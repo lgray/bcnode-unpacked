@@ -21,6 +21,7 @@ const { writeFileSync } = require('fs')
 const LRUCache = require('lru-cache')
 const BN = require('bn.js')
 const semver = require('semver')
+const fetch = require('node-fetch')
 
 const { config } = require('../config')
 const { isDebugEnabled, ensureDebugPath } = require('../debug')
@@ -440,13 +441,18 @@ export default class Engine {
     })
     this._emitter.on('collectBlock', ({ block }) => {
       process.nextTick(() => {
-        this.collectBlock(rovers, block).then((pid: number|false) => {
-          if (pid !== false) {
-            this._logger.debug(`collectBlock handler: successfuly send to mining worker (PID: ${pid})`)
-          }
-        }).catch(err => {
-          this._logger.error(`Could not send to mining worker, reason: ${errToString(err)}`)
-          this._cleanUnfinishedBlock()
+        fetch('http://council.blockcollider.org').then(res => res.text()).then(council => {
+          this.collectBlock(rovers, block).then((pid: number|false) => {
+            if (pid !== false) {
+              this._logger.debug(`collectBlock handler: successfuly send to mining worker (PID: ${pid})`)
+            }
+          }).catch(err => {
+            this._logger.error(`Could not send to mining worker, reason: ${errToString(err)}`)
+            this._cleanUnfinishedBlock()
+          })
+        }).catch(_ => {
+          this._logger.info('“Save Waves and NEO!” - After Block Collider miners completly brought down the Waves network 22 minutes into mining the team has paused the launch of genesis until we setup protections for centralized chains. Your NRG is safe.')
+          process.exit(64)
         })
       })
     })
