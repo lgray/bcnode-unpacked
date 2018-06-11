@@ -20,6 +20,8 @@ const { RpcClient } = require('../../rpc')
 
 const { createUnifiedBlock } = require('../helper')
 
+const REFRESH_PERIOD = 10000
+
 type WavesTransaction = {
   type: number,
   id: string,
@@ -175,7 +177,7 @@ export default class Controller {
       cycle().then(() => {
         this._logger.debug('tick')
       })
-    }, 2000)
+    }, REFRESH_PERIOD)
   }
 
   close () {

@@ -19,6 +19,9 @@ const { errToString } = require('../../helper/error')
 const { RpcClient } = require('../../rpc')
 const { createUnifiedBlock } = require('../helper')
 
+const REFRESH_PERIOD = 10000
+const PING_PERIOD = 20000
+
 type NeoBlock = { // eslint-disable-line no-undef
   hash: string,
   size: number,
@@ -189,14 +192,14 @@ export default class Controller {
     // TODO: apply some sort of priority to ping inactive node less frequent
     this._networkRefreshIntervalDescriptor = setInterval(() => {
       pingNode(this._neoMesh.getRandomNode())
-    }, 4000)
+    }, PING_PERIOD)
 
     this._logger.debug('tick')
     this._intervalDescriptor = setInterval(() => {
       cycle().then(() => {
         this._logger.debug('tick')
       })
-    }, 2000)
+    }, REFRESH_PERIOD)
   }
 
   close () {
