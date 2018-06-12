@@ -7,6 +7,7 @@
  * @flow
  */
 import type { Logger } from 'winston'
+import type { Backoff } from 'backo'
 const profiles = require('@cityofzion/neo-js/dist/common/profiles')
 const NeoMesh = require('@cityofzion/neo-js/dist/node/mesh')
 const NeoNode = require('@cityofzion/neo-js/dist/node/node')
@@ -18,8 +19,8 @@ const logging = require('../../logger')
 const { errToString } = require('../../helper/error')
 const { RpcClient } = require('../../rpc')
 const { createUnifiedBlock } = require('../helper')
+const { getBackoff } = require('../utils')
 
-const REFRESH_PERIOD = 10000
 const PING_PERIOD = 20000
 
 type NeoBlock = { // eslint-disable-line no-undef
@@ -97,8 +98,9 @@ export default class Controller {
   _logger: Logger;
   _config: Object;
   _neoMesh: Object;
-  _intervalDescriptor: IntervalID;
+  _timeoutDescriptor: TimeoutID;
   _networkRefreshIntervalDescriptor: IntervalID;
+  _backoff: Backoff;
   /* eslint-enable */
 
   constructor (config: Object) {
@@ -115,6 +117,7 @@ export default class Controller {
       })
     }))
     this._rpc = new RpcClient()
+    this._backoff = getBackoff()
   }
 
   init () {
@@ -131,33 +134,40 @@ export default class Controller {
     })
 
     const cycle = () => {
-      this._logger.debug('trying to get new block')
-      const node = this._neoMesh.getHighestNode()
+      this._timeoutDescriptor = setTimeout(() => {
+        this._logger.debug('trying to get new block')
+        const node = this._neoMesh.getHighestNode()
 
-      return node.rpc.getBestBlockHash().then(bestBlockHash => {
-        this._logger.debug(`Got best block: "${bestBlockHash}"`)
-        if (!this._blockCache.has(bestBlockHash)) {
-          this._blockCache.set(bestBlockHash, true)
-          this._logger.debug(`Unseen block with id: ${inspect(bestBlockHash)} => using for BC chain`)
+        node.rpc.getBestBlockHash().then(bestBlockHash => {
+          this._logger.debug(`Got best block: "${bestBlockHash}"`)
+          if (!this._blockCache.has(bestBlockHash)) {
+            this._blockCache.set(bestBlockHash, true)
+            this._logger.debug(`Unseen block with id: ${inspect(bestBlockHash)} => using for BC chain`)
 
-          return node.rpc.getBlockByHash(bestBlockHash).then(lastBlock => {
-            this._logger.debug(`Collected new block with id: ${inspect(lastBlock.hash)}, with "${lastBlock.tx.length}" transactions`)
+            return node.rpc.getBlockByHash(bestBlockHash).then(lastBlock => {
+              this._logger.debug(`Collected new block with id: ${inspect(lastBlock.hash)}, with "${lastBlock.tx.length}" transactions`)
 
-            const unifiedBlock = createUnifiedBlock(lastBlock, _createUnifiedBlock)
+              const unifiedBlock = createUnifiedBlock(lastBlock, _createUnifiedBlock)
 
-            this._logger.debug('NEO Going to call this._rpc.rover.collectBlock()')
-            this._rpc.rover.collectBlock(unifiedBlock, (err, response) => {
-              if (err) {
-                this._logger.error(`Error while collecting block ${inspect(err)}`)
-                return
-              }
-              this._logger.debug(`Collector Response: ${JSON.stringify(response.toObject(), null, 4)}`)
+              this._logger.debug('NEO Going to call this._rpc.rover.collectBlock()')
+              this._rpc.rover.collectBlock(unifiedBlock, (err, response) => {
+                if (err) {
+                  this._logger.error(`Error while collecting block ${inspect(err)}`)
+                  return
+                }
+                this._logger.debug(`Collector Response: ${JSON.stringify(response.toObject(), null, 4)}`)
+              })
             })
-          })
-        }
-      }).catch(e => {
-        this._logger.error(`Error while getting new block, err: ${e.message}`)
-      })
+          }
+        }).then(() => {
+          this._backoff.reset()
+          this._logger.debug('tick')
+          cycle()
+        }).catch(reason => {
+          this._logger.error(`Error while getting new block, err: ${errToString(reason)}`)
+          cycle()
+        })
+      }, this._backoff.duration())
     }
 
     const pingNode = (node: NeoNode) => {
@@ -183,6 +193,9 @@ export default class Controller {
           node.pendingRequests -= 1
         })
     }
+
+    cycle()
+
     // Ping all nodes in order to setup their height and latency
     this._neoMesh.nodes.forEach((node) => {
       pingNode(node)
@@ -193,17 +206,10 @@ export default class Controller {
     this._networkRefreshIntervalDescriptor = setInterval(() => {
       pingNode(this._neoMesh.getRandomNode())
     }, PING_PERIOD)
-
-    this._logger.debug('tick')
-    this._intervalDescriptor = setInterval(() => {
-      cycle().then(() => {
-        this._logger.debug('tick')
-      })
-    }, REFRESH_PERIOD)
   }
 
   close () {
-    this._intervalDescriptor && clearInterval(this._intervalDescriptor)
+    this._timeoutDescriptor && clearTimeout(this._timeoutDescriptor)
     this._networkRefreshIntervalDescriptor && clearInterval(this._networkRefreshIntervalDescriptor)
   }
 }
