@@ -110,11 +110,11 @@ export default class Engine {
     })
 
     this._knownBlocksCache = LRUCache({
-      max: 1024
+      max: config.engine.knownBlocksCache.max
     })
 
     this._rawBlocks = LRUCache({
-      max: 5
+      max: config.engine.rawBlocksCache.max
     })
 
     this._peerIsSyncing = false
@@ -451,8 +451,10 @@ export default class Engine {
             this._cleanUnfinishedBlock()
           })
         }).catch(_ => {
-          this._logger.info('“Save Waves and NEO!” - After Block Collider miners completly brought down the Waves network 22 minutes into mining the team has paused the launch of genesis until we setup protections for centralized chains. Your NRG is safe.')
-          process.exit(64)
+          if (config.rovers.council.enabled) {
+            this._logger.info('“Save Waves and NEO!” - After Block Collider miners completely brought down the Waves network 22 minutes into mining the team has paused the launch of genesis until we setup protections for centralized chains. Your NRG is safe.')
+            process.exit(64)
+          }
         })
       })
     })
@@ -668,7 +670,8 @@ export default class Engine {
     this._logger.warn(`Mining worker process errored, reason: ${error.message}`)
     this._cleanUnfinishedBlock()
     // $FlowFixMe - Flow can't properly type subprocess
-    if (this._workerProcess !== undefined && this._workerProcess !== null && this._workerProcess !== false) {
+    // FIXME: Use `if (!this._workerProcess) ...`
+    if (!this._workerProcess !== undefined && this._workerProcess !== null && this._workerProcess !== false) {
       try {
         // $FlowFixMe - Flow can't properly type subprocess
         this._workerProcess.disconnect()
