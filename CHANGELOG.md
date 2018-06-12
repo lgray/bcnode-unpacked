@@ -9,9 +9,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 
-- [Global] - Added env variable BC_CONFIG 
+- [Global] - Added env variable BC_CONFIG
 - [CLI] - Added command "balance <address>" to get NRG balance
-- [CLI] - --miner-key option validates formatted address 
+- [CLI] - --miner-key option validates formatted address
 - [Sentry] - Log more details
 - [Sentry] - Log version as sentry 'release'
 - [CLI] - Name the process - bcnode
@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - [CI] - Automatically build docker images
 - [Docker] - Mountable volumes - _data, config, logs
 - [Docker] - Use foreverjs
+- [Rover] - added exponential backoff from 5s to 20s for WAV and NEO
 
 ### Changed
 
