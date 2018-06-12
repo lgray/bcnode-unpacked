@@ -1,5 +1,21 @@
 {
-  "_version": 1,
+  "_version": 2,
+
+  "app": {
+    "version": {
+      "strictCheck": true
+    }
+  },
+
+  "engine": {
+    "knownBlocksCache": {
+      "max": 1024
+    },
+
+    "rawBlocksCache": {
+      "max": 5
+    }
+  },
 
   "grpc": {
     "host": "127.0.0.1",
@@ -12,13 +28,20 @@
 
   "p2p": {
     "blacklist": {
+      "enabled": false,
       "defaultTtl": 6000,
       "purgeInterval": 6000
     },
+
+    "quorum": {
+      "size": 16
+    },
+
     "rendezvous": {
       "webrtc": "/dns4/dns-r1.blockcollider.org/tcp/9090/ws/p2p-webrtc-star",
       "websocket": "/dns4/dns-r1.blockcollider.org/tcp/9091/ws/p2p-websocket-star"
     },
+
     "stats": {
       "enabled": true,
       "interval": 10
@@ -26,8 +49,28 @@
   },
 
   "rovers": {
+    "council": {
+      "enabled": true
+    },
+
     "eth": {
       "altBootNodes": [
+        {
+          "address": "52.16.188.185",
+          "udpPort": 30303
+        },
+        {
+          "address": "13.93.211.84",
+          "udpPort": 30303
+        },
+        {
+          "address": "191.235.84.50",
+          "udpPort": 30303
+        },
+        {
+          "address": "13.75.154.138",
+          "udpPort": 30303
+        },
         {
           "address": "52.74.57.123",
           "udpPort": 30303
