@@ -97,6 +97,7 @@
     "avon": "korczis/avon#master",
     "axios": "^0.18.0",
     "babel-plugin-transform-object-rest-spread": "^6.26.0",
+    "backo": "1.1.0",
     "base-x": "^3.0.4",
     "base58": "^1.0.1",
     "bcoin": "^1.0.0-beta.15",
