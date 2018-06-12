@@ -8,6 +8,7 @@
  */
 
 import type { Logger } from 'winston'
+import type { Backoff } from 'backo'
 const { inspect } = require('util')
 const WavesApi = require('waves-api')
 const LRUCache = require('lru-cache')
@@ -17,10 +18,9 @@ const { getLogger } = require('../../logger')
 const { errToString } = require('../../helper/error')
 const { blake2b } = require('../../utils/crypto')
 const { RpcClient } = require('../../rpc')
+const { getBackoff } = require('../utils')
 
 const { createUnifiedBlock } = require('../helper')
-
-const REFRESH_PERIOD = 10000
 
 type WavesTransaction = {
   type: number,
@@ -119,9 +119,10 @@ export default class Controller {
   _logger: Logger;
   _wavesApi: Object;
   _rpc: RpcClient;
-  _intervalDescriptor: IntervalID;
+  _timeoutDescriptor: TimeoutID;
   _blockCache: LRUCache<string, bool>;
   _lastBlockHeight: number;
+  _backoff: Backoff;
   /* eslint-enable */
   constructor (config: Object) {
     this._config = config
@@ -130,6 +131,7 @@ export default class Controller {
     this._rpc = new RpcClient()
     this._blockCache = new LRUCache({ max: 500 })
     this._lastBlockHeight = 0
+    this._backoff = getBackoff()
   }
 
   init () {
@@ -146,41 +148,46 @@ export default class Controller {
     })
 
     const cycle = () => {
-      this._logger.debug('Trying to get new block')
-      return getLastHeight(this._wavesApi).then(height => {
-        this._logger.debug(`Got last height '${height}'`)
-        getBlock(this._wavesApi, height - 1).then(lastBlock => {
-          const newBlockHeight = parseInt(lastBlock.height, 10)
-          if (!this._blockCache.has(lastBlock.reference) && this._lastBlockHeight <= newBlockHeight) {
-            this._logger.debug(`Unseen new block '${lastBlock.reference}', height: ${height}`)
-            this._blockCache.set(lastBlock.reference)
+      this._timeoutDescriptor = setTimeout(() => {
+        this._logger.debug('Trying to get new block')
 
-            const unifiedBlock = createUnifiedBlock(lastBlock, _createUnifiedBlock)
+        getLastHeight(this._wavesApi).then(height => {
+          this._logger.debug(`Got last height '${height}'`)
 
-            this._rpc.rover.collectBlock(unifiedBlock, (err, response) => {
-              if (err) {
-                this._logger.error(`Error while collecting block ${inspect(err)}`)
-                return
-              }
-              this._lastBlockHeight = newBlockHeight
-              this._logger.debug(`Collector Response: ${JSON.stringify(response.toObject(), null, 4)}`)
-            })
-          }
+          return getBlock(this._wavesApi, height - 1).then(lastBlock => {
+            const newBlockHeight = parseInt(lastBlock.height, 10)
+
+            if (!this._blockCache.has(lastBlock.reference) && this._lastBlockHeight <= newBlockHeight) {
+              this._logger.debug(`Unseen new block '${lastBlock.reference}', height: ${height}`)
+              this._blockCache.set(lastBlock.reference)
+
+              const unifiedBlock = createUnifiedBlock(lastBlock, _createUnifiedBlock)
+
+              this._rpc.rover.collectBlock(unifiedBlock, (err, response) => {
+                if (err) {
+                  this._logger.error(`Error while collecting block ${inspect(err)}`)
+                  return
+                }
+                this._lastBlockHeight = newBlockHeight
+                this._logger.debug(`Collector Response: ${JSON.stringify(response.toObject(), null, 4)}`)
+              })
+            }
+          })
+        }).then(() => {
+          this._backoff.reset()
+          this._logger.debug('tick')
+          cycle()
+        }).catch(reason => {
+          cycle()
+          this._logger.error(`Could not get new block, err ${inspect(reason)}`)
         })
-      }).catch(reason => {
-        this._logger.error(`Could not get new block, err ${inspect(reason)}`)
-      })
+      }, this._backoff.duration())
     }
 
-    this._logger.debug('tick')
-    this._intervalDescriptor = setInterval(() => {
-      cycle().then(() => {
-        this._logger.debug('tick')
-      })
-    }, REFRESH_PERIOD)
+    cycle()
   }
 
   close () {
-    this._intervalDescriptor && clearInterval(this._intervalDescriptor)
+    this._timeoutDescriptor && clearTimeout(this._timeoutDescriptor)
   }
 }
