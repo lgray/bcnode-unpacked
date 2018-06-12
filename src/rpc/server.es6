@@ -58,7 +58,6 @@ export class RpcServer {
   }
 
   get pubsub (): PubSub {
-    console.log('RPC SERVER', this)
     return this._engine.pubsub
   }
 
