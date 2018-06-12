@@ -18,9 +18,8 @@ const { getLogger } = require('../../logger')
 const { errToString } = require('../../helper/error')
 const { blake2b } = require('../../utils/crypto')
 const { RpcClient } = require('../../rpc')
-const { getBackoff } = require('../utils')
-
 const { createUnifiedBlock } = require('../helper')
+const { getBackoff } = require('../utils')
 
 type WavesTransaction = {
   type: number,
@@ -178,8 +177,8 @@ export default class Controller {
           this._logger.debug('tick')
           cycle()
         }).catch(reason => {
+          this._logger.error(`Could not get new block, err ${errToString(reason)}`)
           cycle()
-          this._logger.error(`Could not get new block, err ${inspect(reason)}`)
         })
       }, this._backoff.duration())
     }
