@@ -10,6 +10,7 @@
 const execSync = require('child_process').execSync
 const fs = require('fs')
 const path = require('path')
+const request = require('request')
 
 const { objFromFileSync, objToFileSync } = require('../helper/json')
 
@@ -20,6 +21,8 @@ const PKG = require('../../package.json')
 
 const VERSION_FILENAME: string = '.version.json'
 const VERSION_FILE_PATH: string = path.resolve(__dirname, '..', '..', VERSION_FILENAME)
+
+const GIT_PACKAGE_JSON_URL: string = 'https://raw.githubusercontent.com/blockcollider/bcnode/release/package.json'
 
 const DEFAULT_VERSION: Object = {
   git: '<unknown>',
@@ -116,4 +119,21 @@ export const readVersionFile = (path: string = VERSION_FILE_PATH) => {
 export function writeVersionFile (path: string = VERSION_FILE_PATH, version: ?Object = null) {
   // $FlowFixMe
   return objToFileSync(VERSION_FILE_PATH, version || getVersion(path))
+}
+
+export const getGitVersion = (): Promise<*> => {
+  return new Promise((resolve, reject) => {
+    request(GIT_PACKAGE_JSON_URL, (err, response, body) => {
+      if (err) {
+        return reject(err)
+      }
+
+      try {
+        const obj = JSON.parse(body)
+        return resolve(obj.version)
+      } catch (err) {
+        return reject(err)
+      }
+    })
+  })
 }
