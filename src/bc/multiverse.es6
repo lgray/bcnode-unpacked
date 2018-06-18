@@ -1,4 +1,4 @@
-/* e
+/**
  * Copyright (c) 2017-present, blockcollider.org developers, All rights reserved.
  *
  * This source code is licensed under the MIT license found in the
@@ -277,7 +277,7 @@ export class Multiverse {
     // TODO: Stub function for the comparison of two multiverse structures
   }
 
-  getHighestBlock (depth: ?number = 7, keys: string[] = [], list: ?Array<*>): ?BcBlock {
+  getHighestBlock (depth: ?number = 7, keys: string[] = [], list: ?Array<*>): ?BcBlock|bool {
     /*
      *
      *           --X|---
