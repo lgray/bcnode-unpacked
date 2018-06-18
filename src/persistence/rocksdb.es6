@@ -105,19 +105,7 @@ export default class PersistenceRocksDb {
     debug('get()', key)
 
     if (Array.isArray(key)) {
-      const promises = key.map((k) => {
-        return this.get(k)
-      })
-
-      // console.log('BULK GET')
-      // console.trace()
-      //
-      // return Promise.all(promises.map((p) => p.catch(e => null)))
-      //   .then((results) => {
-      //     return results.filter(a => a)
-      //   })
-
-      return Promise.all(promises)
+      return this.getBulk(key, opts)
     }
 
     return new Promise((resolve, reject) => {
@@ -133,6 +121,17 @@ export default class PersistenceRocksDb {
         }
       })
     })
+  }
+
+  getBulk (key: string[], opts: Object = { asBuffer: true }): Promise<Array<Object>> {
+    const promises = key.map((k) => {
+      return this.get(k)
+    })
+
+    return Promise.all(promises.map((p) => p.catch(e => null)))
+      .then((results) => {
+        return Promise.all(results.filter(a => a !== null))
+      })
   }
 
   /**

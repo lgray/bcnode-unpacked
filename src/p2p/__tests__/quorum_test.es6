@@ -7,6 +7,10 @@
  * @flow
  */
 
-const { config } = require('../config')
+const { PEER_QUORUM_SIZE } = require('../quorum')
 
-export const PEER_QUORUM_SIZE = config.p2p.quorum.size
+describe('quorum', () => {
+  it('PEER_QUORUM_SIZE', () => {
+    expect(PEER_QUORUM_SIZE).toEqual(16)
+  })
+})

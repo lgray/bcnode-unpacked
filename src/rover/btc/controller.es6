@@ -83,6 +83,7 @@ export default class Controller {
       process.exit()
     })
 
+    // FIXME: This can interfere with global handler
     process.on('uncaughtException', (e) => {
       this._logger.error(`Uncaught exception: ${errToString(e)}`)
       process.exit(3)

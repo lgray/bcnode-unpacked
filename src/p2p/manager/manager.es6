@@ -115,9 +115,9 @@ export class PeerManager {
   }
 
   isQuorumSynced (): boolean {
-    // TODO: Fix  
-    return this._quorumSyncing === false 
-    //return false 
+    // TODO: Fix
+    return this._quorumSyncing === false
+    // return false
   }
 
   onPeerDiscovery (peer: PeerInfo) {

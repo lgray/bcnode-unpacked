@@ -26,7 +26,7 @@ process.on('uncaughtException', (err) => {
 const { config } = require('../config')
 const logging = require('../logger')
 const { ensureDebugDir } = require('../debug')
-const { getVersion } = require('../helper/version')
+const { getVersion, getGitVersion } = require('../helper/version')
 const { getOsInfo } = require('../helper/os')
 const { cmd: cmdConfig } = require('./cmd/config')
 const { cmd: cmdInfo } = require('./cmd/info')
@@ -174,8 +174,48 @@ export const main = async (args: string[] = process.argv) => {
   // Initialize error handlers
   initErrorHandlers(logger, errorHandlers)
 
-  // Parse command line
-  return program.parse(args)
+  // ---------------------
+  // CHECK REMOTE VERSION
+  // ---------------------
+  const versionCheck = getGitVersion()
+    .then((gitVersion) => {
+      const versionObj = {
+        local: {
+          npm: version.npm,
+          git: version.git.short
+        },
+        github: {
+          npm: gitVersion
+        }
+      }
+
+      logger.info(`Version: ${JSON.stringify(versionObj, null, 2)}`)
+      return Promise.resolve([
+        versionObj.local.npm === versionObj.github.npm,
+        versionObj.local,
+        versionObj.github
+      ])
+    })
+    .catch((err) => {
+      logger.debug(`Unable to get git version, reason: ${err.message}`)
+      return Promise.resolve([null])
+    })
+
+  // Check version - local VS github
+  return versionCheck.then((res) => {
+    const [check, local, github] = res
+    if (check === false) {
+      logger.warn(`Version mismatch, local: ${local.npm}, github: ${github.npm}`)
+
+      if (config.app.version.strictCheck && (local.npm < github.npm)) {
+        logger.error('Strict version check enabled, exiting.')
+        return
+      }
+    }
+
+    // Parse command line
+    return program.parse(args)
+  })
 }
 
 const initDirs = () => {

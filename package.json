@@ -205,6 +205,7 @@
     "redux": "^4.0.0",
     "redux-devtools-extension": "^2.13.2",
     "redux-saga": "^0.16.0",
+    "request": "^2.87.0",
     "response-time": "^2.3.2",
     "rlp-encoding": "^3.0.0",
     "rocksdb": "^2.0.0",
