@@ -20,7 +20,7 @@ const tsFormat = () => new Date().toISOString()
 const LOG_LEVEL = process.env.BC_LOG || 'info'
 
 const formatTemplate = options => {
-  const ts = options.timestamp()
+  const ts = (options.timestamp) ? `${options.timestamp()} ` : ''
   const level = options.level.toUpperCase()
   const msg = undefined !== options.message ? options.message : ' '
   const meta =
@@ -28,7 +28,7 @@ const formatTemplate = options => {
       ? '\n\t' + JSON.stringify(options.meta, null, 2)
       : ''
 
-  return `${ts} ${level}\t${msg} ${meta}`
+  return `${ts}${level}\t${msg} ${meta}`
 }
 
 const logger = new winston.Logger({
@@ -36,7 +36,7 @@ const logger = new winston.Logger({
     // Console
     new winston.transports.Console({
       level: LOG_LEVEL,
-      timestamp: tsFormat,
+      timestamp: (!process.stdout.isTTY) ? tsFormat : undefined,
       formatter: formatTemplate,
       humanReadableUnhandledException: true,
       colorize: true
@@ -138,6 +138,7 @@ class LoggingContext {
   }
 }
 
-export const getLogger = (path: string, meta: ?Object): Logger => {
-  return new LoggingContext(logger, pathToLogPrefix(path), meta)
+export const getLogger = (path: string, translatePath: bool = true, meta: ?Object): Logger => {
+  const name = (translatePath) ? pathToLogPrefix(path) : path
+  return new LoggingContext(logger, name, meta)
 }
