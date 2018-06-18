@@ -135,7 +135,7 @@ export default class Engine {
     return this.node.multiverse
   }
 
-  set mutliverse (multiverse: Multiverse) {
+  set multiverse (multiverse: Multiverse) {
     this.node.multiverse = multiverse
   }
 
@@ -328,9 +328,6 @@ export default class Engine {
          block.getTimestamp() >= previousLatest.getTimestamp()) { // notice you cannot create two blocks in the same second (for when BC moves to 1s block propogation waves)
         await self.persistence.put('bc.block.latest', block)
         await self.persistence.put('bc.block.' + block.getHeight(), block)
-        if (self._workerProcess === undefined) {
-          self._workerProcess = false
-        }
       } else {
         self._logger.warn('new purposed latest block does not match the last')
       }
@@ -367,15 +364,15 @@ export default class Engine {
    * Get rawBlock
    * @return {Object}
    */
-  get rawBlock (): ?Object {
+  get rawBlock (): ?Block {
     return this._rawBlock
   }
 
   /**
-   * Get rawBlock
-   * @return {Object}
+   * Set rawBlock
+   * @param block
    */
-  set rawBlock (block: Object): ?Object {
+  set rawBlock (block: Block) {
     this._rawBlock = block
   }
 
@@ -468,46 +465,57 @@ export default class Engine {
     const self = this
     this._collectedBlocks[block.getBlockchain()] += 1
 
+    // Persist block if needed
+    if (PERSIST_ROVER_DATA === true) {
+      this._writeRoverData(block)
+    }
+
     // TODO: Adjust minimum count of collected blocks needed to trigger mining
     if (!this._canMine && all((numCollected: number) => numCollected >= 1, values(self._collectedBlocks))) {
       this._canMine = true
     }
 
-    if (PERSIST_ROVER_DATA === true) {
-      this._writeRoverData(block)
+    // Check if _canMine
+    if (!this._canMine) {
+      const keys = Object.keys(this._collectedBlocks)
+      const values = '|' + keys.reduce((all, a, i) => {
+        const val = this._collectedBlocks[a]
+        if (i === (keys.length - 1)) {
+          all = all + a + ':' + val
+        } else {
+          all = all + a + ':' + val + ' '
+        }
+        return all
+      }, '') + '|'
+
+      this._logger.info('constructing multiverse from blockchains ' + values)
+      return Promise.resolve(false)
     }
-    // start mining only if all known chains are being rovered
-    if (this._canMine && !this._peerIsSyncing && equals(new Set(this._knownRovers), new Set(rovers))) {
-      self._rawBlock.push(block)
-      return self.startMining(rovers, block)
-        .then((res) => {
-          self._logger.info('mining cycle initiated')
-        })
-        .catch((err) => {
-          self._logger.error(err)
-        })
-    } else {
-      if (!this._canMine) {
-        const keys = Object.keys(this._collectedBlocks)
-        const values = '|' + keys.reduce((all, a, i) => {
-          const val = this._collectedBlocks[a]
-          if (i === (keys.length - 1)) {
-            all = all + a + ':' + val
-          } else {
-            all = all + a + ':' + val + ' '
-          }
-          return all
-        }, '') + '|'
-        this._logger.info('constructing multiverse from blockchains ' + values)
-        return Promise.resolve(false)
-      }
-      if (this._peerIsSyncing) {
-        this._logger.info(`mining and ledger updates disabled until initial multiverse threshold is met`)
-        return Promise.resolve(false)
-      }
+
+    // Check if peer is syncing
+    if (this._peerIsSyncing) {
+      this._logger.info(`mining and ledger updates disabled until initial multiverse threshold is met`)
+      return Promise.resolve(false)
+    }
+
+    // Check if all rovers are enabled
+    if (equals(new Set(this._knownRovers), new Set(rovers)) === false) {
       this._logger.debug(`consumed blockchains manually overridden, mining services disabled, active multiverse rovers: ${JSON.stringify(rovers)}, known: ${JSON.stringify(this._knownRovers)})`)
       return Promise.resolve(false)
     }
+
+    // FIXME: @schnorr, is this typo? Should not it be this._rawBlocks.push(block) ?
+    // self._rawBlock.push(block)
+    // $FlowFixMe
+    return self.startMining(rovers, block)
+      .then((res) => {
+        self._logger.info('mining cycle initiated')
+        return Promise.resolve(true)
+      })
+      .catch((err) => {
+        self._logger.error(err)
+        return Promise.resolve(false)
+      })
   }
 
   blockFromPeer (conn: Object, newBlock: BcBlock) {
@@ -683,8 +691,8 @@ export default class Engine {
         this._workerProcess.kill()
       } catch (_) {
         this._logger.warn(`Disconnecting or killing of miner process error - just cleaning up`)
-        this._workerProcess = undefined
       }
+
       this._workerProcess = undefined
     }
   }
@@ -696,6 +704,7 @@ export default class Engine {
       this._logger.warn(`Mining worker process exited with code ${code}, signal ${signal}`)
       this._cleanUnfinishedBlock()
     }
+
     this._workerProcess = undefined
   }
 
@@ -832,7 +841,7 @@ export default class Engine {
     }
   }
 
-  async startMining (rovers: string[] = ROVERS, block: Block): Promise<*> {
+  async startMining (rovers: string[] = ROVERS, block: Block): Promise<boolean> {
     const self = this
     // if (block === undefined) {
     //  return Promise.reject(new Error('cannot start mining on empty block'))
@@ -935,24 +944,39 @@ export default class Engine {
   stopMining (): bool {
     debug('Stopping mining')
 
-    if (!this._workerProcess) {
+    const process = this._workerProcess
+    if (!process) {
       return false
+    }
+
+    if (process.connected) {
+      try {
+        process.disconnect()
+      } catch (err) {
+        this._logger.debug(`Unable to disconnect workerProcess, reason: ${err.message}`)
+      }
     }
 
     try {
-      if (this._workerProcess !== undefined && this._workerProcess !== null && this._workerProcess !== false) {
-        this._workerProcess.disconnect()
-        this._workerProcess.removeAllListeners()
-        this._workerProcess.kill()
-        this._workerProcess = null
-      }
+      process.removeAllListeners()
     } catch (err) {
-      this._logger.debug(`Stopping mining failed, reason: ${err.message}`)
-      return false
+      this._logger.debug(`Unable to remove workerProcess listeners, reason: ${err.message}`)
     }
+
+    // $FlowFixMe
+    if (process.killed !== true) {
+      try {
+        process.kill()
+      } catch (err) {
+        this._logger.debug(`Unable to kill workerProcess, reason: ${err.message}`)
+      }
+    }
+
+    this._workerProcess = undefined
     return true
   }
 
+  // FIXME: Review and fix restartMining
   restartMining (rovers: string[] = ROVERS): Promise<boolean> {
     debug('Restarting mining', rovers)
 
@@ -963,6 +987,7 @@ export default class Engine {
     //      return Promise.resolve(!res)
     //    })
     // } else {
+
     return Promise.resolve(true)
     // }
   }

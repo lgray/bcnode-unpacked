@@ -29,7 +29,7 @@ const { PeerManager, DATETIME_STARTED_AT } = require('./manager/manager')
 const { validateBlockSequence } = require('../bc/validation')
 const { Multiverse } = require('../bc/multiverse')
 const { BlockPool } = require('../bc/blockpool')
-const { blockByTotalDistanceSorter } = require('../bc/helper')
+const { blockByTotalDistanceSorter } = require('../engine/helper')
 
 const { PROTOCOL_PREFIX, NETWORK_ID } = require('./protocol/version')
 
@@ -222,15 +222,13 @@ export class PeerNode {
           peerMultiverses.push(multiverse)
 
           if (peerMultiverses.length >= PEER_QUORUM_SIZE) {
-            const candidates = peerMultiverses.map((peerMultiverse) => {
+            const candidates = peerMultiverses.reduce((acc: Array<Object>, peerMultiverse) => {
               if (peerMultiverse.length > 0 && validateBlockSequence(peerMultiverse)) {
-                return peerMultiverse
-              } else {
-                return null
+                acc.push(peerMultiverse)
               }
-            }).filter((itm) => {
-              return itm !== null
-            }) || []
+
+              return acc
+            }, [])
 
             if (candidates.length >= PEER_QUORUM_SIZE) {
               const uniqueCandidates = uniqBy((candidate) => candidate[0].getHash(), candidates)

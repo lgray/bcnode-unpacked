@@ -17,6 +17,7 @@ const fs = require('fs')
 const path = require('path')
 const process = require('process')
 const program = require('commander')
+const semver = require('semver')
 const Raven = require('raven')
 
 process.on('uncaughtException', (err) => {
@@ -177,45 +178,50 @@ export const main = async (args: string[] = process.argv) => {
   // ---------------------
   // CHECK REMOTE VERSION
   // ---------------------
-  const versionCheck = getGitVersion()
+  return getGitVersion()
     .then((gitVersion) => {
       const versionObj = {
         local: {
           npm: version.npm,
           git: version.git.short
         },
-        github: {
+        remote: {
           npm: gitVersion
         }
       }
 
       logger.info(`Version: ${JSON.stringify(versionObj, null, 2)}`)
       return Promise.resolve([
-        versionObj.local.npm === versionObj.github.npm,
-        versionObj.local,
-        versionObj.github
+        semver.satisfies(versionObj.local.npm, `>=${versionObj.remote.npm}`),
+        versionObj.local.npm,
+        versionObj.remote.npm
       ])
     })
-    .catch((err) => {
-      logger.debug(`Unable to get git version, reason: ${err.message}`)
-      return Promise.resolve([null])
+    .then((res) => {
+      const [checkOk, local, remote] = res
+      if (checkOk === false) {
+        logger.warn(`Version mismatch, local: ${local}, remote: ${remote}`)
+
+        if (config.app.version.strictCheck) {
+          logger.error('Strict version check enabled, exiting.')
+          return
+        }
+      }
+
+      // Parse command line
+      return program.parse(args)
     })
+    .catch((err) => {
+      logger.warn(`Unable to get git version, reason: ${err.message}`)
 
-  // Check version - local VS github
-  return versionCheck.then((res) => {
-    const [check, local, github] = res
-    if (check === false) {
-      logger.warn(`Version mismatch, local: ${local.npm}, github: ${github.npm}`)
-
-      if (config.app.version.strictCheck && (local.npm < github.npm)) {
+      if (config.app.version.strictCheck) {
         logger.error('Strict version check enabled, exiting.')
         return
       }
-    }
 
-    // Parse command line
-    return program.parse(args)
-  })
+      // Parse command line
+      return program.parse(args)
+    })
 }
 
 const initDirs = () => {

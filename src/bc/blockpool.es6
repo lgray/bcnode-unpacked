@@ -7,19 +7,19 @@
  * @flow
  */
 
-import type BcBlock from '../protos/core_pb'
-
+const { BcBlock } = require('../protos/core_pb')
 const { getGenesisBlock } = require('./genesis')
 const { PubSub } = require('../engine/pubsub')
 
 export class BlockPool {
-  _persistence: any
+  _blockchain: Object // FIXME: Add annotation
+  _persistence: Object // FIXME: Add annotation
   _syncEnabled: bool
-  _cache: Object[]
+  _cache: Object[] // FIXME: Add annotation
   _maximumHeight: ?number
   _checkpoint: ?BcBlock
-  _genesisBlock: Object
-  _pubsub: Object
+  _genesisBlock: Object // FIXME: Add annotation
+  _pubsub: Object // FIXME: Add annotation
 
   constructor (persistence: any, pubsub: any) {
     this._cache = []
@@ -30,10 +30,27 @@ export class BlockPool {
     this._pubsub = pubsub
     this._genesisBlock = getGenesisBlock()
   }
+
+  get genesisBlock () : Object {
+    return this._genesisBlock
+  }
+
+  get maximumHeight () : ?number {
+    return this._maximumHeight
+  }
+
+  set maximumHeight (height: number) {
+    this._maximumHeight = height
+  }
+
+  get persistence () : Object {
+    return this._persistence
+  }
+
   // ranch dressing
   _eventResyncFailed (block: BcBlock) {
     // Request to update the data with a resync command
-    // TODO: Impliment miner stop and peer cycling
+    // TODO: Implement miner stop and peer cycling
     this.pubsub.publish('update.resync.failed', { data: BcBlock })
   }
 
@@ -63,7 +80,7 @@ export class BlockPool {
 
   updateCheckpoint (block: BcBlock): Promise<*> {
     // add checkpoint
-    return this._purge(block)
+    return this.purge(block)
   }
 
   get checkpoint (): ?BcBlock {
@@ -81,12 +98,16 @@ export class BlockPool {
     const height = block.getHeight()
     const toWrite = []
     let writeFromCache = false
+
+    // FIXME: @schnorr review this condition
     if (this._checkpoint === undefined && this._checkpoint === false) {
       return Promise.reject(new Error('no checkpoint set for blockpool'))
     }
+
     if (hash === self.genesisBlock.getHash()) {
       return Promise.resolve(true)
     }
+
     try {
       const earliest = await self._persistence.get('bc.block.earliest')
       // the sequence is complete trigger complete event
@@ -95,19 +116,23 @@ export class BlockPool {
         self._eventCheckpointReached(block)
         return await self._persistence.del('bc.block.earliest') // clean up and remove earliest for next sync
       }
+
       if (block.getHash() === earliest.previousHash() &&
          block.getHeight() === 2 &&
          previousHash !== self._genesisBlock.getHash()) {
         self._eventResyncFailed()
         return await self._persistence.del('bc.block.earliest') // clean up and remove earliest for next sync
       }
+
       if (earliest.getHash() === hash) {
         return Promise.resolve(true)
       }
+
       // new block is earlier than the earliest
       if (earliest.getHeight() < height) {
         return Promise.resolve(true)
       }
+
       if (earliest.getPreviousHash() === hash) {
         toWrite.push(block)
       } else if (earliest.getHeight() > height) {
@@ -137,27 +162,28 @@ export class BlockPool {
           toWrite.push(candidates.pop())
         }
       }
+
       // commit work to disk
       if (toWrite.length > 0) {
         const committedBlock = toWrite.pop()
-        await self._persistance.put('bc.block.' + committedBlock.getHeight(), committedBlock)
+        await self.persistence.put('bc.block.' + committedBlock.getHeight(), committedBlock)
         // if the solution was found in the cache rerun
         if (writeFromCache === true &&
           self._cache.length > 0) {
-          await self._persistance.put('bc.block.earliest', committedBlock)
+          await self.persistence.put('bc.block.earliest', committedBlock)
           return self.addBlock(self._cache.pop())
         }
-        return self._persistance.put('bc.block.earliest', committedBlock)
+        return self.persistence.put('bc.block.earliest', committedBlock)
       } else {
         return Promise.resolve(true)
       }
     } catch (err) {
       // when earliest is not set
       if (hash !== self.genesisBlock.getHash() &&
-         height > 1 &&
-         height < self._checkpoint.getHeight()) {
-        await self._persistance.put('bc.block.' + height, block)
-        return self._persistance.put('bc.block.earliest', block)
+        height > 1 &&
+        height < (self._checkpoint && self._checkpoint.getHeight())) {
+        await self.persistence.put('bc.block.' + height, block)
+        return self.persistence.put('bc.block.earliest', block)
       } else {
         if (height < 2) {
           return Promise.reject(new Error('invalid block claiming to be genesis'))
@@ -168,6 +194,7 @@ export class BlockPool {
       }
     }
   }
+
   async purgeFrom (start: number, end: number): Promise<*> {
     if (end < 1 || start <= 1) {
       return Promise.reject(new Error('cannot purge below height 2'))
@@ -183,19 +210,23 @@ export class BlockPool {
       }
     }
   }
+
   async purge (checkpoint: ?BcBlock): Promise<*> {
     const self = this
-    if (checkpoint !== undefined && checkpoint !== false) {
+    if (checkpoint) {
+      const height = checkpoint.getHeight() - 1
       try {
         const latest = await self._persistence.get('bc.block.latest')
         const latestHeight = latest.getHeight()
-        const height = checkpoint.getHeight() - 1
+
         if (height < 2) {
           return Promise.reject(new Error('checkpoint set to genesis height'))
         }
+
         if (height > latestHeight) {
           return Promise.reject(new Error('cannot purge after latest block'))
         }
+
         self._checkpoint = checkpoint
         return self.purgeFrom(height, 1)
       } catch (err) {
@@ -207,6 +238,7 @@ export class BlockPool {
       if (height < 2) {
         return Promise.reject(new Error('checkpoint set to genesis height'))
       }
+
       return self.purgeFrom(height, 1)
     }
   }

@@ -103,18 +103,19 @@ export default class RoverManager {
     debug('Replaying roved blocks')
 
     const pattern = path.join(ROVED_DATA_PATH, '**/unified/*.json')
-    let files = glob.sync(pattern)
+    let files: Array<string> = glob.sync(pattern)
 
-    const g = groupBy((p) => {
+    const groups = groupBy((p) => {
       const parts = p.split(path.sep)
       return parts[parts.length - 4]
-    })
+    })(files)
 
-    const groups = g(files)
-    const tmp = Object.keys(groups).map((k) => {
-      return groups[k].slice(-1)
-    }) || []
+    const tmp: Array<any> = Object.keys(groups)
+      .map((k: string) => {
+        return groups[k].slice(-1)
+      }) || []
 
+    // $FlowFixMe
     files = flatten(tmp)
       .sort((a, b) => {
         const fnameA = path.posix.basename(a)
@@ -132,7 +133,7 @@ export default class RoverManager {
     const rpc = new RpcClient()
 
     files.forEach((f) => {
-      const json = fs.readFileSync(f)
+      const json = fs.readFileSync(f).toString()
       const obj = JSON.parse(json)
 
       const block = new Block()

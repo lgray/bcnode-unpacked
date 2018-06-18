@@ -6,6 +6,7 @@
  *
  * @flow
  */
+
 import type { Logger } from 'winston'
 import type { $Request, $Response, NextFunction } from 'express'
 
@@ -100,7 +101,7 @@ export default class Server {
       help: Null
     }
 
-    this._app.get('/balance/:address', (req, res, next) => {
+    this._app.get('/balance/:address', (req, res: $Response, next: NextFunction) => {
       const address = req.params.address
       if (address) {
         this._engine.persistence.getBtAddressBalance(req.params.address)
@@ -113,7 +114,7 @@ export default class Server {
       }
     })
 
-    this._app.get('/balance', (req, res, next) => {
+    this._app.get('/balance', (req, res: $Response, next: NextFunction) => {
       const address = this.engine.minerKey
       if (address) {
         this._engine.persistence.getBtAddressBalance(address)
