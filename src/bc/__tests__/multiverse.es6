@@ -10,6 +10,8 @@ const { Multiverse } = require('../multiverse')
 
 const { BcBlock, BlockchainHeaders } = require('../../protos/core_pb')
 
+const range = (to: number): number[] => [...Array(to).keys()]
+
 const getHighestBlock = (multiverse: Multiverse): BcBlock => {
   let highest = multiverse.getHighestBlock()
   expect(highest).toBeInstanceOf(BcBlock)
@@ -23,6 +25,7 @@ const createMockBlock = (height: number, previousBlock: ?BcBlock): BcBlock => {
   block.setBlockchainHeaders(new BlockchainHeaders())
   block.setDistance(100)
   if (previousBlock) {
+    block.setPreviousHash(previousBlock.getHash())
     block.setTotalDistance((Number(previousBlock.getTotalDistance()) + 100).toString())
   } else {
     block.setTotalDistance('101')
@@ -51,15 +54,38 @@ describe(Multiverse, () => {
       expect(getHighestBlock(m).getHash()).toBe('bbb')
     })
 
-    it.only('adds series of blocks', () => {
-      const blocks = [...Array(8).keys()].reduce((blocks, height) => { // ES6 version of range(from, to)
+    it('holds maximum of 7 blocks', () => {
+      const blocks = range(8).reduce((blocks, height) => {
         blocks.push(createMockBlock(height, blocks[height - 1]))
         return blocks
       }, [])
 
       const m = new Multiverse()
       blocks.map(b => m.addBlock(b))
-      expect(getHighestBlock(m).getHash()).toBe('bbb')
+      expect(blocks[7].getHash()).toBe('ggg')
+      expect(getHighestBlock(m).getHash()).toBe('fff')
+    })
+
+    it('add sorts blocks by total distance', () => {
+      const blocks = range(7).reduce((blocks, height) => {
+        blocks.push(createMockBlock(height, blocks[height - 1]))
+        return blocks
+      }, [])
+
+      const m = new Multiverse()
+      blocks.map(b => m.addBlock(b))
+
+      const extraTopBlock = new BcBlock()
+      extraTopBlock.setHash('abc')
+      extraTopBlock.setPreviousHash(blocks[5].getHash())
+      extraTopBlock.setHeight(6)
+      extraTopBlock.setTotalDistance('10000') // higher than blocks[7]
+      extraTopBlock.setBlockchainHeaders(new BlockchainHeaders())
+      extraTopBlock.setDistance(101)
+      m.addBlock(extraTopBlock)
+
+      expect(getHighestBlock(m).getHash()).not.toBe('fff')
+      expect(getHighestBlock(m).getHash()).toBe('abc')
     })
   })
 })
