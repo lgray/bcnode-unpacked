@@ -135,6 +135,10 @@ export default class Engine {
     return this.node.multiverse
   }
 
+  set mutliverse (multiverse: Multiverse) {
+    this.node.multiverse = multiverse
+  }
+
   /**
    * Get blockpool
    * @returns {BlockPool|*}
@@ -539,8 +543,8 @@ export default class Engine {
         this.pubsub.publish('update.block.latest', { key: 'bc.block.latest', data: newBlock })
       } else if (afterBlockHighest.getHeight() < newBlock.getHeight() &&
         new BN(afterBlockHighest.getTotalDistance()).lt(new BN(newBlock.getTotalDistance())) === true) {
-        self.pubsub.publish('update.block.latest', { key: 'bc.block.latest', data: newBlock, force: true })
         this.stopMining()
+        self.pubsub.publish('update.block.latest', { key: 'bc.block.latest', data: newBlock, force: true })
         const newMultiverse = new Multiverse()
         conn.getPeerInfo((err, peerInfo) => {
           if (err) {

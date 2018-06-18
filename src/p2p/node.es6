@@ -87,6 +87,10 @@ export class PeerNode {
     return this._multiverse
   }
 
+  set multiverse (multiverse: Multiverse) {
+    this._multiverse = multiverse
+  }
+
   _pipelineStartNode () {
     debug('_pipelineStartNode')
 
