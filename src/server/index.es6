@@ -25,7 +25,7 @@ const SocketIO = require('socket.io')
 const logging = require('../logger')
 const { config } = require('../config')
 const { Null, Block } = require('../protos/core_pb')
-const Engine = require('../engine').default
+const { Engine } = require('../engine')
 const { RpcClient, RpcServer } = require('../rpc')
 const { dispatcher: socketDispatcher } = require('./socket')
 

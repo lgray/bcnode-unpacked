@@ -7,9 +7,10 @@
  * @flow
  */
 
+import type { Engine } from '../engine'
+
 const os = require('os')
 
-const Engine = require('../engine').default
 const logging = require('../logger')
 
 // const BC_MONITOR_INTERVAL = process.env.BC_MONITOR_INTERVAL

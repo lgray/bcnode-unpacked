@@ -7,6 +7,8 @@
  * @flow
  */
 
+import type { Engine } from '../engine'
+
 const { inspect } = require('util')
 
 const PeerInfo = require('peer-info')
@@ -23,7 +25,6 @@ const logging = require('../logger')
 const { BcBlock } = require('../protos/core_pb')
 const { ManagedPeerBook } = require('./book')
 const Bundle = require('./bundle').default
-const Engine = require('../engine').default
 const Signaling = require('./signaling').websocket
 const { PeerManager, DATETIME_STARTED_AT } = require('./manager/manager')
 const { validateBlockSequence } = require('../bc/validation')

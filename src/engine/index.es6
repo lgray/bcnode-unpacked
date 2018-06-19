@@ -58,7 +58,7 @@ type UnfinishedBlockData = {
   timeDiff: ?number
 }
 
-export default class Engine {
+export class Engine {
   _logger: Object; // eslint-disable-line no-undef
   _monitor: Monitor; // eslint-disable-line no-undef
   _knownBlocksCache: LRUCache<string, BcBlock>; // eslint-disable-line no-undef
@@ -1033,3 +1033,5 @@ export default class Engine {
     // }
   }
 }
+
+export default Engine
