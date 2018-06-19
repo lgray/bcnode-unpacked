@@ -233,7 +233,6 @@ export class Engine {
           self._logger.info('wrote block ' + msg.data.getHeight())
         }
       }).catch((err) => {
-        console.trace(err)
         self._logger.error(err)
       })
     })
@@ -245,10 +244,9 @@ export class Engine {
     self.pubsub.subscribe('state.resync.failed', '<engine>', (msg) => {
       self._logger.info('pausing mining to reestablish multiverse')
       self._peerIsResyncing = true
-      engineQueue.push(self.blockpool.purge(msg.data), function (err, data) {
+      engineQueue.push(self.blockpool.purge(msg.data), (err) => {
         if (err) {
-          console.trace(err)
-          self._logger.error(err)
+          this._logger.error(`Queued task failed, reason: ${err.message}`)
         }
       })
     })
@@ -258,13 +256,12 @@ export class Engine {
     })
 
     self.pubsub.subscribe('update.block.latest', '<engine>', (msg) => {
-      self.updateLatestAndStore(msg).then((res) => {
-        console.log('latest block ' + msg.data.getHeight() + ' has been updated')
-        self._logger.info('latest block ' + msg.data.getHeight() + ' has been updated')
-      })
+      self.updateLatestAndStore(msg)
+        .then((res) => {
+          self._logger.info(`latest block ${msg.data.getHeight()} has been updated`)
+        })
         .catch((err) => {
-          console.trace(err)
-          self._logger.error(err)
+          self._logger.error(`Error occurred during updateLatestAndStore(), reason: ${err.message}`)
         })
     })
   }
@@ -316,14 +313,17 @@ export class Engine {
     try {
       const previousLatest = await self.persistence.get('bc.block.latest')
       let persistNewBlock = false
-      console.log('comparing new block ' + block.getHeight() + ' with the latest block at ' + previousLatest.getHeight())
+
+      this._logger.error(`comparing new block ${block.getHeight()} with the latest block at ${previousLatest.getHeight()}`)
       if (previousLatest.getHash() === block.getPreviousHash()) {
         persistNewBlock = true
       }
+
       if (msg.force !== undefined && msg.force === true) {
         // TODO: trigger purge
         persistNewBlock = true
       }
+
       if (persistNewBlock === true &&
          block.getTimestamp() >= previousLatest.getTimestamp()) { // notice you cannot create two blocks in the same second (for when BC moves to 1s block propogation waves)
         await self.persistence.put('bc.block.latest', block)
@@ -331,6 +331,7 @@ export class Engine {
       } else {
         self._logger.warn('new purposed latest block does not match the last')
       }
+
       if (msg.force !== undefined && msg.force === true && msg.multiverse !== undefined) {
         while (msg.multiverse.length > 0) {
           const b = msg.multiverse.pop()
@@ -576,7 +577,6 @@ export class Engine {
         const newMultiverse = new Multiverse()
         conn.getPeerInfo((err, peerInfo) => {
           if (err) {
-            console.trace(err)
             self._logger.error(err)
             return false
           }
@@ -589,7 +589,7 @@ export class Engine {
           }
 
           debug('Querying peer for blocks', peerQuery)
-          console.log('***********************CANDIDATE 0*******************')
+          this._logger.error('***********************| CANDIDATE 0 |*******************')
           self.node.manager.createPeer(peerInfo)
             .query(peerQuery)
             .then((blocks) => {
@@ -626,7 +626,7 @@ export class Engine {
               }
             })
             .catch((err) => {
-              console.trace(err)
+              this._logger.error(`Error occurred when querying peer, peerId: '${peerInfo.id.toB58String()}', reason: ${err.message}`)
             })
         })
       }
@@ -844,18 +844,18 @@ export class Engine {
 
       const beforeBlockHighest = this.multiverse.getHighestBlock()
       if (beforeBlockHighest) {
-        console.log(`beforeBlockHighest height: ${beforeBlockHighest.getHeight()}, hash: ${beforeBlockHighest.getHash()}`)
+        this._logger.debug(`beforeBlockHighest height: ${beforeBlockHighest.getHeight()}, hash: ${beforeBlockHighest.getHash()}`)
       } else {
         // beforeBlockHighest is not available
         return Promise.resolve(false)
       }
 
       const addedToMultiverse = this.multiverse.addBlock(newBlock)
-      console.log(`addedToMultiverse: ${addedToMultiverse.toString()}`)
+      this._logger.debug(`addedToMultiverse: ${addedToMultiverse.toString()}`)
 
       const afterBlockHighest = this.multiverse.getHighestBlock()
       if (afterBlockHighest) {
-        console.log(`afterBlockHighest height: ${afterBlockHighest.getHeight()}, hash: ${afterBlockHighest.getHash()}`)
+        this._logger.debug(`afterBlockHighest height: ${afterBlockHighest.getHeight()}, hash: ${afterBlockHighest.getHash()}`)
       } else {
         // afterBlockHighest is not available
         return Promise.resolve(false)
@@ -970,7 +970,6 @@ export class Engine {
           return Promise.resolve(self._workerProcess.pid)
         }
       } catch (err) {
-        console.trace(err)
         self._logger.warn(`Error while getting last previous BC block, reason: ${err.message}`)
         return Promise.reject(err)
       }

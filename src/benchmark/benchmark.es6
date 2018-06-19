@@ -32,6 +32,7 @@ export class Benchmark {
     return new Promise((resolve) => {
       this._suite
         .on('cycle', (event) => {
+          // eslint-disable-next-line no-console
           console.log(String(event.target))
         })
         .on('complete', () => {

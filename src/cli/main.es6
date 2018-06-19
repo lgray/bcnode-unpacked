@@ -21,6 +21,7 @@ const semver = require('semver')
 const Raven = require('raven')
 
 const uncaughtExceptionHandler = (err) => {
+  // eslint-disable-next-line no-console
   console.log(err)
 }
 
@@ -54,6 +55,7 @@ export const main = async (args: string[] = process.argv) => {
     .version(versionString)
     .usage('<cmd>')
     .action((cmd) => {
+      // eslint-disable-next-line no-console
       console.log(colors.red(`Invalid command '${cmd}'`))
       return program.help()
     })
@@ -105,11 +107,6 @@ export const main = async (args: string[] = process.argv) => {
       return cmdStart(cmd)
     })
 
-  if (args.length < 3) {
-    console.log(colors.red('No command specified'))
-    return program.help()
-  }
-
   // Initialize required directories
   initDirs()
 
@@ -118,6 +115,11 @@ export const main = async (args: string[] = process.argv) => {
 
   // Initialize Rust logger
   native.initLogger()
+
+  if (args.length < 3) {
+    logger.log(colors.red('No command specified'))
+    return program.help()
+  }
 
   // ---------------------------
   // CORE ERROR HANDLER SECTION
@@ -135,7 +137,7 @@ export const main = async (args: string[] = process.argv) => {
   // Generic console handler
   const consoleErrorHandler = {
     handle: (type, err) => {
-      console.log('consoleErrorHandler', type, err)
+      logger.log('consoleErrorHandler', type, err)
     }
   }
 

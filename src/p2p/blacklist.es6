@@ -83,7 +83,7 @@ export class Blacklist {
     const peerId = peer.id.toB58String()
     if (!reasonId) {
       this._logger.error(`Invalid blacklist reason specified - peer ${peerId}, reason: ${reasonId}`)
-      return console.trace()
+      return
     }
 
     const reason = REASON_LOOKUP[reasonId]

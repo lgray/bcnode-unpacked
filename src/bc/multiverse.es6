@@ -8,6 +8,7 @@
  */
 
 import type BcBlock from '../protos/core_pb'
+import type { Logger } from 'winston'
 
 const BN = require('bn.js')
 const { equals, flatten } = require('ramda')
@@ -27,7 +28,7 @@ export class Multiverse {
   _created: number
   _selective: boolean
   _id: string
-  _logger: Object
+  _logger: Logger
 
   constructor (selective: boolean = false, commitDepth: number = COMMIT_MULTIVERSE_DEPTH) {
     this._id = standardId()
@@ -526,7 +527,7 @@ export class Multiverse {
   // NOTE: Multiverse print disabled. Why?
   print () {
     // this._logger.info(this._blocks)
-    console.log('multiverse print disabled')
+    this._logger.debug('multiverse print disabled')
   }
 }
 

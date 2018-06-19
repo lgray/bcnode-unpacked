@@ -87,4 +87,3 @@ export const blockByTotalDistanceSorter = (a: BcBlock, b: BcBlock) => {
 
   return 0
 }
-

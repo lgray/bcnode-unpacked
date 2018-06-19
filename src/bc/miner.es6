@@ -11,7 +11,7 @@
 /**
  *    DOCUMENT IN FOUR PARTS
  *
- *      PART 1: Difiiculty of the next block [COMPLETE]
+ *      PART 1: Difficulty of the next block [COMPLETE]
  *
  *      PART 2: Mining a block hash [COMPLETE]
  *
@@ -20,6 +20,9 @@
  *      PART 4: Create Block Collider Block Hash  [COMPLETE]
  *
  */
+
+import type { Logger } from 'winston'
+
 const similarity = require('compute-cosine-similarity')
 const BN = require('bn.js')
 const {
@@ -49,6 +52,9 @@ const GENESIS_DATA = require('./genesis.raw')
 
 const MINIMUM_DIFFICULTY = new BN(11801972029393, 16)
 const MAX_TIMEOUT_SECONDS = 300
+
+const logging = require('../logger')
+const logger: Logger = logging.getLogger(__filename)
 
 /// /////////////////////////////////////////////////////////////////////
 /// ////////////////////////
@@ -253,7 +259,7 @@ export function mine (currentTimestamp: number, work: string, miner: string, mer
     if (difficultyCalculator && currentLoopTimestamp < now) {
       currentLoopTimestamp = now
       difficulty = difficultyCalculator(now)
-      console.log(`In timestamp: ${currentLoopTimestamp} recalculated difficulty is: ${difficulty}`)
+      logger.debug(`In timestamp: ${currentLoopTimestamp} recalculated difficulty is: ${difficulty}`)
     }
 
     let nonce = String(Math.random()) // random string
@@ -504,7 +510,7 @@ export function prepareNewBlock (currentTimestamp: number, lastPreviousBlock: Bc
       break
     } catch (e) {
       finalTimestamp += 1
-      console.log(`Recalculating difficulty in prepareNewBlock with new finalTimestamp: ${finalTimestamp}`)
+      logger.debug(`Recalculating difficulty in prepareNewBlock with new finalTimestamp: ${finalTimestamp}`)
       continue
     }
   }
