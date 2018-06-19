@@ -12,14 +12,6 @@ import type BcBlock from '../protos/core_pb'
 
 const BN = require('bn.js')
 
-// Functions
-// [x] - timestampIs70secondsBelowLocalTime
-// [x] - doesNewBlockPreviousHashReferenceBlockInMultiverse
-// [ ] - isNewBlockDifficultyLowerThanLowestInMultiverse
-// [x] - isNewBlockHeightLowerThanLowestInMultiverse
-// [x] - isNewBlockTimestampGreaterThanHighestInMultiverse
-// [x] - isNewBlockTimestampLowerThanLowestInMultiverse
-
 /**
  * High-level functions
  */
@@ -95,3 +87,4 @@ export const blockByTotalDistanceSorter = (a: BcBlock, b: BcBlock) => {
 
   return 0
 }
+
