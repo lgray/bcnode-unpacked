@@ -7,21 +7,23 @@
  * @flow
  */
 
+import type { RocksDb as PersistenceRocksDb } from '../persistence'
+
 const { BcBlock } = require('../protos/core_pb')
 const { getGenesisBlock } = require('./genesis')
 const { PubSub } = require('../engine/pubsub')
 
 export class BlockPool {
   _blockchain: Object // FIXME: Add annotation
-  _persistence: Object // FIXME: Add annotation
+  _persistence: PersistenceRocksDb
   _syncEnabled: bool
   _cache: Object[] // FIXME: Add annotation
   _maximumHeight: ?number
   _checkpoint: ?BcBlock
-  _genesisBlock: Object // FIXME: Add annotation
-  _pubsub: Object // FIXME: Add annotation
+  _genesisBlock: BcBlock
+  _pubsub: PubSub
 
-  constructor (persistence: any, pubsub: any) {
+  constructor (persistence: PersistenceRocksDb, pubsub: PubSub) {
     this._cache = []
     this._checkpoint = false
     this._persistence = persistence
@@ -31,7 +33,11 @@ export class BlockPool {
     this._genesisBlock = getGenesisBlock()
   }
 
-  get genesisBlock () : Object {
+  get checkpoint (): ?BcBlock {
+    return this._checkpoint
+  }
+
+  get genesisBlock () : BcBlock {
     return this._genesisBlock
   }
 
@@ -43,8 +49,12 @@ export class BlockPool {
     this._maximumHeight = height
   }
 
-  get persistence () : Object {
+  get persistence () : PersistenceRocksDb {
     return this._persistence
+  }
+
+  get pubsub (): PubSub {
+    return this._pubsub
   }
 
   // ranch dressing
@@ -56,39 +66,39 @@ export class BlockPool {
 
   _eventCheckpointReached (lastBlock: BcBlock) {
     // the blockchain has been fully populated from genesis block to checkpoint
-    this.pubsub.publish('state.checkpoint.end', { checkpoint: this._checkpoint, genesisSecondBlock: lastBlock })
+    this.pubsub.publish('state.checkpoint.end', {
+      checkpoint: this._checkpoint,
+      genesisSecondBlock: lastBlock
+    })
+
     this._checkpoint = false
   }
 
   _hasParent (block: BcBlock): boolean {
     const previousHash = block.getPreviousHash()
     const parentHeight = block.getHeight() - 1
+
     if (this._blockchain[parentHeight] === undefined) {
       return false
     }
+
     const matches = this._blockchain[parentHeight].reduce((all, item) => {
       if (item.getHash() === previousHash) {
         all = all + 1
       }
       return all
     }, 0)
+
     if (matches > 0) {
       return true
     }
+
     return false
   }
 
   updateCheckpoint (block: BcBlock): Promise<*> {
     // add checkpoint
     return this.purge(block)
-  }
-
-  get checkpoint (): ?BcBlock {
-    return this._checkpoint
-  }
-
-  get pubsub (): PubSub {
-    return this._pubsub
   }
 
   async addBlock (block: BcBlock): Promise<*> {
@@ -199,6 +209,7 @@ export class BlockPool {
     if (end < 1 || start <= 1) {
       return Promise.reject(new Error('cannot purge below height 2'))
     }
+
     if (start === end) {
       return Promise.resolve(true)
     } else {
@@ -213,26 +224,7 @@ export class BlockPool {
 
   async purge (checkpoint: ?BcBlock): Promise<*> {
     const self = this
-    if (checkpoint) {
-      const height = checkpoint.getHeight() - 1
-      try {
-        const latest = await self._persistence.get('bc.block.latest')
-        const latestHeight = latest.getHeight()
-
-        if (height < 2) {
-          return Promise.reject(new Error('checkpoint set to genesis height'))
-        }
-
-        if (height > latestHeight) {
-          return Promise.reject(new Error('cannot purge after latest block'))
-        }
-
-        self._checkpoint = checkpoint
-        return self.purgeFrom(height, 1)
-      } catch (err) {
-        return Promise.reject(err)
-      }
-    } else {
+    if (!checkpoint) {
       const latest = await self._persistence.get('bc.block.latest')
       const height = latest.getHeight() - 1
       if (height < 2) {
@@ -240,6 +232,25 @@ export class BlockPool {
       }
 
       return self.purgeFrom(height, 1)
+    }
+
+    const height = checkpoint.getHeight() - 1
+    try {
+      const latest = await self._persistence.get('bc.block.latest')
+      const latestHeight = latest.getHeight()
+
+      if (height < 2) {
+        return Promise.reject(new Error('checkpoint set to genesis height'))
+      }
+
+      if (height > latestHeight) {
+        return Promise.reject(new Error('cannot purge after latest block'))
+      }
+
+      self._checkpoint = checkpoint
+      return self.purgeFrom(height, 1)
+    } catch (err) {
+      return Promise.reject(err)
     }
   }
 }
