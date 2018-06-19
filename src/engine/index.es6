@@ -444,8 +444,8 @@ export default class Engine {
       process.nextTick(() => {
         let promise = null
 
-        if (config.rovers.council.enabled) {
-          promise = fetch('http://council.blockcollider.org')
+        if (config.bc.council.enabled) {
+          promise = fetch(config.bc.council.url)
             .then(res => res.text())
         } else {
           promise = Promise.resolve(true)
