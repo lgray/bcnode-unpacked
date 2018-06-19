@@ -419,6 +419,7 @@ export class Multiverse {
     return flatten(blocks)
   }
 
+  // NOTE: Multiverse print disabled. Why?
   print () {
     // this._logger.info(this._blocks)
     console.log('multiverse print disabled')
