@@ -605,8 +605,9 @@ export default class Engine {
                   self.pubsub.publish('update.block.latest', { key: 'bc.block.latest', data: newBlock, force: true, multiverse: decOrder })
                   self.multiverse = newMultiverse
 
-                  const newMultiverseHighestBlockHash = newMultiverse.getHighestBlock() && newMultiverse.getHighestBlock().getHash()
-                  self._logger.info(`applied new multiverse, hash: ${newMultiverseHighestBlockHash}`)
+                  const newMultiverseHighestBlock = newMultiverse.getHighestBlock()
+                  const newMultiverseHighestBlockHash = newMultiverseHighestBlock && newMultiverseHighestBlock.getHash()
+                  self._logger.info(`applied new multiverse, hash: ${(newMultiverseHighestBlockHash && newMultiverseHighestBlockHash.toString()) || 'null'}`)
                   self.blockpool._checkpoint = lowCandidateBlock
                   // sets multiverse for removal
                 }
