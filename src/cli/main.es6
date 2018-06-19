@@ -190,7 +190,7 @@ export const main = async (args: string[] = process.argv) => {
         }
       }
 
-      logger.info(`Version: ${JSON.stringify(versionObj, null, 2)}`)
+      debug(`Version: ${JSON.stringify(versionObj, null, 2)}`)
       return Promise.resolve([
         semver.satisfies(versionObj.local.npm, `>=${versionObj.remote.npm}`),
         versionObj.local.npm,
