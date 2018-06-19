@@ -442,20 +442,29 @@ export default class Engine {
     })
     this._emitter.on('collectBlock', ({ block }) => {
       process.nextTick(() => {
-        fetch('http://council.blockcollider.org').then(res => res.text()).then(council => {
-          this.collectBlock(rovers, block).then((pid: number|false) => {
-            if (pid !== false) {
-              this._logger.debug(`collectBlock handler: successfuly send to mining worker (PID: ${pid})`)
-            }
-          }).catch(err => {
-            this._logger.error(`Could not send to mining worker, reason: ${errToString(err)}`)
-            this._cleanUnfinishedBlock()
-          })
+        let promise = null
+
+        if (config.rovers.council.enabled) {
+          promise = fetch('http://council.blockcollider.org')
+            .then(res => res.text())
+        } else {
+          promise = Promise.resolve(true)
+        }
+
+        promise.then(council => {
+          this.collectBlock(rovers, block)
+            .then((pid: number|false) => {
+              if (pid !== false) {
+                this._logger.debug(`collectBlock handler: successfuly send to mining worker (PID: ${pid})`)
+              }
+            })
+            .catch(err => {
+              this._logger.error(`Could not send to mining worker, reason: ${errToString(err)}`)
+              this._cleanUnfinishedBlock()
+            })
         }).catch(_ => {
-          if (config.rovers.council.enabled) {
-            this._logger.info('“Save Waves and NEO!” - After Block Collider miners completely brought down the Waves network 22 minutes into mining the team has paused the launch of genesis until we setup protections for centralized chains. Your NRG is safe.')
-            process.exit(64)
-          }
+          this._logger.info('“Save Waves and NEO!” - After Block Collider miners completely brought down the Waves network 22 minutes into mining the team has paused the launch of genesis until we setup protections for centralized chains. Your NRG is safe.')
+          process.exit(64)
         })
       })
     })
@@ -526,7 +535,7 @@ export default class Engine {
   blockFromPeer (conn: Object, newBlock: BcBlock): boolean {
     const self = this
     // TODO: Validate new block mined by peer
-    if (newBlock  && !self._knownBlocksCache.get(newBlock.getHash())) {
+    if (newBlock && !self._knownBlocksCache.get(newBlock.getHash())) {
       self._logger.info('Received new block from peer', newBlock.getHeight())
 
       // Add to cache
@@ -534,13 +543,17 @@ export default class Engine {
       this._knownBlocksCache.set(newBlock.getHash(), newBlock)
 
       const beforeBlockHighest = self.multiverse.getHighestBlock()
-      this._logger.debug(`${self.multiverse._id} - beforeBlockHighest`, beforeBlockHighest)
+      if (beforeBlockHighest) {
+        this._logger.debug(`${self.multiverse._id} - beforeBlockHighest`, JSON.stringify(beforeBlockHighest.toObject(), null, 2))
+      }
 
       const addedToMultiverse = self.multiverse.addBlock(newBlock)
       this._logger.debug(`${self.multiverse._id} - addedToMultiverse`, addedToMultiverse)
 
       const afterBlockHighest = self.multiverse.getHighestBlock()
-      this._logger.debug(`${self.multiverse._id} - afterBlockHighest`, afterBlockHighest)
+      if (afterBlockHighest) {
+        this._logger.debug(`${self.multiverse._id} - afterBlockHighest`, JSON.stringify(afterBlockHighest.toObject(), null, 2))
+      }
 
       if (addedToMultiverse === false) {
         // TODO: Replace with newBlock.toObject()
@@ -556,7 +569,6 @@ export default class Engine {
         this.pubsub.publish('update.block.latest', { key: 'bc.block.latest', data: newBlock })
       } else if (afterBlockHighest.getHeight() < newBlock.getHeight() &&
         new BN(afterBlockHighest.getTotalDistance()).lt(new BN(newBlock.getTotalDistance())) === true) {
-
         this.stopMining()
 
         self.pubsub.publish('update.block.latest', { key: 'bc.block.latest', data: newBlock, force: true })
