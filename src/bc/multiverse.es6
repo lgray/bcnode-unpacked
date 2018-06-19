@@ -4,10 +4,11 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @flow-disabled
+ * @flow
  */
 
 import type BcBlock from '../protos/core_pb'
+
 const { equals, flatten } = require('ramda')
 const { validateBlockSequence } = require('./validation')
 const { standardId } = require('./helper')
