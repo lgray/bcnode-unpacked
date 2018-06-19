@@ -20,9 +20,11 @@ const program = require('commander')
 const semver = require('semver')
 const Raven = require('raven')
 
-process.on('uncaughtException', (err) => {
+const uncaughtExceptionHandler = (err) => {
   console.log(err)
-})
+}
+
+process.on('uncaughtException', uncaughtExceptionHandler)
 
 const { config } = require('../config')
 const logging = require('../logger')
@@ -174,6 +176,9 @@ export const main = async (args: string[] = process.argv) => {
 
   // Initialize error handlers
   initErrorHandlers(logger, errorHandlers)
+
+  // Unregister global handler now
+  process.removeListener('uncaughtException', uncaughtExceptionHandler)
 
   // ---------------------
   // CHECK REMOTE VERSION
