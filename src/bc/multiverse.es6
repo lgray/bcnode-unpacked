@@ -49,16 +49,18 @@ export class Multiverse {
     return blocks.length
   }
 
-  getMissingBlocks (block: BcBlock): Object {
-    if (block === undefined) {
+  getMissingBlocks (block: BcBlock): Object | boolean {
+    if (!block) {
       this._logger.error('no block submitted to evaluate')
       return false
     }
+
     const highestBlock = this.getHighestBlock()
     const height = block.getHeight()
     const hash = block.getHash()
     const previousHash = block.getPreviousHash()
     const distance = block.getTotalDistance()
+
     const template = {
       queryHash: hash,
       queryHeight: height,
@@ -66,38 +68,42 @@ export class Multiverse {
       from: 0,
       to: 0
     }
-    if (highestBlock !== null) {
-      if (highestBlock.getHash() === hash) {
-        template.message = 'blocks are the equal to each-other'
-        return template
-      } else if (highestBlock.getHeight() === height) {
-        if (new BN(highestBlock.getTotalDistance()).lt(new BN(distance)) === true) {
-          this.addBlock(block)
-          template.message = 'purposed block will be the current height of the multiverse'
-        }
-      } else if (highestBlock.getHash() === previousHash) {
-        this.addBlock(block)
-        template.message = 'purposed block is next block'
-      } else if (highestBlock.getHeight() + 2 < height) {
-        template.from = highestBlock.getHeight() - 2
-        template.to = height + 1
-        template.message = 'purposed block is ahead and disconnected from multiverse'
-      } else if (highestBlock.getHeight() > height && (highestBlock.getHeight() - height <= 7)) {
-        this.addBlock(block)
-        template.from = height - 10
-        template.to = height + 1
-        template.message = 'purposed block may be in a multiverse layer'
-      } else if (highestBlock.getHeight() > height) {
-        this.addBlock(block)
-        template.from = height - 1
-        template.to = this.getLowestBlock().getHeight() + 1 // Plus one so we can check with the multiverse if side chain
-        template.message = 'purposed block far behnd multiverse'
-      }
-      return template
-    } else {
+
+    if (!highestBlock) {
       this.addBlock(block)
       template.message = 'no highest block has been selected for multiverse'
+      return template
     }
+
+    if (highestBlock.getHash() === hash) {
+      template.message = 'blocks are the equal to each-other'
+      return template
+    }
+
+    if (highestBlock.getHeight() === height) {
+      if (new BN(highestBlock.getTotalDistance()).lt(new BN(distance)) === true) {
+        this.addBlock(block)
+        template.message = 'purposed block will be the current height of the multiverse'
+      }
+    } else if (highestBlock.getHash() === previousHash) {
+      this.addBlock(block)
+      template.message = 'purposed block is next block'
+    } else if (highestBlock.getHeight() + 2 < height) {
+      template.from = highestBlock.getHeight() - 2
+      template.to = height + 1
+      template.message = 'purposed block is ahead and disconnected from multiverse'
+    } else if (highestBlock.getHeight() > height && (highestBlock.getHeight() - height <= 7)) {
+      this.addBlock(block)
+      template.from = height - 10
+      template.to = height + 1
+      template.message = 'purposed block may be in a multiverse layer'
+    } else if (highestBlock.getHeight() > height) {
+      this.addBlock(block)
+      template.from = height - 1
+      template.to = this.getLowestBlock().getHeight() + 1 // Plus one so we can check with the multiverse if side chain
+      template.message = 'purposed block far behnd multiverse'
+    }
+
     return template
   }
 
@@ -274,7 +280,7 @@ export class Multiverse {
 
   caseBetterMultiverse (block: BcBlock): ?BcBlock {
     const currentHighestBlock = this.getHighestBlock()
-    this._logger.info(currentHighestBlock)
+    this._logger.info('caseBetterMultiverse()', currentHighestBlock)
     // TODO: Stub function for the comparison of two multiverse structures
   }
 
@@ -292,6 +298,7 @@ export class Multiverse {
       this._logger.warn('unable to determine height from incomplete multiverse')
       return false
     }
+
     if (keys.length === 0) {
       keys = Object.keys(this._blocks).sort((a, b) => {
         if (a > b) {
@@ -302,8 +309,10 @@ export class Multiverse {
         }
         return 0
       })
+
       list = []
     }
+
     const currentHeight = keys.pop()
     const currentRow = this._blocks[currentHeight]
     let matches = []
@@ -317,24 +326,30 @@ export class Multiverse {
         }
         return all
       }, 0)
+
       if (matches === 0) { // this must be it's own chain
         list.push([candidate])
       }
     })
+
     // Cycle through keys
     if (keys.length > 0) {
       return this.getHighestBlock(depth, keys, list)
     }
+
     const minimumDepthChains = list.reduce((all, chain) => {
       if (chain.length >= depth && validateBlockSequence(chain) === true) {
         all.push(chain)
       }
       return all
     }, [])
+
     if (minimumDepthChains === undefined) {
       // Any new block is the highest
       return true
-    } else if (minimumDepthChains !== undefined && minimumDepthChains.length === 0) {
+    }
+
+    if (minimumDepthChains !== undefined && minimumDepthChains.length === 0) {
       const performance = list.reduce((order, chain) => {
         const totalDistance = chain.reduce((all, b) => {
           all = new BN(b.getTotalDistance()).add(new BN(all))
@@ -356,33 +371,42 @@ export class Multiverse {
         }
         return 0
       }).reverse()
-      return results[0][0].pop()
-    } else if (minimumDepthChains !== undefined && minimumDepthChains.length === 1) {
-      return minimumDepthChains[0][0]
-    } else {
-      const performance = minimumDepthChains.reduce((order, chain) => {
-        const totalDistance = chain.reduce((all, b) => {
-          all = new BN(b.getTotalDistance()).add(all)
-          all.push(b)
-        }, 1)
-        if (order.length === 0) {
-          order.push([chain, totalDistance])
-        } else if (order.length > 0 && order[0] !== undefined && order[0][1] < totalDistance) {
-          order.unshift([chain, totalDistance])
-        }
-        return order
-      }, [])
-      const results = performance.sort((a, b) => {
-        if (a[1] < b[1]) {
-          return 1
-        }
-        if (a[1] > b[1]) {
-          return -1
-        }
-        return 0
-      }).reverse()
+
       return results[0][0].pop()
     }
+
+    if (minimumDepthChains && minimumDepthChains.length === 1) {
+      return minimumDepthChains[0][0]
+    }
+
+    const performance = minimumDepthChains.reduce((order, chain) => {
+      const totalDistance = chain.reduce((all, b) => {
+        all = new BN(b.getTotalDistance()).add(all)
+        all.push(b)
+      }, 1)
+
+      if (order.length === 0) {
+        order.push([chain, totalDistance])
+      } else if (order.length > 0 && order[0] !== undefined && order[0][1] < totalDistance) {
+        order.unshift([chain, totalDistance])
+      }
+
+      return order
+    }, [])
+
+    const results = performance.sort((a, b) => {
+      if (a[1] < b[1]) {
+        return 1
+      }
+
+      if (a[1] > b[1]) {
+        return -1
+      }
+
+      return 0
+    }).reverse()
+
+    return results[0][0].pop()
   }
 
   /**
