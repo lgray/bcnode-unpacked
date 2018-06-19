@@ -108,6 +108,7 @@ export class PeerNode {
 
         peerInfo.multiaddrs.add(Signaling.getAddress(peerInfo))
         peerInfo.multiaddrs.add(`/ip4/0.0.0.0/tcp/0/ipfs/${peerId}`)
+        peerInfo.multiaddrs.add(`/ip6/::1/tcp/0/ipfs/${peerId}`)
 
         peerInfo.meta = {
           p2p: {
