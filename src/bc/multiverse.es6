@@ -410,10 +410,17 @@ export class Multiverse {
     return false
   }
 
+  /**
+   * Get multiverse as nested `BcBlock` array
+   * @returns {*}
+   */
   toArray (): Array<Array<BcBlock>> {
     return this._blocks.toarray()
   }
 
+  /**
+   * Get multiverse as flat `BcBlock` array
+   */
   toFlatArray (): Array<BcBlock> {
     const blocks = this.toArray()
     return flatten(blocks)
