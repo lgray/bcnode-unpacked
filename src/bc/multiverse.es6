@@ -345,12 +345,13 @@ export class Multiverse {
    *  dim([t,d]) . max(t+d*n)
    *
    */
-  getHighestBlock (depth: ?number = 7, keys: string[] = [], list: ?Array<BcBlock> = []): ?BcBlock|bool {
+  getHighestBlock (depth: ?number = 7, keys: string[] = [], inList: ?Array<BcBlock>): ?BcBlock {
     if (Object.keys(this._blocks).length === 0) {
       this._logger.warn('unable to determine height from incomplete multiverse')
-      return false
+      return null
     }
 
+    let list = inList || []
     if (keys.length === 0) {
       keys = Object.keys(this._blocks).sort((a, b) => {
         if (a > b) {

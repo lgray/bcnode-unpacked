@@ -518,33 +518,37 @@ export default class Engine {
       })
   }
 
-  blockFromPeer (conn: Object, newBlock: BcBlock) {
+  /**
+   * New block received from peer handler
+   * @param conn Connection the block was received from
+   * @param newBlock Block itself
+   */
+  blockFromPeer (conn: Object, newBlock: BcBlock): boolean {
     const self = this
     // TODO: Validate new block mined by peer
-    if (newBlock !== undefined && !self._knownBlocksCache.get(newBlock.getHash())) {
-      self._logger.info('!!!!!!!!!! received new block from peer', newBlock.getHeight())
-      debug(`Adding received block into cache of known blocks - ${newBlock.getHash()}`)
+    if (newBlock  && !self._knownBlocksCache.get(newBlock.getHash())) {
+      self._logger.info('Received new block from peer', newBlock.getHeight())
+
       // Add to cache
+      debug(`Adding received block into cache of known blocks - ${newBlock.getHash()}`)
       this._knownBlocksCache.set(newBlock.getHash(), newBlock)
 
       const beforeBlockHighest = self.multiverse.getHighestBlock()
-      const addedToMultiverse = self.multiverse.addBlock(newBlock)
-      const afterBlockHighest = self.multiverse.getHighestBlock()
+      this._logger.debug(`${self.multiverse._id} - beforeBlockHighest`, beforeBlockHighest)
 
-      // $FlowFixMe
-      this._logger.debug('(' + self.multiverse._id + ') beforeBlockHighest: ' + beforeBlockHighest.getHash())
-      // $FlowFixMe
-      this._logger.debug('(' + self.multiverse._id + ') afterBlockHighest: ' + afterBlockHighest.getHash())
-      // $FlowFixMe
-      this._logger.debug('(' + self.multiverse._id + ') addedToMultiverse: ' + addedToMultiverse)
+      const addedToMultiverse = self.multiverse.addBlock(newBlock)
+      this._logger.debug(`${self.multiverse._id} - addedToMultiverse`, addedToMultiverse)
+
+      const afterBlockHighest = self.multiverse.getHighestBlock()
+      this._logger.debug(`${self.multiverse._id} - afterBlockHighest`, afterBlockHighest)
 
       if (addedToMultiverse === false) {
-        this._logger.warn('(' + self.multiverse._id + ') !!!! Block failed to join multiverse')
-        this._logger.warn('(' + self.multiverse._id + ') !!!!     height: ' + newBlock.getHeight())
-        this._logger.warn('(' + self.multiverse._id + ') !!!!     hash: ' + newBlock.getHash())
-        this._logger.warn('(' + self.multiverse._id + ') !!!!     previousHash: ' + newBlock.getPreviousHash())
-        this._logger.warn('(' + self.multiverse._id + ') !!!!     distance: ' + newBlock.getDistance())
-        this._logger.warn('(' + self.multiverse._id + ') !!!!     totalDistance: ' + newBlock.getTotalDistance())
+        // TODO: Replace with newBlock.toObject()
+        this._logger.warn(`Block failed to join multiverse, id: ${self.multiverse._id}`, newBlock.toObject())
+      }
+
+      if (!beforeBlockHighest || !afterBlockHighest) {
+        return false
       }
 
       if (beforeBlockHighest.getHash() !== afterBlockHighest.getHash()) {
@@ -552,8 +556,11 @@ export default class Engine {
         this.pubsub.publish('update.block.latest', { key: 'bc.block.latest', data: newBlock })
       } else if (afterBlockHighest.getHeight() < newBlock.getHeight() &&
         new BN(afterBlockHighest.getTotalDistance()).lt(new BN(newBlock.getTotalDistance())) === true) {
+
         this.stopMining()
+
         self.pubsub.publish('update.block.latest', { key: 'bc.block.latest', data: newBlock, force: true })
+
         const newMultiverse = new Multiverse()
         conn.getPeerInfo((err, peerInfo) => {
           if (err) {
@@ -561,12 +568,14 @@ export default class Engine {
             self._logger.error(err)
             return false
           }
+
           const peerQuery = {
             queryHash: newBlock.getHash(),
             queryHeight: newBlock.getHeight(),
             low: Math.max(newBlock.getHeight() - 7, 1),
             high: newBlock.getHeight() - 1
           }
+
           debug('Querying peer for blocks', peerQuery)
           console.log('***********************CANDIDATE 0*******************')
           self.node.manager.createPeer(peerInfo)
@@ -590,11 +599,14 @@ export default class Engine {
               if (Object.keys(newMultiverse).length > 6) {
                 const highCandidateBlock = newMultiverse.getHighestBlock()
                 const lowCandidateBlock = newMultiverse.getLowestBlock()
-                if (new BN(highCandidateBlock.getTotalDistance()).gt(new BN(afterBlockHighest.getTotalDistance())) &&
+
+                if (highCandidateBlock && new BN(highCandidateBlock.getTotalDistance()).gt(new BN(afterBlockHighest.getTotalDistance())) &&
                     highCandidateBlock.getHeight() >= afterBlockHighest.getHeight()) {
                   self.pubsub.publish('update.block.latest', { key: 'bc.block.latest', data: newBlock, force: true, multiverse: decOrder })
                   self.multiverse = newMultiverse
-                  self._logger.info('applied new multiverse ' + newMultiverse.getHighestBlock().getHash())
+
+                  const newMultiverseHighestBlockHash = newMultiverse.getHighestBlock() && newMultiverse.getHighestBlock().getHash()
+                  self._logger.info(`applied new multiverse, hash: ${newMultiverseHighestBlockHash}`)
                   self.blockpool._checkpoint = lowCandidateBlock
                   // sets multiverse for removal
                 }
@@ -604,13 +616,14 @@ export default class Engine {
               console.trace(err)
             })
         })
-      } else {
-
       }
     } else {
-      console.log(`Received block is already in cache of known blocks - ${newBlock.getHash()}`)
-      debug(`Received block is already in cache of known blocks - ${newBlock.getHash()}`)
+      const msg = `Received block is already in cache of known blocks - ${newBlock.getHash()}`
+      debug(msg)
+      this._logger.info(msg)
     }
+
+    return true
   }
 
   receiveSyncPeriod (peerIsSyncing: bool) {
@@ -634,12 +647,16 @@ export default class Engine {
 
     // $FlowFixMe
     this._unfinishedBlock.setNonce(nonce)
+
     // $FlowFixMe
     this._unfinishedBlock.setDistance(distance)
+
     // $FlowFixMe
     this._unfinishedBlock.setTotalDistance(new BN(this._unfinishedBlock.getTotalDistance()).add(new BN(distance)).toString())
+
     // $FlowFixMe
     this._unfinishedBlock.setTimestamp(timestamp)
+
     // $FlowFixMe
     this._unfinishedBlock.setDifficulty(difficulty)
 
@@ -679,23 +696,16 @@ export default class Engine {
       })
   }
 
-  _handleWorkerError (error: Error) {
+  _handleWorkerError (error: Error): boolean {
     this._logger.warn(`Mining worker process errored, reason: ${error.message}`)
     this._cleanUnfinishedBlock()
-    // $FlowFixMe - Flow can't properly type subprocess
-    // FIXME: Use `if (!this._workerProcess) ...`
-    if (!this._workerProcess !== undefined && this._workerProcess !== null && this._workerProcess !== false) {
-      try {
-        // $FlowFixMe - Flow can't properly type subprocess
-        this._workerProcess.disconnect()
-        // $FlowFixMe - Flow can't properly type subprocess
-        this._workerProcess.kill()
-      } catch (_) {
-        this._logger.warn(`Disconnecting or killing of miner process error - just cleaning up`)
-      }
 
-      this._workerProcess = undefined
+    // $FlowFixMe - Flow can't properly type subprocess
+    if (!this._workerProcess) {
+      return false
     }
+
+    return this.stopMining()
   }
 
   _handleWorkerExit (code: number, signal: string) {
@@ -762,17 +772,18 @@ export default class Engine {
    * @returns {Promise<boolean>}
    * @private
    */
-  _broadcastMinedBlock (newBlock: BcBlock, solution: Object): Promise<*> {
+  _broadcastMinedBlock (newBlock: BcBlock, solution: Object): Promise<boolean> {
     const self = this
     this._logger.info('Broadcasting mined block')
 
     if (newBlock === undefined) {
       return Promise.reject(new Error('cannot broadcast empty block'))
     }
-    // if (Object.keys(self.multiverse).length > 6) {
-    // }
+
     try {
       self.node.broadcastNewBlock(newBlock)
+
+      // NOTE: Do we really need nested try-catch ?
       try {
         const newBlockObj = {
           ...newBlock.toObject(),
@@ -787,6 +798,7 @@ export default class Engine {
     } catch (err) {
       return Promise.reject(err)
     }
+
     return Promise.resolve(true)
   }
 
@@ -798,7 +810,7 @@ export default class Engine {
    * @returns {Promise<boolean>} Promise indicating if the block was successfully processed
    * @private
    */
-  _processMinedBlock (newBlock: BcBlock, solution: Object): Promise<*> {
+  _processMinedBlock (newBlock: BcBlock, solution: Object): Promise<boolean> {
     // TODO: reenable this._logger.info(`Mined new block: ${JSON.stringify(newBlockObj, null, 2)}`)
 
     // Trying to process null/undefined block
@@ -810,7 +822,7 @@ export default class Engine {
     try {
       // Received block which is already in cache
       if (this._knownBlocksCache.has(newBlock.getHash())) {
-        this._logger.warn('Recieved duplicate new block ' + newBlock.getHeight() + ' (' + newBlock.getHash() + ')')
+        this._logger.warn('Received duplicate new block ' + newBlock.getHeight() + ' (' + newBlock.getHash() + ')')
         return Promise.resolve(false)
       }
 
@@ -818,26 +830,39 @@ export default class Engine {
       this._knownBlocksCache.set(newBlock.getHash(), newBlock)
 
       const beforeBlockHighest = this.multiverse.getHighestBlock()
-      const addedToMultiverse = this.multiverse.addBlock(newBlock)
-      const afterBlockHighest = this.multiverse.getHighestBlock()
+      if (beforeBlockHighest) {
+        console.log(`beforeBlockHighest height: ${beforeBlockHighest.getHeight()}, hash: ${beforeBlockHighest.getHash()}`)
+      } else {
+        // beforeBlockHighest is not available
+        return Promise.resolve(false)
+      }
 
-      console.log('beforeBlockHighest height -> ' + beforeBlockHighest.getHeight() + ' ' + beforeBlockHighest.getHash())
-      console.log('afterBlockHighest height -> ' + afterBlockHighest.getHeight() + ' ' + afterBlockHighest.getHash())
-      console.log('addedToMultiverse: ' + addedToMultiverse)
+      const addedToMultiverse = this.multiverse.addBlock(newBlock)
+      console.log(`addedToMultiverse: ${addedToMultiverse.toString()}`)
+
+      const afterBlockHighest = this.multiverse.getHighestBlock()
+      if (afterBlockHighest) {
+        console.log(`afterBlockHighest height: ${afterBlockHighest.getHeight()}, hash: ${afterBlockHighest.getHash()}`)
+      } else {
+        // afterBlockHighest is not available
+        return Promise.resolve(false)
+      }
 
       if (beforeBlockHighest.getHash() !== afterBlockHighest.getHash()) {
         this.stopMining()
         this.pubsub.publish('update.block.latest', { key: 'bc.block.latest', data: newBlock })
         return Promise.resolve(true)
-      } else if (
+      }
+
+      if (afterBlockHighest &&
         afterBlockHighest.getHeight() < newBlock.getHeight() &&
-        new BN(afterBlockHighest.getTotalDistance()).lt(new BN(newBlock.getTotalDistance())) === true
+        new BN(afterBlockHighest.getTotalDistance()).lt(new BN(newBlock.getTotalDistance()))
       ) {
         this.pubsub.publish('update.block.latest', { key: 'bc.block.latest', data: newBlock })
         return Promise.resolve(true)
-      } else {
-        return Promise.resolve(false)
       }
+
+      return Promise.resolve(false)
     } catch (err) {
       this._logger.warn(`failed to process work provided by miner, err: ${errToString(err)}`)
       return Promise.resolve(false)
@@ -846,15 +871,9 @@ export default class Engine {
 
   async startMining (rovers: string[] = ROVERS, block: Block): Promise<boolean> {
     const self = this
-    // if (block === undefined) {
-    //  return Promise.reject(new Error('cannot start mining on empty block'))
-    // }
-    // debug('Starting mining', rovers || ROVERS, block.toObject())
-
-    let currentBlocks
-    let lastPreviousBlock
 
     // get latest block from each child blockchain
+    let currentBlocks
     try {
       const getKeys: string[] = ROVERS.map(chain => `${chain}.block.latest`)
       currentBlocks = await Promise.all(getKeys.map((key) => {
@@ -863,10 +882,12 @@ export default class Engine {
           return block
         })
       }))
+
       this._logger.info(`Loaded ${currentBlocks.length} blocks from persistence`)
+
       // get latest known BC block
       try {
-        lastPreviousBlock = await self.persistence.get('bc.block.latest')
+        const lastPreviousBlock = await self.persistence.get('bc.block.latest')
         self._logger.info(`Got last previous block (height: ${lastPreviousBlock.getHeight()}) from persistence`)
         self._logger.debug(`Preparing new block`)
 
@@ -874,6 +895,7 @@ export default class Engine {
         if (this._unfinishedBlock !== undefined && getBlockchainsBlocksCount(this._unfinishedBlock) >= 6) {
           this._cleanUnfinishedBlock()
         }
+
         const [newBlock, finalTimestamp] = prepareNewBlock(
           currentTimestamp,
           lastPreviousBlock,
@@ -883,6 +905,7 @@ export default class Engine {
           self._minerKey,
           self._unfinishedBlock
         )
+
         const work = prepareWork(lastPreviousBlock.getHash(), newBlock.getBlockchainHeaders())
         newBlock.setTimestamp(finalTimestamp)
         self._unfinishedBlock = newBlock
@@ -905,16 +928,16 @@ export default class Engine {
         this._logger.debug(`Starting miner process with work: "${work}", difficulty: ${newBlock.getDifficulty()}, ${JSON.stringify(this._collectedBlocks, null, 2)}`)
         const proc: ChildProcess = fork(MINER_WORKER_PATH)
         this._workerProcess = proc
-        // } else {
-        //   this._logger.debug(`Sending work to existing miner process (pid: ${this._workerProcess.pid}), work: "${work}", difficulty: ${newBlock.getDifficulty()}, ${JSON.stringify(this._collectedBlocks, null, 2)}`)
-        // }
         if (self._workerProcess !== null) {
           // $FlowFixMe - Flow can't find out that ChildProcess is extended form EventEmitter
           self._workerProcess.on('message', this._handleWorkerFinishedMessage.bind(this))
+
           // $FlowFixMe - Flow can't find out that ChildProcess is extended form EventEmitter
           self._workerProcess.on('error', this._handleWorkerError.bind(this))
+
           // $FlowFixMe - Flow can't find out that ChildProcess is extended form EventEmitter
           self._workerProcess.on('exit', this._handleWorkerExit.bind(this))
+
           // $FlowFixMe - Flow can't find out that ChildProcess is extended form EventEmitter
           self._workerProcess.send({
             currentTimestamp,
@@ -929,6 +952,7 @@ export default class Engine {
               // $FlowFixMe
               newBlockHeaders: newBlock.getBlockchainHeaders().serializeBinary()
             }})
+
           // $FlowFixMe - Flow can't properly find worker pid
           return Promise.resolve(self._workerProcess.pid)
         }
@@ -937,6 +961,7 @@ export default class Engine {
         self._logger.warn(`Error while getting last previous BC block, reason: ${err.message}`)
         return Promise.reject(err)
       }
+
       return Promise.resolve(false)
     } catch (err) {
       self._logger.warn(`Error while getting current blocks, reason: ${err.message}`)
