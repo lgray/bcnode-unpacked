@@ -385,15 +385,19 @@ export class Multiverse {
     }
   }
 
+  /**
+   * Get lowest block by block key
+   * @returns {*}
+   */
   getLowestBlock (): ?BcBlock {
     const keys = Object.keys(this._blocks)
-    if (keys.length > 0) {
-      const last = keys.shift()
-      const block = this._blocks[last][0]
-      return block
-    } else {
+    if (keys.length < 1) {
       return null
     }
+
+    const last = keys.shift()
+    const block = this._blocks[last][0]
+    return block
   }
 
   /**
