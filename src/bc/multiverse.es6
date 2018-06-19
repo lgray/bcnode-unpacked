@@ -156,6 +156,7 @@ export class Multiverse {
         return acc.concat(headersObj[blockchainListKey].map(headerObj => headerObj.hash))
       }, [])
     }
+
     const self = this
     const height = block.getHeight()
     const childHeight = height + 1
@@ -171,8 +172,8 @@ export class Multiverse {
     let hasChild = false
     let uniqueChildHeaders = false
     let alreadyInMultiverse = false
-    let added = false
     let syncing = false
+
     this._logger.info('new multiverse candidate for height ' + height + ' (' + block.getHash() + ')')
     if (keyCount < 7 && this._selective === false) {
       this._logger.info('node is attempting to sync, multiverse filtering disabled')
@@ -183,15 +184,7 @@ export class Multiverse {
       syncing = true
       force = true
     }
-    // if (keyCount > 16) {
-    //  // remove the oldest
-    //  const orderedKeys = Object.keys(this._blocks).sort((a, b) => {
-    //    if (a > b) { return 1 }
-    //    if (a < b) { return -1 }
-    //    return 0
-    //  })
-    //  this._blocks[orderedKeys[0]] = 1
-    // }
+
     if (this._blocks[parentHeight] !== undefined) {
       hasParentHash = this._blocks[parentHeight].reduce((all, item, i) => {
         if (item.getHash() === block.getPreviousHash()) {
@@ -211,6 +204,7 @@ export class Multiverse {
       uniqueParentHeaders = !equals(parentBlockHeaders, blockHeaderHashes)
       hasParent = hasParentHash === true && hasParentHeight === true && uniqueParentHeaders === true
     }
+
     if (this._blocks[childHeight] !== undefined) {
       hasChildHash = this._blocks[childHeight].reduce((all, item, i) => {
         if (item.getPreviousHash() === block.getHash() && (item.getHeight() - 1) === block.getHeight()) {
@@ -230,6 +224,7 @@ export class Multiverse {
       uniqueChildHeaders = !equals(childBlockHeaders, blockHeaderHashes)
       hasChild = hasChildHash === true && hasChildHeight === true && uniqueChildHeaders === true
     }
+
     if (this._blocks[height] !== undefined) {
       alreadyInMultiverse = this._blocks[height].reduce((all, item) => {
         if (item.getHash() === block.getHash()) {
@@ -238,6 +233,7 @@ export class Multiverse {
         return all
       }, false)
     }
+
     if (hasChild === false && hasParent === false) {
       const failures = {}
       failures['hasParentHash'] = hasParentHash
@@ -248,6 +244,7 @@ export class Multiverse {
       failures['uniqueChildHeaders'] = uniqueChildHeaders
       this._logger.info(failures)
     }
+
     this._logger.info('Block hasParent: ' + hasParent + ' hasChild: ' + hasChild + ' syncing: ' + syncing + ' height: ' + height + ' alreadyInMultiverse: ' + alreadyInMultiverse)
     if (hasParent === true || hasChild === true) {
       if (alreadyInMultiverse === false) {
@@ -274,7 +271,9 @@ export class Multiverse {
       if (self._blocks[height] === undefined) {
         self._blocks[height] = []
       }
+
       self._blocks[height].push(block)
+
       if (self._blocks[height].length > 1) {
         self._blocks[height] = self._blocks[height].sort((a, b) => {
           if (new BN(a.getTotalDistance()).lt(new BN(b.getTotalDistance())) === true) {
@@ -286,10 +285,11 @@ export class Multiverse {
           return 0
         })
       }
-      added = true
-      return added
+
+      return true
     }
-    return added
+
+    return false
   }
 
   purge () {
