@@ -183,6 +183,10 @@ export class Server {
         socketDispatcher(this, socket, { type: 'blocks.get', data: msg })
       })
 
+      socket.on('multiverse.get', (msg) => {
+        socketDispatcher(this, socket, { type: 'multiverse.get', data: msg })
+      })
+
       this._wsSendInitialState(socket)
     })
 
@@ -280,6 +284,21 @@ export class Server {
     if (this._socket) {
       this._socket.emit(msg.type, msg.data)
     }
+  }
+
+  _wsBroadcastMultiverse (multiverse: Object) {
+    const blocksToSend = multiverse.blocks
+    const keys = Object.keys(blocksToSend)
+
+    const res = keys.reduce((acc, val) => {
+      acc[val] = blocksToSend[val].map((b) => b.toObject())
+      return acc
+    }, {})
+
+    this._wsBroadcast({
+      type: 'multiverse.set',
+      data: res
+    })
   }
 
   _wsBroadcastPeerConnected (peer: Object) {

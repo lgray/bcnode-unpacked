@@ -607,10 +607,13 @@ export class Engine {
                 }
                 return 0
               })
+
               while (decOrder.length > 0) {
                 newMultiverse.addBlock(decOrder.pop())
               }
+
               newMultiverse.addBlock(newBlock)
+
               if (Object.keys(newMultiverse).length > 6) {
                 const highCandidateBlock = newMultiverse.getHighestBlock()
                 const lowCandidateBlock = newMultiverse.getLowestBlock()
@@ -627,6 +630,8 @@ export class Engine {
                   // sets multiverse for removal
                 }
               }
+
+              this._server._wsBroadcastMultiverse(newMultiverse)
             })
             .catch((err) => {
               this._logger.error(`Error occurred when querying peer, peerId: '${peerInfo.id.toB58String()}', reason: ${err.message}`)
@@ -845,6 +850,9 @@ export class Engine {
 
       const addedToMultiverse = this.multiverse.addBlock(newBlock)
       this._logger.debug(`addedToMultiverse: ${addedToMultiverse.toString()}`)
+      if (addedToMultiverse) {
+        this._server._wsBroadcastMultiverse(this.multiverse)
+      }
 
       const afterBlockHighest = this.multiverse.getHighestBlock()
       if (afterBlockHighest) {

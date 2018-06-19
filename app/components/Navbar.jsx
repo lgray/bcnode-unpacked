@@ -69,6 +69,9 @@ export class Navbar extends Component<*, State> {
             <DropdownItem href='https://www.blockcollider.org'>Homepage</DropdownItem>
             <DropdownItem href='/#/doc'>Documentation</DropdownItem>
             <DropdownItem href='/#/logs'>Logs</DropdownItem>
+            <DropdownItem divider />
+            { false && <DropdownItem href='/#/blockpool'>Block Pool</DropdownItem> }
+            <DropdownItem href='/#/multiverse'>Multiverse</DropdownItem>
           </DropdownMenu>
         </Dropdown>
       </Nav>

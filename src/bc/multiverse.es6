@@ -13,12 +13,12 @@ import type { Logger } from 'winston'
 const BN = require('bn.js')
 const { equals, flatten } = require('ramda')
 
-// const { config } = require('../config')
+const { config } = require('../config')
 const { validateBlockSequence } = require('./validation')
 const { standardId } = require('./helper')
 const logging = require('../logger')
 
-const COMMIT_MULTIVERSE_DEPTH = 7 // config.bc.multiverse.commitDepth
+const COMMIT_MULTIVERSE_DEPTH = config.bc.multiverse.commitDepth
 
 export class Multiverse {
   _blocks: Object

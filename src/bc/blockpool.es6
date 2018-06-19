@@ -109,8 +109,7 @@ export class BlockPool {
     const toWrite = []
     let writeFromCache = false
 
-    // FIXME: @schnorr review this condition
-    if (this._checkpoint === undefined && this._checkpoint === false) {
+    if (!this._checkpoint) {
       return Promise.reject(new Error('no checkpoint set for blockpool'))
     }
 

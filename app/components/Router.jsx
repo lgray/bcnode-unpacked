@@ -15,10 +15,12 @@ import { App } from './App'
 
 import {
   Block,
+  BlockPool,
   Blocks,
   Doc,
   Logs,
   Miner,
+  Multiverse,
   Peer,
   Peers,
   Profile,
@@ -37,7 +39,9 @@ export class Router extends Component<*> {
               }} />
               <Route path='/block/:id/' component={Block} />
               <Route path='/blocks/:id/' component={Blocks} />
+              <Route path='/blockpool' component={BlockPool} />
               <Route path='/miner' component={Miner} />
+              <Route path='/multiverse' component={Multiverse} />
               <Route path='/peer/:id/' component={Peer} />
               <Route path='/peers' component={Peers} />
               <Route path='/rover' component={Rover} />

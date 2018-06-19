@@ -17,6 +17,7 @@ import { reducer as appReducer } from './reducers/app/reducer'
 import { reducer as blockReducer } from './reducers/block/reducer'
 import { reducer as blocksReducer } from './reducers/blocks/reducer'
 import { reducer as minerReducer } from './reducers/miner/reducer'
+import { reducer as multiverseReducer } from './reducers/multiverse/reducer'
 import { reducer as peerReducer } from './reducers/peer/reducer'
 import { reducer as peersReducer } from './reducers/peers/reducer'
 import { reducer as profileReducer } from './reducers/profile/reducer'
@@ -39,6 +40,7 @@ export const createStore = (history: Object, reducers: Object = {}) => {
       block: blockReducer,
       blocks: blocksReducer,
       miner: minerReducer,
+      multiverse: multiverseReducer,
       peer: peerReducer,
       peers: peersReducer,
       profile: profileReducer,
