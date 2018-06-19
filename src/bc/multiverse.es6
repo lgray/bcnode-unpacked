@@ -9,12 +9,15 @@
 
 import type BcBlock from '../protos/core_pb'
 
+const BN = require('bn.js')
 const { equals, flatten } = require('ramda')
+
+// const { config } = require('../config')
 const { validateBlockSequence } = require('./validation')
 const { standardId } = require('./helper')
 const logging = require('../logger')
-const BN = require('bn.js')
-const COMMIT_MULTIVERSE_DEPTH = 7
+
+const COMMIT_MULTIVERSE_DEPTH = 7 // config.bc.multiverse.commitDepth
 
 export class Multiverse {
   _blocks: Object

@@ -7,6 +7,12 @@
     }
   },
 
+  "bc": {
+    "multiverse": {
+      "commitDepth": 7
+    }
+  },
+
   "engine": {
     "knownBlocksCache": {
       "max": 1024
