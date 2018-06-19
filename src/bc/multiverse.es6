@@ -396,19 +396,28 @@ export class Multiverse {
     }
   }
 
+  /**
+   * Check if block should be broadcasted
+   * @param block New block
+   * @param force Force broadcast flag
+   * @returns {boolean}
+   */
   shouldBroadcastBlock (block: BcBlock, force: boolean = false): boolean {
     const highestBlock = this.getHighestBlock()
-    if (highestBlock !== null) {
-      if (this.addBlock(block, force) === true) {
-        // $FlowFixMe
-        const height = highestBlock.getHeight()
-        if (block.getHeight() >= height) {
-          return true
-        }
-      }
-      return true
+    if (!highestBlock) {
+      return false
     }
-    return false
+
+    if (this.addBlock(block, force) === true) {
+      // $FlowFixMe
+      const height = highestBlock.getHeight()
+      if (block.getHeight() >= height) {
+        return true
+      }
+    }
+
+    // NOTE: Should we broadcast if addBlock() returned false?
+    return true
   }
 
   /**
