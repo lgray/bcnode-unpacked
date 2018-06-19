@@ -55,7 +55,6 @@ export class Multiverse {
       return false
     }
 
-    const highestBlock = this.getHighestBlock()
     const height = block.getHeight()
     const hash = block.getHash()
     const previousHash = block.getPreviousHash()
@@ -69,39 +68,57 @@ export class Multiverse {
       to: 0
     }
 
+    const highestBlock = this.getHighestBlock()
     if (!highestBlock) {
       this.addBlock(block)
       template.message = 'no highest block has been selected for multiverse'
       return template
     }
 
-    if (highestBlock.getHash() === hash) {
+    const highestBlockHash = highestBlock.getHash()
+    if (highestBlockHash === hash) {
       template.message = 'blocks are the equal to each-other'
       return template
     }
 
-    if (highestBlock.getHeight() === height) {
+    const highestBlockHeight = highestBlock.getHeight()
+    if (highestBlockHeight === height) {
       if (new BN(highestBlock.getTotalDistance()).lt(new BN(distance)) === true) {
         this.addBlock(block)
         template.message = 'purposed block will be the current height of the multiverse'
       }
-    } else if (highestBlock.getHash() === previousHash) {
+
+      return template
+    }
+
+    if (highestBlockHash === previousHash) {
       this.addBlock(block)
       template.message = 'purposed block is next block'
-    } else if (highestBlock.getHeight() + 2 < height) {
-      template.from = highestBlock.getHeight() - 2
+      return template
+    }
+
+    if (highestBlockHeight + 2 < height) {
+      template.from = highestBlockHeight - 2
       template.to = height + 1
       template.message = 'purposed block is ahead and disconnected from multiverse'
-    } else if (highestBlock.getHeight() > height && (highestBlock.getHeight() - height <= 7)) {
+      return template
+    }
+
+    if (highestBlockHeight > height && (highestBlockHeight - height <= 7)) {
       this.addBlock(block)
       template.from = height - 10
       template.to = height + 1
       template.message = 'purposed block may be in a multiverse layer'
-    } else if (highestBlock.getHeight() > height) {
+      return template
+    }
+
+    const lowestBlockHeight = this.getLowestBlock().getHeight()
+    if (highestBlockHeight > height) {
       this.addBlock(block)
       template.from = height - 1
-      template.to = this.getLowestBlock().getHeight() + 1 // Plus one so we can check with the multiverse if side chain
+      template.to = lowestBlockHeight + 1 // Plus one so we can check with the multiverse if side chain
       template.message = 'purposed block far behnd multiverse'
+      return template
     }
 
     return template
