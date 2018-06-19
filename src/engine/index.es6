@@ -653,62 +653,52 @@ export class Engine {
   }
 
   _handleWorkerFinishedMessage (solution: { distance: number, nonce : string, difficulty: number, timestamp: number, iterations: number, timeDiff: number }) {
-    const self = this
-    if (this._unfinishedBlock === undefined || this._unfinishedBlock === null) {
+    const unfinishedBlock = this._unfinishedBlock
+    if (!unfinishedBlock) {
       this._logger.warn('There is not an unfinished block to use solution for')
       return
     }
 
     const { nonce, distance, timestamp, difficulty, iterations, timeDiff } = solution
+    unfinishedBlock.setNonce(nonce)
+    unfinishedBlock.setDistance(distance)
+    unfinishedBlock.setTotalDistance(new BN(unfinishedBlock.getTotalDistance()).add(new BN(distance)).toString())
+    unfinishedBlock.setTimestamp(timestamp)
+    unfinishedBlock.setDifficulty(difficulty)
 
-    // $FlowFixMe
-    this._unfinishedBlock.setNonce(nonce)
-
-    // $FlowFixMe
-    this._unfinishedBlock.setDistance(distance)
-
-    // $FlowFixMe
-    this._unfinishedBlock.setTotalDistance(new BN(this._unfinishedBlock.getTotalDistance()).add(new BN(distance)).toString())
-
-    // $FlowFixMe
-    this._unfinishedBlock.setTimestamp(timestamp)
-
-    // $FlowFixMe
-    this._unfinishedBlock.setDifficulty(difficulty)
-
-    if (this._unfinishedBlockData) {
-      this._unfinishedBlockData.iterations = iterations
-      this._unfinishedBlockData.timeDiff = timeDiff
+    const unfinishedBlockData = this._unfinishedBlockData
+    if (unfinishedBlockData) {
+      unfinishedBlockData.iterations = iterations
+      unfinishedBlockData.timeDiff = timeDiff
     }
 
-    if (!isValidBlock(this._unfinishedBlock)) {
+    if (!isValidBlock(unfinishedBlock)) {
       this._logger.warn(`The mined block is not valid`)
       this._cleanUnfinishedBlock()
       return
     }
 
-    if (this._unfinishedBlock !== undefined && isDebugEnabled()) {
-      this._writeMiningData(this._unfinishedBlock, solution)
+    if (unfinishedBlock !== undefined && isDebugEnabled()) {
+      this._writeMiningData(unfinishedBlock, solution)
     }
 
-    this._processMinedBlock(this._unfinishedBlock, solution)
+    this._processMinedBlock(unfinishedBlock, solution)
       .then((res) => {
         // If block was successfully processed then _cleanUnfinishedBlock
-        if (res === true) {
-          try {
-            self._broadcastMinedBlock(self._unfinishedBlock, solution)
-              .then((res) => {
-                self._logger.info('block solution has been transmitted to network')
-                self._cleanUnfinishedBlock()
-              })
-              .catch((err) => {
-                self._logger.error(err)
-                self._cleanUnfinishedBlock()
-              })
-          } catch (err) {
-            self._cleanUnfinishedBlock()
-          }
+        if (res === false) {
+          this._cleanUnfinishedBlock()
+          return
         }
+
+        this._broadcastMinedBlock(unfinishedBlock, solution)
+          .then((res) => {
+            this._logger.info('Broadcasted mined block', res)
+            this._cleanUnfinishedBlock()
+          })
+          .catch((err) => {
+            this._logger.error(`Unable to broadcast mined block, reason: ${err.message}`)
+            this._cleanUnfinishedBlock()
+          })
       })
   }
 
@@ -716,7 +706,7 @@ export class Engine {
     this._logger.warn(`Mining worker process errored, reason: ${error.message}`)
     this._cleanUnfinishedBlock()
 
-    // $FlowFixMe - Flow can't properly type subprocess
+    // $FlowFixMe - Flow can't properly type subproccess
     if (!this._workerProcess) {
       return false
     }
