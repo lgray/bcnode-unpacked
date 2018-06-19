@@ -42,7 +42,7 @@ type Opts = {|
 |}
 
 // See http://www.programwitherik.com/getting-started-with-socket-io-node-js-and-express/
-export default class Server {
+export class Server {
   _opts: Opts
   _app: express$Application // eslint-disable-line
   _engine: Engine
@@ -408,3 +408,5 @@ export function jsonRpcMiddleware (mappings: any) {
     next()
   }
 }
+
+export default Server

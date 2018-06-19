@@ -38,7 +38,7 @@ export const rovers = {
 /**
  * Rover manager
  */
-export default class RoverManager {
+export class RoverManager {
   _logger: Object // eslint-disable-line no-undef
   _rovers: Object // eslint-disable-line no-undef
 
@@ -168,3 +168,5 @@ export default class RoverManager {
     }
   }
 }
+
+export default RoverManager

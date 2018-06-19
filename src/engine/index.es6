@@ -7,6 +7,7 @@
  * @flow
  */
 
+import type { Logger } from 'winston'
 import type { BcBlock } from '../protos/core_pb'
 
 const ROVERS = Object.keys(require('../rover/manager').rovers)
@@ -29,9 +30,9 @@ const { Multiverse } = require('../bc/multiverse')
 const logging = require('../logger')
 const { Monitor } = require('../monitor')
 const { Node } = require('../p2p')
-const RoverManager = require('../rover/manager').default
+const { RoverManager } = require('../rover/manager')
 const rovers = require('../rover/manager').rovers
-const Server = require('../server/index').default
+const { Server } = require('../server/index')
 const PersistenceRocksDb = require('../persistence').RocksDb
 const { PubSub } = require('./pubsub')
 const { RpcServer } = require('../rpc/index')
@@ -59,22 +60,22 @@ type UnfinishedBlockData = {
 }
 
 export class Engine {
-  _logger: Object; // eslint-disable-line no-undef
-  _monitor: Monitor; // eslint-disable-line no-undef
-  _knownBlocksCache: LRUCache<string, BcBlock>; // eslint-disable-line no-undef
-  _rawBlocks: LRUCache<number, Block>; // eslint-disable-line no-undef
-  _node: Node; // eslint-disable-line no-undef
-  _persistence: PersistenceRocksDb; // eslint-disable-line no-undef
-  _pubsub: PubSub; //  eslint-disable-line no-undef
-  _rovers: RoverManager; // eslint-disable-line no-undef
-  _rpc: RpcServer; // eslint-disable-line no-undef
-  _server: Server; // eslint-disable-line no-undef
-  _emitter: EventEmitter; // eslint-disable-line no-undef
-  _knownRovers: string[]; // eslint-disable-line no-undef
-  _minerKey: string; // eslint-disable-line no-undef
-  _collectedBlocks: Object; // eslint-disable-line no-undef
-  _verses: Multiverse[]; // eslint-disable-line no-undef
-  _canMine: bool; // eslint-disable-line no-undef
+  _logger: Logger
+  _monitor: Monitor
+  _knownBlocksCache: LRUCache<string, BcBlock>
+  _rawBlocks: LRUCache<number, Block>
+  _node: Node
+  _persistence: PersistenceRocksDb
+  _pubsub: PubSub
+  _rovers: RoverManager
+  _rpc: RpcServer
+  _server: Server
+  _emitter: EventEmitter
+  _knownRovers: string[]
+  _minerKey: string
+  _collectedBlocks: Object
+  _verses: Multiverse[]
+  _canMine: bool
   _workerProcess: ?ChildProcess
   _unfinishedBlock: ?BcBlock
   _rawBlock: Block[]
@@ -84,7 +85,8 @@ export class Engine {
   _peerIsResyncing: boolean
   _storageQueue: any
 
-  constructor (logger: Object, opts: { rovers: string[], minerKey: string}) {
+  // FIXME: Remove unused parameter Logger
+  constructor (logger: Logger, opts: { rovers: string[], minerKey: string}) {
     this._logger = logging.getLogger(__filename)
     this._knownRovers = opts.rovers
     this._minerKey = opts.minerKey
@@ -119,6 +121,7 @@ export class Engine {
 
     this._peerIsSyncing = false
     this._peerIsResyncing = false
+
     // Start NTP sync
     ts.start()
   }

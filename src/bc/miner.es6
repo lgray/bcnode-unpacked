@@ -364,8 +364,8 @@ export function getNewPreExpDifficulty (
 /**
  * Return the `work` - string to which the distance is being guessed while mining
  *
- * @param {BcBlock} previousBlock Last known previously mined BC block
- * @param {Block[]} childrenCurrentBlocks Last know rovered blocks from each chain (one of them is the one which triggered mining)
+ * @param {string} previousBlockHash Hash of last known previously mined BC block
+ * @param {BlockchainHeaders} childrenCurrentBlocks Last know rovered blocks from each chain (one of them is the one which triggered mining)
  * @return {string} a hash representing the work
  */
 export function prepareWork (previousBlockHash: string, childrenCurrentBlocks: BlockchainHeaders): string {
