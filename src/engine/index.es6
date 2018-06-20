@@ -7,6 +7,7 @@
  * @flow
  */
 
+import type { Logger } from 'winston'
 import type { BcBlock } from '../protos/core_pb'
 
 const ROVERS = Object.keys(require('../rover/manager').rovers)
@@ -29,9 +30,9 @@ const { Multiverse } = require('../bc/multiverse')
 const logging = require('../logger')
 const { Monitor } = require('../monitor')
 const { Node } = require('../p2p')
-const RoverManager = require('../rover/manager').default
+const { RoverManager } = require('../rover/manager')
 const rovers = require('../rover/manager').rovers
-const Server = require('../server/index').default
+const { Server } = require('../server/index')
 const PersistenceRocksDb = require('../persistence').RocksDb
 const { PubSub } = require('./pubsub')
 const { RpcServer } = require('../rpc/index')
@@ -58,23 +59,23 @@ type UnfinishedBlockData = {
   timeDiff: ?number
 }
 
-export default class Engine {
-  _logger: Object; // eslint-disable-line no-undef
-  _monitor: Monitor; // eslint-disable-line no-undef
-  _knownBlocksCache: LRUCache<string, BcBlock>; // eslint-disable-line no-undef
-  _rawBlocks: LRUCache<number, Block>; // eslint-disable-line no-undef
-  _node: Node; // eslint-disable-line no-undef
-  _persistence: PersistenceRocksDb; // eslint-disable-line no-undef
-  _pubsub: PubSub; //  eslint-disable-line no-undef
-  _rovers: RoverManager; // eslint-disable-line no-undef
-  _rpc: RpcServer; // eslint-disable-line no-undef
-  _server: Server; // eslint-disable-line no-undef
-  _emitter: EventEmitter; // eslint-disable-line no-undef
-  _knownRovers: string[]; // eslint-disable-line no-undef
-  _minerKey: string; // eslint-disable-line no-undef
-  _collectedBlocks: Object; // eslint-disable-line no-undef
-  _verses: Multiverse[]; // eslint-disable-line no-undef
-  _canMine: bool; // eslint-disable-line no-undef
+export class Engine {
+  _logger: Logger
+  _monitor: Monitor
+  _knownBlocksCache: LRUCache<string, BcBlock>
+  _rawBlocks: LRUCache<number, Block>
+  _node: Node
+  _persistence: PersistenceRocksDb
+  _pubsub: PubSub
+  _rovers: RoverManager
+  _rpc: RpcServer
+  _server: Server
+  _emitter: EventEmitter
+  _knownRovers: string[]
+  _minerKey: string
+  _collectedBlocks: Object
+  _verses: Multiverse[]
+  _canMine: bool
   _workerProcess: ?ChildProcess
   _unfinishedBlock: ?BcBlock
   _rawBlock: Block[]
@@ -84,7 +85,8 @@ export default class Engine {
   _peerIsResyncing: boolean
   _storageQueue: any
 
-  constructor (logger: Object, opts: { rovers: string[], minerKey: string}) {
+  // FIXME: Remove unused parameter Logger
+  constructor (logger: Logger, opts: { rovers: string[], minerKey: string}) {
     this._logger = logging.getLogger(__filename)
     this._knownRovers = opts.rovers
     this._minerKey = opts.minerKey
@@ -119,6 +121,7 @@ export default class Engine {
 
     this._peerIsSyncing = false
     this._peerIsResyncing = false
+
     // Start NTP sync
     ts.start()
   }
@@ -135,7 +138,7 @@ export default class Engine {
     return this.node.multiverse
   }
 
-  set mutliverse (multiverse: Multiverse) {
+  set multiverse (multiverse: Multiverse) {
     this.node.multiverse = multiverse
   }
 
@@ -233,7 +236,6 @@ export default class Engine {
           self._logger.info('wrote block ' + msg.data.getHeight())
         }
       }).catch((err) => {
-        console.trace(err)
         self._logger.error(err)
       })
     })
@@ -245,10 +247,9 @@ export default class Engine {
     self.pubsub.subscribe('state.resync.failed', '<engine>', (msg) => {
       self._logger.info('pausing mining to reestablish multiverse')
       self._peerIsResyncing = true
-      engineQueue.push(self.blockpool.purge(msg.data), function (err, data) {
+      engineQueue.push(self.blockpool.purge(msg.data), (err) => {
         if (err) {
-          console.trace(err)
-          self._logger.error(err)
+          this._logger.error(`Queued task failed, reason: ${err.message}`)
         }
       })
     })
@@ -258,13 +259,12 @@ export default class Engine {
     })
 
     self.pubsub.subscribe('update.block.latest', '<engine>', (msg) => {
-      self.updateLatestAndStore(msg).then((res) => {
-        console.log('latest block ' + msg.data.getHeight() + ' has been updated')
-        self._logger.info('latest block ' + msg.data.getHeight() + ' has been updated')
-      })
+      self.updateLatestAndStore(msg)
+        .then((res) => {
+          self._logger.info(`latest block ${msg.data.getHeight()} has been updated`)
+        })
         .catch((err) => {
-          console.trace(err)
-          self._logger.error(err)
+          self._logger.error(`Error occurred during updateLatestAndStore(), reason: ${err.message}`)
         })
     })
   }
@@ -316,24 +316,25 @@ export default class Engine {
     try {
       const previousLatest = await self.persistence.get('bc.block.latest')
       let persistNewBlock = false
-      console.log('comparing new block ' + block.getHeight() + ' with the latest block at ' + previousLatest.getHeight())
+
+      this._logger.error(`comparing new block ${block.getHeight()} with the latest block at ${previousLatest.getHeight()}`)
       if (previousLatest.getHash() === block.getPreviousHash()) {
         persistNewBlock = true
       }
+
       if (msg.force !== undefined && msg.force === true) {
         // TODO: trigger purge
         persistNewBlock = true
       }
+
       if (persistNewBlock === true &&
          block.getTimestamp() >= previousLatest.getTimestamp()) { // notice you cannot create two blocks in the same second (for when BC moves to 1s block propogation waves)
         await self.persistence.put('bc.block.latest', block)
         await self.persistence.put('bc.block.' + block.getHeight(), block)
-        if (self._workerProcess === undefined) {
-          self._workerProcess = false
-        }
       } else {
         self._logger.warn('new purposed latest block does not match the last')
       }
+
       if (msg.force !== undefined && msg.force === true && msg.multiverse !== undefined) {
         while (msg.multiverse.length > 0) {
           const b = msg.multiverse.pop()
@@ -367,15 +368,15 @@ export default class Engine {
    * Get rawBlock
    * @return {Object}
    */
-  get rawBlock (): ?Object {
+  get rawBlock (): ?Block {
     return this._rawBlock
   }
 
   /**
-   * Get rawBlock
-   * @return {Object}
+   * Set rawBlock
+   * @param block
    */
-  set rawBlock (block: Object): ?Object {
+  set rawBlock (block: Block) {
     this._rawBlock = block
   }
 
@@ -445,20 +446,29 @@ export default class Engine {
     })
     this._emitter.on('collectBlock', ({ block }) => {
       process.nextTick(() => {
-        fetch('http://council.blockcollider.org').then(res => res.text()).then(council => {
-          this.collectBlock(rovers, block).then((pid: number|false) => {
-            if (pid !== false) {
-              this._logger.debug(`collectBlock handler: successfuly send to mining worker (PID: ${pid})`)
-            }
-          }).catch(err => {
-            this._logger.error(`Could not send to mining worker, reason: ${errToString(err)}`)
-            this._cleanUnfinishedBlock()
-          })
+        let promise = null
+
+        if (config.bc.council.enabled) {
+          promise = fetch(config.bc.council.url)
+            .then(res => res.text())
+        } else {
+          promise = Promise.resolve(true)
+        }
+
+        promise.then(council => {
+          this.collectBlock(rovers, block)
+            .then((pid: number|false) => {
+              if (pid !== false) {
+                this._logger.debug(`collectBlock handler: successfuly send to mining worker (PID: ${pid})`)
+              }
+            })
+            .catch(err => {
+              this._logger.error(`Could not send to mining worker, reason: ${errToString(err)}`)
+              this._cleanUnfinishedBlock()
+            })
         }).catch(_ => {
-          if (config.rovers.council.enabled) {
-            this._logger.info('“Save Waves and NEO!” - After Block Collider miners completely brought down the Waves network 22 minutes into mining the team has paused the launch of genesis until we setup protections for centralized chains. Your NRG is safe.')
-            process.exit(64)
-          }
+          this._logger.info('“Save Waves and NEO!” - After Block Collider miners completely brought down the Waves network 22 minutes into mining the team has paused the launch of genesis until we setup protections for centralized chains. Your NRG is safe.')
+          process.exit(64)
         })
       })
     })
@@ -468,98 +478,121 @@ export default class Engine {
     const self = this
     this._collectedBlocks[block.getBlockchain()] += 1
 
+    // Persist block if needed
+    if (PERSIST_ROVER_DATA === true) {
+      this._writeRoverData(block)
+    }
+
     // TODO: Adjust minimum count of collected blocks needed to trigger mining
     if (!this._canMine && all((numCollected: number) => numCollected >= 1, values(self._collectedBlocks))) {
       this._canMine = true
     }
 
-    if (PERSIST_ROVER_DATA === true) {
-      this._writeRoverData(block)
+    // Check if _canMine
+    if (!this._canMine) {
+      const keys = Object.keys(this._collectedBlocks)
+      const values = '|' + keys.reduce((all, a, i) => {
+        const val = this._collectedBlocks[a]
+        if (i === (keys.length - 1)) {
+          all = all + a + ':' + val
+        } else {
+          all = all + a + ':' + val + ' '
+        }
+        return all
+      }, '') + '|'
+
+      this._logger.info('constructing multiverse from blockchains ' + values)
+      return Promise.resolve(false)
     }
-    // start mining only if all known chains are being rovered
-    if (this._canMine && !this._peerIsSyncing && equals(new Set(this._knownRovers), new Set(rovers))) {
-      self._rawBlock.push(block)
-      return self.startMining(rovers, block)
-        .then((res) => {
-          self._logger.info('mining cycle initiated')
-        })
-        .catch((err) => {
-          self._logger.error(err)
-        })
-    } else {
-      if (!this._canMine) {
-        const keys = Object.keys(this._collectedBlocks)
-        const values = '|' + keys.reduce((all, a, i) => {
-          const val = this._collectedBlocks[a]
-          if (i === (keys.length - 1)) {
-            all = all + a + ':' + val
-          } else {
-            all = all + a + ':' + val + ' '
-          }
-          return all
-        }, '') + '|'
-        this._logger.info('constructing multiverse from blockchains ' + values)
-        return Promise.resolve(false)
-      }
-      if (this._peerIsSyncing) {
-        this._logger.info(`mining and ledger updates disabled until initial multiverse threshold is met`)
-        return Promise.resolve(false)
-      }
+
+    // Check if peer is syncing
+    if (this._peerIsSyncing) {
+      this._logger.info(`mining and ledger updates disabled until initial multiverse threshold is met`)
+      return Promise.resolve(false)
+    }
+
+    // Check if all rovers are enabled
+    if (equals(new Set(this._knownRovers), new Set(rovers)) === false) {
       this._logger.debug(`consumed blockchains manually overridden, mining services disabled, active multiverse rovers: ${JSON.stringify(rovers)}, known: ${JSON.stringify(this._knownRovers)})`)
       return Promise.resolve(false)
     }
+
+    // FIXME: @schnorr, is this typo? Should not it be this._rawBlocks.push(block) ?
+    // self._rawBlock.push(block)
+    // $FlowFixMe
+    return self.startMining(rovers, block)
+      .then((res) => {
+        self._logger.info('mining cycle initiated')
+        return Promise.resolve(true)
+      })
+      .catch((err) => {
+        self._logger.error(err)
+        return Promise.resolve(false)
+      })
   }
 
-  blockFromPeer (conn: Object, newBlock: BcBlock) {
+  /**
+   * New block received from peer handler
+   * @param conn Connection the block was received from
+   * @param newBlock Block itself
+   */
+  blockFromPeer (conn: Object, newBlock: BcBlock): boolean {
     const self = this
     // TODO: Validate new block mined by peer
-    if (newBlock !== undefined && !self._knownBlocksCache.get(newBlock.getHash())) {
-      self._logger.info('!!!!!!!!!! received new block from peer', newBlock.getHeight())
-      debug(`Adding received block into cache of known blocks - ${newBlock.getHash()}`)
+    if (newBlock && !self._knownBlocksCache.get(newBlock.getHash())) {
+      self._logger.info('Received new block from peer', newBlock.getHeight())
+
       // Add to cache
+      debug(`Adding received block into cache of known blocks - ${newBlock.getHash()}`)
       this._knownBlocksCache.set(newBlock.getHash(), newBlock)
 
       const beforeBlockHighest = self.multiverse.getHighestBlock()
-      const addedToMultiverse = self.multiverse.addBlock(newBlock)
-      const afterBlockHighest = self.multiverse.getHighestBlock()
+      if (beforeBlockHighest) {
+        this._logger.debug(`${self.multiverse._id} - beforeBlockHighest`, JSON.stringify(beforeBlockHighest.toObject(), null, 2))
+      }
 
-      // $FlowFixMe
-      this._logger.debug('(' + self.multiverse._id + ') beforeBlockHighest: ' + beforeBlockHighest.getHash())
-      // $FlowFixMe
-      this._logger.debug('(' + self.multiverse._id + ') afterBlockHighest: ' + afterBlockHighest.getHash())
-      // $FlowFixMe
-      this._logger.debug('(' + self.multiverse._id + ') addedToMultiverse: ' + addedToMultiverse)
+      const addedToMultiverse = self.multiverse.addBlock(newBlock)
+      this._logger.debug(`${self.multiverse._id} - addedToMultiverse`, addedToMultiverse)
+
+      const afterBlockHighest = self.multiverse.getHighestBlock()
+      if (afterBlockHighest) {
+        this._logger.debug(`${self.multiverse._id} - afterBlockHighest`, JSON.stringify(afterBlockHighest.toObject(), null, 2))
+      }
 
       if (addedToMultiverse === false) {
-        this._logger.warn('(' + self.multiverse._id + ') !!!! Block failed to join multiverse')
-        this._logger.warn('(' + self.multiverse._id + ') !!!!     height: ' + newBlock.getHeight())
-        this._logger.warn('(' + self.multiverse._id + ') !!!!     hash: ' + newBlock.getHash())
-        this._logger.warn('(' + self.multiverse._id + ') !!!!     previousHash: ' + newBlock.getPreviousHash())
-        this._logger.warn('(' + self.multiverse._id + ') !!!!     distance: ' + newBlock.getDistance())
-        this._logger.warn('(' + self.multiverse._id + ') !!!!     totalDistance: ' + newBlock.getTotalDistance())
+        // TODO: Replace with newBlock.toObject()
+        this._logger.warn(`Block failed to join multiverse, id: ${self.multiverse._id}`, newBlock.toObject())
       }
+
+      if (!beforeBlockHighest || !afterBlockHighest) {
+        return false
+      }
+
       if (beforeBlockHighest.getHash() !== afterBlockHighest.getHash()) {
         this.stopMining()
         this.pubsub.publish('update.block.latest', { key: 'bc.block.latest', data: newBlock })
       } else if (afterBlockHighest.getHeight() < newBlock.getHeight() &&
         new BN(afterBlockHighest.getTotalDistance()).lt(new BN(newBlock.getTotalDistance())) === true) {
         this.stopMining()
+
         self.pubsub.publish('update.block.latest', { key: 'bc.block.latest', data: newBlock, force: true })
+
         const newMultiverse = new Multiverse()
         conn.getPeerInfo((err, peerInfo) => {
           if (err) {
-            console.trace(err)
             self._logger.error(err)
             return false
           }
+
           const peerQuery = {
             queryHash: newBlock.getHash(),
             queryHeight: newBlock.getHeight(),
             low: Math.max(newBlock.getHeight() - 7, 1),
             high: newBlock.getHeight() - 1
           }
+
           debug('Querying peer for blocks', peerQuery)
-          console.log('***********************CANDIDATE 0*******************')
+          this._logger.error('***********************| CANDIDATE 0 |*******************')
           self.node.manager.createPeer(peerInfo)
             .query(peerQuery)
             .then((blocks) => {
@@ -574,34 +607,44 @@ export default class Engine {
                 }
                 return 0
               })
+
               while (decOrder.length > 0) {
                 newMultiverse.addBlock(decOrder.pop())
               }
+
               newMultiverse.addBlock(newBlock)
+
               if (Object.keys(newMultiverse).length > 6) {
                 const highCandidateBlock = newMultiverse.getHighestBlock()
                 const lowCandidateBlock = newMultiverse.getLowestBlock()
-                if (new BN(highCandidateBlock.getTotalDistance()).gt(new BN(afterBlockHighest.getTotalDistance())) &&
+
+                if (highCandidateBlock && new BN(highCandidateBlock.getTotalDistance()).gt(new BN(afterBlockHighest.getTotalDistance())) &&
                     highCandidateBlock.getHeight() >= afterBlockHighest.getHeight()) {
                   self.pubsub.publish('update.block.latest', { key: 'bc.block.latest', data: newBlock, force: true, multiverse: decOrder })
                   self.multiverse = newMultiverse
-                  self._logger.info('applied new multiverse ' + newMultiverse.getHighestBlock().getHash())
+
+                  const newMultiverseHighestBlock = newMultiverse.getHighestBlock()
+                  const newMultiverseHighestBlockHash = newMultiverseHighestBlock && newMultiverseHighestBlock.getHash()
+                  self._logger.info(`applied new multiverse, hash: ${(newMultiverseHighestBlockHash && newMultiverseHighestBlockHash.toString()) || 'null'}`)
                   self.blockpool._checkpoint = lowCandidateBlock
                   // sets multiverse for removal
                 }
               }
+
+              this._server._wsBroadcastMultiverse(newMultiverse)
             })
             .catch((err) => {
-              console.trace(err)
+              this._logger.error(`Error occurred when querying peer, peerId: '${peerInfo.id.toB58String()}', reason: ${err.message}`)
             })
         })
-      } else {
-
       }
     } else {
-      console.log(`Received block is already in cache of known blocks - ${newBlock.getHash()}`)
-      debug(`Received block is already in cache of known blocks - ${newBlock.getHash()}`)
+      const msg = `Received block is already in cache of known blocks - ${newBlock.getHash()}`
+      debug(msg)
+      this._logger.info(msg)
     }
+
+    return true
   }
 
   receiveSyncPeriod (peerIsSyncing: bool) {
@@ -615,78 +658,65 @@ export default class Engine {
   }
 
   _handleWorkerFinishedMessage (solution: { distance: number, nonce : string, difficulty: number, timestamp: number, iterations: number, timeDiff: number }) {
-    const self = this
-    if (this._unfinishedBlock === undefined || this._unfinishedBlock === null) {
+    const unfinishedBlock = this._unfinishedBlock
+    if (!unfinishedBlock) {
       this._logger.warn('There is not an unfinished block to use solution for')
       return
     }
 
     const { nonce, distance, timestamp, difficulty, iterations, timeDiff } = solution
+    unfinishedBlock.setNonce(nonce)
+    unfinishedBlock.setDistance(distance)
+    unfinishedBlock.setTotalDistance(new BN(unfinishedBlock.getTotalDistance()).add(new BN(distance)).toString())
+    unfinishedBlock.setTimestamp(timestamp)
+    unfinishedBlock.setDifficulty(difficulty)
 
-    // $FlowFixMe
-    this._unfinishedBlock.setNonce(nonce)
-    // $FlowFixMe
-    this._unfinishedBlock.setDistance(distance)
-    // $FlowFixMe
-    this._unfinishedBlock.setTotalDistance(new BN(this._unfinishedBlock.getTotalDistance()).add(new BN(distance)).toString())
-    // $FlowFixMe
-    this._unfinishedBlock.setTimestamp(timestamp)
-    // $FlowFixMe
-    this._unfinishedBlock.setDifficulty(difficulty)
-
-    if (this._unfinishedBlockData) {
-      this._unfinishedBlockData.iterations = iterations
-      this._unfinishedBlockData.timeDiff = timeDiff
+    const unfinishedBlockData = this._unfinishedBlockData
+    if (unfinishedBlockData) {
+      unfinishedBlockData.iterations = iterations
+      unfinishedBlockData.timeDiff = timeDiff
     }
 
-    if (!isValidBlock(this._unfinishedBlock)) {
+    if (!isValidBlock(unfinishedBlock)) {
       this._logger.warn(`The mined block is not valid`)
       this._cleanUnfinishedBlock()
       return
     }
 
-    if (this._unfinishedBlock !== undefined && isDebugEnabled()) {
-      this._writeMiningData(this._unfinishedBlock, solution)
+    if (unfinishedBlock !== undefined && isDebugEnabled()) {
+      this._writeMiningData(unfinishedBlock, solution)
     }
 
-    this._processMinedBlock(this._unfinishedBlock, solution)
+    this._processMinedBlock(unfinishedBlock, solution)
       .then((res) => {
         // If block was successfully processed then _cleanUnfinishedBlock
-        if (res === true) {
-          try {
-            self._broadcastMinedBlock(self._unfinishedBlock, solution)
-              .then((res) => {
-                self._logger.info('block solution has been transmitted to network')
-                self._cleanUnfinishedBlock()
-              })
-              .catch((err) => {
-                self._logger.error(err)
-                self._cleanUnfinishedBlock()
-              })
-          } catch (err) {
-            self._cleanUnfinishedBlock()
-          }
+        if (res === false) {
+          this._cleanUnfinishedBlock()
+          return
         }
+
+        this._broadcastMinedBlock(unfinishedBlock, solution)
+          .then((res) => {
+            this._logger.info('Broadcasted mined block', res)
+            this._cleanUnfinishedBlock()
+          })
+          .catch((err) => {
+            this._logger.error(`Unable to broadcast mined block, reason: ${err.message}`)
+            this._cleanUnfinishedBlock()
+          })
       })
   }
 
-  _handleWorkerError (error: Error) {
+  _handleWorkerError (error: Error): Promise<boolean> {
     this._logger.warn(`Mining worker process errored, reason: ${error.message}`)
     this._cleanUnfinishedBlock()
-    // $FlowFixMe - Flow can't properly type subprocess
-    // FIXME: Use `if (!this._workerProcess) ...`
-    if (!this._workerProcess !== undefined && this._workerProcess !== null && this._workerProcess !== false) {
-      try {
-        // $FlowFixMe - Flow can't properly type subprocess
-        this._workerProcess.disconnect()
-        // $FlowFixMe - Flow can't properly type subprocess
-        this._workerProcess.kill()
-      } catch (_) {
-        this._logger.warn(`Disconnecting or killing of miner process error - just cleaning up`)
-        this._workerProcess = undefined
-      }
-      this._workerProcess = undefined
+
+    // $FlowFixMe - Flow can't properly type subproccess
+    if (!this._workerProcess) {
+      return Promise.resolve(false)
     }
+
+    return this.stopMining()
   }
 
   _handleWorkerExit (code: number, signal: string) {
@@ -696,6 +726,7 @@ export default class Engine {
       this._logger.warn(`Mining worker process exited with code ${code}, signal ${signal}`)
       this._cleanUnfinishedBlock()
     }
+
     this._workerProcess = undefined
   }
 
@@ -752,17 +783,18 @@ export default class Engine {
    * @returns {Promise<boolean>}
    * @private
    */
-  _broadcastMinedBlock (newBlock: BcBlock, solution: Object): Promise<*> {
+  _broadcastMinedBlock (newBlock: BcBlock, solution: Object): Promise<boolean> {
     const self = this
     this._logger.info('Broadcasting mined block')
 
     if (newBlock === undefined) {
       return Promise.reject(new Error('cannot broadcast empty block'))
     }
-    // if (Object.keys(self.multiverse).length > 6) {
-    // }
+
     try {
       self.node.broadcastNewBlock(newBlock)
+
+      // NOTE: Do we really need nested try-catch ?
       try {
         const newBlockObj = {
           ...newBlock.toObject(),
@@ -777,6 +809,7 @@ export default class Engine {
     } catch (err) {
       return Promise.reject(err)
     }
+
     return Promise.resolve(true)
   }
 
@@ -788,7 +821,7 @@ export default class Engine {
    * @returns {Promise<boolean>} Promise indicating if the block was successfully processed
    * @private
    */
-  _processMinedBlock (newBlock: BcBlock, solution: Object): Promise<*> {
+  _processMinedBlock (newBlock: BcBlock, solution: Object): Promise<boolean> {
     // TODO: reenable this._logger.info(`Mined new block: ${JSON.stringify(newBlockObj, null, 2)}`)
 
     // Trying to process null/undefined block
@@ -800,7 +833,7 @@ export default class Engine {
     try {
       // Received block which is already in cache
       if (this._knownBlocksCache.has(newBlock.getHash())) {
-        this._logger.warn('Recieved duplicate new block ' + newBlock.getHeight() + ' (' + newBlock.getHash() + ')')
+        this._logger.warn('Received duplicate new block ' + newBlock.getHeight() + ' (' + newBlock.getHash() + ')')
         return Promise.resolve(false)
       }
 
@@ -808,41 +841,53 @@ export default class Engine {
       this._knownBlocksCache.set(newBlock.getHash(), newBlock)
 
       const beforeBlockHighest = this.multiverse.getHighestBlock()
-      const addedToMultiverse = this.multiverse.addBlock(newBlock)
-      const afterBlockHighest = this.multiverse.getHighestBlock()
+      if (beforeBlockHighest) {
+        this._logger.debug(`beforeBlockHighest height: ${beforeBlockHighest.getHeight()}, hash: ${beforeBlockHighest.getHash()}`)
+      } else {
+        // beforeBlockHighest is not available
+        return Promise.resolve(false)
+      }
 
-      console.log('beforeBlockHighest height -> ' + beforeBlockHighest.getHeight() + ' ' + beforeBlockHighest.getHash())
-      console.log('afterBlockHighest height -> ' + afterBlockHighest.getHeight() + ' ' + afterBlockHighest.getHash())
-      console.log('addedToMultiverse: ' + addedToMultiverse)
+      const addedToMultiverse = this.multiverse.addBlock(newBlock)
+      this._logger.debug(`addedToMultiverse: ${addedToMultiverse.toString()}`)
+      if (addedToMultiverse) {
+        this._server._wsBroadcastMultiverse(this.multiverse)
+      }
+
+      const afterBlockHighest = this.multiverse.getHighestBlock()
+      if (afterBlockHighest) {
+        this._logger.debug(`afterBlockHighest height: ${afterBlockHighest.getHeight()}, hash: ${afterBlockHighest.getHash()}`)
+      } else {
+        // afterBlockHighest is not available
+        return Promise.resolve(false)
+      }
 
       if (beforeBlockHighest.getHash() !== afterBlockHighest.getHash()) {
         this.stopMining()
         this.pubsub.publish('update.block.latest', { key: 'bc.block.latest', data: newBlock })
         return Promise.resolve(true)
-      } else if (afterBlockHighest.getHeight() < newBlock.getHeight() &&
-                new BN(afterBlockHighest.getTotalDistance()).lt(new BN(newBlock.getTotalDistance())) === true) {
+      }
+
+      if (afterBlockHighest &&
+        afterBlockHighest.getHeight() < newBlock.getHeight() &&
+        new BN(afterBlockHighest.getTotalDistance()).lt(new BN(newBlock.getTotalDistance()))
+      ) {
         this.pubsub.publish('update.block.latest', { key: 'bc.block.latest', data: newBlock })
         return Promise.resolve(true)
-      } else {
-        return Promise.resolve(false)
       }
+
+      return Promise.resolve(false)
     } catch (err) {
       this._logger.warn(`failed to process work provided by miner, err: ${errToString(err)}`)
       return Promise.resolve(false)
     }
   }
 
-  async startMining (rovers: string[] = ROVERS, block: Block): Promise<*> {
+  async startMining (rovers: string[] = ROVERS, block: Block): Promise<boolean> {
     const self = this
-    // if (block === undefined) {
-    //  return Promise.reject(new Error('cannot start mining on empty block'))
-    // }
-    // debug('Starting mining', rovers || ROVERS, block.toObject())
-
-    let currentBlocks
-    let lastPreviousBlock
 
     // get latest block from each child blockchain
+    let currentBlocks
     try {
       const getKeys: string[] = ROVERS.map(chain => `${chain}.block.latest`)
       currentBlocks = await Promise.all(getKeys.map((key) => {
@@ -851,10 +896,12 @@ export default class Engine {
           return block
         })
       }))
+
       this._logger.info(`Loaded ${currentBlocks.length} blocks from persistence`)
+
       // get latest known BC block
       try {
-        lastPreviousBlock = await self.persistence.get('bc.block.latest')
+        const lastPreviousBlock = await self.persistence.get('bc.block.latest')
         self._logger.info(`Got last previous block (height: ${lastPreviousBlock.getHeight()}) from persistence`)
         self._logger.debug(`Preparing new block`)
 
@@ -862,6 +909,7 @@ export default class Engine {
         if (this._unfinishedBlock !== undefined && getBlockchainsBlocksCount(this._unfinishedBlock) >= 6) {
           this._cleanUnfinishedBlock()
         }
+
         const [newBlock, finalTimestamp] = prepareNewBlock(
           currentTimestamp,
           lastPreviousBlock,
@@ -871,6 +919,7 @@ export default class Engine {
           self._minerKey,
           self._unfinishedBlock
         )
+
         const work = prepareWork(lastPreviousBlock.getHash(), newBlock.getBlockchainHeaders())
         newBlock.setTimestamp(finalTimestamp)
         self._unfinishedBlock = newBlock
@@ -893,16 +942,16 @@ export default class Engine {
         this._logger.debug(`Starting miner process with work: "${work}", difficulty: ${newBlock.getDifficulty()}, ${JSON.stringify(this._collectedBlocks, null, 2)}`)
         const proc: ChildProcess = fork(MINER_WORKER_PATH)
         this._workerProcess = proc
-        // } else {
-        //   this._logger.debug(`Sending work to existing miner process (pid: ${this._workerProcess.pid}), work: "${work}", difficulty: ${newBlock.getDifficulty()}, ${JSON.stringify(this._collectedBlocks, null, 2)}`)
-        // }
         if (self._workerProcess !== null) {
           // $FlowFixMe - Flow can't find out that ChildProcess is extended form EventEmitter
           self._workerProcess.on('message', this._handleWorkerFinishedMessage.bind(this))
+
           // $FlowFixMe - Flow can't find out that ChildProcess is extended form EventEmitter
           self._workerProcess.on('error', this._handleWorkerError.bind(this))
+
           // $FlowFixMe - Flow can't find out that ChildProcess is extended form EventEmitter
           self._workerProcess.on('exit', this._handleWorkerExit.bind(this))
+
           // $FlowFixMe - Flow can't find out that ChildProcess is extended form EventEmitter
           self._workerProcess.send({
             currentTimestamp,
@@ -917,14 +966,15 @@ export default class Engine {
               // $FlowFixMe
               newBlockHeaders: newBlock.getBlockchainHeaders().serializeBinary()
             }})
+
           // $FlowFixMe - Flow can't properly find worker pid
           return Promise.resolve(self._workerProcess.pid)
         }
       } catch (err) {
-        console.trace(err)
         self._logger.warn(`Error while getting last previous BC block, reason: ${err.message}`)
         return Promise.reject(err)
       }
+
       return Promise.resolve(false)
     } catch (err) {
       self._logger.warn(`Error while getting current blocks, reason: ${err.message}`)
@@ -932,38 +982,58 @@ export default class Engine {
     }
   }
 
-  stopMining (): bool {
+  stopMining (): Promise<bool> {
     debug('Stopping mining')
 
-    if (!this._workerProcess) {
-      return false
+    const process = this._workerProcess
+    if (!process) {
+      return Promise.resolve(false)
+    }
+
+    if (process.connected) {
+      try {
+        process.disconnect()
+      } catch (err) {
+        this._logger.debug(`Unable to disconnect workerProcess, reason: ${err.message}`)
+      }
     }
 
     try {
-      if (this._workerProcess !== undefined && this._workerProcess !== null && this._workerProcess !== false) {
-        this._workerProcess.disconnect()
-        this._workerProcess.removeAllListeners()
-        this._workerProcess.kill()
-        this._workerProcess = null
-      }
+      process.removeAllListeners()
     } catch (err) {
-      this._logger.debug(`Stopping mining failed, reason: ${err.message}`)
-      return false
+      this._logger.debug(`Unable to remove workerProcess listeners, reason: ${err.message}`)
     }
-    return true
+
+    // $FlowFixMe
+    if (process.killed !== true) {
+      try {
+        process.kill()
+      } catch (err) {
+        this._logger.debug(`Unable to kill workerProcess, reason: ${err.message}`)
+      }
+    }
+
+    this._workerProcess = undefined
+    return Promise.resolve(true)
   }
 
+  // FIXME: Review and fix restartMining
   restartMining (rovers: string[] = ROVERS): Promise<boolean> {
     debug('Restarting mining', rovers)
 
-    this.stopMining()
+    // this.stopMining()
     // if (this._rawBlock.length > 0) {
     //  return this.startMining(rovers || ROVERS, this._rawBlock.pop())
     //    .then(res => {
     //      return Promise.resolve(!res)
     //    })
     // } else {
-    return Promise.resolve(true)
+
+    // return Promise.resolve(true)
     // }
+
+    return this.stopMining()
   }
 }
+
+export default Engine

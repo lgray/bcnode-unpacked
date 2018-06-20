@@ -11,7 +11,7 @@ const { EventEmitter } = require('events')
 const grpc = require('grpc')
 const { config } = require('../config')
 
-const Engine = require('../engine').default
+const { Engine } = require('../engine')
 const logging = require('../logger')
 
 const { BcService } = require('../protos/bc_grpc_pb')

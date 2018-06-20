@@ -8,10 +8,12 @@
  */
 
 import Block from './Block'
+import BlockPool from './BlockPool'
 import Blocks from './Blocks'
 import Doc from './Doc'
 import Logs from './Logs'
 import Miner from './Miner'
+import Multiverse from './Multiverse'
 import Peer from './Peer'
 import Peers from './Peers'
 import Profile from './Profile'
@@ -19,10 +21,12 @@ import Rover from './Rover'
 
 export {
   Block,
+  BlockPool,
   Blocks,
   Doc,
   Logs,
   Miner,
+  Multiverse,
   Peer,
   Peers,
   Profile,

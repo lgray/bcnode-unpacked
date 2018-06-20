@@ -6,9 +6,10 @@
  *
  * @flow
  */
+
 const { BcBlock, BlockchainHeader, BlockchainHeaders } = require('../protos/core_pb')
 
-export function getGenesisBlock () {
+export function getGenesisBlock (): BcBlock {
   const GENESIS_DATA = require('./genesis.raw')
   const GENESIS_BLOCK_HEADERS_MAP = new BlockchainHeaders()
   Object.entries(GENESIS_DATA.blockchainHeadersMap)

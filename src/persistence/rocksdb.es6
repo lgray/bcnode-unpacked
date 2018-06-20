@@ -101,11 +101,13 @@ export default class PersistenceRocksDb {
    * @param key
    * @param opts
    */
-  get (key: string, opts: Object = { asBuffer: true }): Promise<Object>|Promise<Array<Object>> {
+  get (key: string, opts: Object = { asBuffer: true }): Promise<Object> {
     debug('get()', key)
 
     if (Array.isArray(key)) {
-      return this.getBulk(key, opts)
+      const msg = 'PersistenceRocksDb.get() for bulk gets is deprecated, use PersistenceRocksDb.getBulk() instead'
+      this._logger.error(msg)
+      return Promise.reject(new Error(msg))
     }
 
     return new Promise((resolve, reject) => {
@@ -167,7 +169,7 @@ export default class PersistenceRocksDb {
     }
     for (let i = startBlock; i < endBlock; i++) {
       try {
-        const block = await self.get('bc.block.' + i)
+        const block: Object = await self.get('bc.block.' + i)
         if (block !== undefined && block.getMiner() === address) {
           if (block.getNrgGrant() !== 1600000000) {
             block.setNrgGrant(1600000000) // Force BT Reward

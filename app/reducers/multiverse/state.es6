@@ -7,12 +7,6 @@
  * @flow
  */
 
-const block = require('./block')
-const blocks = require('./blocks')
-const multiverse = require('./multiverse')
-
-module.exports = {
-  block,
-  blocks,
-  multiverse
+export const initialState = {
+  multiverse: {}
 }

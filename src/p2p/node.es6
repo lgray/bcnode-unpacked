@@ -7,6 +7,8 @@
  * @flow
  */
 
+import type { Engine } from '../engine'
+
 const { inspect } = require('util')
 
 const PeerInfo = require('peer-info')
@@ -23,13 +25,12 @@ const logging = require('../logger')
 const { BcBlock } = require('../protos/core_pb')
 const { ManagedPeerBook } = require('./book')
 const Bundle = require('./bundle').default
-const Engine = require('../engine').default
 const Signaling = require('./signaling').websocket
 const { PeerManager, DATETIME_STARTED_AT } = require('./manager/manager')
 const { validateBlockSequence } = require('../bc/validation')
 const { Multiverse } = require('../bc/multiverse')
 const { BlockPool } = require('../bc/blockpool')
-const { blockByTotalDistanceSorter } = require('../bc/helper')
+const { blockByTotalDistanceSorter } = require('../engine/helper')
 
 const { PROTOCOL_PREFIX, NETWORK_ID } = require('./protocol/version')
 
@@ -108,6 +109,7 @@ export class PeerNode {
 
         peerInfo.multiaddrs.add(Signaling.getAddress(peerInfo))
         peerInfo.multiaddrs.add(`/ip4/0.0.0.0/tcp/0/ipfs/${peerId}`)
+        peerInfo.multiaddrs.add(`/ip6/::1/tcp/0/ipfs/${peerId}`)
 
         peerInfo.meta = {
           p2p: {
@@ -197,7 +199,6 @@ export class PeerNode {
       this._logger.debug(`Sending to peer ${peer}`)
       this.bundle.dialProtocol(peer, url, (err, conn) => {
         if (err) {
-          console.trace(err)
           this._logger.error('Error sending message to peer', peer.id.toB58String(), err)
           return err
         }
@@ -222,15 +223,13 @@ export class PeerNode {
           peerMultiverses.push(multiverse)
 
           if (peerMultiverses.length >= PEER_QUORUM_SIZE) {
-            const candidates = peerMultiverses.map((peerMultiverse) => {
+            const candidates = peerMultiverses.reduce((acc: Array<Object>, peerMultiverse) => {
               if (peerMultiverse.length > 0 && validateBlockSequence(peerMultiverse)) {
-                return peerMultiverse
-              } else {
-                return null
+                acc.push(peerMultiverse)
               }
-            }).filter((itm) => {
-              return itm !== null
-            }) || []
+
+              return acc
+            }, [])
 
             if (candidates.length >= PEER_QUORUM_SIZE) {
               const uniqueCandidates = uniqBy((candidate) => candidate[0].getHash(), candidates)

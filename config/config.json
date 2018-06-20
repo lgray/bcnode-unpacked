@@ -7,6 +7,17 @@
     }
   },
 
+  "bc": {
+    "council": {
+      "enabled": true,
+      "url": "http://council.blockcollider.org"
+    },
+
+    "multiverse": {
+      "commitDepth": 7
+    }
+  },
+
   "engine": {
     "knownBlocksCache": {
       "max": 1024
@@ -49,10 +60,6 @@
   },
 
   "rovers": {
-    "council": {
-      "enabled": true
-    },
-
     "eth": {
       "altBootNodes": [
         {

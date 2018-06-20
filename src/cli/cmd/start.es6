@@ -13,7 +13,7 @@ const { Command } = require('commander')
 
 const { MINER_KEY_REGEX } = require('../minerKey')
 const logging = require('../../logger')
-const Engine = require('../../engine').default
+const { Engine } = require('../../engine')
 
 const ROVERS = Object.keys(require('../../rover/manager').rovers)
 

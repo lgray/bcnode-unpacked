@@ -62,7 +62,7 @@ const handlers = {
       ids.push(`bc.block.${i}`)
     }
 
-    return manager.engine.persistence.get(ids)
+    return manager.engine.persistence.getBulk(ids)
       .then((blocks) => {
         // validate if first returned block.hash is fromHash and last is toHash
         if (blocks[0].getHash() !== fromHash) {
@@ -97,7 +97,7 @@ const handlers = {
           ids.push(`bc.block.${height - i}`)
         }
 
-        return manager.engine.persistence.get(ids)
+        return manager.engine.persistence.getBulk(ids)
           .then((res) => res.map((block) => block.serializeBinary()))
       })
   },
@@ -121,7 +121,7 @@ const handlers = {
           ids.push(`bc.block.${height - i}`)
         }
 
-        return manager.engine.persistence.get(ids)
+        return manager.engine.persistence.getBulk(ids)
           .then((res) => res.map((block) => block.serializeBinary()))
       })
   },
@@ -143,7 +143,7 @@ const handlers = {
           ids.push(`bc.block.${i}`)
         }
 
-        return manager.engine.persistence.get(ids)
+        return manager.engine.persistence.getBulk(ids)
           .then((res) => res.map((block) => block.serializeBinary()))
       })
       .catch((e) => {

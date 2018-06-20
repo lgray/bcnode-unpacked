@@ -1,3 +1,9 @@
+# Link to ~/.bc
+.bc/
+
+# Helper run scripts
+/.run*.sh
+
 # Docker stuff
 #.dockerignore
 Dockerfile

@@ -7,22 +7,21 @@
  * @flow
  */
 
+import type { Logger } from 'winston'
+import type { Engine } from '../engine'
+
 const os = require('os')
 
-const Engine = require('../engine').default
 const logging = require('../logger')
-
-// const BC_MONITOR_INTERVAL = process.env.BC_MONITOR_INTERVAL
-// const MONITOR_INTERVAL = (BC_MONITOR_INTERVAL && parseInt(BC_MONITOR_INTERVAL, 10)) || (10 * 60 * 1000)
 
 // Print monitor info once per five minutes
 const MONITOR_INTERVAL = (5 * 60 * 1000)
 
-export default class Monitor {
-  _logger: Object; // eslint-disable-line no-undef
-  _engine: Engine; // eslint-disable-line no-undef
-  _opts: Object; // eslint-disable-line no-undef
-  _interval: ?IntervalID; // eslint-disable-line no-undef
+export class Monitor {
+  _logger: Logger
+  _engine: Engine
+  _opts: Object
+  _interval: ?IntervalID // eslint-disable-line no-undef
 
   constructor (engine: Engine, opts: Object) {
     this._logger = logging.getLogger(__filename)
@@ -63,3 +62,5 @@ export default class Monitor {
     this._logger.info(`Stats: ${JSON.stringify(stats, null, 2)}`)
   }
 }
+
+export default Monitor

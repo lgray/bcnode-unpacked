@@ -6,6 +6,7 @@
  *
  * @flow
  */
+
 import type { Logger } from 'winston'
 import type { $Request, $Response, NextFunction } from 'express'
 
@@ -24,7 +25,7 @@ const SocketIO = require('socket.io')
 const logging = require('../logger')
 const { config } = require('../config')
 const { Null, Block } = require('../protos/core_pb')
-const Engine = require('../engine').default
+const { Engine } = require('../engine')
 const { RpcClient, RpcServer } = require('../rpc')
 const { dispatcher: socketDispatcher } = require('./socket')
 
@@ -41,7 +42,7 @@ type Opts = {|
 |}
 
 // See http://www.programwitherik.com/getting-started-with-socket-io-node-js-and-express/
-export default class Server {
+export class Server {
   _opts: Opts
   _app: express$Application // eslint-disable-line
   _engine: Engine
@@ -100,7 +101,7 @@ export default class Server {
       help: Null
     }
 
-    this._app.get('/balance/:address', (req, res, next) => {
+    this._app.get('/balance/:address', (req, res: $Response, next: NextFunction) => {
       const address = req.params.address
       if (address) {
         this._engine.persistence.getBtAddressBalance(req.params.address)
@@ -113,7 +114,7 @@ export default class Server {
       }
     })
 
-    this._app.get('/balance', (req, res, next) => {
+    this._app.get('/balance', (req, res: $Response, next: NextFunction) => {
       const address = this.engine.minerKey
       if (address) {
         this._engine.persistence.getBtAddressBalance(address)
@@ -180,6 +181,14 @@ export default class Server {
 
       socket.on('blocks.get', (msg) => {
         socketDispatcher(this, socket, { type: 'blocks.get', data: msg })
+      })
+
+      socket.on('multiverse.get', (msg) => {
+        socketDispatcher(this, socket, { type: 'multiverse.get', data: msg })
+      })
+
+      socket.on('multiverse.purge', (msg) => {
+        socketDispatcher(this, socket, { type: 'multiverse.purge', data: msg })
       })
 
       this._wsSendInitialState(socket)
@@ -279,6 +288,21 @@ export default class Server {
     if (this._socket) {
       this._socket.emit(msg.type, msg.data)
     }
+  }
+
+  _wsBroadcastMultiverse (multiverse: Object) {
+    const blocksToSend = multiverse.blocks
+    const keys = Object.keys(blocksToSend)
+
+    const res = keys.reduce((acc, val) => {
+      acc[val] = blocksToSend[val].map((b) => b.toObject())
+      return acc
+    }, {})
+
+    this._wsBroadcast({
+      type: 'multiverse.set',
+      data: res
+    })
   }
 
   _wsBroadcastPeerConnected (peer: Object) {
@@ -407,3 +431,5 @@ export function jsonRpcMiddleware (mappings: any) {
     next()
   }
 }
+
+export default Server

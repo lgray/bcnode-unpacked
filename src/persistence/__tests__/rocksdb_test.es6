@@ -70,7 +70,7 @@ describe('RocksDb', () => {
         return Promise.all(promises)
       })
       .then(() => {
-        return db.get(nums)
+        return db.getBulk(nums)
       })
       .then((res) => {
         nums.forEach((val, index) => {
@@ -91,7 +91,7 @@ describe('RocksDb', () => {
         return Promise.all(promises)
       })
       .then(() => {
-        return db.get([...vals, 3])
+        return db.getBulk([...vals, 3])
       })
       .then((res) => {
         vals.forEach((val, index) => {

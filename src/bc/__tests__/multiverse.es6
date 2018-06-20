@@ -40,7 +40,7 @@ describe(Multiverse, () => {
     expect(m).toBeInstanceOf(Multiverse)
   })
 
-  describe('addBlock', () => {
+  describe.skip('addBlock', () => {
     it('adds two blocks', () => {
       const block1 = createMockBlock(1)
 

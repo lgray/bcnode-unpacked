@@ -10,20 +10,20 @@
 import React, { Component } from 'react'
 import { Helmet } from 'react-helmet'
 
-export class Profile extends Component<*> {
+export class BlockPool extends Component<*> {
   render () {
     return (
       <div className='d-flex flex-wrap flex-row'>
         <Helmet>
-          <title>Profile</title>
+          <title>Block Pool</title>
         </Helmet>
 
         <h2 className='col-md-12 text-center' style={{marginTop: '16px', marginBottom: '16px'}}>
-          Profile
+          Block Pool
         </h2>
       </div>
     )
   }
 }
 
-export default Profile
+export default BlockPool
