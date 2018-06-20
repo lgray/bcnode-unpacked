@@ -25,14 +25,16 @@ module.exports = {
         return Promise.all(
           reverse(
             range(firstBlockHeight - count, firstBlockHeight)
-              .map((id) => blockGet(persistence, id.toString()))
+              .map((id) => blockGet(persistence, id.toString())
+                .then((b) => Promise.resolve(b))
+                .catch(() => Promise.resolve(null)))
           )
         )
       })
       .then((blocks) => {
         client.emit('blocks.set', [
           (firstBlock && firstBlock.toObject()),
-          ...blocks.map((block) => block.toObject())
+          ...blocks.filter((b) => b).map((block) => block.toObject())
         ])
       })
       .catch((err) => {
