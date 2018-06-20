@@ -27,7 +27,7 @@ const fetch = require('node-fetch')
 const { config } = require('../config')
 const { isDebugEnabled, ensureDebugPath } = require('../debug')
 const { Multiverse } = require('../bc/multiverse')
-const logging = require('../logger')
+const { getLogger } = require('../logger')
 const { Monitor } = require('../monitor')
 const { Node } = require('../p2p')
 const { RoverManager } = require('../rover/manager')
@@ -85,9 +85,8 @@ export class Engine {
   _peerIsResyncing: boolean
   _storageQueue: any
 
-  // FIXME: Remove unused parameter Logger
-  constructor (logger: Logger, opts: { rovers: string[], minerKey: string}) {
-    this._logger = logging.getLogger(__filename)
+  constructor (opts: { rovers: string[], minerKey: string}) {
+    this._logger = getLogger(__filename)
     this._knownRovers = opts.rovers
     this._minerKey = opts.minerKey
     this._rawBlock = []

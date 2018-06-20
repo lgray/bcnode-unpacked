@@ -12,7 +12,7 @@ import type { Logger } from 'winston'
 const { Command } = require('commander')
 
 const { MINER_KEY_REGEX } = require('../minerKey')
-const logging = require('../../logger')
+const { getLogger } = require('../../logger')
 const { Engine } = require('../../engine')
 
 const ROVERS = Object.keys(require('../../rover/manager').rovers)
@@ -27,7 +27,7 @@ export const cmd = async (program: typeof Command) => {
   } = program.opts()
 
   // Initialize JS logger
-  const logger = logging.getLogger(__filename)
+  const logger = getLogger(__filename)
 
   // Create instance of engine
   let minerKey = process.env.BC_MINER_KEY || program.opts().minerKey
@@ -52,7 +52,7 @@ export const cmd = async (program: typeof Command) => {
   }
 
   // Create engine instance
-  const engine = new Engine(logger, opts)
+  const engine = new Engine(opts)
 
   // Initialize SIGING handler
   initSigintHandler(logger, engine)
