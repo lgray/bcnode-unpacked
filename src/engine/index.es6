@@ -36,7 +36,7 @@ const { Server } = require('../server/index')
 const PersistenceRocksDb = require('../persistence').RocksDb
 const { PubSub } = require('./pubsub')
 const { RpcServer } = require('../rpc/index')
-const { prepareWork, prepareNewBlock } = require('../bc/miner')
+const { prepareWork, prepareNewBlock } = require('../mining/primitives')
 const { getGenesisBlock } = require('../bc/genesis')
 const { BlockPool } = require('../bc/blockpool')
 const { isValidBlock } = require('../bc/validation')
@@ -49,7 +49,7 @@ const ts = require('../utils/time').default // ES6 default export
 const DATA_DIR = process.env.BC_DATA_DIR || config.persistence.path
 const MONITOR_ENABLED = process.env.BC_MONITOR === 'true'
 const PERSIST_ROVER_DATA = process.env.PERSIST_ROVER_DATA === 'true'
-const MINER_WORKER_PATH = resolve(__filename, '..', '..', 'bc', 'miner_worker.js')
+const MINER_WORKER_PATH = resolve(__filename, '..', '..', 'mining', 'worker.js')
 
 type UnfinishedBlockData = {
   lastPreviousBlock: ?BcBlock,

@@ -9,7 +9,7 @@
  */
 import type { Logger } from 'winston'
 const process = require('process')
-const { getExpFactorDiff, getNewPreExpDifficulty, getNewBlockCount, mine } = require('./miner')
+const { getExpFactorDiff, getNewPreExpDifficulty, getNewBlockCount, mine } = require('./primitives')
 const { BlockchainHeaders, BlockchainHeader, BcBlock } = require('../protos/core_pb')
 const ts = require('../utils/time').default // ES6 default export
 
