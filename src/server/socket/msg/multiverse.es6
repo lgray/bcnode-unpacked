@@ -21,5 +21,13 @@ module.exports = {
     }, {})
 
     client.emit('multiverse.set', res)
+  },
+
+  purge: (server: Object, client: Object, payload: Object) => {
+    server._engine.multiverse.purge()
+    server._wsBroadcast({
+      type: 'multiverse.set',
+      data: {}
+    })
   }
 }

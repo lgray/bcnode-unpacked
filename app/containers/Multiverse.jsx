@@ -14,6 +14,7 @@ import { bindActionCreators } from 'redux'
 import { actions } from '../reducers/multiverse/actions'
 
 import { BlocksTable } from '../components'
+import { Button } from 'reactstrap'
 
 export class MultiverseContainer extends Component<*> {
   componentDidMount () {
@@ -44,6 +45,9 @@ export class MultiverseContainer extends Component<*> {
           Multiverse
         </h2>
 
+        <div>
+          <Button color='danger' onClick={() => this.props.actions.purgeMultiverse()}>Purge!</Button>
+        </div>
         {verses}
       </div>
     )

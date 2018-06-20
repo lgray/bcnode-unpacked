@@ -187,6 +187,10 @@ export class Server {
         socketDispatcher(this, socket, { type: 'multiverse.get', data: msg })
       })
 
+      socket.on('multiverse.purge', (msg) => {
+        socketDispatcher(this, socket, { type: 'multiverse.purge', data: msg })
+      })
+
       this._wsSendInitialState(socket)
     })
 

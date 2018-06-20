@@ -982,12 +982,12 @@ export class Engine {
     }
   }
 
-  stopMining (): bool {
+  stopMining (): Promise<bool> {
     debug('Stopping mining')
 
     const process = this._workerProcess
     if (!process) {
-      return false
+      return Promise.resolve(false)
     }
 
     if (process.connected) {
@@ -1014,14 +1014,14 @@ export class Engine {
     }
 
     this._workerProcess = undefined
-    return true
+    return Promise.resolve(true)
   }
 
   // FIXME: Review and fix restartMining
   restartMining (rovers: string[] = ROVERS): Promise<boolean> {
     debug('Restarting mining', rovers)
 
-    this.stopMining()
+    // this.stopMining()
     // if (this._rawBlock.length > 0) {
     //  return this.startMining(rovers || ROVERS, this._rawBlock.pop())
     //    .then(res => {
@@ -1029,8 +1029,10 @@ export class Engine {
     //    })
     // } else {
 
-    return Promise.resolve(true)
+    // return Promise.resolve(true)
     // }
+
+    return this.stopMining()
   }
 }
 

@@ -16,6 +16,16 @@ export const ACTIONS = {
 
 export const actions = (dispatch: Function) => {
   return {
+    purgeMultiverse: () => {
+      return {
+        type: SOCKET_ACTIONS.SOCKET_SEND,
+        payload: {
+          type: 'multiverse.purge',
+          data: {}
+        }
+      }
+    },
+
     getMultiverse: () => {
       return {
         type: SOCKET_ACTIONS.SOCKET_SEND,

@@ -48,6 +48,10 @@ export class Multiverse {
     return this._blocks
   }
 
+  set blocks (blocks: Object) {
+    this._blocks = blocks
+  }
+
   get blocksCount (): number {
     const blocks = Object.keys(this._blocks)
     return blocks.length
