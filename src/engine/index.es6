@@ -707,13 +707,13 @@ export class Engine {
       })
   }
 
-  _handleWorkerError (error: Error): boolean {
+  _handleWorkerError (error: Error): Promise<boolean> {
     this._logger.warn(`Mining worker process errored, reason: ${error.message}`)
     this._cleanUnfinishedBlock()
 
     // $FlowFixMe - Flow can't properly type subproccess
     if (!this._workerProcess) {
-      return false
+      return Promise.resolve(false)
     }
 
     return this.stopMining()
