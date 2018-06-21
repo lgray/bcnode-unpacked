@@ -584,7 +584,7 @@ export class Engine {
   }
 
   receiveSyncPeriod (peerIsSyncing: bool) {
-    this._peerIsSyncing = peerIsSyncing
+    this.miningOfficer.paused = peerIsSyncing
   }
 
   /**

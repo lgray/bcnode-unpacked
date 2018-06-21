@@ -49,6 +49,7 @@ export class MiningOfficer {
   _workerProcess: ?ChildProcess
   _unfinishedBlock: ?BcBlock
   _unfinishedBlockData: ?UnfinishedBlockData
+  _paused: bool
 
   constructor (pubsub: PubSub, persistence: RocksDb, opts: { minerKey: string, rovers: string[] }) {
     this._logger = getLogger(__filename)
@@ -63,6 +64,7 @@ export class MiningOfficer {
     }
     this._canMine = false
     this._unfinishedBlockData = { block: undefined, lastPreviousBlock: undefined, currentBlocks: {}, timeDiff: undefined, iterations: undefined }
+    this._paused = false
   }
 
   get persistence (): RocksDb {
@@ -71,6 +73,14 @@ export class MiningOfficer {
 
   get pubsub (): PubSub {
     return this._pubsub
+  }
+
+  get paused (): bool {
+    return this._paused
+  }
+
+  set paused (paused: bool) {
+    this._paused = paused
   }
 
   async newRoveredBlock (rovers: string[], block: Block): Promise<number|false> {
@@ -99,10 +109,10 @@ export class MiningOfficer {
     }
 
     // Check if peer is syncing
-    // if (this._peerIsSyncing) { // TODO get from engine
-    //   this._logger.info(`mining and ledger updates disabled until initial multiverse threshold is met`)
-    //   return Promise.resolve(false)
-    // }
+    if (this.paused) {
+      this._logger.info(`mining and ledger updates disabled until initial multiverse threshold is met`)
+      return Promise.resolve(false)
+    }
 
     // Check if all rovers are enabled
     if (equals(new Set(this._knownRovers), new Set(rovers)) === false) {
