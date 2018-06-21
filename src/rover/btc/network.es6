@@ -153,6 +153,7 @@ export class Network {
   get pool (): Pool {
     if (!this._pool) {
       this._pool = new Pool({
+        listenAddr: false,
         network: Networks.livenet,
         maxSize: this._state.maximumPeers,
         relay: false
@@ -167,7 +168,6 @@ export class Network {
       // connect to the network
       try {
         this.pool.connect()
-        this.pool.listen()
         this._poolConnected = true
         this._logger.debug('Connected to network')
       } catch (err) {
