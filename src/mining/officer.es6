@@ -1,4 +1,4 @@
-/* e
+/*
  * Copyright (c) 2017-present, Block Collider developers, All rights reserved.
  *
  * This source code is licensed under the MIT license found in the
@@ -124,7 +124,7 @@ export class MiningOfficer {
     return this.startMining(rovers, block)
       .then((res) => {
         this._logger.info('mining cycle initiated')
-        return Promise.resolve(true)
+        return Promise.resolve(res)
       })
       .catch((err) => {
         this._logger.error(err)
@@ -137,7 +137,7 @@ export class MiningOfficer {
     this._cleanUnfinishedBlock()
   }
 
-  async startMining (rovers: string[], block: Block): Promise<boolean> {
+  async startMining (rovers: string[], block: Block): Promise<boolean|number> {
     // get latest block from each child blockchain
     let currentBlocks
     try {
