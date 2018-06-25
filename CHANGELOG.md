@@ -25,6 +25,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - [Docker] - Mountable volumes - `_data`, `config`, `logs`
 - [Docker] - Use foreverjs
 - [Rover] - added exponential backoff from 5s to 20s for WAV and NEO
+- [Miner] - separated mining setup and hadling to officer module
 
 ### Changed
 
