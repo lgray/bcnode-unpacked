@@ -4,10 +4,10 @@ version = "0.1.0"
 authors = ["Tomas Korcak <korczis@gmail.com>"]
 build = "build.rs"
 
-[[bin]]
-name = "bcrust_core"
-path = "src/main.rs"
-required-features = ["afl"]
+# [[bin]]
+# name = "bcrust_core"
+# path = "src/main.rs"
+# required-features = ["afl"]
 
 [lib]
 name = "bcrust_core"
@@ -30,5 +30,5 @@ strsim = "0.6"
 url = "1.0"
 tls-api = "0.1.14"
 
-[target.'cfg(any(linux,unix))'.dependencies]
-afl = { git = "https://github.com/rust-fuzz/afl.rs"}
+# [target.'cfg(any(linux,unix))'.dependencies]
+# afl = { git = "https://github.com/rust-fuzz/afl.rs"}
