@@ -56,6 +56,7 @@ export class Engine {
   _rpc: RpcServer
   _server: Server
   _emitter: EventEmitter
+  _minerKey: string // TODO only needed because of server touches that - should be passed using constructor?
   _knownRovers: string[]
   _verses: Multiverse[]
   _rawBlock: Block[]
@@ -68,6 +69,7 @@ export class Engine {
   constructor (opts: { rovers: string[], minerKey: string}) {
     this._logger = getLogger(__filename)
     this._knownRovers = opts.rovers
+    this._minerKey = opts.minerKey // TODO only needed because of server touches that - should be passed using constructor?
     this._rawBlock = []
     this._monitor = new Monitor(this, {})
     this._persistence = new PersistenceRocksDb(DATA_DIR)
@@ -97,6 +99,11 @@ export class Engine {
 
     // Start NTP sync
     ts.start()
+  }
+
+  // TODO only needed because of server touches that - should be passed using constructor?
+  get minerKey (): string {
+    return this._minerKey
   }
 
   /**
