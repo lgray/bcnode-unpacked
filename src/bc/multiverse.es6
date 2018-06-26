@@ -48,7 +48,7 @@ export class Multiverse {
   }
 
   get blocksCount (): number {
-    const blocks = Object.keys(this._blocks)
+    const blocks = this._chain
     return blocks.length
   }
 
@@ -151,6 +151,10 @@ export class Multiverse {
       return true
     }
     const currentHighestBlock = this.getHighestBlock()
+    // PASS no other candidate in Multiverse
+    if (currentHighestBlock === false) {
+      this._chain.unshift(newBlock)
+    }
     // FAIL if newBlock totalDifficulty < (lt) currentHighestBlock totalDifficulty
     if (new BN(newBlock.getTotalDifficulty()).lt(new BN(currentHighestBlock.getTotalDifficulty()))) {
       return false
@@ -192,9 +196,14 @@ export class Multiverse {
   addResyncRequest (newBlock: BcBlock): boolean {
     const currentHighestBlock = this.getHighestBlock()
     const currentParentHighestBlock = this.getParentHighestBlock()
-    // if no block is available go by total difficulty
+
+    // PASS if no highest block exists go with current
+    if (currentHighestBlock === false) {
+      return true
+    }
+
     // FAIL if new block not within 16 seconds of local time
-    if (newBlock.getTimestamp() + 16 < Math.floor(Date.now * 0.001)) {
+    if (newBlock.getTimestamp() + 16 < Math.floor(Date.now() * 0.001)) {
       return false
     }
     if (currentParentHighestBlock === false && currentHighestBlock !== false) {
@@ -222,7 +231,7 @@ export class Multiverse {
    * @returns {*}
    */
   toArray (): Array<Array<BcBlock>> {
-    return this._blocks.toarray()
+    return this._chain
   }
 
   /**

@@ -624,7 +624,7 @@ export class Engine {
 
       if (isNextBlock) {
         // TODO: this will break now that _blocks is not used in multiverse
-        self._server._wsBroadcastMultiverse(this.multiverse)
+        self._server._wsBroadcastMultiverse(self.multiverse)
         self.pubsub.publish('update.block.latest', { key: 'bc.block.latest', data: newBlock, multiverse: self.multiverse._chain })
         return Promise.resolve(true)
       } else {
