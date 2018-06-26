@@ -29,7 +29,7 @@ type State = {
 }
 
 const DEFAULT_STATE: State = {
-  maximumPeers: 96,
+  maximumPeers: 40,
   quorum: 31,
   peers: {},
   bestHeight: null
