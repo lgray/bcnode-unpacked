@@ -13,7 +13,7 @@ import type { Logger } from 'winston'
 const BN = require('bn.js')
 const { flatten } = require('ramda')
 
-const { validateBlockSequence } = require('./validation')
+const { validateBlockSequence, childrenHeightSum } = require('./validation')
 const { standardId } = require('./helper')
 const { getLogger } = require('../logger')
 
@@ -212,12 +212,11 @@ export class Multiverse {
     if (new BN(newBlock.getTotalDifficulty()).lt(new BN(currentHighestBlock.getTotalDifficulty()))) {
       return false
     }
-    // TODO: need child sum function
     // TODO: make sure that blocks that are added reference child chains
     // FAIL if sum of child block heights is less than the rovered child heights
-    // if (roveredChildHeights(newBlock) <= roveredChildHeights(currentParentHighestBlock)){
-    //   return false
-    // }
+    if (childrenHeightSum(newBlock) <= childrenHeightSum(currentParentHighestBlock)) {
+      return false
+    }
     this.addCandidateBlock(newBlock)
     return true
   }
