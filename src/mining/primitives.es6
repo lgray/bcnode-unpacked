@@ -50,7 +50,7 @@ const { Block, BcBlock, BcTransaction, BlockchainHeader, BlockchainHeaders } = r
 const ts = require('../utils/time').default // ES6 default export
 const GENESIS_DATA = require('../bc/genesis.raw')
 
-const MINIMUM_DIFFICULTY = new BN(11801972029393, 16)
+const MINIMUM_DIFFICULTY = new BN(23603944058786, 16)
 const MAX_TIMEOUT_SECONDS = 300
 
 const logging = require('../logger')
@@ -353,7 +353,7 @@ export function getNewPreExpDifficulty (
   const preExpDiff = getDiff(
     currentTimestamp,
     lastPreviousBlock.getTimestamp(),
-    lastPreviousBlock.getDistance(),
+    lastPreviousBlock.getDifficulty(),
     MINIMUM_DIFFICULTY,
     newBlockCount
   ) // Calculate the final pre-singularity difficulty adjustment
