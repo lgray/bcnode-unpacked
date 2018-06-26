@@ -15,7 +15,7 @@ const { flatten } = require('ramda')
 
 const { validateBlockSequence } = require('./validation')
 const { standardId } = require('./helper')
-const logging = require('../logger')
+const { getLogger } = require('../logger')
 
 export class Multiverse {
   _chain: BcBlock[]
@@ -28,17 +28,17 @@ export class Multiverse {
   constructor () {
     this._id = standardId()
     this._chain = []
-    this._canddiates = []
-    this._logger = logging.getLogger(`bc.multiverse.${this._id}`, false)
+    this._candidates = []
+    this._logger = getLogger(`bc.multiverse.${this._id}`, false)
     this._height = 0
     this._created = Math.floor(Date.now() * 0.001)
   }
 
-  get blocks (): Object {
+  get blocks (): Array<BcBlock> {
     return this._chain
   }
 
-  set blocks (blocks: Object) {
+  set blocks (blocks: BcBlock[]) {
     this._chain = blocks
   }
 
@@ -53,12 +53,11 @@ export class Multiverse {
   }
 
   /**
-   * Get sencond to highest block in Multiverse
-   * @returns {*}
+   * Get second to highest block in Multiverse
    */
-  getParentHighestBlock (): ?BcBlock {
+  getParentHighestBlock (): BcBlock|null {
     if (this._chain.length > 1) {
-      return false
+      return null
     }
     return this._chain[1]
   }
@@ -67,9 +66,9 @@ export class Multiverse {
    * Get highest block in Multiverse
    * @returns {*}
    */
-  getHighestBlock (): ?BcBlock {
+  getHighestBlock (): BcBlock|null {
     if (this._chain.length === 0) {
-      return false
+      return null
     }
     return this._chain[0]
   }
@@ -78,11 +77,11 @@ export class Multiverse {
    * Get lowest block by block key
    * @returns {*}
    */
-  getLowestBlock (): ?BcBlock {
+  getLowestBlock (): BcBlock|null {
     if (this._chain.length > 0) {
       return this._chain[this._chain.length - 1]
     }
-    return false
+    return null
   }
 
   /**
@@ -105,9 +104,13 @@ export class Multiverse {
   addBestBlock (newBlock: BcBlock): boolean {
     const currentHighestBlock = this.getHighestBlock()
     const currentParentHighestBlock = this.getParentHighestBlock()
+    if (currentHighestBlock === null) {
+      // assume we always have current highest block
+      throw Error('Cannot get currentHighestBlock')
+    }
     // if no block is available go by total difficulty
     // FAIL if new block not within 16 seconds of local time
-    if (newBlock.getTimestamp() + 21 < Math.floor(Date.now * 0.001)) {
+    if (newBlock.getTimestamp() + 21 < Math.floor(Date.now() * 0.001)) {
       return false
     }
     if (currentParentHighestBlock === false) {
@@ -122,11 +125,13 @@ export class Multiverse {
     if (new BN(newBlock.getTotalDifficulty()).lt(new BN(currentHighestBlock.getTotalDifficulty()))) {
       return false
     }
-    if (newBlock.getPreviousHash() === currentParentHighestBlock.getHash() && validateBlockSequence([newBlock, currentParentHighestBlock]) === true) {
+    if (currentParentHighestBlock !== null && newBlock.getPreviousHash() === currentParentHighestBlock.getHash() && validateBlockSequence([newBlock, currentParentHighestBlock]) === true) {
       this._chain.shift()
       this._chain.unshift(newBlock)
       return true
     }
+
+    return false
   }
 
   /**
@@ -142,8 +147,9 @@ export class Multiverse {
     }
     const currentHighestBlock = this.getHighestBlock()
     // PASS no other candidate in Multiverse
-    if (currentHighestBlock === false) {
+    if (currentHighestBlock === null) {
       this._chain.unshift(newBlock)
+      return true // TODO added - check with @schnorr
     }
     // FAIL if newBlock totalDifficulty < (lt) currentHighestBlock totalDifficulty
     if (new BN(newBlock.getTotalDifficulty()).lt(new BN(currentHighestBlock.getTotalDifficulty()))) {
@@ -188,7 +194,7 @@ export class Multiverse {
     const currentParentHighestBlock = this.getParentHighestBlock()
 
     // PASS if no highest block exists go with current
-    if (currentHighestBlock === false) {
+    if (currentHighestBlock === null) {
       return true
     }
 
@@ -196,7 +202,7 @@ export class Multiverse {
     if (newBlock.getTimestamp() + 16 < Math.floor(Date.now() * 0.001)) {
       return false
     }
-    if (currentParentHighestBlock === false && currentHighestBlock !== false) {
+    if (currentParentHighestBlock === null && currentHighestBlock !== null) {
       if (new BN(newBlock.getTotalDifficulty()).gt(new BN(currentHighestBlock.getTotalDifficulty()))) {
         this.addCandidateBlock(newBlock)
         return true
