@@ -18,7 +18,7 @@ const { writeFileSync } = require('fs')
 const LRUCache = require('lru-cache')
 const BN = require('bn.js')
 const semver = require('semver')
-const fetch = require('node-fetch')
+const request = require('request')
 
 const { config } = require('../config')
 const { ensureDebugPath } = require('../debug')
@@ -450,8 +450,15 @@ export class Engine {
         let promise = null
 
         if (config.bc.council.enabled) {
-          promise = fetch(config.bc.council.url)
-            .then(res => res.text())
+          promise = new Promise((resolve, reject) => {
+            request(config.bc.council.url, (error, response, body) => {
+              if (error) {
+                return reject(error)
+              }
+
+              return resolve(body)
+            })
+          })
         } else {
           promise = Promise.resolve(true)
         }
