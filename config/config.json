@@ -64,6 +64,7 @@
       "maximumPeers": 40
     },
     "eth": {
+      "maximumPeers": 33,
       "altBootNodes": [
         {
           "address": "52.16.188.185",
