@@ -11,7 +11,6 @@ const { childrenHeightSum } = require('../validation')
 const { BcBlock, BlockchainHeader, BlockchainHeaders } = require('../../protos/core_pb')
 
 const rndString = () => Number(Math.random().toString().slice(2)).toString(36)
-// }
 const createMockBlockchainHeader = (height) => new BlockchainHeader([
   rndString(), // string blockchain = 1;
   rndString(), // string hash = 2;
