@@ -22,21 +22,16 @@ export class Multiverse {
   _candidates: BcBlock[]
   _height: number
   _created: number
-  _selective: boolean
   _id: string
   _logger: Logger
 
-  constructor (selective: boolean = false) {
+  constructor () {
     this._id = standardId()
-    this._selective = selective
     this._chain = []
     this._canddiates = []
     this._logger = logging.getLogger(`bc.multiverse.${this._id}`, false)
     this._height = 0
     this._created = Math.floor(Date.now() * 0.001)
-    if (selective === true) {
-      this._logger.warn('selective multiverse created')
-    }
   }
 
   get blocks (): Object {
