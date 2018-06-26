@@ -35,11 +35,11 @@ export class Multiverse {
   }
 
   get blocks (): Object {
-    return this._blocks
+    return this._chain
   }
 
   set blocks (blocks: Object) {
-    this._blocks = blocks
+    this._chain = blocks
   }
 
   get blocksCount (): number {
@@ -48,7 +48,7 @@ export class Multiverse {
   }
 
   purge () {
-    this._blocks = {}
+    this._chain.length = 0
     this._logger.info('metaverse has been purged')
   }
 
@@ -79,22 +79,17 @@ export class Multiverse {
    * @returns {*}
    */
   getLowestBlock (): ?BcBlock {
-    const keys = Object.keys(this._blocks)
-    if (keys.length < 1) {
-      return null
+    if (this._chain.length > 0) {
+      return this._chain[this._chain.length - 1]
     }
-
-    const last = keys.shift()
-    return this._blocks[last][0]
+    return false
   }
 
   /**
-   * Check if multiverse has minimum data for evaluation
+   * Add candidate block to candidate list (max 12)
+   * @param newBlock
+   * @returns {*}
    */
-  ready (): boolean {
-
-  }
-
   addCandidateBlock (newBlock: BcBlock) {
     this._candidates.unshift(newBlock)
     if (this._candidates.length > 12) {
