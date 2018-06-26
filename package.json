@@ -183,7 +183,6 @@
     "n64": "^0.1.2",
     "neon-cli": "^0.1.22",
     "network": "^0.4.1",
-    "node-fetch": "2.1.2",
     "node-forge": "^0.7.5",
     "node-uuid": "^1.4.8",
     "peer-book": "0.7.0",
