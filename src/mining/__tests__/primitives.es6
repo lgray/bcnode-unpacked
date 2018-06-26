@@ -7,16 +7,16 @@ const {
   mine,
   getNewPreExpDifficulty,
   getNewBlockCount
-} = require('../miner')
+} = require('../primitives')
 
-const { getGenesisBlock, GENESIS_MINER_KEY } = require('../genesis')
+const { getGenesisBlock, GENESIS_MINER_KEY } = require('../../bc/genesis')
 
 const { mockRandom } = require('jest-mock-random')
 const mockNow = require('jest-mock-now')
 
 const TEST_MINER_KEY = GENESIS_MINER_KEY // crypto.randomBytes(32)
 
-const TEST_DATA = require('../data').BLOCKS_MAP
+const TEST_DATA = require('../../bc/data').BLOCKS_MAP
 
 describe.skip('Miner', () => {
   test('mine()', () => {

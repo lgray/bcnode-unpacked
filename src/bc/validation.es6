@@ -28,7 +28,7 @@ const {
   createMerkleRoot,
   prepareWork,
   distance
-} = require('./miner')
+} = require('../mining/primitives')
 const GENESIS_DATA = require('./genesis.raw')
 
 const logger = getLogger(__filename)
