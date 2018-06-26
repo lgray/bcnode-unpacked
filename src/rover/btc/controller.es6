@@ -72,7 +72,7 @@ export default class Controller {
     }
   }
 
-  init (config) {
+  init (config: { maximumPeers: number }) {
     const network = new Network(config)
     this._network = network
 

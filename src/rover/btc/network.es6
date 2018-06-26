@@ -43,7 +43,7 @@ export class Network {
   _pool: ?Pool; // eslint-disable-line no-undef
   _poolConnected: bool; // eslint-disable-line no-undef
 
-  constructor (config: Object = {}) {
+  constructor (config: { maximumPeers: number }) {
     this._logger = logging.getLogger(__filename)
     this._state = merge(DEFAULT_STATE, config)
     this._poolConnected = false

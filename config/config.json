@@ -60,6 +60,9 @@
   },
 
   "rovers": {
+    "btc": {
+      "maximumPeers": 40
+    },
     "eth": {
       "altBootNodes": [
         {
