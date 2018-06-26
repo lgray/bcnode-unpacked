@@ -43,7 +43,7 @@ export const register = (manager: PeerManager, bundle: Bundle) => {
           }
 
           // manager.engine._processMinedBlock(block)
-          manager.engine.blockFromPeer(conn, block)
+          manager.engine.blockFromPeer(conn, block) // TODO check if following code still used, if so wrap whole into then
 
           // const shouldBeAdded = shouldBlockBeAddedToMultiverse(block, manager.peerNode.multiverse, manager.peerNode.triggerBlockSync)
           // TODO add getter

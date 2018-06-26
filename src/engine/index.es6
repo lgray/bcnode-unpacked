@@ -481,14 +481,13 @@ export class Engine {
    * @param conn Connection the block was received from
    * @param newBlock Block itself
    */
-  blockFromPeer (conn: Object, newBlock: BcBlock): boolean {
-    const self = this
-    // Testis new block has been seen before
-    if (newBlock && !self._knownBlocksCache.get(newBlock.getHash())) {
+  blockFromPeer (conn: Object, newBlock: BcBlock): void {
+    // Test if new block has been seen before
+    if (newBlock && !this._knownBlocksCache.get(newBlock.getHash())) {
       // Add block to LRU cache to avoid processing the same block twice
       debug(`Adding received block into cache of known blocks - ${newBlock.getHash()}`)
       this._knownBlocksCache.set(newBlock.getHash(), newBlock)
-      self._logger.info('Received new block from peer', newBlock.getHeight())
+      this._logger.info('Received new block from peer', newBlock.getHeight())
 
       // EVAL NEXT
       // is newBlock next after currentHighestBlock? (all)
@@ -510,20 +509,19 @@ export class Engine {
       // after target adds weighted fusion positioning to also evaluate block  -> (X1,Y1) = D1/D1 + D2 * (X1,Y1) + D2 / D1 + D2 * (X2, Y2)
       // encourages grouped transactions from one tower to be more likely to enter a winning block in batch due to lowest distance
 
-      const isNextBlock = self.multiverse.addNextBlock(newBlock)
+      const isNextBlock = this.multiverse.addNextBlock(newBlock)
 
       if (isNextBlock) {
         // RESTART MINING USED newBlock.getHash()
         this.pubsub.publish('update.block.latest', { key: 'bc.block.latest', data: newBlock })
       } else {
-        const isResyncCandidate = self.multiverse.addResyncRequest(newBlock)
-        if (isResyncCandidate === true) {
-          // trigger sync from peer
-
-        }
+        this.multiverse.addResyncRequest(newBlock).then(shouldResync => {
+          if (shouldResync === true) {
+            // trigger sync from peer
+          }
+        })
       }
     }
-    return true
   }
 
   receiveSyncPeriod (peerIsSyncing: bool) {
