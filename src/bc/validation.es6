@@ -14,7 +14,8 @@ const {
   flatten,
   identity,
   reject,
-  sort
+  sort,
+  sum
 } = require('ramda')
 
 const { getLogger } = require('../logger')
@@ -222,4 +223,13 @@ export function validateBlockSequence (blocks: BcBlock[]): bool {
   }
 
   return true
+}
+
+export function childrenHeightSum (block: BcBlock): number {
+  return sum(
+    flatten(
+      Object.values(block.getBlockchainHeaders().toObject())
+    // $FlowFixMe Object.values is not generic
+    ).map((header) => header.height)
+  )
 }
