@@ -9,6 +9,7 @@
 
 import type BcBlock from '../protos/core_pb'
 import type { Logger } from 'winston'
+import type PersistenceRocksDb from '../persistence/rocksdb'
 
 const BN = require('bn.js')
 const { flatten } = require('ramda')
@@ -24,8 +25,10 @@ export class Multiverse {
   _created: number
   _id: string
   _logger: Logger
+  _persistence: PersistenceRocksDb
 
-  constructor () {
+  constructor (persistence: PersistenceRocksDb) {
+    this._persistence = persistence
     this._id = standardId()
     this._chain = []
     this._candidates = []
@@ -45,6 +48,10 @@ export class Multiverse {
   get blocksCount (): number {
     const blocks = this._chain
     return blocks.length
+  }
+
+  get persistence (): PersistenceRocksDb {
+    return this._persistence
   }
 
   purge () {
@@ -189,36 +196,53 @@ export class Multiverse {
    * @param newBlock
    * @returns {boolean}
    */
-  addResyncRequest (newBlock: BcBlock): boolean {
+  addResyncRequest (newBlock: BcBlock): Promise<boolean> {
     const currentHighestBlock = this.getHighestBlock()
     const currentParentHighestBlock = this.getParentHighestBlock()
 
     // PASS if no highest block exists go with current
     if (currentHighestBlock === null) {
-      return true
+      return Promise.resolve(true)
     }
 
     // FAIL if new block not within 16 seconds of local time
     if (newBlock.getTimestamp() + 16 < Math.floor(Date.now() * 0.001)) {
-      return false
+      return Promise.resolve(false)
     }
     if (currentParentHighestBlock === null && currentHighestBlock !== null) {
       if (new BN(newBlock.getTotalDifficulty()).gt(new BN(currentHighestBlock.getTotalDifficulty()))) {
         this.addCandidateBlock(newBlock)
-        return true
+        return Promise.resolve(true)
       }
     }
     // FAIL if newBlock total difficulty <  currentHighestBlock
     if (new BN(newBlock.getTotalDifficulty()).lt(new BN(currentHighestBlock.getTotalDifficulty()))) {
-      return false
+      return Promise.resolve(false)
     }
-    // TODO: make sure that blocks that are added reference child chains
-    // FAIL if sum of child block heights is less than the rovered child heights
-    if (childrenHeightSum(newBlock) <= childrenHeightSum(currentParentHighestBlock)) {
-      return false
-    }
-    this.addCandidateBlock(newBlock)
-    return true
+
+    // make sure that blocks that are added reference child chains
+    return this.validateRoveredBlocks(newBlock).then(areAllChildrenRovered => {
+      if (!areAllChildrenRovered) {
+        return Promise.resolve(false)
+      }
+
+      // FAIL if sum of child block heights is less than the rovered child heights
+      if (childrenHeightSum(newBlock) <= childrenHeightSum(currentParentHighestBlock)) {
+        return Promise.resolve(false)
+      }
+      this.addCandidateBlock(newBlock)
+      return Promise.resolve(true)
+    })
+  }
+
+  async validateRoveredBlocks (block: BcBlock): Promise<boolean> {
+    // construct key array like ['btc.block.528089', ..., 'wav.block.1057771', 'wav.blocks.1057771']
+    const keys = flatten(Object.values(block.getBlockchainHeaders().toObject()))
+      // $FlowFixMe - Object.values is not generic
+      .map(({ blockchain, height }) => `${blockchain}.block.${height}`)
+
+    const blocks = await this.persistence.getBulk(keys)
+    return Promise.resolve(keys.length === blocks.length)
   }
 
   /**
