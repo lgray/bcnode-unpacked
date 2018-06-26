@@ -1,4 +1,4 @@
-/* e
+/*
  * Copyright (c) 2017-present, Block Collider developers, All rights reserved.
  *
  * This source code is licensed under the MIT license found in the
@@ -181,14 +181,12 @@ export class Engine {
         await this.persistence.get('bc.block.1')
         const latestBlock = await this.persistence.get('bc.block.latest')
         self._logger.info('highest block height on disk ' + latestBlock.getHeight())
-        self.multiverse.addBlock(latestBlock)
-        self.multiverse._selective = true
-        this._logger.info('Genesis block present, everything ok')
+        self.multiverse.addNextBlock(latestBlock)
       } catch (_) { // genesis block not found
         try {
           await this.persistence.put('bc.block.1', newGenesisBlock)
           await this.persistence.put('bc.block.latest', newGenesisBlock)
-          self.multiverse.addBlock(newGenesisBlock)
+          self.multiverse.addNextBlock(newGenesisBlock)
           this._logger.info('Genesis block saved to disk ' + newGenesisBlock.getHash())
         } catch (e) {
           this._logger.error(`Error while creating genesis block ${e.message}`)
@@ -323,17 +321,14 @@ export class Engine {
         self._logger.warn('new purposed latest block does not match the last')
       }
 
-      if (msg.force !== undefined && msg.force === true && msg.multiverse !== undefined) {
+      if (msg.multiverse !== undefined) {
         while (msg.multiverse.length > 0) {
           const b = msg.multiverse.pop()
           await self.persistence.put('bc.block.' + b.getHeight(), b)
         }
         return Promise.resolve(true)
-      } else if (msg.force !== undefined && msg.force === true && msg.purge !== undefined) {
-        return self.blockpool.purgeFrom(block.getHeight(), msg.purge)
-      } else {
-        return Promise.resolve(true)
       }
+      return Promise.resolve(true)
     } catch (err) {
       self._logger.warn(err)
       if (block !== undefined) {
@@ -488,112 +483,46 @@ export class Engine {
    */
   blockFromPeer (conn: Object, newBlock: BcBlock): boolean {
     const self = this
-    // TODO: Validate new block mined by peer
+    // Testis new block has been seen before
     if (newBlock && !self._knownBlocksCache.get(newBlock.getHash())) {
-      self._logger.info('Received new block from peer', newBlock.getHeight())
-
-      // Add to cache
+      // Add block to LRU cache to avoid processing the same block twice
       debug(`Adding received block into cache of known blocks - ${newBlock.getHash()}`)
       this._knownBlocksCache.set(newBlock.getHash(), newBlock)
+      self._logger.info('Received new block from peer', newBlock.getHeight())
 
-      const beforeBlockHighest = self.multiverse.getHighestBlock()
-      if (beforeBlockHighest) {
-        this._logger.debug(`${self.multiverse._id} - beforeBlockHighest`, JSON.stringify(beforeBlockHighest.toObject(), null, 2))
-      }
+      // EVAL NEXT
+      // is newBlock next after currentHighestBlock? (all)
+      // [] - newBlock previousHash is hash of currentHighestBlock
+      // [] - newBlock timestamp > currentHighestBlock timestamp
+      // [] - newBlock totalDifficulty > currentHighestBlock totalDifficulty
+      // [] - newBlock connected chain heights > currentHighestBlock connected chain heights
 
-      const addedToMultiverse = self.multiverse.addBlock(newBlock)
-      this._logger.debug(`${self.multiverse._id} - addedToMultiverse`, addedToMultiverse)
+      // 1 EVAL REJECT / RESYNC
+      // * requires currentParentHighestBlock
+      // when does newBlock trigger resync after multiverse rejection (pick any)
+      // [] = newBlock has greater totalDifficulty
+      // [] = greater child heights of the parentHighestBlock
+      //
+      // 2 EVAL REJECT / RESYNC
+      // when no parentBlockExists (light client / early sync)
+      // [] = newBlock has greater totalDifficulty
+      //
+      // after target adds weighted fusion positioning to also evaluate block  -> (X1,Y1) = D1/D1 + D2 * (X1,Y1) + D2 / D1 + D2 * (X2, Y2)
+      // encourages grouped transactions from one tower to be more likely to enter a winning block in batch due to lowest distance
 
-      const afterBlockHighest = self.multiverse.getHighestBlock()
-      if (afterBlockHighest) {
-        this._logger.debug(`${self.multiverse._id} - afterBlockHighest`, JSON.stringify(afterBlockHighest.toObject(), null, 2))
-      }
+      const isNextBlock = self.multiverse.addNextBlock(newBlock)
 
-      if (addedToMultiverse === false) {
-        // TODO: Replace with newBlock.toObject()
-        this._logger.warn(`Block failed to join multiverse, id: ${self.multiverse._id}`, newBlock.toObject())
-      }
-
-      if (!beforeBlockHighest || !afterBlockHighest) {
-        return false
-      }
-
-      if (beforeBlockHighest.getHash() !== afterBlockHighest.getHash()) {
-        this.miningOfficer.stopMining()
+      if (isNextBlock) {
+        // RESTART MINING USED newBlock.getHash()
         this.pubsub.publish('update.block.latest', { key: 'bc.block.latest', data: newBlock })
-      } else if (afterBlockHighest.getHeight() < newBlock.getHeight() &&
-        new BN(afterBlockHighest.getTotalDistance()).lt(new BN(newBlock.getTotalDistance())) === true) {
-        this.miningOfficer.stopMining()
+      } else {
+        const isResyncCandidate = self.multiverse.addResyncRequest(newBlock)
+        if (isResyncCandidate === true) {
+          // trigger sync from peer
 
-        self.pubsub.publish('update.block.latest', { key: 'bc.block.latest', data: newBlock, force: true })
-
-        const newMultiverse = new Multiverse()
-        conn.getPeerInfo((err, peerInfo) => {
-          if (err) {
-            self._logger.error(err)
-            return false
-          }
-
-          const peerQuery = {
-            queryHash: newBlock.getHash(),
-            queryHeight: newBlock.getHeight(),
-            low: Math.max(newBlock.getHeight() - 7, 1),
-            high: newBlock.getHeight() - 1
-          }
-
-          debug('Querying peer for blocks', peerQuery)
-          this._logger.error('***********************| CANDIDATE 0 |*******************')
-          self.node.manager.createPeer(peerInfo)
-            .query(peerQuery)
-            .then((blocks) => {
-              self._logger.info('peer sent ' + blocks.length + ' block multiverse ')
-              debug('Got query response', blocks)
-              const decOrder = blocks.sort((a, b) => {
-                if (a.getHeight() > b.getHeight()) {
-                  return -1
-                }
-                if (a.getHeight() < b.getHeight()) {
-                  return 1
-                }
-                return 0
-              })
-
-              while (decOrder.length > 0) {
-                newMultiverse.addBlock(decOrder.pop())
-              }
-
-              newMultiverse.addBlock(newBlock)
-
-              if (Object.keys(newMultiverse).length > 6) {
-                const highCandidateBlock = newMultiverse.getHighestBlock()
-                const lowCandidateBlock = newMultiverse.getLowestBlock()
-
-                if (highCandidateBlock && new BN(highCandidateBlock.getTotalDistance()).gt(new BN(afterBlockHighest.getTotalDistance())) &&
-                    highCandidateBlock.getHeight() >= afterBlockHighest.getHeight()) {
-                  self.pubsub.publish('update.block.latest', { key: 'bc.block.latest', data: newBlock, force: true, multiverse: decOrder })
-                  self.multiverse = newMultiverse
-
-                  const newMultiverseHighestBlock = newMultiverse.getHighestBlock()
-                  const newMultiverseHighestBlockHash = newMultiverseHighestBlock && newMultiverseHighestBlock.getHash()
-                  self._logger.info(`applied new multiverse, hash: ${(newMultiverseHighestBlockHash && newMultiverseHighestBlockHash.toString()) || 'null'}`)
-                  self.blockpool._checkpoint = lowCandidateBlock
-                  // sets multiverse for removal
-                }
-              }
-
-              this._server._wsBroadcastMultiverse(newMultiverse)
-            })
-            .catch((err) => {
-              this._logger.error(`Error occurred when querying peer, peerId: '${peerInfo.id.toB58String()}', reason: ${err.message}`)
-            })
-        })
+        }
       }
-    } else {
-      const msg = `Received block is already in cache of known blocks - ${newBlock.getHash()}`
-      debug(msg)
-      this._logger.info(msg)
     }
-
     return true
   }
 
@@ -675,7 +604,7 @@ export class Engine {
    */
   _processMinedBlock (newBlock: BcBlock, solution: Object): Promise<boolean> {
     // TODO: reenable this._logger.info(`Mined new block: ${JSON.stringify(newBlockObj, null, 2)}`)
-
+    const self = this
     // Trying to process null/undefined block
     if (newBlock === null || newBlock === undefined) {
       this._logger.warn('Failed to process work provided by miner')
@@ -691,47 +620,19 @@ export class Engine {
 
       // Add to multiverse and call persist
       this._knownBlocksCache.set(newBlock.getHash(), newBlock)
+      const isNextBlock = self.multiverse.addNextBlock(newBlock)
 
-      const beforeBlockHighest = this.multiverse.getHighestBlock()
-      if (beforeBlockHighest) {
-        this._logger.debug(`beforeBlockHighest height: ${beforeBlockHighest.getHeight()}, hash: ${beforeBlockHighest.getHash()}`)
+      if (isNextBlock) {
+        // TODO: this will break now that _blocks is not used in multiverse
+        self._server._wsBroadcastMultiverse(this.multiverse)
+        self.pubsub.publish('update.block.latest', { key: 'bc.block.latest', data: newBlock, multiverse: self.multiverse._chain })
+        return Promise.resolve(true)
       } else {
         // beforeBlockHighest is not available
         return Promise.resolve(false)
       }
-
-      const addedToMultiverse = this.multiverse.addBlock(newBlock)
-      this._logger.debug(`addedToMultiverse: ${addedToMultiverse.toString()}`)
-      if (addedToMultiverse) {
-        this._server._wsBroadcastMultiverse(this.multiverse)
-      }
-
-      const afterBlockHighest = this.multiverse.getHighestBlock()
-      if (afterBlockHighest) {
-        this._logger.debug(`afterBlockHighest height: ${afterBlockHighest.getHeight()}, hash: ${afterBlockHighest.getHash()}`)
-      } else {
-        // afterBlockHighest is not available
-        return Promise.resolve(false)
-      }
-
-      if (beforeBlockHighest.getHash() !== afterBlockHighest.getHash()) {
-        this.miningOfficer.stopMining()
-        this.pubsub.publish('update.block.latest', { key: 'bc.block.latest', data: newBlock })
-        return Promise.resolve(true)
-      }
-
-      if (afterBlockHighest &&
-        afterBlockHighest.getHeight() < newBlock.getHeight() &&
-        new BN(afterBlockHighest.getTotalDistance()).lt(new BN(newBlock.getTotalDistance()))
-      ) {
-        this.pubsub.publish('update.block.latest', { key: 'bc.block.latest', data: newBlock })
-        return Promise.resolve(true)
-      }
-
-      return Promise.resolve(false)
     } catch (err) {
-      this._logger.warn(`failed to process work provided by miner, err: ${errToString(err)}`)
-      return Promise.resolve(false)
+      return Promise.reject(err)
     }
   }
 }

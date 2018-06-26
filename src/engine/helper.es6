@@ -22,7 +22,7 @@ export const shouldBlockBeAddedToMultiverse = (newBlock: BcBlock, multiverse: Mu
   }
 
   if (doesNewBlockPreviousHashReferenceBlockInMultiverse(newBlock, multiverse)) {
-    multiverse.addBlock(newBlock)
+    multiverse.addNextBlock(newBlock)
     return true
   }
 
@@ -36,7 +36,7 @@ export const shouldBlockBeAddedToMultiverse = (newBlock: BcBlock, multiverse: Mu
     return false
   }
 
-  multiverse.addBlock(newBlock)
+  multiverse.addNextBlock(newBlock)
   return true
 }
 
@@ -49,7 +49,7 @@ export const timestampIsSignificantSecondsBelowLocalTime = (newBlock: BcBlock): 
 }
 
 export const doesNewBlockPreviousHashReferenceBlockInMultiverse = (newBlock: BcBlock, multiverse: Multiverse): boolean => {
-  return multiverse.addBlock(newBlock)
+  return multiverse.addNextBlock(newBlock)
 }
 
 export const isNewBlockHeightLowerThanLowestInMultiverse = (newBlock: BcBlock, multiverse: Multiverse): boolean => {

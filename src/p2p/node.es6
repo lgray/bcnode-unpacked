@@ -253,7 +253,7 @@ export class PeerNode {
                 if (lowestBlock && lowestBlock.getHash() !== winningMultiverse[0].getHash()) {
                   this._blockPool.maximumHeight = lowestBlock.getHeight()
                   // insert into the multiverse
-                  winningMultiverse.map(block => this.multiverse.addBlock(block))
+                  winningMultiverse.map(block => this.multiverse.addNextBlock(block))
                   // TODO: Use RXP
                   // Report not syncing
                   this.reportSyncPeriod(false)
