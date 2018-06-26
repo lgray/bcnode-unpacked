@@ -483,7 +483,7 @@ export default class Network extends EventEmitter {
 
     const rlpx = this._rlpx = new RLPx(this._key, {
       dpt: this._dpt,
-      maxPeers: 60,
+      maxPeers: 33,
       capabilities: [ETH.eth63, ETH.eth62],
       listenPort: null
     })
