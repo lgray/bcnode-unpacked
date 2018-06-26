@@ -23,7 +23,6 @@ const { createUnifiedBlock } = require('../helper')
 
 const NETWORK_TIMEOUT = 3000
 const BLOCK_VERSION = 536870912
-const LOCALDISK = true
 
 function _createUnifiedBlock (block: Object): Block { // TODO specify block type
   const msg = new Block()
@@ -38,13 +37,14 @@ function _createUnifiedBlock (block: Object): Block { // TODO specify block type
 }
 
 export default class Controller {
-  constructor () {
+  constructor (isStandalone: boolean) {
     this._network = undefined
     this._logger = logging.getLogger(__filename)
     this._blockCache = new LRUCache({ max: 110 })
     this._blocksNumberCache = new LRUCache({ max: 110 })
     this._txCache = new LRUCache({ max: 3000 })
     this._rpc = new RpcClient()
+    this._isStandalone = isStandalone
   }
 
   get network () {
@@ -166,13 +166,17 @@ export default class Controller {
         if (isNew) {
           const unifiedBlock = createUnifiedBlock(block, _createUnifiedBlock)
           network.bestHeight = _block.blockNumber
-          this._rpc.rover.collectBlock(unifiedBlock, (err, response) => {
-            if (err) {
-              this._logger.warn('RpcClient could not collect block')
-            } else {
-              this._logger.debug(`Collector Response: ${JSON.stringify(response.toObject(), null, 4)}`)
-            }
-          })
+          if (!this._isStandalone) {
+            this._rpc.rover.collectBlock(unifiedBlock, (err, response) => {
+              if (err) {
+                this._logger.warn('RpcClient could not collect block')
+              } else {
+                this._logger.debug(`Collector Response: ${JSON.stringify(response.toObject(), null, 4)}`)
+              }
+            })
+          } else {
+            this._logger.debug(`Collected new BTC block: ${unifiedBlock.toObject()}`)
+          }
         }
       } else if (peer !== undefined && peer.status !== undefined && peer.hash !== undefined && pool._connectedPeers[peer.hash] !== undefined) {
         try {
