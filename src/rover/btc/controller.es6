@@ -39,17 +39,12 @@ function _createUnifiedBlock (block: Object): Block { // TODO specify block type
 
 export default class Controller {
   constructor () {
-    this._dpt = false
     this._network = undefined
     this._logger = logging.getLogger(__filename)
     this._blockCache = new LRUCache({ max: 110 })
     this._blocksNumberCache = new LRUCache({ max: 110 })
     this._txCache = new LRUCache({ max: 3000 })
     this._rpc = new RpcClient()
-  }
-
-  get dpt () {
-    return this._dpt
   }
 
   get network () {
