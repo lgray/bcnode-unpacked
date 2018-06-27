@@ -6,86 +6,84 @@
  *
  * @flow
  */
+const { flatten } = require('ramda')
+
+const { BcBlock, BlockchainHeader, BlockchainHeaders, Block } = require('../../protos/core_pb')
 const { Multiverse } = require('../multiverse')
 
-const { BcBlock, BlockchainHeaders } = require('../../protos/core_pb')
+const PersistenceRocksDb = require('../../persistence/rocksdb').default
+jest.mock('../../persistence/rocksdb')
 
-const range = (to: number): number[] => [...Array(to).keys()]
+const rndString = () => Number(Math.random().toString().slice(2)).toString(36)
+const createMockBlockchainHeader = (blockchain: string, height: number) => new BlockchainHeader([
+  blockchain, // string blockchain = 1;
+  rndString(), // string hash = 2;
+  rndString(), // string previous_hash = 3;
+  Date.now() - (Math.random() * 1000 << 0), // uint64 timestamp = 4;
+  height, // uint64 height = 5;
+  rndString(), // string merkle_root = 6;
+  1 // uint64 blockchain_confirmations_in_parent_count = 7;
+])
 
-const getHighestBlock = (multiverse: Multiverse): BcBlock => {
-  let highest = multiverse.getHighestBlock()
-  expect(highest).toBeInstanceOf(BcBlock)
-  return highest
+const blockchainHeaderToRoveredBlock = (header: BlockchainHeader): Block => {
+  return new Block([
+    header.getBlockchain(),
+    header.getHash(),
+    header.getPreviousHash(),
+    header.getTimestamp(),
+    header.getHeight(),
+    header.getMerkleRoot()
+  ])
 }
 
-const createMockBlock = (height: number, previousBlock: ?BcBlock): BcBlock => {
-  const block = new BcBlock()
-  block.setHash(String.fromCharCode(96 + height).repeat(3))
-  block.setHeight(height)
-  block.setBlockchainHeaders(new BlockchainHeaders())
-  block.setDistance(100)
-  if (previousBlock) {
-    block.setPreviousHash(previousBlock.getHash())
-    block.setTotalDistance((Number(previousBlock.getTotalDistance()) + 100).toString())
-  } else {
-    block.setTotalDistance('101')
-  }
-
-  return block
-}
-
-describe(Multiverse, () => {
-  it('can instantiate', () => {
-    const m = new Multiverse()
-    expect(m).toBeInstanceOf(Multiverse)
+describe('Multiverse', () => {
+  beforeEach(() => {
+    // $FlowFixMe - flow is unable to properly type mocked module
+    PersistenceRocksDb.mockClear()
   })
 
-  describe.skip('addBlock', () => {
-    it('adds two blocks', () => {
-      const block1 = createMockBlock(1)
+  test('constructor()', () => {
+    const multiverse = new Multiverse(new PersistenceRocksDb())
+    expect(multiverse.blocksCount).toEqual(0)
+  })
 
-      const m = new Multiverse()
-      m.addBlock(block1)
-      expect(getHighestBlock(m).getHash()).toBe('aaa')
+  describe('validateRoveredBlocks', () => {
+    let mockPersistence
+    let multiverse
+    let mockBlockchainHeaders
 
-      const block2 = createMockBlock(2, block1)
-
-      m.addBlock(block2)
-      expect(getHighestBlock(m).getHash()).toBe('bbb')
+    beforeAll(() => {
+      mockPersistence = new PersistenceRocksDb()
+      multiverse = new Multiverse(mockPersistence)
+      mockBlockchainHeaders = [
+        [createMockBlockchainHeader('btc', 529338)], // btc
+        [createMockBlockchainHeader('eth', 5858091)], // eth
+        [createMockBlockchainHeader('lsk', 6351117)], // lsk
+        [createMockBlockchainHeader('neo', 2435841)], // neo
+        [createMockBlockchainHeader('wav', 1057785)] // wav
+      ]
     })
 
-    it('holds maximum of 7 blocks', () => {
-      const blocks = range(8).reduce((blocks, height) => {
-        blocks.push(createMockBlock(height, blocks[height - 1]))
-        return blocks
-      }, [])
+    test('resolves as true if all blocks are roveres', async () => {
+      // we don't care here about other values in the BcBlock so keep default values
+      const mockBlock = new BcBlock()
+      mockBlock.setBlockchainHeaders(new BlockchainHeaders(mockBlockchainHeaders))
+      mockPersistence.getBulk.mockResolvedValueOnce(flatten(mockBlockchainHeaders).map(blockchainHeaderToRoveredBlock))
 
-      const m = new Multiverse()
-      blocks.map(b => m.addBlock(b))
-      expect(blocks[7].getHash()).toBe('ggg')
-      expect(getHighestBlock(m).getHash()).toBe('fff')
+      const allAreRovered = await multiverse.validateRoveredBlocks(mockBlock)
+      expect(allAreRovered).toBe(true)
     })
 
-    it('add sorts blocks by total distance', () => {
-      const blocks = range(7).reduce((blocks, height) => {
-        blocks.push(createMockBlock(height, blocks[height - 1]))
-        return blocks
-      }, [])
+    test('resolves as false if some block in BlockchainHeaders was not rovered by node', async () => {
+      // we don't care here about other values in the BcBlock so keep default values
+      const mockBlock = new BcBlock()
+      mockBlock.setBlockchainHeaders(new BlockchainHeaders(mockBlockchainHeaders))
+      // mock that persistence returns olny eth, lsk, neo and wav Block from persistence (btc is missing - was not rovered)
+      const mockGetBulkReturnValue = flatten(mockBlockchainHeaders).map(blockchainHeaderToRoveredBlock).slice(1)
+      mockPersistence.getBulk.mockResolvedValueOnce(mockGetBulkReturnValue)
 
-      const m = new Multiverse()
-      blocks.map(b => m.addBlock(b))
-
-      const extraTopBlock = new BcBlock()
-      extraTopBlock.setHash('abc')
-      extraTopBlock.setPreviousHash(blocks[5].getHash())
-      extraTopBlock.setHeight(6)
-      extraTopBlock.setTotalDistance('10000') // higher than blocks[7]
-      extraTopBlock.setBlockchainHeaders(new BlockchainHeaders())
-      extraTopBlock.setDistance(101)
-      m.addBlock(extraTopBlock)
-
-      expect(getHighestBlock(m).getHash()).not.toBe('fff')
-      expect(getHighestBlock(m).getHash()).toBe('abc')
+      const allAreRovered = await multiverse.validateRoveredBlocks(mockBlock)
+      expect(allAreRovered).toBe(false)
     })
   })
 })

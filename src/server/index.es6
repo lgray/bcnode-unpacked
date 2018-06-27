@@ -291,17 +291,11 @@ export class Server {
   }
 
   _wsBroadcastMultiverse (multiverse: Object) {
-    const blocksToSend = multiverse.blocks
-    const keys = Object.keys(blocksToSend)
-
-    const res = keys.reduce((acc, val) => {
-      acc[val] = blocksToSend[val].map((b) => b.toObject())
-      return acc
-    }, {})
+    const blocksToSend = multiverse._chain
 
     this._wsBroadcast({
       type: 'multiverse.set',
-      data: res
+      data: blocksToSend
     })
   }
 

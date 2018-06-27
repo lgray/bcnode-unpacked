@@ -48,8 +48,8 @@ export class PeerNode {
 
   constructor (engine: Engine) {
     this._engine = engine
-    this._multiverse = new Multiverse() /// !important this is a (nonselective) multiverse
-    this._blockPool = new BlockPool(engine._persistence, engine._pubsub)
+    this._multiverse = new Multiverse(engine.persistence) /// !important this is a (nonselective) multiverse
+    this._blockPool = new BlockPool(engine.persistence, engine._pubsub)
     this._logger = logging.getLogger(__filename)
     this._manager = new PeerManager(this)
 
@@ -253,7 +253,7 @@ export class PeerNode {
                 if (lowestBlock && lowestBlock.getHash() !== winningMultiverse[0].getHash()) {
                   this._blockPool.maximumHeight = lowestBlock.getHeight()
                   // insert into the multiverse
-                  winningMultiverse.map(block => this.multiverse.addBlock(block))
+                  winningMultiverse.map(block => this.multiverse.addNextBlock(block))
                   // TODO: Use RXP
                   // Report not syncing
                   this.reportSyncPeriod(false)
