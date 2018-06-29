@@ -26,13 +26,14 @@ const createMockBlockchainHeader = (blockchain: string, height: number) => new B
 ])
 
 const blockchainHeaderToRoveredBlock = (header: BlockchainHeader): Block => {
+  // TODO why not protoBuf but just plain object?
   return new Block([
-    header.getBlockchain(),
-    header.getHash(),
-    header.getPreviousHash(),
-    header.getTimestamp(),
-    header.getHeight(),
-    header.getMerkleRoot()
+    header.blockchain,
+    header.hash,
+    header.previousHash,
+    header.timestamp,
+    header.height,
+    header.merkleRoot
   ])
 }
 
@@ -64,7 +65,7 @@ describe('Multiverse', () => {
       ]
     })
 
-    test('resolves as true if all blocks are roveres', async () => {
+    test('resolves as true if all blocks are rovered', async () => {
       // we don't care here about other values in the BcBlock so keep default values
       const mockBlock = new BcBlock()
       mockBlock.setBlockchainHeaders(new BlockchainHeaders(mockBlockchainHeaders))
