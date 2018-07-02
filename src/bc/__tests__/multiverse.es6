@@ -26,7 +26,6 @@ const createMockBlockchainHeader = (blockchain: string, height: number) => new B
 ])
 
 const blockchainHeaderToRoveredBlock = (header: BlockchainHeader): Block => {
-  // TODO why not protoBuf but just plain object?
   return new Block([
     header.blockchain,
     header.hash,
@@ -51,25 +50,32 @@ describe('Multiverse', () => {
   describe('validateRoveredBlocks', () => {
     let mockPersistence
     let multiverse
+    let mockBlockchainHeadersObj
     let mockBlockchainHeaders
 
     beforeAll(() => {
       mockPersistence = new PersistenceRocksDb()
       multiverse = new Multiverse(mockPersistence)
-      mockBlockchainHeaders = [
-        [createMockBlockchainHeader('btc', 529338)], // btc
-        [createMockBlockchainHeader('eth', 5858091)], // eth
-        [createMockBlockchainHeader('lsk', 6351117)], // lsk
-        [createMockBlockchainHeader('neo', 2435841)], // neo
-        [createMockBlockchainHeader('wav', 1057785)] // wav
-      ]
+      mockBlockchainHeadersObj = {
+        setBtcList: [createMockBlockchainHeader('btc', 529338)], // btc
+        setEthList: [createMockBlockchainHeader('eth', 5858091)], // eth
+        setLskList: [createMockBlockchainHeader('lsk', 6351117)], // lsk
+        setNeoList: [createMockBlockchainHeader('neo', 2435841)], // neo
+        setWavList: [createMockBlockchainHeader('wav', 1057785)] // wav
+      }
+      mockBlockchainHeaders = new BlockchainHeaders()
+      Object.entries(mockBlockchainHeadersObj).forEach(([method, list]) => {
+        mockBlockchainHeaders[method](list)
+      })
     })
 
     test('resolves as true if all blocks are rovered', async () => {
       // we don't care here about other values in the BcBlock so keep default values
       const mockBlock = new BcBlock()
-      mockBlock.setBlockchainHeaders(new BlockchainHeaders(mockBlockchainHeaders))
-      mockPersistence.getBulk.mockResolvedValueOnce(flatten(mockBlockchainHeaders).map(blockchainHeaderToRoveredBlock))
+      mockBlock.setBlockchainHeaders(mockBlockchainHeaders)
+
+      const mockGetBulkReturnValue = flatten(Object.values(mockBlockchainHeaders.toObject())).map(blockchainHeaderToRoveredBlock)
+      mockPersistence.getBulk.mockResolvedValueOnce(mockGetBulkReturnValue)
 
       const allAreRovered = await multiverse.validateRoveredBlocks(mockBlock)
       expect(allAreRovered).toBe(true)
@@ -78,9 +84,24 @@ describe('Multiverse', () => {
     test('resolves as false if some block in BlockchainHeaders was not rovered by node', async () => {
       // we don't care here about other values in the BcBlock so keep default values
       const mockBlock = new BcBlock()
-      mockBlock.setBlockchainHeaders(new BlockchainHeaders(mockBlockchainHeaders))
+      mockBlock.setBlockchainHeaders(mockBlockchainHeaders)
       // mock that persistence returns olny eth, lsk, neo and wav Block from persistence (btc is missing - was not rovered)
-      const mockGetBulkReturnValue = flatten(mockBlockchainHeaders).map(blockchainHeaderToRoveredBlock).slice(1)
+      const mockGetBulkReturnValue = flatten(Object.values(mockBlockchainHeaders.toObject())).map(blockchainHeaderToRoveredBlock).slice(1)
+      mockPersistence.getBulk.mockResolvedValueOnce(mockGetBulkReturnValue)
+
+      const allAreRovered = await multiverse.validateRoveredBlocks(mockBlock)
+      expect(allAreRovered).toBe(false)
+    })
+
+    test('resolves ad false if some block in BlockchainHeaders has different values', async () => {
+      // we don't care here about other values in the BcBlock so keep default values
+      const mockBlock = new BcBlock()
+      mockBlock.setBlockchainHeaders(mockBlockchainHeaders)
+      // mock that BTC block returned from persistence has different hash, previous hash and merkleRoot
+      const mockGetBulkReturnValue = flatten(Object.values(mockBlockchainHeaders.toObject())).map(blockchainHeaderToRoveredBlock)
+      mockGetBulkReturnValue[0].setHash('differentHash')
+      mockGetBulkReturnValue[0].setPreviousHash('differentPreviousHash')
+      mockGetBulkReturnValue[0].setMerkleRoot('differentMerkleRoot')
       mockPersistence.getBulk.mockResolvedValueOnce(mockGetBulkReturnValue)
 
       const allAreRovered = await multiverse.validateRoveredBlocks(mockBlock)
