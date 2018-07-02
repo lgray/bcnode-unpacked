@@ -10,6 +10,10 @@
       "electionEndBlockHeight": "",
       "version": 1,
       "blocksCount": 3,
+      "DFNumerator": 1,
+      "DFDenominator": 1,
+      "DFVoid": 0,
+      "DFBound": 0,
       "fingerprint": [
         {
           "hash": "000000000000a89a2c06f66c5aa3e278b53a19d094026be17c9c5a6bbae32e6b",
@@ -39,6 +43,10 @@
       "electionStartBlockHeight": "",
       "electionEndBlockHeight": "",
       "version": 1,
+      "DFNumerator": 1,
+      "DFDenominator": 1,
+      "DFVoid": 0,
+      "DFBound": 0,
       "fingerprint": [
         {
           "hash": "a218e2c611f21232d857e3c8cecdcdf1f65f25a4477f98f6f47e4063807f2308",
@@ -68,6 +76,10 @@
       "electionEndBlockHeight": "",
       "version": 1,
       "blocksCount": 3,
+      "DFNumerator": 1,
+      "DFDenominator": 15,
+      "DFVoid": 15000,
+      "DFBound": 300,
       "fingerprint": [
         {
           "hash": "FSH8eAAzZNqnG8xgTZtz5xuLqXySsXgAjmFEC25hXMbEufiGjqWPnGCZFt6gLiVLJny16ipxRNAkkzjjhqTjBE2",
@@ -97,6 +109,10 @@
       "electionEndBlockHeight": "",
       "version": 1,
       "blocksCount": 3,
+      "DFNumerator": 1,
+      "DFDenominator": 15,
+      "DFVoid": 15000,
+      "DFBound": 180,
       "fingerprint": [
         {
           "hash": "d42561e3d30e15be6400b6df2f328e02d2bf6354c41dce433bc57687c82144bf",
@@ -126,6 +142,10 @@
       "electionEndBlockHeight": "",
       "version": 1,
       "blocksCount": 3,
+      "DFNumerator": 1,
+      "DFDenominator": 1,
+      "DFVoid": 0,
+      "DFBound": 0,
       "fingerprint": [
         {
           "hash": "13658550407518916215",
