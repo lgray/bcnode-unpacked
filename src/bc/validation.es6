@@ -12,6 +12,7 @@ const {
   aperture,
   equals,
   flatten,
+  fromPairs,
   identity,
   reject,
   sort,
@@ -31,6 +32,14 @@ const {
   distance
 } = require('../mining/primitives')
 const GENESIS_DATA = require('./genesis.raw')
+const FINGERPRINTS_TEMPLATE = require('../utils/templates/blockchain_fingerprints.json')
+
+type DfConfig = {
+  [chain: string]: {DFNumerator: number, DFDenominator: number, DFVoid: number, DFBound: number}
+}
+const DF_CONFIG: DfConfig = fromPairs(FINGERPRINTS_TEMPLATE.blockchainHeaders.map(
+  ({name, DFNumerator, DFDenominator, DFVoid, DFBound}) => ([name, {DFNumerator, DFDenominator, DFVoid, DFBound}])
+))
 
 const logger = getLogger(__filename)
 
@@ -52,6 +61,10 @@ export function isValidBlock (newBlock: BcBlock): bool {
   }
   if (!isChainRootCorrectlyCalculated(newBlock)) {
     logger.warn('failed: isChainRootCorrectlyCalculated')
+    return false
+  }
+  if (!areDarkFibersValid(newBlock)) {
+    logger.warn('failed: areDarkFibersValid')
     return false
   }
   if (!isMerkleRootCorrectlyCalculated(newBlock)) {
@@ -127,6 +140,17 @@ function isChainRootCorrectlyCalculated (newBlock: BcBlock): bool {
   const expectedBlockHashes = getChildrenBlocksHashes(blockchainMapToList(newBlock.getBlockchainHeaders()))
   const expectedChainRoot = blake2bl(getChildrenRootHash(expectedBlockHashes).toString())
   return receivedChainRoot === expectedChainRoot
+}
+
+function areDarkFibersValid (newBlock: BcBlock): bool {
+  logger.info('areDarkFibersValid validation running')
+  const newBlockTimestampMs = newBlock.getTimestamp() * 1000
+  const blockchainHeadersList = blockchainMapToList(newBlock.getBlockchainHeaders())
+  const dfHeadersChecks = blockchainHeadersList.map(header => {
+    // e.g. NEO 1000 (rovered ts)  <=    1400 (mined time) -   300 (DFBound for NEO)
+    return header.getTimestamp() <= newBlockTimestampMs - DF_CONFIG[header.getBlockchain()].DFBound * 1000
+  })
+  return all(equals(true), dfHeadersChecks)
 }
 
 function isMerkleRootCorrectlyCalculated (newBlock: BcBlock): bool {

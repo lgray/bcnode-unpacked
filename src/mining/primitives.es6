@@ -321,7 +321,7 @@ const blockHash: (BlockchainHeader|Block => string) = compose(
 
 export const getChildrenBlocksHashes: ((BlockchainHeader[]|Block[]) => string[]) = map(blockHash)
 
-// TODO should maintain sort (btc -> eth -> lbbhhsk -> neo -> wav)
+// TODO should maintain sort (btc -> eth -> lsk -> neo -> wav)
 export const blockchainMapToList = (headersMap: BlockchainHeaders): BlockchainHeader[] => {
   return Object.keys(headersMap.toObject()).map(listName => {
     const getMethodName = `get${listName[0].toUpperCase()}${listName.slice(1)}`
