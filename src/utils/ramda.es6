@@ -12,3 +12,5 @@ const {
 } = require('ramda')
 
 export const concatAll = reduce(concat, [])
+
+export const randRange = (min: number, max: number) => Math.random() * ((max - min) + 1) + min << 0
