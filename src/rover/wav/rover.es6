@@ -25,7 +25,7 @@ const { config } = require('../../config')
 const { DF_CONFIG } = require('../../bc/validation')
 
 const ROVER_TITLE = 'bc-rover-wav'
-const IS_STANDALONE = require.main === module
+const IS_STANDALONE = require.main === module && process.argv.length > 2
 
 /**
  * WAV Rover entrypoint

@@ -23,7 +23,7 @@ process.on('unhandledRejection', (err) => {
 const Controller = require('./controller').default
 
 const ROVER_TITLE = 'bc-rover-btc'
-const IS_STANDALONE = require.main === module
+const IS_STANDALONE = require.main === module && process.argv.length > 2
 
 const main = () => {
   process.title = ROVER_TITLE
