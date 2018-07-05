@@ -151,9 +151,10 @@ export default class Controller {
         if (isEmpty(this._pendingRequests)) {
           node.rpc.getBlockCount().then(height => node.rpc.getBlock(height - 1)).then(block => {
             const ts = block.time
-            // TODO push second further to future
-            this._pendingRequests.push([randRange(ts, ts + DFBound), block.index])
-            this._pendingRequests.push([randRange(ts + 5, ts + 5 + DFBound), block.index + 1])
+            const requestTime = randRange(ts, ts + DFBound)
+            this._pendingRequests.push([requestTime, block.index])
+            // push second further to future
+            this._pendingRequests.push([requestTime + 5, block.index + 1])
             cycle()
           }).catch(err => {
             this._logger.warn(`Unable to start roving, could not get block count, err: ${err.message}`)
@@ -171,7 +172,16 @@ export default class Controller {
               this._logger.debug(`Unseen block with hash: ${block.hash} => using for BC chain`)
 
               const unifiedBlock = createUnifiedBlock(block, _createUnifiedBlock)
-              this._pendingFibers.push([unifiedBlock.getTimestamp(), unifiedBlock])
+              const formatTimestamp = unifiedBlock.getTimestamp() / 1000 << 0
+              const currentTime = ts.nowSeconds()
+              this._pendingFibers.push([formatTimestamp, unifiedBlock])
+
+              const maxPendingHeight = this._pendingRequests[this._pendingRequests.length - 1][1]
+              if (currentTime + 5 < formatTimestamp + DFBound) {
+                this._pendingRequests.push([randRange(currentTime, formatTimestamp + DFBound), maxPendingHeight + 1])
+              } else {
+                this._pendingRequests.push([randRange(currentTime, currentTime + 5), maxPendingHeight + 1])
+              }
             }
             cycle()
           }, reason => {
@@ -224,7 +234,7 @@ export default class Controller {
         return
       }
       this._logger.debug(`Fibers count ${this._pendingFibers.length}`)
-      const fiberTs = this._pendingFibers[0][0] / 1000 << 0
+      const fiberTs = this._pendingFibers[0][0]
       if (fiberTs + DFBound <= ts.nowSeconds()) {
         const [, fiberBlock] = this._pendingFibers.shift()
         this._logger.debug('NEO Fiber is ready, going to call this._rpc.rover.collectBlock()')

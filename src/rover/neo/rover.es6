@@ -31,7 +31,7 @@ const IS_STANDALONE = require.main === module
 const main = () => {
   process.title = ROVER_TITLE
 
-  const controller = new Controller(merge(config, { isStandalone: IS_STANDALONE, dFconfig: DF_CONFIG }))
+  const controller = new Controller(merge(config, { isStandalone: IS_STANDALONE, dfConfig: DF_CONFIG }))
   controller.init()
 }
 
