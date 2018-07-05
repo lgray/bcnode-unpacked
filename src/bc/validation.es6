@@ -161,7 +161,7 @@ function isMerkleRootCorrectlyCalculated (newBlock: BcBlock): bool {
   const expectedMerkleRoot = createMerkleRoot(concatAll([
     blockHashes,
     newBlock.getTxsList(),
-    [newBlock.getMiner(), newBlock.getHeight(), newBlock.getVersion(), newBlock.getSchemaVersion(), newBlock.getNrgGrant()]
+    [newBlock.getMiner(), newBlock.getHeight(), newBlock.getVersion(), newBlock.getSchemaVersion(), newBlock.getNrgGrant(), GENESIS_DATA.blockchainFingerprintsRoot]
   ]))
 
   return receivedMerkleRoot === expectedMerkleRoot
