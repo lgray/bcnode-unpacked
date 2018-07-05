@@ -13,6 +13,7 @@ const NeoMesh = require('@cityofzion/neo-js/dist/node/mesh')
 const NeoNode = require('@cityofzion/neo-js/dist/node/node')
 const { inspect } = require('util')
 const LRUCache = require('lru-cache')
+const { isEmpty } = require('ramda')
 
 const { Block } = require('../../protos/core_pb')
 const logging = require('../../logger')
@@ -20,6 +21,8 @@ const { errToString } = require('../../helper/error')
 const { RpcClient } = require('../../rpc')
 const { createUnifiedBlock } = require('../helper')
 const { getBackoff } = require('../utils')
+const { randRange } = require('../../utils/ramda')
+const ts = require('../../utils/time').default // ES6 default export
 
 const PING_PERIOD = 20000
 
@@ -92,18 +95,19 @@ function _createUnifiedBlock (block: NeoBlock): Block {
  * NEO Controller
  */
 export default class Controller {
-  /* eslint-disable no-undef */
-  _blockCache: LRUCache<string, bool>;
-  _rpc: RpcClient;
-  _logger: Logger;
-  _config: Object;
-  _neoMesh: Object;
-  _timeoutDescriptor: TimeoutID;
-  _networkRefreshIntervalDescriptor: IntervalID;
-  _backoff: Backoff;
-  /* eslint-enable */
+  _blockCache: LRUCache<string, bool>
+  _rpc: RpcClient
+  _logger: Logger
+  _config: { isStandalone: bool }
+  _neoMesh: Object
+  _timeoutDescriptor: TimeoutID
+  _networkRefreshIntervalDescriptor: IntervalID
+  _checkFibersIntervalID: IntervalID
+  _backoff: Backoff
+  _pendingRequests: Array<[number, number]>
+  _pendingFibers: Array<[number, Block]>
 
-  constructor (config: Object) {
+  constructor (config: { isStandalone: bool }) {
     this._config = config
     this._logger = logging.getLogger(__filename)
     this._blockCache = new LRUCache({
@@ -118,6 +122,9 @@ export default class Controller {
     }))
     this._rpc = new RpcClient()
     this._backoff = getBackoff()
+    this._pendingRequests = []
+    this._pendingFibers = []
+    ts.start()
   }
 
   init () {
@@ -133,41 +140,55 @@ export default class Controller {
       process.exit(3)
     })
 
+    const DFBound = 180
+
     const cycle = () => {
       this._timeoutDescriptor = setTimeout(() => {
-        this._logger.debug('trying to get new block')
         const node = this._neoMesh.getHighestNode()
+        this._logger.debug(`Pending requests: ${inspect(this._pendingRequests)}, pending fibers: ${inspect(this._pendingFibers.map(([ts, b]) => { return [ts, b.toObject()] }))}`)
 
-        node.rpc.getBestBlockHash().then(bestBlockHash => {
-          this._logger.debug(`Got best block: "${bestBlockHash}"`)
-          if (!this._blockCache.has(bestBlockHash)) {
-            this._blockCache.set(bestBlockHash, true)
-            this._logger.debug(`Unseen block with id: ${inspect(bestBlockHash)} => using for BC chain`)
+        if (isEmpty(this._pendingRequests)) {
+          node.rpc.getBlockCount().then(height => node.rpc.getBlock(height - 1)).then(block => {
+            const ts = block.time
+            // TODO push second further to future
+            this._pendingRequests.push([randRange(ts, ts + DFBound), block.index])
+            this._pendingRequests.push([randRange(ts + 5, ts + 5 + DFBound), block.index + 1])
+            cycle()
+          }).catch(err => {
+            this._logger.warn(`Unable to start roving, could not get block count, err: ${err.message}`)
+            cycle()
+          })
+          return
+        }
 
-            return node.rpc.getBlockByHash(bestBlockHash).then(lastBlock => {
-              this._logger.debug(`Collected new block with id: ${inspect(lastBlock.hash)}, with "${lastBlock.tx.length}" transactions`)
+        const [requestTimestamp, requestBlockHeight] = this._pendingRequests.shift()
+        if (requestTimestamp <= ts.nowSeconds()) {
+          node.rpc.getBlock(requestBlockHeight).then(block => {
+            this._logger.debug(`Got block at height : "${requestBlockHeight}"`)
+            if (!this._blockCache.has(requestBlockHeight)) {
+              this._blockCache.set(requestBlockHeight, true)
+              this._logger.debug(`Unseen block with hash: ${block.hash} => using for BC chain`)
 
-              const unifiedBlock = createUnifiedBlock(lastBlock, _createUnifiedBlock)
-
-              this._logger.debug('NEO Going to call this._rpc.rover.collectBlock()')
-              this._rpc.rover.collectBlock(unifiedBlock, (err, response) => {
-                if (err) {
-                  this._logger.error(`Error while collecting block ${inspect(err)}`)
-                  return
-                }
-                this._logger.debug(`Collector Response: ${JSON.stringify(response.toObject(), null, 4)}`)
-              })
-            })
-          }
-        }).then(() => {
-          this._backoff.reset()
-          this._logger.debug('tick')
+              const unifiedBlock = createUnifiedBlock(block, _createUnifiedBlock)
+              this._pendingFibers.push([unifiedBlock.getTimestamp(), unifiedBlock])
+            }
+            cycle()
+          }, reason => {
+            throw new Error(reason)
+          }).catch(err => {
+            this._logger.warn(`Error while getting new block height: ${requestBlockHeight}, err: ${errToString(err)}`)
+            // postpone remaining requests
+            this._pendingRequests = this._pendingRequests.map(([ts, height]) => [ts + 10, height])
+            // prepend currentrequest back but schedule to try it in [now, now + 10s]
+            this._pendingRequests.unshift([randRange(ts.nowSeconds(), ts.nowSeconds() + 10), requestBlockHeight])
+            cycle()
+          })
+        } else {
+          // prepend request back to queue - we have to wait until time it is scheduled
+          this._pendingRequests.unshift([requestTimestamp, requestBlockHeight])
           cycle()
-        }).catch(reason => {
-          this._logger.error(`Error while getting new block, err: ${errToString(reason)}`)
-          cycle()
-        })
-      }, this._backoff.duration())
+        }
+      }, 1000)
     }
 
     const pingNode = (node: NeoNode) => {
@@ -194,7 +215,37 @@ export default class Controller {
         })
     }
 
+    const checkFibers = () => {
+      if (isEmpty(this._pendingFibers)) {
+        this._logger.debug(`No fiber ready, waiting: ${inspect(
+          this._pendingFibers.map(([ts, b]) => ([ts, b.getHash()]))
+        )}`)
+        return
+      }
+      this._logger.debug(`Fibers count ${this._pendingFibers.length}`)
+      const fiberTs = this._pendingFibers[0][0] / 1000 << 0
+      if (fiberTs + DFBound <= ts.nowSeconds()) {
+        const [, fiberBlock] = this._pendingFibers.shift()
+        this._logger.debug('NEO Fiber is ready, going to call this._rpc.rover.collectBlock()')
+
+        if (this._config.isStandalone) {
+          this._logger.debug(`Would publish block: ${inspect(fiberBlock.toObject())}`)
+          return
+        }
+
+        this._rpc.rover.collectBlock(fiberBlock, (err, response) => {
+          if (err) {
+            this._logger.error(`Error while collecting block ${inspect(err)}`)
+            return
+          }
+          this._logger.debug(`Collector Response: ${JSON.stringify(response.toObject(), null, 4)}`)
+        })
+      }
+    }
+
     cycle()
+
+    this._checkFibersIntervalID = setInterval(checkFibers, 1000)
 
     // Ping all nodes in order to setup their height and latency
     this._neoMesh.nodes.forEach((node) => {
@@ -209,7 +260,9 @@ export default class Controller {
   }
 
   close () {
+    ts.stop()
     this._timeoutDescriptor && clearTimeout(this._timeoutDescriptor)
     this._networkRefreshIntervalDescriptor && clearInterval(this._networkRefreshIntervalDescriptor)
+    this._checkFibersIntervalID && clearInterval(this._checkFibersIntervalID)
   }
 }
