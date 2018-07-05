@@ -20,6 +20,7 @@ process.on('unhandledRejection', (err) => {
 
 const Controller = require('./controller').default
 const { config } = require('../../config')
+const { DF_CONFIG } = require('../../bc/validation')
 
 const ROVER_TITLE = 'bc-rover-neo'
 const IS_STANDALONE = require.main === module
@@ -30,7 +31,7 @@ const IS_STANDALONE = require.main === module
 const main = () => {
   process.title = ROVER_TITLE
 
-  const controller = new Controller(merge(config, { isStandalone: IS_STANDALONE }))
+  const controller = new Controller(merge(config, { isStandalone: IS_STANDALONE, dFconfig: DF_CONFIG }))
   controller.init()
 }
 

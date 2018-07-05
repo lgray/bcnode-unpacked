@@ -8,6 +8,7 @@
  */
 import type { Logger } from 'winston'
 import type { Backoff } from 'backo'
+import type { DfConfig } from '../../bc/validation'
 const profiles = require('@cityofzion/neo-js/dist/common/profiles')
 const NeoMesh = require('@cityofzion/neo-js/dist/node/mesh')
 const NeoNode = require('@cityofzion/neo-js/dist/node/node')
@@ -98,7 +99,7 @@ export default class Controller {
   _blockCache: LRUCache<string, bool>
   _rpc: RpcClient
   _logger: Logger
-  _config: { isStandalone: bool }
+  _config: { isStandalone: bool, dfConfig: DfConfig }
   _neoMesh: Object
   _timeoutDescriptor: TimeoutID
   _networkRefreshIntervalDescriptor: IntervalID
@@ -107,7 +108,7 @@ export default class Controller {
   _pendingRequests: Array<[number, number]>
   _pendingFibers: Array<[number, Block]>
 
-  constructor (config: { isStandalone: bool }) {
+  constructor (config: { isStandalone: bool, dfConfig: DfConfig }) {
     this._config = config
     this._logger = logging.getLogger(__filename)
     this._blockCache = new LRUCache({
@@ -140,7 +141,7 @@ export default class Controller {
       process.exit(3)
     })
 
-    const DFBound = 180
+    const DFBound = this._config.dfConfig.neo.DFBound
 
     const cycle = () => {
       this._timeoutDescriptor = setTimeout(() => {
