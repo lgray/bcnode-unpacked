@@ -177,8 +177,8 @@ export default class Controller {
               this._pendingFibers.push([formatTimestamp, unifiedBlock])
 
               const maxPendingHeight = this._pendingRequests[this._pendingRequests.length - 1][1]
-              if (currentTime + 5 < formatTimestamp + DFBound) {
-                this._pendingRequests.push([randRange(currentTime, formatTimestamp + DFBound), maxPendingHeight + 1])
+              if (currentTime + 5 < formatTimestamp + dfBound) {
+                this._pendingRequests.push([randRange(currentTime, formatTimestamp + dfBound), maxPendingHeight + 1])
               } else {
                 this._pendingRequests.push([randRange(currentTime, currentTime + 5), maxPendingHeight + 1])
               }
@@ -235,7 +235,7 @@ export default class Controller {
       }
       this._logger.debug(`Fibers count ${this._pendingFibers.length}`)
       const fiberTs = this._pendingFibers[0][0]
-      if (fiberTs + DFBound <= ts.nowSeconds()) {
+      if (fiberTs + dfBound <= ts.nowSeconds()) {
         const [, fiberBlock] = this._pendingFibers.shift()
         this._logger.debug('NEO Fiber is ready, going to call this._rpc.rover.collectBlock()')
 

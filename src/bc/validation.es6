@@ -147,8 +147,8 @@ function areDarkFibersValid (newBlock: BcBlock): bool {
   const newBlockTimestampMs = newBlock.getTimestamp() * 1000
   const blockchainHeadersList = blockchainMapToList(newBlock.getBlockchainHeaders())
   const dfHeadersChecks = blockchainHeadersList.map(header => {
-    // e.g. NEO 1000 (rovered ts)  <=    1400 (mined time) -   300 (DFBound for NEO)
-    return header.getTimestamp() <= newBlockTimestampMs - DF_CONFIG[header.getBlockchain()].DFBound * 1000
+    // e.g. NEO 1000 (rovered ts)  <=    1400 (mined time) -   300 (dfBound for NEO)
+    return header.getTimestamp() <= newBlockTimestampMs - DF_CONFIG[header.getBlockchain()].dfBound * 1000
   })
   return all(equals(true), dfHeadersChecks)
 }
