@@ -201,7 +201,7 @@ export default class Controller {
       process.exit(3)
     })
 
-    const DFBound = this._config.dfConfig.wav.DFBound
+    const dfBound = this._config.dfConfig.wav.dfBound
 
     const cycle = () => {
       this._timeoutDescriptor = setTimeout(() => {
@@ -210,7 +210,7 @@ export default class Controller {
         if (isEmpty(this._pendingRequests)) {
           getLastHeight().then(({ height, timestamp }) => {
             const ts = timestamp / 1000 << 0
-            const requestTime = randRange(ts, ts + DFBound)
+            const requestTime = randRange(ts, ts + dfBound)
             this._pendingRequests.push([requestTime, height - 1])
             // push second further to future
             this._pendingRequests.push([requestTime + randRange(5, 15), height])

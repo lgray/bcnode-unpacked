@@ -35,10 +35,10 @@ const GENESIS_DATA = require('./genesis.raw')
 const FINGERPRINTS_TEMPLATE = require('../utils/templates/blockchain_fingerprints.json')
 
 export type DfConfig = {
-  [chain: string]: {DFNumerator: number, DFDenominator: number, DFVoid: number, DFBound: number}
+  [chain: string]: {dfNumerator: number, dfDenominator: number, dfVoid: number, dfBound: number}
 }
 export const DF_CONFIG: DfConfig = fromPairs(FINGERPRINTS_TEMPLATE.blockchainHeaders.map(
-  ({name, DFNumerator, DFDenominator, DFVoid, DFBound}) => ([name, {DFNumerator, DFDenominator, DFVoid, DFBound}])
+  ({name, dfNumerator, dfDenominator, dfVoid, dfBound}) => ([name, {dfNumerator, dfDenominator, dfVoid, dfBound}])
 ))
 
 const logger = getLogger(__filename)

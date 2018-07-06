@@ -141,7 +141,7 @@ export default class Controller {
       process.exit(3)
     })
 
-    const DFBound = this._config.dfConfig.neo.DFBound
+    const dfBound = this._config.dfConfig.neo.dfBound
 
     const cycle = () => {
       this._timeoutDescriptor = setTimeout(() => {
@@ -151,7 +151,7 @@ export default class Controller {
         if (isEmpty(this._pendingRequests)) {
           node.rpc.getBlockCount().then(height => node.rpc.getBlock(height - 1)).then(block => {
             const ts = block.time
-            const requestTime = randRange(ts, ts + DFBound)
+            const requestTime = randRange(ts, ts + dfBound)
             this._pendingRequests.push([requestTime, block.index])
             // push second further to future
             this._pendingRequests.push([requestTime + 5, block.index + 1])
