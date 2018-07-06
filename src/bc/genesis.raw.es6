@@ -38,5 +38,5 @@ module.exports = {
   "childBlockchainCount": 5, // not used in genesis module now
   "blockchainHeadersMap": {},
 
-  "blockchainFingerprintsRoot": "86120e6b6c3bcc31204ebb7f7fdacf62cbcc1408191092ee2f8f5b3cc5082db1"
+  "blockchainFingerprintsRoot": "a456c8cf02772903ff5e01f94ba34e8f586dee282a1dc06d37bf52899670ad4d"
 }
