@@ -11,6 +11,7 @@
 
 const process = require('process')
 const logging = require('../../logger')
+const { config } = require('../../config')
 
 const globalLog = logging.getLogger(__filename)
 // setup logging of unhandled rejections
@@ -22,12 +23,13 @@ process.on('unhandledRejection', (err) => {
 const Controller = require('./controller').default
 
 const ROVER_TITLE = 'bc-rover-btc'
+const IS_STANDALONE = require.main === module && process.argv.length > 2
 
 const main = () => {
   process.title = ROVER_TITLE
 
-  const controller = new Controller()
-  controller.init()
+  const controller = new Controller(IS_STANDALONE)
+  controller.init(config.rovers.btc)
 }
 
 main()

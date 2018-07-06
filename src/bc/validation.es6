@@ -12,6 +12,7 @@ const {
   aperture,
   equals,
   flatten,
+  fromPairs,
   identity,
   reject,
   sort,
@@ -31,6 +32,14 @@ const {
   distance
 } = require('../mining/primitives')
 const GENESIS_DATA = require('./genesis.raw')
+const FINGERPRINTS_TEMPLATE = require('../utils/templates/blockchain_fingerprints.json')
+
+export type DfConfig = {
+  [chain: string]: {dfNumerator: number, dfDenominator: number, dfVoid: number, dfBound: number}
+}
+export const DF_CONFIG: DfConfig = fromPairs(FINGERPRINTS_TEMPLATE.blockchainHeaders.map(
+  ({name, dfNumerator, dfDenominator, dfVoid, dfBound}) => ([name, {dfNumerator, dfDenominator, dfVoid, dfBound}])
+))
 
 const logger = getLogger(__filename)
 
@@ -52,6 +61,10 @@ export function isValidBlock (newBlock: BcBlock): bool {
   }
   if (!isChainRootCorrectlyCalculated(newBlock)) {
     logger.warn('failed: isChainRootCorrectlyCalculated')
+    return false
+  }
+  if (!areDarkFibersValid(newBlock)) {
+    logger.warn('failed: areDarkFibersValid')
     return false
   }
   if (!isMerkleRootCorrectlyCalculated(newBlock)) {
@@ -129,6 +142,17 @@ function isChainRootCorrectlyCalculated (newBlock: BcBlock): bool {
   return receivedChainRoot === expectedChainRoot
 }
 
+function areDarkFibersValid (newBlock: BcBlock): bool {
+  logger.info('areDarkFibersValid validation running')
+  const newBlockTimestampMs = newBlock.getTimestamp() * 1000
+  const blockchainHeadersList = blockchainMapToList(newBlock.getBlockchainHeaders())
+  const dfHeadersChecks = blockchainHeadersList.map(header => {
+    // e.g. NEO 1000 (rovered ts)  <=    1400 (mined time) -   300 (dfBound for NEO)
+    return header.getTimestamp() <= newBlockTimestampMs - DF_CONFIG[header.getBlockchain()].dfBound * 1000
+  })
+  return all(equals(true), dfHeadersChecks)
+}
+
 function isMerkleRootCorrectlyCalculated (newBlock: BcBlock): bool {
   logger.info('isMerkleRootCorrectlyCalculated validation running')
   const receivedMerkleRoot = newBlock.getMerkleRoot()
@@ -137,7 +161,7 @@ function isMerkleRootCorrectlyCalculated (newBlock: BcBlock): bool {
   const expectedMerkleRoot = createMerkleRoot(concatAll([
     blockHashes,
     newBlock.getTxsList(),
-    [newBlock.getMiner(), newBlock.getHeight(), newBlock.getVersion(), newBlock.getSchemaVersion(), newBlock.getNrgGrant()]
+    [newBlock.getMiner(), newBlock.getHeight(), newBlock.getVersion(), newBlock.getSchemaVersion(), newBlock.getNrgGrant(), GENESIS_DATA.blockchainFingerprintsRoot]
   ]))
 
   return receivedMerkleRoot === expectedMerkleRoot

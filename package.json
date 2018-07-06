@@ -85,7 +85,9 @@
       "test",
       "expect",
       "jest",
-      "location"
+      "location",
+      "TimeoutID",
+      "IntervalID"
     ],
     "parser": "babel-eslint",
     "plugins": [

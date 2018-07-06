@@ -8,6 +8,7 @@
  *
  */
 const process = require('process')
+const { merge } = require('ramda')
 const logging = require('../../logger')
 
 const globalLog = logging.getLogger(__filename)
@@ -19,8 +20,10 @@ process.on('unhandledRejection', (err) => {
 
 const Controller = require('./controller').default
 const { config } = require('../../config')
+const { DF_CONFIG } = require('../../bc/validation')
 
 const ROVER_TITLE = 'bc-rover-neo'
+const IS_STANDALONE = require.main === module && process.argv.length > 2
 
 /**
  * NEO Rover entrypoint
@@ -28,7 +31,7 @@ const ROVER_TITLE = 'bc-rover-neo'
 const main = () => {
   process.title = ROVER_TITLE
 
-  const controller = new Controller(config)
+  const controller = new Controller(merge(config, { isStandalone: IS_STANDALONE, dfConfig: DF_CONFIG }))
   controller.init()
 }
 

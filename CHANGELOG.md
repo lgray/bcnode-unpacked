@@ -26,6 +26,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - [Docker] - Use foreverjs
 - [Rover] - added exponential backoff from 5s to 20s for WAV and NEO
 - [Miner] - separated mining setup and hadling to officer module
+- [Rover] - BTC runnable separately, quorum for BTC and ETH configurable
+- [Global] - introduced DF variables to fingerprints template, use them in BC block validation
+- [Rover] - Dark fibers in NEO and WAV rovers, NEO and WAV runnable reparately
 
 ### Changed
 

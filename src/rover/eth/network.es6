@@ -94,8 +94,9 @@ export default class Network extends EventEmitter {
   _forkDrops: {[string]: ?TimeoutID}; // eslint-disable-line no-undef
   _forkVerifiedForPeer: Object; // eslint-disable-line no-undef
   _peerRequests: Object; // eslint-disable-line no-undef
+  _config: { maximumPeers: number }
 
-  constructor () {
+  constructor (config: { maximumPeers: number }) {
     super()
     this._logger = logging.getLogger(__filename)
     this._forkVerifiedForPeer = {}
@@ -107,6 +108,7 @@ export default class Network extends EventEmitter {
     this._key = getPrivateKey()
     this._txCache = new LRUCache({ max: 2000 })
     this._blocksCache = new LRUCache({ max: 118 })
+    this._config = config
   }
 
   get peers (): string[] {
@@ -483,7 +485,7 @@ export default class Network extends EventEmitter {
 
     const rlpx = this._rlpx = new RLPx(this._key, {
       dpt: this._dpt,
-      maxPeers: 60,
+      maxPeers: this._config.maximumPeers,
       capabilities: [ETH.eth63, ETH.eth62],
       listenPort: null
     })

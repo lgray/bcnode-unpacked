@@ -11,6 +11,7 @@
 
 const process = require('process')
 const logging = require('../../logger')
+const { config } = require('../../config')
 
 const globalLog = logging.getLogger(__filename)
 // setup logging of unhandled rejections
@@ -30,7 +31,7 @@ const main = () => {
   process.title = ROVER_TITLE
 
   const controller = new Controller()
-  controller.init()
+  controller.init(config.rovers.eth)
 }
 
 main()

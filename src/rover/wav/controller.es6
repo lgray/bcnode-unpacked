@@ -9,9 +9,12 @@
 
 import type { Logger } from 'winston'
 import type { Backoff } from 'backo'
+import type { DfConfig } from '../../bc/validation'
 const { inspect } = require('util')
 const WavesApi = require('waves-api')
+const request = require('request')
 const LRUCache = require('lru-cache')
+const { isEmpty } = require('ramda')
 
 const { Block } = require('../../protos/core_pb')
 const { getLogger } = require('../../logger')
@@ -20,6 +23,10 @@ const { blake2b } = require('../../utils/crypto')
 const { RpcClient } = require('../../rpc')
 const { createUnifiedBlock } = require('../helper')
 const { getBackoff } = require('../utils')
+const { randRange } = require('../../utils/ramda')
+const ts = require('../../utils/time').default // ES6 default export
+
+const WAVES_NODE_ADDRESS = WavesApi.MAINNET_CONFIG.nodeAddress
 
 type WavesTransaction = {
   type: number,
@@ -53,6 +60,22 @@ type WavesBlock = {
   height: number
 }
 
+type WavesHeader = {
+  version: number,
+  timestamp: number, // e.g. 1530795651152
+  reference: string,
+  "nxt-consensus": {
+    "base-target": number,
+    "generation-signature": string
+  },
+  features: number[],
+  generator: string,
+  signature: string,
+  blocksize: number,
+  transactionCount: number,
+  height: number
+}
+
 const getMerkleRoot = (block) => {
   if (!block.transactions || (block.transactions.length === 0)) {
     return blake2b(block.signature)
@@ -62,13 +85,42 @@ const getMerkleRoot = (block) => {
   return txs.reduce((acc, el) => blake2b(acc + el), '')
 }
 
-const getLastHeight = (api: Object): Promise<number> => {
-  const response = api.API.Node.v1.blocks.height()
-  return response.then(d => d.height)
+export const getLastHeight = (): Promise<WavesHeader> => {
+  return new Promise((resolve, reject) => {
+    request({
+      url: `${WAVES_NODE_ADDRESS}/blocks/headers/last`,
+      headers: { 'Accept': 'application/json' }
+    }, (error, response, body) => {
+      if (error) {
+        return reject(error)
+      }
+
+      const data = JSON.parse(body)
+      if (data.status === 'error') {
+        return reject(data.details)
+      }
+      return resolve(data)
+    })
+  })
 }
 
-const getBlock = (api: Object, height: number): Promise<WavesBlock> => {
-  return api.API.Node.v1.blocks.at(height).then(b => b)
+const getBlock = (height: number): Promise<WavesBlock> => {
+  return new Promise((resolve, reject) => {
+    request({
+      url: `${WAVES_NODE_ADDRESS}/blocks/at/${height}`,
+      headers: { 'Accept': 'application/json' }
+    }, (error, response, body) => {
+      if (error) {
+        return reject(error)
+      }
+
+      const data = JSON.parse(body)
+      if (data.status === 'error') {
+        return reject(data.details)
+      }
+      return resolve(data)
+    })
+  })
 }
 
 function _createUnifiedBlock (block): Block {
@@ -113,24 +165,27 @@ function _createUnifiedBlock (block): Block {
  * WAV Controller
  */
 export default class Controller {
-  /* eslint-disable no-undef */
-  _config: Object;
-  _logger: Logger;
-  _wavesApi: Object;
-  _rpc: RpcClient;
-  _timeoutDescriptor: TimeoutID;
-  _blockCache: LRUCache<string, bool>;
-  _lastBlockHeight: number;
-  _backoff: Backoff;
-  /* eslint-enable */
-  constructor (config: Object) {
+  _config: { isStandalone: bool, dfConfig: DfConfig }
+  _logger: Logger
+  _rpc: RpcClient
+  _timeoutDescriptor: TimeoutID
+  _checkFibersIntervalID: IntervalID
+  _blockCache: LRUCache<string, bool>
+  _lastBlockHeight: number
+  _backoff: Backoff
+  _pendingRequests: Array<[number, number]>
+  _pendingFibers: Array<[number, Block]>
+
+  constructor (config: { isStandalone: bool, dfConfig: DfConfig }) {
     this._config = config
     this._logger = getLogger(__filename)
-    this._wavesApi = WavesApi.create(WavesApi.MAINNET_CONFIG)
     this._rpc = new RpcClient()
     this._blockCache = new LRUCache({ max: 500 })
     this._lastBlockHeight = 0
     this._backoff = getBackoff()
+    this._pendingRequests = []
+    this._pendingFibers = []
+    ts.start()
   }
 
   init () {
@@ -146,47 +201,104 @@ export default class Controller {
       process.exit(3)
     })
 
+    const dfBound = this._config.dfConfig.wav.dfBound
+
     const cycle = () => {
       this._timeoutDescriptor = setTimeout(() => {
-        this._logger.debug('Trying to get new block')
+        this._logger.debug(`Pending requests: ${inspect(this._pendingRequests)}, pending fibers: ${inspect(this._pendingFibers.map(([ts, b]) => { return [ts, b.toObject()] }))}`)
 
-        getLastHeight(this._wavesApi).then(height => {
-          this._logger.debug(`Got last height '${height}'`)
-
-          return getBlock(this._wavesApi, height - 1).then(lastBlock => {
-            const newBlockHeight = parseInt(lastBlock.height, 10)
-
-            if (!this._blockCache.has(lastBlock.reference) && this._lastBlockHeight <= newBlockHeight) {
-              this._logger.debug(`Unseen new block '${lastBlock.reference}', height: ${height}`)
-              this._blockCache.set(lastBlock.reference)
-
-              const unifiedBlock = createUnifiedBlock(lastBlock, _createUnifiedBlock)
-
-              this._rpc.rover.collectBlock(unifiedBlock, (err, response) => {
-                if (err) {
-                  this._logger.error(`Error while collecting block ${inspect(err)}`)
-                  return
-                }
-                this._lastBlockHeight = newBlockHeight
-                this._logger.debug(`Collector Response: ${JSON.stringify(response.toObject(), null, 4)}`)
-              })
-            }
+        if (isEmpty(this._pendingRequests)) {
+          getLastHeight().then(({ height, timestamp }) => {
+            const ts = timestamp / 1000 << 0
+            const requestTime = randRange(ts, ts + dfBound)
+            this._pendingRequests.push([requestTime, height - 1])
+            // push second further to future
+            this._pendingRequests.push([requestTime + randRange(5, 15), height])
+            cycle()
+          }).catch(err => {
+            this._logger.warn(`Unable to start roving, could not get block count, err: ${err.message}`)
+            cycle()
           })
-        }).then(() => {
-          this._backoff.reset()
-          this._logger.debug('tick')
+          return
+        }
+
+        const [requestTimestamp, requestBlockHeight] = this._pendingRequests.shift()
+        if (requestTimestamp <= ts.nowSeconds()) {
+          getBlock(requestBlockHeight).then(block => {
+            this._logger.debug(`Got block at height : "${requestBlockHeight}"`)
+            if (!this._blockCache.has(requestBlockHeight)) {
+              this._blockCache.set(requestBlockHeight, true)
+              this._logger.debug(`Unseen block with hash: ${block.signature} => using for BC chain`)
+
+              const unifiedBlock = createUnifiedBlock(block, _createUnifiedBlock)
+              const formatTimestamp = unifiedBlock.getTimestamp() / 1000 << 0
+              const currentTime = ts.nowSeconds()
+              this._pendingFibers.push([formatTimestamp, unifiedBlock])
+
+              const maxPendingHeight = this._pendingRequests[this._pendingRequests.length - 1][1]
+              if (currentTime + 5 < formatTimestamp + dfBound) {
+                this._pendingRequests.push([randRange(currentTime, formatTimestamp + dfBound), maxPendingHeight + 1])
+              } else {
+                this._pendingRequests.push([randRange(currentTime, currentTime + 5), maxPendingHeight + 1])
+              }
+            }
+            this._backoff.reset()
+            cycle()
+          }, reason => {
+            throw new Error(reason)
+          }).catch(err => {
+            this._logger.warn(`Error while getting new block height: ${requestBlockHeight}, err: ${errToString(err)}`)
+            const moveBySeconds = Math.ceil(this._backoff.duration() / 1000)
+            // postpone remaining requests
+            this._pendingRequests = this._pendingRequests.map(([ts, height]) => [ts + moveBySeconds, height])
+            // prepend currentrequest back but schedule to try it in [now, now + 10s]
+            this._pendingRequests.unshift([randRange(ts.nowSeconds(), ts.nowSeconds() + 10) + moveBySeconds, requestBlockHeight])
+            cycle()
+          })
+        } else {
+          // prepend request back to queue - we have to wait until time it is scheduled
+          this._pendingRequests.unshift([requestTimestamp, requestBlockHeight])
           cycle()
-        }).catch(reason => {
-          this._logger.error(`Could not get new block, err ${errToString(reason)}`)
-          cycle()
+        }
+      }, 1000)
+    }
+
+    const checkFibers = () => {
+      if (isEmpty(this._pendingFibers)) {
+        this._logger.debug(`No fiber ready, waiting: ${inspect(
+          this._pendingFibers.map(([ts, b]) => ([ts, b.getHash()]))
+        )}`)
+        return
+      }
+      this._logger.debug(`Fibers count ${this._pendingFibers.length}`)
+      const fiberTs = this._pendingFibers[0][0]
+      if (fiberTs + dfBound <= ts.nowSeconds()) {
+        const [, fiberBlock] = this._pendingFibers.shift()
+        this._logger.debug('WAV Fiber is ready, going to call this._rpc.rover.collectBlock()')
+
+        if (this._config.isStandalone) {
+          this._logger.debug(`Would publish block: ${inspect(fiberBlock.toObject())}`)
+          return
+        }
+
+        this._rpc.rover.collectBlock(fiberBlock, (err, response) => {
+          if (err) {
+            this._logger.error(`Error while collecting block ${inspect(err)}`)
+            return
+          }
+          this._logger.debug(`Collector Response: ${JSON.stringify(response.toObject(), null, 4)}`)
         })
-      }, this._backoff.duration())
+      }
     }
 
     cycle()
+
+    this._checkFibersIntervalID = setInterval(checkFibers, 1000)
   }
 
   close () {
+    ts.stop()
     this._timeoutDescriptor && clearTimeout(this._timeoutDescriptor)
+    this._checkFibersIntervalID && clearInterval(this._checkFibersIntervalID)
   }
 }

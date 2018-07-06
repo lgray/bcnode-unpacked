@@ -1,15 +1,19 @@
 {
-  "fingerprintsHash": "",
+  "fingerprintsHash": "a456c8cf02772903ff5e01f94ba34e8f586dee282a1dc06d37bf52899670ad4d",
   "genesisBlockchainCount": 5,
   "blockchainHeaders": [
     {
       "name": "btc",
       "description": "Bitcoin",
-      "hash": "390fcf5ffdfedca732c19e2571e367230895725bed88e53f92d43762c14e3d57",
+      "hash": "c73e965f0046b14e66f5c3cf1087ae9730e10ea37c665a7e480f4508edd1236b",
       "electionStartBlockHeight": "",
       "electionEndBlockHeight": "",
       "version": 1,
       "blocksCount": 3,
+      "dfNumerator": 1,
+      "dfDenominator": 1,
+      "dfVoid": 0,
+      "dfBound": 0,
       "fingerprint": [
         {
           "hash": "000000000000a89a2c06f66c5aa3e278b53a19d094026be17c9c5a6bbae32e6b",
@@ -34,11 +38,15 @@
     {
       "name": "eth",
       "description": "Ethereum",
-      "hash": "bbe5c469c469cec1f8c0b01de640df724f3d9053c23b19c6ed1bc6ee0faf5160",
-      "genesisBlockchainSignature": "",
+      "hash": "af9e3a713801bff8f968f24edfbfd65a76e7b98c2b2f4c9ac8228ea79630c5b0",
       "electionStartBlockHeight": "",
       "electionEndBlockHeight": "",
       "version": 1,
+      "blocksCount": 3,
+      "dfNumerator": 1,
+      "dfDenominator": 1,
+      "dfVoid": 0,
+      "dfBound": 0,
       "fingerprint": [
         {
           "hash": "a218e2c611f21232d857e3c8cecdcdf1f65f25a4477f98f6f47e4063807f2308",
@@ -63,11 +71,15 @@
     {
       "name": "wav",
       "description": "Waves",
-      "hash": "3bc516a4f96b1c08a5ccc19acc3ce643929c040ca3319c08480bfd784538333b",
+      "hash": "2407cfcf144a9f7bee75f5330d45bd09ceac0544b41bedf77e19d960f064d066",
       "electionStartBlockHeight": "",
       "electionEndBlockHeight": "",
       "version": 1,
       "blocksCount": 3,
+      "dfNumerator": 1,
+      "dfDenominator": 15,
+      "dfVoid": 15000,
+      "dfBound": 300,
       "fingerprint": [
         {
           "hash": "FSH8eAAzZNqnG8xgTZtz5xuLqXySsXgAjmFEC25hXMbEufiGjqWPnGCZFt6gLiVLJny16ipxRNAkkzjjhqTjBE2",
@@ -83,7 +95,7 @@
         },
         {
           "hash": "54dS4KPRoKzccHv6sXYPaDNnxLL9n91LiQkDA6BkUi9tc7SJaUAXiaWZpsjrnTDYESDuqjtxjsqd34D6acyAMw7a",
-          "data": "3PBWXDFUc86N2EQxKJmW8eFco65xTyMZx6J",
+          "data": "3PBWXdfUc86N2EQxKJmW8eFco65xTyMZx6J",
           "height": 3,
           "index": 2
         }
@@ -92,11 +104,15 @@
     {
       "name": "neo",
       "description": "NEO",
-      "hash": "2d37e680ed8d737499b65ee55245577df9fb0cf603c33bdb2f98fafafcd95fab",
+      "hash": "b001a98da9452646d0c4ef96812678c2c3bdd9ad3abde9365dc98cdd8d909185",
       "electionStartBlockHeight": "",
       "electionEndBlockHeight": "",
       "version": 1,
       "blocksCount": 3,
+      "dfNumerator": 1,
+      "dfDenominator": 15,
+      "dfVoid": 15000,
+      "dfBound": 180,
       "fingerprint": [
         {
           "hash": "d42561e3d30e15be6400b6df2f328e02d2bf6354c41dce433bc57687c82144bf",
@@ -121,11 +137,15 @@
     {
       "name": "lsk",
       "description": "Lisk",
-      "hash": "1ce956a5687e7ad5c40c0cb91f88a03a2abbc6ff12c4d87cb568fa86a0c07fe9",
+      "hash": "2ce9c963746012a75018847a60bac1bf7a22fc6fcfd32299516a1344315848c4",
       "electionStartBlockHeight": "",
       "electionEndBlockHeight": "",
       "version": 1,
       "blocksCount": 3,
+      "dfNumerator": 1,
+      "dfDenominator": 1,
+      "dfVoid": 0,
+      "dfBound": 0,
       "fingerprint": [
         {
           "hash": "13658550407518916215",

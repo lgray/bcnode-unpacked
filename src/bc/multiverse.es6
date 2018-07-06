@@ -12,7 +12,7 @@ import type { Logger } from 'winston'
 import type PersistenceRocksDb from '../persistence/rocksdb'
 
 const BN = require('bn.js')
-const { flatten } = require('ramda')
+const { all, flatten, zip } = require('ramda')
 
 const { validateBlockSequence, childrenHeightSum } = require('./validation')
 const { standardId } = require('./helper')
@@ -237,12 +237,29 @@ export class Multiverse {
 
   async validateRoveredBlocks (block: BcBlock): Promise<boolean> {
     // construct key array like ['btc.block.528089', ..., 'wav.block.1057771', 'wav.blocks.1057771']
-    const keys = flatten(Object.values(block.getBlockchainHeaders().toObject()))
+    const receivedBlocks = flatten(Object.values(block.getBlockchainHeaders().toObject()))
+    const keys = receivedBlocks
       // $FlowFixMe - Object.values is not generic
       .map(({ blockchain, height }) => `${blockchain}.block.${height}`)
 
     const blocks = await this.persistence.getBulk(keys)
-    return Promise.resolve(keys.length === blocks.length)
+    let valid = keys.length === blocks.length
+    if (!valid) {
+      return Promise.resolve(valid)
+    }
+
+    const pairs = zip(receivedBlocks, blocks)
+
+    return Promise.resolve(all(flag => flag === true, pairs.map(([received, expected]) => {
+      // $FlowFixMe
+      return received.hash === expected.getHash() &&
+        // $FlowFixMe
+        received.height === expected.getHeight() &&
+        // $FlowFixMe
+        received.merkleRoot === expected.getMerkleRoot() &&
+        // $FlowFixMe
+        received.timestamp === expected.getTimestamp()
+    })))
   }
 
   /**

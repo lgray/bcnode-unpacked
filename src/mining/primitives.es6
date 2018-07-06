@@ -321,7 +321,7 @@ const blockHash: (BlockchainHeader|Block => string) = compose(
 
 export const getChildrenBlocksHashes: ((BlockchainHeader[]|Block[]) => string[]) = map(blockHash)
 
-// TODO should maintain sort (btc -> eth -> lbbhhsk -> neo -> wav)
+// TODO should maintain sort (btc -> eth -> lsk -> neo -> wav)
 export const blockchainMapToList = (headersMap: BlockchainHeaders): BlockchainHeader[] => {
   return Object.keys(headersMap.toObject()).map(listName => {
     const getMethodName = `get${listName[0].toUpperCase()}${listName.slice(1)}`
@@ -517,7 +517,8 @@ export function prepareNewBlock (currentTimestamp: number, lastPreviousBlock: Bc
 
   const newHeight = lastPreviousBlock.getHeight() + 1
   // blockchains, transactions, miner address, height
-  const newMerkleRoot = createMerkleRoot(concatAll([blockHashes, newTransactions, [minerAddress, newHeight, GENESIS_DATA.version, GENESIS_DATA.schemaVersion, GENESIS_DATA.nrgGrant]]))
+  // TODO add EMB data to merkleRoot AT
+  const newMerkleRoot = createMerkleRoot(concatAll([blockHashes, newTransactions, [minerAddress, newHeight, GENESIS_DATA.version, GENESIS_DATA.schemaVersion, GENESIS_DATA.nrgGrant, GENESIS_DATA.blockchainFingerprintsRoot]]))
 
   // nonce, distance, timestamp and difficulty are set to proper values after successful mining of this block
   const newBlock = new BcBlock()

@@ -82,8 +82,8 @@ export default class Controller {
     })
   }
 
-  start () {
-    var network = new Network()
+  start (config: { maximumPeers: number }) {
+    var network = new Network(config)
     network.on('newBlock', block => this.transmitNewBlock(block))
 
     network.connect()
@@ -91,8 +91,8 @@ export default class Controller {
     this.interfaces.push(network)
   }
 
-  init () {
-    this.start()
+  init (config: { maximumPeers: number }) {
+    this.start(config)
 
     process.on('disconnect', () => {
       this._logger.info('Parent exited')
