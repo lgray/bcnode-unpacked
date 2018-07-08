@@ -15,7 +15,7 @@ const { EventEmitter } = require('events')
 const { queue } = require('async')
 const { resolve } = require('path')
 const { writeFileSync } = require('fs')
-const { max } = require('rambda')
+const { max } = require('ramda')
 const LRUCache = require('lru-cache')
 const BN = require('bn.js')
 const semver = require('semver')
@@ -483,17 +483,13 @@ export class Engine {
    * TODO: Move this to a better location
    * @param blocks BcBlock[]
    */
-  async syncSetBlocksInline (blocks: BcBlock[]): ?Promise {
+  async syncSetBlocksInline (blocks: BcBlock[]): Promise<Error|bool[]> {
     const valid = await this.multiverse.validateBlockSequenceInline(blocks)
     if (valid === false) {
       return Promise.reject(new Error('sequence of blocks is not working'))
-    } else {
-      const tasks = blocks.reduce((all, item) => {
-        all.push(this.persistence.set('pending.bc.block' + item.getHeight(), item))
-        return all
-      }, [])
-      return Promise.all(tasks)
     }
+    const tasks = blocks.map((item) => this.persistence.put(`pending.bc.block.${item.getHeight()}`, item))
+    return Promise.all(tasks)
   }
 
   /**
@@ -502,9 +498,10 @@ export class Engine {
    * @param conn Connection the block was received from
    * @param newBlock Block itself
    */
-  async syncFromDepth (conn: Object, newBlock: BcBlock): ?Promise {
+  async syncFromDepth (conn: Object, newBlock: BcBlock): Promise<bool|Error> {
     try {
-      const depth = this.persistence.get('bc.depth')
+      const depthData = await this.persistence.get('bc.depth')
+      const depth = parseInt(depthData, 10) // coerce for Flow
       if (depth === 2) {
         // ignore block
         return false
@@ -525,9 +522,9 @@ export class Engine {
         } else {
           // request a range from the peer
           // TODO: switch to real IP
-          await this.persistence.set('bc.peer.ip', 1)
+          await this.persistence.put('bc.peer.ip', 1)
           // lock the depth for if another block comes while running this
-          await this.persistence.set('depth', depth)
+          await this.persistence.put('depth', depth)
           return conn.getPeerInfo((err, peerInfo) => {
             if (err) {
               return Promise.reject(err)
@@ -542,16 +539,16 @@ export class Engine {
               .query(query)
               .then(blocks => {
                 return this.syncSetBlocksInline(blocks)
-                  .then(isSequenceValid => {
+                  .then((blocksStoredResults) => {
                     // if we didn't get the one block above the genesis block run again
                     if (lowerBound !== 2) {
                       return this.syncFromDepth(conn, newBlock)
                     }
                     // no more depth so unlock peer
                     // TODO: switch to real IP
-                    return this.persistence.set('bc.peer.ip', 0)
+                    return this.persistence.put('bc.peer.ip', 0)
                       .then(() => {
-                        return this.persistence.set('bc.depth', 2)
+                        return this.persistence.put('bc.depth', 2)
                       })
                       .catch(e => {
                         this._logger.error(e)
@@ -562,16 +559,16 @@ export class Engine {
                     this._logger.error(e)
                     // TODO: switch to real IP
                     // unlock the peer
-                    return this.persistence.set('bc.peer.ip', 0)
+                    return this.persistence.put('bc.peer.ip', 0)
                       .then(() => {
-                        return this.persistence.set('bc.depth', depth)
+                        return this.persistence.put('bc.depth', depth)
                           .then(() => {
                             return Promise.resolve(depth)
                           })
                       })
                       .catch(e => {
-                      // reset the depth
-                        return this.persistence.set('bc.depth', depth)
+                        // reset the depth
+                        return this.persistence.put('bc.depth', depth)
                           .then(() => {
                             return Promise.reject(e)
                           })
@@ -580,9 +577,9 @@ export class Engine {
               })
               .catch(e => {
                 // unlock the peer and reset the depth
-                return this.persistence.set('bc.peer.ip', 0)
+                return this.persistence.put('bc.peer.ip', 0)
                   .then(() => {
-                    return this.persistence.set('bc.depth', depth)
+                    return this.persistence.put('bc.depth', depth)
                       .then(() => {
                         return Promise.resolve(depth)
                       })
@@ -700,12 +697,13 @@ export class Engine {
                       return 0
                     })
 
-                    if (new BN(sorted[0].getTotalDifficulty()).gt(new BN(this.multiverse.getHighestBlock().getTotalDistance())) === true) {
+                    const highestBlock = this.multiverse.getHighestBlock()
+                    if (highestBlock && new BN(sorted[0].getTotalDifficulty()).gt(new BN(highestBlock.getTotalDistance())) === true) {
                       this.multiverse._candidates.length = 0
                       this.multiverse._chain.length = 0
                       this.multiverse._chain = sorted
 
-                      this.persistance.set('bc.depth', this.multiverse.getLowestBlock())
+                      this.persistence.put('bc.depth', this.multiverse.getLowestBlock())
                         .then(() => {
                           this.pubsub.publish('update.block.latest', { key: 'bc.block.latest', data: newBlock })
                           this.node.broadcastNewBlock(newBlock)
