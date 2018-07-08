@@ -15,6 +15,7 @@ const { EventEmitter } = require('events')
 const { queue } = require('async')
 const { resolve } = require('path')
 const { writeFileSync } = require('fs')
+const { max } = require('rambda')
 const LRUCache = require('lru-cache')
 const BN = require('bn.js')
 const semver = require('semver')
@@ -186,6 +187,7 @@ export class Engine {
         try {
           await this.persistence.put('bc.block.1', newGenesisBlock)
           await this.persistence.put('bc.block.latest', newGenesisBlock)
+          await this.persistence.put('bc.depth', 1)
           self.multiverse.addNextBlock(newGenesisBlock)
           this._logger.info('Genesis block saved to disk ' + newGenesisBlock.getHash())
         } catch (e) {
@@ -477,6 +479,125 @@ export class Engine {
   }
 
   /**
+   * Takes a range of blocks and validates them against within the contents of a parent and child
+   * TODO: Move this to a better location
+   * @param blocks BcBlock[]
+   */
+  async syncSetBlocksInline (blocks: BcBlock[]): ?Promise {
+    const valid = await this.multiverse.validateBlockSequenceInline(blocks)
+    if (valid === false) {
+      return Promise.reject(new Error('sequence of blocks is not working'))
+    } else {
+      const tasks = blocks.reduce((all, item) => {
+        all.push(this.persistence.set('pending.bc.block' + item.getHeight(), item))
+        return all
+      }, [])
+      return Promise.all(tasks)
+    }
+  }
+
+  /**
+   * Determine if a sync request should be made to get the block
+   * TODO: Move this to P2P / better location
+   * @param conn Connection the block was received from
+   * @param newBlock Block itself
+   */
+  async syncFromDepth (conn: Object, newBlock: BcBlock): ?Promise {
+    try {
+      const depth = this.persistence.get('bc.depth')
+      if (depth === 2) {
+        // ignore block
+        return false
+      } else {
+        const upperBound = max(depth - 1, 3) // so we dont get the genesis block
+        const lowerBound = max(depth - 2000, 2)
+        let peerLock = 1 // assume peer is busy
+        try {
+          // TODO: Tomas how to get IP from Conn object
+          peerLock = await this.get('bc.peer.ip')
+        } catch (err) {
+          // the lock does not exist
+          peerLock = 0
+        }
+        if (peerLock === 1) {
+          // dont send request because the peer in busy
+          return Promise.resolve(true)
+        } else {
+          // request a range from the peer
+          // TODO: switch to real IP
+          await this.persistence.set('bc.peer.ip', 1)
+          // lock the depth for if another block comes while running this
+          await this.persistence.set('depth', depth)
+          return conn.getPeerInfo((err, peerInfo) => {
+            if (err) {
+              return Promise.reject(err)
+            }
+            const query = {
+              queryHash: newBlock.getHash(),
+              queryHeight: upperBound,
+              low: lowerBound,
+              high: upperBound
+            }
+            this.node.manager.createPeer(peerInfo)
+              .query(query)
+              .then(blocks => {
+                return this.syncSetBlocksInline(blocks)
+                  .then(isSequenceValid => {
+                    // if we didn't get the one block above the genesis block run again
+                    if (lowerBound !== 2) {
+                      return this.syncFromDepth(conn, newBlock)
+                    }
+                    // no more depth so unlock peer
+                    // TODO: switch to real IP
+                    return this.persistence.set('bc.peer.ip', 0)
+                      .then(() => {
+                        return this.persistence.set('bc.depth', 2)
+                      })
+                      .catch(e => {
+                        this._logger.error(e)
+                        return Promise.reject(e)
+                      })
+                  })
+                  .catch(e => {
+                    this._logger.error(e)
+                    // TODO: switch to real IP
+                    // unlock the peer
+                    return this.persistence.set('bc.peer.ip', 0)
+                      .then(() => {
+                        return this.persistence.set('bc.depth', depth)
+                          .then(() => {
+                            return Promise.resolve(depth)
+                          })
+                      })
+                      .catch(e => {
+                      // reset the depth
+                        return this.persistence.set('bc.depth', depth)
+                          .then(() => {
+                            return Promise.reject(e)
+                          })
+                      })
+                  })
+              })
+              .catch(e => {
+                // unlock the peer and reset the depth
+                return this.persistence.set('bc.peer.ip', 0)
+                  .then(() => {
+                    return this.persistence.set('bc.depth', depth)
+                      .then(() => {
+                        return Promise.resolve(depth)
+                      })
+                  })
+              })
+          })
+        }
+      }
+    } catch (err) {
+      // no depth has been set
+      return Promise.reject(err)
+    }
+  }
+
+  /**
    * New block received from peer handler
    * @param conn Connection the block was received from
    * @param newBlock Block itself
@@ -514,12 +635,103 @@ export class Engine {
       if (isNextBlock) {
         // RESTART MINING USED newBlock.getHash()
         this.pubsub.publish('update.block.latest', { key: 'bc.block.latest', data: newBlock })
+        this.node.broadcastNewBlock(newBlock)
+        this.syncFromDepth(conn, newBlock)
+          .then(() => {
+            this._logger.info('depth sync stated')
+          })
+          .catch(e => {
+
+          })
+        // if depth !== 0
+        // get peer lock
+        // if peer unlocked
+        // lock peer
+        // request lowest multiverse block height, lowest block height - 5000 / 0
+        // set the bc.depth depth  at the lowest - 5000 height
+        // if the request succeeds check the depth and see if we are done
+        // if we are done unlock the peer
+        // if we are not done re-request a sync
       } else {
-        this.multiverse.addResyncRequest(newBlock).then(shouldResync => {
-          if (shouldResync === true) {
-            // trigger sync from peer
-          }
-        })
+        this.multiverse.addResyncRequest(newBlock)
+          .then(shouldResync => {
+            if (shouldResync === true) {
+              // 1. request multiverse from peer, if fail ignore
+              // succeed in getting multiverse -->
+              // 2. Compare purposed multiverse sum of difficulty with current sum of diff
+              // determined newBlock multiverse better
+              // 3. restart miner
+              // 4. set bc.depth to lowest height and hash of new multiverse
+              // 5. get peer lock status
+              //
+              //
+              const upperBound = newBlock.getHeight()
+              // get the lowest of the current multiverse
+              const lowerBound = this.multiverse.getLowestBlock()
+              return conn.getPeerInfo((err, peerInfo) => {
+                if (err) {
+                  return Promise.reject(err)
+                }
+                // request proof of the multiverse from the peer
+                const query = {
+                  queryHash: newBlock.getHash(),
+                  queryHeight: upperBound,
+                  low: lowerBound,
+                  high: upperBound
+                }
+                this.node.manager.createPeer(peerInfo)
+                  .query(query)
+                  .then(newBlocks => {
+                    const currentHeights = this.multiverse._chain.map(b => {
+                      return b.getHeight()
+                    })
+
+                    const comparableBlocks = newBlocks.filter(a => {
+                      if (currentHeights.indexOf(a) > -1) return a
+                    })
+
+                    const sorted = comparableBlocks.sort((a, b) => {
+                      if (a.getHeight() > b.getHeight()) {
+                        return -1
+                      }
+                      if (a.getHeight() < b.getHeight()) {
+                        return 1
+                      }
+                      return 0
+                    })
+
+                    if (new BN(sorted[0].getTotalDifficulty()).gt(new BN(this.multiverse.getHighestBlock().getTotalDistance())) === true) {
+                      this.multiverse._candidates.length = 0
+                      this.multiverse._chain.length = 0
+                      this.multiverse._chain = sorted
+
+                      this.persistance.set('bc.depth', this.multiverse.getLowestBlock())
+                        .then(() => {
+                          this.pubsub.publish('update.block.latest', { key: 'bc.block.latest', data: newBlock })
+                          this.node.broadcastNewBlock(newBlock)
+                          // TODO: restart miner on new multiverse
+                          this.syncFromDepth(conn, this.multiverse.getLowestBlock())
+                            .then(synced => {
+
+                            })
+                            .catch(e => {
+                              this._logger.error(e)
+                            })
+                        })
+                        .catch(e => {
+                          this._logger.error(e)
+                        })
+                    }
+                  })
+                  .catch(e => {
+                    this._logger.error(e)
+                  })
+              })
+            }
+          })
+          .catch(err => {
+            this._logger.error(err)
+          })
       }
     }
   }

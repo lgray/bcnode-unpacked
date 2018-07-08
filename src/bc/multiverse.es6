@@ -70,6 +70,49 @@ export class Multiverse {
   }
 
   /**
+   * Accessor for validation function
+   * @returns {*}
+   */
+  validateBlockSequence (blocks: BcBlock[]): boolean {
+    return validateBlockSequence(blocks)
+  }
+
+  /**
+   * Valid Block Range
+   * @returns {*}
+   */
+  async validateBlockSequenceInline (blocks: BcBlock[]): boolean {
+    if (blocks === undefined || blocks.length < 1) return false
+    const sorted = blocks.sort((a, b) => {
+      if (a.getHeight() < b.getHeight()) {
+        return 1
+      }
+      if (a.getHeight() > b.getHeight()) {
+        return -1
+      }
+      return 0
+    })
+    // check if the actually sequence itself is valid
+    const upperBound = sorted[0]
+    const lowerBound = sorted[sorted.length - 1]
+    const upperBoundChild = await this.persistence.get('pending.bc.block.' + (sorted[0].getHeight() + 1))
+    // current pending block does not match the purposed block at that height
+    if (upperBoundChild === undefined || upperBound.getHash() !== upperBoundChild.getPreviousHash()) return Promise.reject(new Error('pending block does not match purposed block'))
+    // add the child block of the sequence
+    sorted.unshift(upperBoundChild)
+    if (lowerBound === 1) {
+      // if at final depth this will equal 1 or the genesis block
+      const lowerBoundParent = await this.persistence.get('bc.block.1')
+      if (lowerBound.getPreviousHash() !== lowerBoundParent.getHash()) return Promise.reject(new Error('sync did not resolve to genesis block'))
+      // add the genesis block to the sequence
+      sorted.push(lowerBoundParent)
+    }
+    // finally check the entire sequence
+    if (!validateBlockSequence(sorted)) return Promise.reject(new Error('block sequence invalid'))
+    return Promise.resolve(true)
+  }
+
+  /**
    * Get highest block in Multiverse
    * @returns {*}
    */
@@ -117,9 +160,10 @@ export class Multiverse {
     }
     // if no block is available go by total difficulty
     // FAIL if new block not within 16 seconds of local time
-    if (newBlock.getTimestamp() + 21 < Math.floor(Date.now() * 0.001)) {
+    if (newBlock.getTimestamp() + 16 < Math.floor(Date.now() * 0.001)) {
       return false
     }
+    // if there is no current parent, this block is the right lbock
     if (currentParentHighestBlock === false) {
       if (new BN(newBlock.getTotalDifficulty()).gt(new BN(currentHighestBlock.getTotalDifficulty()))) {
         this._chain.length = 0
@@ -132,6 +176,7 @@ export class Multiverse {
     if (new BN(newBlock.getTotalDifficulty()).lt(new BN(currentHighestBlock.getTotalDifficulty()))) {
       return false
     }
+    // if the current block at the same height is better switch
     if (currentParentHighestBlock !== null && newBlock.getPreviousHash() === currentParentHighestBlock.getHash() && validateBlockSequence([newBlock, currentParentHighestBlock]) === true) {
       this._chain.shift()
       this._chain.unshift(newBlock)
@@ -157,6 +202,10 @@ export class Multiverse {
     if (currentHighestBlock === null) {
       this._chain.unshift(newBlock)
       return true // TODO added - check with @schnorr
+    }
+    // Fail is the block hashes are identical
+    if (newBlock.getHash() === currentHighestBlock.getHash()) {
+      return false
     }
     // FAIL if newBlock totalDifficulty < (lt) currentHighestBlock totalDifficulty
     if (new BN(newBlock.getTotalDifficulty()).lt(new BN(currentHighestBlock.getTotalDifficulty()))) {
@@ -205,6 +254,10 @@ export class Multiverse {
       return Promise.resolve(true)
     }
 
+    // Fail is the block hashes are identical
+    if (newBlock.getHash() === currentHighestBlock.getHash()) {
+      return false
+    }
     // FAIL if new block not within 16 seconds of local time
     if (newBlock.getTimestamp() + 16 < Math.floor(Date.now() * 0.001)) {
       return Promise.resolve(false)
