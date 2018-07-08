@@ -81,8 +81,10 @@ export class Multiverse {
    * Valid Block Range
    * @returns {*}
    */
-  async validateBlockSequenceInline (blocks: BcBlock[]): boolean {
-    if (blocks === undefined || blocks.length < 1) return false
+  async validateBlockSequenceInline (blocks: BcBlock[]): Promise<bool> {
+    if (blocks === undefined || blocks.length < 1) {
+      return Promise.resolve(false)
+    }
     const sorted = blocks.sort((a, b) => {
       if (a.getHeight() < b.getHeight()) {
         return 1
@@ -95,7 +97,7 @@ export class Multiverse {
     // check if the actually sequence itself is valid
     const upperBound = sorted[0]
     const lowerBound = sorted[sorted.length - 1]
-    const upperBoundChild = await this.persistence.get('pending.bc.block.' + (sorted[0].getHeight() + 1))
+    const upperBoundChild = await this.persistence.get(`pending.bc.block.${sorted[0].getHeight() + 1}`)
     // current pending block does not match the purposed block at that height
     if (upperBoundChild === undefined || upperBound.getHash() !== upperBoundChild.getPreviousHash()) return Promise.reject(new Error('pending block does not match purposed block'))
     // add the child block of the sequence
@@ -256,7 +258,7 @@ export class Multiverse {
 
     // Fail is the block hashes are identical
     if (newBlock.getHash() === currentHighestBlock.getHash()) {
-      return false
+      return Promise.resolve(false)
     }
     // FAIL if new block not within 16 seconds of local time
     if (newBlock.getTimestamp() + 16 < Math.floor(Date.now() * 0.001)) {
