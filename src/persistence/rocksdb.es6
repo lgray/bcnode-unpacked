@@ -153,10 +153,9 @@ export default class PersistenceRocksDb {
 
   /**
    * Write pending values to perminent values
-   * @param blockchain string
    * @param opts
    */
-  putPending (blockchain: string = 'bc', opts: Object = { highWaterMark: 100000000, asBuffer: true }): Promise<Object> {
+  putPending (blockchain: string = 'bc', opts: Object = { highWaterMark: 100000000, asBuffer: true }): Promise<?boolean> {
     return new Promise((resolve, reject) => {
       const iter = this.db.iterator(opts)
       const cycle = () => {
