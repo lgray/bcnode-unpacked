@@ -516,7 +516,7 @@ export class Engine {
             const peerLockKey = 'bc.peer.' + peerInfo.id.toB58String()
             let peerLock = 1 // assume peer is busy
             try {
-              peerLock = await this.get(peerLockKey)
+              peerLock = await this.persistence.get(peerLockKey)
             } catch (err) {
               // the lock does not exist
               peerLock = 0
