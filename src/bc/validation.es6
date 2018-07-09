@@ -146,12 +146,18 @@ function areDarkFibersValid (newBlock: BcBlock): bool {
   logger.info('areDarkFibersValid validation running')
   const newBlockTimestampMs = newBlock.getTimestamp() * 1000
   const blockchainHeadersList = blockchainMapToList(newBlock.getBlockchainHeaders())
-  const dfHeadersChecks = blockchainHeadersList.map(header => {
+  const dfBoundHeadersChecks = blockchainHeadersList.map(header => {
     // e.g. NEO 1000 (rovered ts)  <=    1400 (mined time) -   300 (dfBound for NEO)
     return header.getTimestamp() <= newBlockTimestampMs - DF_CONFIG[header.getBlockchain()].dfBound * 1000
   })
-  logger.debug(`dfHeadersChecks: ${inspect(dfHeadersChecks)}`)
-  return all(equals(true), dfHeadersChecks)
+  logger.debug(`dfBoundHeadersChecks: ${inspect(dfBoundHeadersChecks)}`)
+
+  const dfVoidHeadersChecks = blockchainHeadersList.map(header => {
+    const { dfVoid } = DF_CONFIG[header.getBlockchain()]
+    return dfVoid === 0 || newBlockTimestampMs < header.getTimestamp() + dfVoid * 1000
+  })
+  logger.debug(`dfVoidHeadersChecks: ${inspect(dfVoidHeadersChecks)}`)
+  return all(equals(true), dfBoundHeadersChecks) && all(equals(true), dfVoidHeadersChecks)
 }
 
 function isMerkleRootCorrectlyCalculated (newBlock: BcBlock): bool {
