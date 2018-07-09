@@ -508,91 +508,90 @@ export class Engine {
       } else {
         const upperBound = max(depth - 1, 3) // so we dont get the genesis block
         const lowerBound = max(depth - 2000, 2)
-        let peerLock = 1 // assume peer is busy
-        try {
-          // TODO: Tomas how to get IP from Conn object
-          peerLock = await this.get('bc.peer.ip')
-        } catch (err) {
-          // the lock does not exist
-          peerLock = 0
-        }
-        if (peerLock === 1) {
-          // dont send request because the peer in busy
-          return Promise.resolve(true)
-        } else {
-          // request a range from the peer
-          // TODO: switch to real IP
-          await this.persistence.put('bc.peer.ip', 1)
-          // lock the depth for if another block comes while running this
-          await this.persistence.put('depth', depth)
-          return conn.getPeerInfo((err, peerInfo) => {
-            if (err) {
-              return Promise.reject(err)
+        return conn.getPeerInfo((err, peerInfo) => {
+          if (err) {
+            return Promise.reject(err)
+          }
+          return async () => {
+            const peerLockKey = 'bc.peer.' + peerInfo.id.toB58String()
+            let peerLock = 1 // assume peer is busy
+            try {
+              peerLock = await this.get(peerLockKey)
+            } catch (err) {
+              // the lock does not exist
+              peerLock = 0
             }
-            const query = {
-              queryHash: newBlock.getHash(),
-              queryHeight: upperBound,
-              low: lowerBound,
-              high: upperBound
+            if (peerLock === 1) {
+              // dont send request because the peer in busy
+              return Promise.resolve(true)
+            } else {
+              // request a range from the peer
+              await this.persistence.put(peerLockKey, 1)
+              // lock the depth for if another block comes while running this
+              await this.persistence.put('depth', depth)
+              const query = {
+                queryHash: newBlock.getHash(),
+                queryHeight: upperBound,
+                low: lowerBound,
+                high: upperBound
+              }
+              this.node.manager.createPeer(peerInfo)
+                .query(query)
+                .then(blocks => {
+                  return this.syncSetBlocksInline(blocks)
+                    .then((blocksStoredResults) => {
+                      // if we didn't get the one block above the genesis block run again
+                      if (lowerBound !== 2) {
+                        return this.syncFromDepth(conn, newBlock)
+                      }
+                      // all done, no more depth so unlock peer
+                      return this.persistence.put(peerLockKey, 0)
+                        .then(() => {
+                          return this.persistence.put('bc.depth', 2)
+                            .then(() => {
+                              return this.persistence.putPending('bc')
+                            })
+                            .catch((e) => {
+                              return Promise.reject(e)
+                            })
+                        })
+                        .catch(e => {
+                          this._logger.error(e)
+                          return Promise.reject(e)
+                        })
+                    })
+                    .catch(e => {
+                      this._logger.error(e)
+                      // unlock the peer
+                      return this.persistence.put(peerLockKey, 0)
+                        .then(() => {
+                          return this.persistence.put('bc.depth', depth)
+                            .then(() => {
+                              return Promise.resolve(depth)
+                            })
+                        })
+                        .catch(e => {
+                          // reset the depth
+                          return this.persistence.put('bc.depth', depth)
+                            .then(() => {
+                              return Promise.reject(e)
+                            })
+                        })
+                    })
+                })
+                .catch(e => {
+                  // unlock the peer and reset the depth
+                  return this.persistence.put(peerLockKey, 0)
+                    .then(() => {
+                      return this.persistence.put('bc.depth', depth)
+                        .then(() => {
+                          return Promise.resolve(depth)
+                        })
+                    })
+                })
             }
-            this.node.manager.createPeer(peerInfo)
-              .query(query)
-              .then(blocks => {
-                return this.syncSetBlocksInline(blocks)
-                  .then((blocksStoredResults) => {
-                    // if we didn't get the one block above the genesis block run again
-                    if (lowerBound !== 2) {
-                      return this.syncFromDepth(conn, newBlock)
-                    }
-                    // all done, no more depth so unlock peer
-                    // TODO: switch to real IP
-                    return this.persistence.put('bc.peer.ip', 0)
-                      .then(() => {
-                        return this.persistence.put('bc.depth', 2)
-                          .then(() => {
-                            return this.persistence.putPending('bc')
-                          })
-                          .catch((e) => {
-                            return Promise.reject(e)
-                          })
-                      })
-                      .catch(e => {
-                        this._logger.error(e)
-                        return Promise.reject(e)
-                      })
-                  })
-                  .catch(e => {
-                    this._logger.error(e)
-                    // TODO: switch to real IP
-                    // unlock the peer
-                    return this.persistence.put('bc.peer.ip', 0)
-                      .then(() => {
-                        return this.persistence.put('bc.depth', depth)
-                          .then(() => {
-                            return Promise.resolve(depth)
-                          })
-                      })
-                      .catch(e => {
-                        // reset the depth
-                        return this.persistence.put('bc.depth', depth)
-                          .then(() => {
-                            return Promise.reject(e)
-                          })
-                      })
-                  })
-              })
-              .catch(e => {
-                // unlock the peer and reset the depth
-                return this.persistence.put('bc.peer.ip', 0)
-                  .then(() => {
-                    return this.persistence.put('bc.depth', depth)
-                      .then(() => {
-                        return Promise.resolve(depth)
-                      })
-                  })
-              })
-          })
-        }
+          }
+        })
       }
     } catch (err) {
       // no depth has been set
