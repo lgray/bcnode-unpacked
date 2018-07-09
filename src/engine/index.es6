@@ -544,11 +544,17 @@ export class Engine {
                     if (lowerBound !== 2) {
                       return this.syncFromDepth(conn, newBlock)
                     }
-                    // no more depth so unlock peer
+                    // all done, no more depth so unlock peer
                     // TODO: switch to real IP
                     return this.persistence.put('bc.peer.ip', 0)
                       .then(() => {
                         return this.persistence.put('bc.depth', 2)
+                          .then(() => {
+                            return this.persistence.putPending('bc')
+                          })
+                          .catch((e) => {
+                            return Promise.reject(e)
+                          })
                       })
                       .catch(e => {
                         this._logger.error(e)

@@ -136,6 +136,53 @@ export default class PersistenceRocksDb {
       })
   }
 
+  putBulk (key: Array<*>, opts: Object = { asBuffer: true }): Promise<Array<Object>> {
+    const valid = key.filter((k) => {
+      if (k.length === 2) {
+        return k
+      }
+    })
+    const promises = valid.map((k) => {
+      return this.put(k[0], k[1])
+    })
+    return Promise.all(promises.map((p) => p.catch(e => null)))
+      .then((results) => {
+        return Promise.all(results.filter(a => a !== null))
+      })
+  }
+
+  /**
+   * Write pending values to perminent values
+   * @param blockchain string
+   * @param opts
+   */
+  putPending (blockchain: string = 'bc', opts: Object = { highWaterMark: 100000000, asBuffer: true }): Promise<Object> {
+    return new Promise((resolve, reject) => {
+      const iter = this.db.iterator(opts)
+      const cycle = () => {
+        return iter.next((err, key) => {
+          if (err) {
+            return reject(err)
+          } else if (key !== undefined && key.indexOf('pending.' + blockchain) > -1) {
+            return this.get(key)
+              .then((res) => {
+                const stringKey = key.toString().replace('pending.', '')
+                return this.put(stringKey, res).then(cycle)
+                  .catch((err) => {
+                    return reject(err)
+                  })
+              })
+              .catch((err) => {
+                return reject(err)
+              })
+          }
+          return resolve(true)
+        })
+      }
+      return cycle()
+    })
+  }
+
   /**
    * Delete data from database
    * @param key
