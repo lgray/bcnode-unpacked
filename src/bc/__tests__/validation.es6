@@ -6,7 +6,7 @@
  *
  * @flow
  */
-const { childrenHeightSum } = require('../validation')
+const { childrenHeightSum, validateBlockSequence } = require('../validation')
 
 const { BcBlock, BlockchainHeader, BlockchainHeaders } = require('../../protos/core_pb')
 
@@ -50,6 +50,42 @@ describe('validation', () => {
     it('correctly sums when some list has multiple blocks', () => {
       const mockBlock = createMockBlock([[1], [1], [1], [1], [1, 2]])
       expect(childrenHeightSum(mockBlock)).toBe(7)
+    })
+  })
+
+  describe('validateBlockSequence', () => {
+    it('validates that both BC blocks and blockchainHeaders form a chain', () => {
+      const mockParentBlock = createMockBlock([[2], [2], [2], [2], [2]])
+      mockParentBlock.setHeight(10)
+      mockParentBlock.setHash('a')
+      mockParentBlock.setPreviousHash('1')
+      mockParentBlock.getBlockchainHeaders().getBtcList()[0].setHash('btc_a')
+      mockParentBlock.getBlockchainHeaders().getBtcList()[0].setPreviousHash('btc_1')
+      mockParentBlock.getBlockchainHeaders().getEthList()[0].setHash('eth_a')
+      mockParentBlock.getBlockchainHeaders().getEthList()[0].setPreviousHash('eth_1')
+      mockParentBlock.getBlockchainHeaders().getLskList()[0].setHash('lsk_a')
+      mockParentBlock.getBlockchainHeaders().getLskList()[0].setPreviousHash('lsk_1')
+      mockParentBlock.getBlockchainHeaders().getNeoList()[0].setHash('neo_a')
+      mockParentBlock.getBlockchainHeaders().getNeoList()[0].setPreviousHash('neo_1')
+      mockParentBlock.getBlockchainHeaders().getWavList()[0].setHash('wav_a')
+      mockParentBlock.getBlockchainHeaders().getWavList()[0].setPreviousHash('wav_1')
+
+      const mockChildBlock = createMockBlock([[2], [3], [2], [2], [2]])
+      mockChildBlock.setHeight(11)
+      mockChildBlock.setHash('b')
+      mockChildBlock.setPreviousHash('a')
+      mockChildBlock.getBlockchainHeaders().getBtcList()[0].setHash('btc_a')
+      mockChildBlock.getBlockchainHeaders().getBtcList()[0].setPreviousHash('btc_1')
+      mockChildBlock.getBlockchainHeaders().getEthList()[0].setHash('eth_b')
+      mockChildBlock.getBlockchainHeaders().getEthList()[0].setPreviousHash('eth_a')
+      mockChildBlock.getBlockchainHeaders().getLskList()[0].setHash('lsk_a')
+      mockChildBlock.getBlockchainHeaders().getLskList()[0].setPreviousHash('lsk_1')
+      mockChildBlock.getBlockchainHeaders().getNeoList()[0].setHash('neo_a')
+      mockChildBlock.getBlockchainHeaders().getNeoList()[0].setPreviousHash('neo_1')
+      mockChildBlock.getBlockchainHeaders().getWavList()[0].setHash('wav_a')
+      mockChildBlock.getBlockchainHeaders().getWavList()[0].setPreviousHash('wav_1')
+
+      expect(validateBlockSequence([mockParentBlock, mockChildBlock])).toBe(true)
     })
   })
 })

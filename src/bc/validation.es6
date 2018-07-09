@@ -184,7 +184,7 @@ function isDistanceCorrectlyCalculated (newBlock: BcBlock): bool {
   return receivedDistance === expectedDistance
 }
 
-function blockainHeadersOrdered (childHeaderList: BlockchainHeader[], parentHeaderList: BlockchainHeader[]) {
+function blockchainHeadersAreChain (childHeaderList: BlockchainHeader[], parentHeaderList: BlockchainHeader[]) {
   // check highest block from child list is higher or equally high as highest block from parent list
   const pickHighestFromList = (list: BlockchainHeader[]) => {
     if (list.length === 1) {
@@ -197,8 +197,11 @@ function blockainHeadersOrdered (childHeaderList: BlockchainHeader[], parentHead
   const highestChildHeader = pickHighestFromList(childHeaderList)
   const highestParentHeader = pickHighestFromList(parentHeaderList)
 
-  // logger.debug(`blockainHeadersOrdered highestChild ${inspect(highestChildHeader.toObject())}, highestParent: ${inspect(highestParentHeader.toObject())}`)
-  return highestChildHeader !== undefined && highestParentHeader !== undefined && highestChildHeader.getHeight() >= highestParentHeader.getHeight()
+  // logger.debug(`blockchainHeadersAreChain highestChild ${inspect(highestChildHeader.toObject())}, highestParent: ${inspect(highestParentHeader.toObject())}`)
+  return highestChildHeader !== undefined &&
+    highestParentHeader !== undefined &&
+    (highestChildHeader.getPreviousHash() === highestParentHeader.getHash() ||
+     highestChildHeader.getHash() === highestParentHeader.getHash())
 }
 
 export function validateBlockSequence (blocks: BcBlock[]): bool {
@@ -233,11 +236,11 @@ export function validateBlockSequence (blocks: BcBlock[]): bool {
     const parentBlockchainHeaders = parent.getBlockchainHeaders()
     // TODO this should be a map over all members of BlockchainHeaders instance to prevent error after adding another chain to Collider
     return [
-      blockainHeadersOrdered(childBlockchainHeaders.getBtcList(), parentBlockchainHeaders.getBtcList()),
-      blockainHeadersOrdered(childBlockchainHeaders.getEthList(), parentBlockchainHeaders.getEthList()),
-      blockainHeadersOrdered(childBlockchainHeaders.getLskList(), parentBlockchainHeaders.getLskList()),
-      blockainHeadersOrdered(childBlockchainHeaders.getNeoList(), parentBlockchainHeaders.getNeoList()),
-      blockainHeadersOrdered(childBlockchainHeaders.getWavList(), parentBlockchainHeaders.getWavList())
+      blockchainHeadersAreChain(childBlockchainHeaders.getBtcList(), parentBlockchainHeaders.getBtcList()),
+      blockchainHeadersAreChain(childBlockchainHeaders.getEthList(), parentBlockchainHeaders.getEthList()),
+      blockchainHeadersAreChain(childBlockchainHeaders.getLskList(), parentBlockchainHeaders.getLskList()),
+      blockchainHeadersAreChain(childBlockchainHeaders.getNeoList(), parentBlockchainHeaders.getNeoList()),
+      blockchainHeadersAreChain(childBlockchainHeaders.getWavList(), parentBlockchainHeaders.getWavList())
     ]
   })
   // flatten => [btc10_9Ordered, eth10_9Ordered, lsk10_9Ordered, neo10_9Ordered, wav10_9Ordered, btc9_8Orderded, eth9_8Ordered, lsk9_8Ordered, neo9_8Ordered, wav9_8Ordered]
