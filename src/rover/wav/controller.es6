@@ -25,6 +25,7 @@ const { createUnifiedBlock } = require('../helper')
 const { getBackoff } = require('../utils')
 const { randRange } = require('../../utils/ramda')
 const ts = require('../../utils/time').default // ES6 default export
+const { ROVER_DF_VOID_EXIT_CODE } = require('../manager')
 
 const WAVES_NODE_ADDRESS = WavesApi.MAINNET_CONFIG.nodeAddress
 
@@ -201,7 +202,7 @@ export default class Controller {
       process.exit(3)
     })
 
-    const dfBound = this._config.dfConfig.wav.dfBound
+    const { dfBound, dfVoid } = this._config.dfConfig.wav
 
     const cycle = () => {
       this._timeoutDescriptor = setTimeout(() => {
@@ -279,6 +280,11 @@ export default class Controller {
         if (this._config.isStandalone) {
           this._logger.debug(`Would publish block: ${inspect(fiberBlock.toObject())}`)
           return
+        }
+
+        if (fiberTs + dfVoid < ts.nowSeconds()) {
+          this._logger.debug(`Would publish block: ${inspect(fiberBlock.toObject())}`)
+          process.exit(ROVER_DF_VOID_EXIT_CODE)
         }
 
         this._rpc.rover.collectBlock(fiberBlock, (err, response) => {
