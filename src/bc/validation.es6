@@ -150,6 +150,7 @@ function areDarkFibersValid (newBlock: BcBlock): bool {
     // e.g. NEO 1000 (rovered ts)  <=    1400 (mined time) -   300 (dfBound for NEO)
     return header.getTimestamp() <= newBlockTimestampMs - DF_CONFIG[header.getBlockchain()].dfBound * 1000
   })
+  logger.debug(`dfHeadersChecks: ${inspect(dfHeadersChecks)}`)
   return all(equals(true), dfHeadersChecks)
 }
 
