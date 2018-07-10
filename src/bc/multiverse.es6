@@ -149,6 +149,25 @@ export class Multiverse {
   }
 
   /**
+   * check if a block exists
+   * @param newBlock
+   * @returns {boolean}
+   */
+  hasBlock (newBlock: BcBlock): boolean {
+    if (this._chain.length < 1) {
+      return false
+    }
+    return this._chain.reduce((state, b) => {
+      if (state === true) {
+        return state
+      } else if (b.getHash() === newBlock.getHash()) {
+        return true
+      }
+      return false
+    }, false)
+  }
+
+  /**
    * Check if immmediate height is better
    * @param newBlock
    * @returns {boolean}
@@ -167,7 +186,7 @@ export class Multiverse {
     }
     // if there is no current parent, this block is the right lbock
     if (currentParentHighestBlock === false) {
-      if (new BN(newBlock.getTotalDifficulty()).gt(new BN(currentHighestBlock.getTotalDifficulty()))) {
+      if (new BN(newBlock.getTotalDistance()).gt(new BN(currentHighestBlock.getTotalDistance()))) {
         this._chain.length = 0
         this._chain.push(newBlock)
         return true
@@ -175,7 +194,7 @@ export class Multiverse {
       return false
     }
     // FAIL if newBlock total difficulty <  currentHighestBlock
-    if (new BN(newBlock.getTotalDifficulty()).lt(new BN(currentHighestBlock.getTotalDifficulty()))) {
+    if (new BN(newBlock.getTotalDistance()).lt(new BN(currentHighestBlock.getTotalDistance()))) {
       return false
     }
     // if the current block at the same height is better switch
@@ -210,7 +229,7 @@ export class Multiverse {
       return false
     }
     // FAIL if newBlock totalDifficulty < (lt) currentHighestBlock totalDifficulty
-    if (new BN(newBlock.getTotalDifficulty()).lt(new BN(currentHighestBlock.getTotalDifficulty()))) {
+    if (new BN(newBlock.getTotalDistance()).lt(new BN(currentHighestBlock.getTotalDistance()))) {
       return false
     }
     // FAIL if malformed timestamp referenced from previous block with five second lag
@@ -265,13 +284,13 @@ export class Multiverse {
       return Promise.resolve(false)
     }
     if (currentParentHighestBlock === null && currentHighestBlock !== null) {
-      if (new BN(newBlock.getTotalDifficulty()).gt(new BN(currentHighestBlock.getTotalDifficulty()))) {
+      if (new BN(newBlock.getTotalDistance()).gt(new BN(currentHighestBlock.getTotalDistance()))) {
         this.addCandidateBlock(newBlock)
         return Promise.resolve(true)
       }
     }
     // FAIL if newBlock total difficulty <  currentHighestBlock
-    if (new BN(newBlock.getTotalDifficulty()).lt(new BN(currentHighestBlock.getTotalDifficulty()))) {
+    if (new BN(newBlock.getTotalDistance()).lt(new BN(currentHighestBlock.getTotalDistance()))) {
       return Promise.resolve(false)
     }
 

@@ -635,6 +635,7 @@ export class Engine {
       const isNextBlock = this.multiverse.addNextBlock(newBlock)
 
       if (isNextBlock) {
+        this._logger.debug('block ' + newBlock.getHeight() + ' considered next block in current multiverse ')
         // RESTART MINING USED newBlock.getHash()
         this.pubsub.publish('update.block.latest', { key: 'bc.block.latest', data: newBlock })
         this.node.broadcastNewBlock(newBlock)
@@ -643,7 +644,7 @@ export class Engine {
             this._logger.info('depth sync stated')
           })
           .catch(e => {
-
+            this._logger.error(e)
           })
         // if depth !== 0
         // get peer lock
@@ -655,9 +656,11 @@ export class Engine {
         // if we are done unlock the peer
         // if we are not done re-request a sync
       } else {
+        this._logger.debug('new block ' + newBlock.getHeight() + ' is NOT next block, evaluating resync.')
         this.multiverse.addResyncRequest(newBlock)
           .then(shouldResync => {
             if (shouldResync === true) {
+              this._logger.debug(newBlock.getHash() + ' new block: ' + newBlock.getHeight() + ' should rsync request approved')
               // 1. request multiverse from peer, if fail ignore
               // succeed in getting multiverse -->
               // 2. Compare purposed multiverse sum of difficulty with current sum of diff
@@ -668,30 +671,38 @@ export class Engine {
               //
               //
               const upperBound = newBlock.getHeight()
+              this._logger.debug(newBlock.getHash() + ' resync upper bound: ' + upperBound)
               // get the lowest of the current multiverse
               const lowerBound = this.multiverse.getLowestBlock()
+              this._logger.debug(newBlock.getHash() + ' resync lower bound: ' + lowerBound)
               return conn.getPeerInfo((err, peerInfo) => {
                 if (err) {
                   return Promise.reject(err)
                 }
                 // request proof of the multiverse from the peer
+                const peerLockKey = peerInfo.id.toB58String()
                 const query = {
                   queryHash: newBlock.getHash(),
                   queryHeight: upperBound,
                   low: lowerBound,
                   high: upperBound
                 }
+                this._logger.debug(newBlock.getHash() + ' requesting multiverse proof from peer: ' + peerLockKey)
                 this.node.manager.createPeer(peerInfo)
                   .query(query)
                   .then(newBlocks => {
+                    if (newBlocks === undefined) {
+                      this._logger.warn(newBlock.getHash() + ' no blocks recieved from proof ')
+                      return Promise.resolve(true)
+                    }
+                    this._logger.debug(newBlock.getHash() + ' recieved ' + newBlocks.length + ' blocks for multiverse proof')
                     const currentHeights = this.multiverse._chain.map(b => {
                       return b.getHeight()
                     })
-
+                    this._logger.debug(newBlock.getHash() + ' new heights: ' + JSON.stringify(currentHeights, null, 2))
                     const comparableBlocks = newBlocks.filter(a => {
                       if (currentHeights.indexOf(a) > -1) return a
                     })
-
                     const sorted = comparableBlocks.sort((a, b) => {
                       if (a.getHeight() > b.getHeight()) {
                         return -1
@@ -701,23 +712,27 @@ export class Engine {
                       }
                       return 0
                     })
-
                     const highestBlock = this.multiverse.getHighestBlock()
-                    if (highestBlock && new BN(sorted[0].getTotalDifficulty()).gt(new BN(highestBlock.getTotalDistance())) === true) {
+                    this._logger.debug(newBlock.getHash() + ' comparing with: ' + highestBlock.getHash() + ' height: ' + highestBlock.getHeight())
+                    if (highestBlock && new BN(sorted[0].getTotalDistance()).gt(new BN(highestBlock.getTotalDistance())) === true) {
+                      // overwrite current multiverse
+                      this._logger.debug(newBlock.getHash() + ' approved --> assigning as current multiverse')
                       this.multiverse._candidates.length = 0
                       this.multiverse._chain.length = 0
                       this.multiverse._chain = sorted
-
-                      this.persistence.put('bc.depth', this.multiverse.getLowestBlock())
+                      const lowestBlock = this.multiverse.getLowestBlock()
+                      this._logger.debug(newBlock.getHash() + ' setting resync target block hash at height: ' + lowestBlock.getHeight())
+                      this.persistence.put('bc.depth', lowestBlock.getHeight())
                         .then(() => {
                           this.pubsub.publish('update.block.latest', { key: 'bc.block.latest', data: newBlock })
                           this.node.broadcastNewBlock(newBlock)
                           // TODO: restart miner on new multiverse
                           this.syncFromDepth(conn, this.multiverse.getLowestBlock())
                             .then(synced => {
-
+                              this._logger.debug(newBlock.getHash() + ' blockchain sync complete')
                             })
                             .catch(e => {
+                              this._logger.debug(newBlock.getHash() + ' blockchain sync failed')
                               this._logger.error(e)
                             })
                         })
@@ -795,7 +810,6 @@ export class Engine {
           iterations: solution.iterations,
           timeDiff: solution.timeDiff
         }
-        self.pubsub.publish('update.block.latest', { key: 'bc.block.' + newBlock.getHeight(), data: newBlock })
         self.pubsub.publish('block.mined', { type: 'block.mined', data: newBlockObj })
       } catch (e) {
         return Promise.reject(e)
@@ -817,7 +831,6 @@ export class Engine {
    */
   _processMinedBlock (newBlock: BcBlock, solution: Object): Promise<boolean> {
     // TODO: reenable this._logger.info(`Mined new block: ${JSON.stringify(newBlockObj, null, 2)}`)
-    const self = this
     // Trying to process null/undefined block
     if (newBlock === null || newBlock === undefined) {
       this._logger.warn('Failed to process work provided by miner')
@@ -825,25 +838,25 @@ export class Engine {
     }
 
     try {
-      // Received block which is already in cache
+      // Prevent submitting mined block twice
       if (this._knownBlocksCache.has(newBlock.getHash())) {
         this._logger.warn('Received duplicate new block ' + newBlock.getHeight() + ' (' + newBlock.getHash() + ')')
         return Promise.resolve(false)
       }
-
       // Add to multiverse and call persist
       this._knownBlocksCache.set(newBlock.getHash(), newBlock)
-      const isNextBlock = self.multiverse.addNextBlock(newBlock)
-
-      if (isNextBlock) {
-        // TODO: this will break now that _blocks is not used in multiverse
-        self._server._wsBroadcastMultiverse(self.multiverse)
-        self.pubsub.publish('update.block.latest', { key: 'bc.block.latest', data: newBlock, multiverse: self.multiverse._chain })
-        return Promise.resolve(true)
-      } else {
-        // beforeBlockHighest is not available
-        return Promise.resolve(false)
-      }
+      this._logger.info('submitting mined block to current multiverse')
+      const isNextBlock = this.multiverse.addNextBlock(newBlock)
+      this._logger.info('submitted mine block is next block in multiverse: ' + isNextBlock)
+      // if (isNextBlock) {
+      // TODO: this will break now that _blocks is not used in multiverse
+      this._server._wsBroadcastMultiverse(this.multiverse)
+      this.pubsub.publish('update.block.latest', { key: 'bc.block.latest', data: newBlock, multiverse: this.multiverse._chain })
+      return Promise.resolve(true)
+      // } else {
+      //   // beforeBlockHighest is not available
+      //   return Promise.resolve(false)
+      // }
     } catch (err) {
       return Promise.reject(err)
     }
