@@ -822,11 +822,11 @@ proto.bc.BcBlock.toObject = function(includeInstance, msg) {
     schemaVersion: jspb.Message.getFieldWithDefault(msg, 4, 0),
     height: jspb.Message.getFieldWithDefault(msg, 5, 0),
     miner: jspb.Message.getFieldWithDefault(msg, 6, ""),
-    difficulty: +jspb.Message.getFieldWithDefault(msg, 7, 0.0),
+    difficulty: jspb.Message.getFieldWithDefault(msg, 7, ""),
     timestamp: jspb.Message.getFieldWithDefault(msg, 8, 0),
     merkleRoot: jspb.Message.getFieldWithDefault(msg, 9, ""),
     chainRoot: jspb.Message.getFieldWithDefault(msg, 10, ""),
-    distance: jspb.Message.getFieldWithDefault(msg, 11, 0),
+    distance: jspb.Message.getFieldWithDefault(msg, 11, ""),
     totalDistance: jspb.Message.getFieldWithDefault(msg, 12, ""),
     nonce: jspb.Message.getFieldWithDefault(msg, 13, ""),
     nrgGrant: jspb.Message.getFieldWithDefault(msg, 14, 0),
@@ -909,7 +909,7 @@ proto.bc.BcBlock.deserializeBinaryFromReader = function(msg, reader) {
       msg.setMiner(value);
       break;
     case 7:
-      var value = /** @type {number} */ (reader.readFloat());
+      var value = /** @type {string} */ (reader.readString());
       msg.setDifficulty(value);
       break;
     case 8:
@@ -925,7 +925,7 @@ proto.bc.BcBlock.deserializeBinaryFromReader = function(msg, reader) {
       msg.setChainRoot(value);
       break;
     case 11:
-      var value = /** @type {number} */ (reader.readUint64());
+      var value = /** @type {string} */ (reader.readString());
       msg.setDistance(value);
       break;
     case 12:
@@ -1082,8 +1082,8 @@ proto.bc.BcBlock.serializeBinaryToWriter = function(message, writer) {
     );
   }
   f = message.getDifficulty();
-  if (f !== 0.0) {
-    writer.writeFloat(
+  if (f.length > 0) {
+    writer.writeString(
       7,
       f
     );
@@ -1110,8 +1110,8 @@ proto.bc.BcBlock.serializeBinaryToWriter = function(message, writer) {
     );
   }
   f = message.getDistance();
-  if (f !== 0) {
-    writer.writeUint64(
+  if (f.length > 0) {
+    writer.writeString(
       11,
       f
     );
@@ -1352,15 +1352,15 @@ proto.bc.BcBlock.prototype.setMiner = function(value) {
 
 
 /**
- * optional float difficulty = 7;
- * @return {number}
+ * optional string difficulty = 7;
+ * @return {string}
  */
 proto.bc.BcBlock.prototype.getDifficulty = function() {
-  return /** @type {number} */ (+jspb.Message.getFieldWithDefault(this, 7, 0.0));
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 7, ""));
 };
 
 
-/** @param {number} value */
+/** @param {string} value */
 proto.bc.BcBlock.prototype.setDifficulty = function(value) {
   jspb.Message.setField(this, 7, value);
 };
@@ -1412,15 +1412,15 @@ proto.bc.BcBlock.prototype.setChainRoot = function(value) {
 
 
 /**
- * optional uint64 distance = 11;
- * @return {number}
+ * optional string distance = 11;
+ * @return {string}
  */
 proto.bc.BcBlock.prototype.getDistance = function() {
-  return /** @type {number} */ (jspb.Message.getFieldWithDefault(this, 11, 0));
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 11, ""));
 };
 
 
-/** @param {number} value */
+/** @param {string} value */
 proto.bc.BcBlock.prototype.setDistance = function(value) {
   jspb.Message.setField(this, 11, value);
 };

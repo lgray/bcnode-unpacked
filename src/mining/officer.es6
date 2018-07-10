@@ -287,7 +287,7 @@ export class MiningOfficer {
     return this.stopMining()
   }
 
-  _handleWorkerFinishedMessage (solution: { distance: number, nonce : string, difficulty: number, timestamp: number, iterations: number, timeDiff: number }) {
+  _handleWorkerFinishedMessage (solution: { distance: string, nonce: string, difficulty: string, timestamp: number, iterations: number, timeDiff: number }) {
     const unfinishedBlock = this._unfinishedBlock
     if (!unfinishedBlock) {
       this._logger.warn('There is not an unfinished block to use solution for')
@@ -297,7 +297,7 @@ export class MiningOfficer {
     const { nonce, distance, timestamp, difficulty, iterations, timeDiff } = solution
     unfinishedBlock.setNonce(nonce)
     unfinishedBlock.setDistance(distance)
-    unfinishedBlock.setTotalDistance(new BN(unfinishedBlock.getTotalDistance()).add(new BN(distance)).toString())
+    unfinishedBlock.setTotalDistance(new BN(unfinishedBlock.getTotalDistance()).add(new BN(difficulty)).toString())
     unfinishedBlock.setTimestamp(timestamp)
     unfinishedBlock.setDifficulty(difficulty)
 

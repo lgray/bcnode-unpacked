@@ -52,7 +52,7 @@ const main = () => {
           lastPreviousBlockProto,
           newBlockCount
         )
-        return getExpFactorDiff(preExpDiff, lastPreviousBlockProto.getHeight()).toNumber()
+        return getExpFactorDiff(preExpDiff, lastPreviousBlockProto.getHeight()).toString()
       }
     }
 

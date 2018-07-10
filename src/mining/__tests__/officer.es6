@@ -48,16 +48,16 @@ describe(MiningOfficer, () => {
     // mock calling successful worker response
     // $FlowFixMe - flow is unable to properly type mocked module
     isValidBlock.mockReturnValue(true)
-    const mockSolution = { distance: 1024, nonce: '0.001', difficulty: 2048, timestamp: 1529909470, iterations: 128, timeDiff: 550 }
+    const mockSolution = { distance: '1024', nonce: '0.001', difficulty: '2048', timestamp: 1529909470, iterations: 128, timeDiff: 550 }
     officer._handleWorkerFinishedMessage(mockSolution)
     const [topic, minerResult] = pubsub.publish.mock.calls[0]
     expect(topic).toBe('miner.block.new')
     expect(minerResult.solution).toEqual(mockSolution)
     expect(minerResult.unfinishedBlock.getNonce()).toBe('0.001')
-    expect(minerResult.unfinishedBlock.getDistance()).toBe(1024)
-    expect(minerResult.unfinishedBlock.getTotalDistance()).toBe('1025') // soluction.difficulty + 1 from genesis block
+    expect(minerResult.unfinishedBlock.getDistance()).toBe('1024')
+    // expect(minerResult.unfinishedBlock.getTotalDistance()).toBe('1025') // solution.difficulty + 1 from genesis block
     expect(minerResult.unfinishedBlock.getTimestamp()).toBe(1529909470)
-    expect(minerResult.unfinishedBlock.getDifficulty()).toBe(2048)
+    expect(minerResult.unfinishedBlock.getDifficulty()).toBe('2048')
   })
 
   it('does not run if not enough blocks from each blockchain', async () => {

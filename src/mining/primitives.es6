@@ -96,14 +96,14 @@ export function getExpFactorDiff (calculatedDifficulty: BN, parentBlockHeight: n
  * @param currentBlockTime
  * @param previousBlockTime
  * @param previousDistance
- * @param minimalDiffulty
+ * @param minimalDifficulty
  * @param newBlockCount
  * @returns
  */
-export function getDiff (currentBlockTime: number, previousBlockTime: number, previousDistance: number, minimalDiffulty: number, newBlockCount: number): BN {
+export function getDiff (currentBlockTime: number, previousBlockTime: number, previousDistance: string, minimalDifficulty: number, newBlockCount: number): BN {
   // https://github.com/ethereum/EIPs/blob/master/EIPS/eip-2.md
 
-  let bigMinimalDifficulty = new BN(minimalDiffulty, 16)
+  let bigMinimalDifficulty = new BN(minimalDifficulty, 16)
 
   const bigPreviousBlockTime = new BN(previousBlockTime, 16)
   const bigPreviousDistance = new BN(previousDistance, 16)
@@ -137,7 +137,7 @@ export function getDiff (currentBlockTime: number, previousBlockTime: number, pr
   // x = x + previousDistance
   x = x.add(bigPreviousDistance)
 
-  // x < minimalDiffulty
+  // x < minimalDifficulty
   if (x.lt(bigMinimalDifficulty)) {
     return bigMinimalDifficulty
   }
@@ -238,7 +238,7 @@ export function distance (a: string, b: string): number {
  * @returns {Object} result containing found `nonce` and `distance` where distance is > `threshold` provided as parameter
  */
 // $FlowFixMe will never return anything else then a mining result
-export function mine (currentTimestamp: number, work: string, miner: string, merkleRoot: string, threshold: number, difficultyCalculator: ?Function): { distance: number, nonce: string, timestamp: number, difficulty: number } {
+export function mine (currentTimestamp: number, work: string, miner: string, merkleRoot: string, threshold: number, difficultyCalculator: ?Function): { distance: string, nonce: string, timestamp: number, difficulty: string } {
   let difficulty = threshold
   let result
   const tsStart = ts.now()
@@ -506,7 +506,7 @@ export function prepareNewBlock (currentTimestamp: number, lastPreviousBlock: Bc
         lastPreviousBlock,
         newBlockCount
       )
-      finalDifficulty = getExpFactorDiff(preExpDiff, lastPreviousBlock.getHeight()).toNumber()
+      finalDifficulty = getExpFactorDiff(preExpDiff, lastPreviousBlock.getHeight()).toString()
       break
     } catch (e) {
       finalTimestamp += 1
