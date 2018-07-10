@@ -236,7 +236,7 @@ export default class Controller {
       }
       this._logger.debug(`Fibers count ${this._pendingFibers.length}`)
       const fiberTs = this._pendingFibers[0][0]
-      if (fiberTs + dfBound <= ts.nowSeconds()) {
+      if (fiberTs + dfBound < ts.nowSeconds()) {
         const [, fiberBlock] = this._pendingFibers.shift()
         this._logger.debug('NEO Fiber is ready, going to call this._rpc.rover.collectBlock()')
 
