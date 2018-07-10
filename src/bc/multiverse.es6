@@ -120,7 +120,7 @@ export class Multiverse {
    */
   getHighestBlock (): BcBlock|null {
     if (this._chain.length === 0) {
-      return null
+      return
     }
     return this._chain[0]
   }
@@ -173,17 +173,21 @@ export class Multiverse {
    * @returns {boolean}
    */
   addBestBlock (newBlock: BcBlock): boolean {
+    this._logger.info(11)
     const currentHighestBlock = this.getHighestBlock()
     const currentParentHighestBlock = this.getParentHighestBlock()
-    if (currentHighestBlock === null) {
+    if (currentHighestBlock === null || currentHighestBlock === undefined) {
       // assume we always have current highest block
-      throw Error('Cannot get currentHighestBlock')
+      this._logger.error('Cannot get currentHighestBlock')
+      return false
     }
+    this._logger.info(12)
     // if no block is available go by total difficulty
     // FAIL if new block not within 16 seconds of local time
     if (newBlock.getTimestamp() + 16 < Math.floor(Date.now() * 0.001)) {
       return false
     }
+    this._logger.info(13)
     // if there is no current parent, this block is the right lbock
     if (currentParentHighestBlock === false) {
       if (new BN(newBlock.getTotalDistance()).gt(new BN(currentHighestBlock.getTotalDistance()))) {
@@ -193,17 +197,21 @@ export class Multiverse {
       }
       return false
     }
+    this._logger.info(14)
     // FAIL if newBlock total difficulty <  currentHighestBlock
     if (new BN(newBlock.getTotalDistance()).lt(new BN(currentHighestBlock.getTotalDistance()))) {
       return false
     }
     // if the current block at the same height is better switch
-    if (currentParentHighestBlock !== null && newBlock.getPreviousHash() === currentParentHighestBlock.getHash() && validateBlockSequence([newBlock, currentParentHighestBlock]) === true) {
+    if (currentParentHighestBlock !== null &&
+        currentParentHighestBlock !== undefined &&
+        newBlock.getPreviousHash() === currentParentHighestBlock.getHash() &&
+        validateBlockSequence([newBlock, currentParentHighestBlock]) === true) {
       this._chain.shift()
       this._chain.unshift(newBlock)
       return true
     }
-
+    this._logger.info(15)
     return false
   }
 
@@ -213,50 +221,65 @@ export class Multiverse {
    * @returns {boolean}
    */
   addNextBlock (newBlock: BcBlock): boolean {
+    // return false for empty block
+    if (newBlock === undefined || newBlock === null) {
+      return false
+    }
+    this._logger.info(1)
     // if there are no blocks in the multiverse this block is the highest
     if (this._chain.length === 0) {
       this._chain.push(newBlock)
       return true
     }
+    this._logger.info(2)
     const currentHighestBlock = this.getHighestBlock()
     // PASS no other candidate in Multiverse
-    if (currentHighestBlock === null) {
+    if (currentHighestBlock === null || currentHighestBlock === undefined) {
       this._chain.unshift(newBlock)
       return true // TODO added - check with @schnorr
     }
+    this._logger.info(3)
     // Fail is the block hashes are identical
-    if (newBlock.getHash() === currentHighestBlock.getHash()) {
+    if (currentHighestBlock !== undefined && newBlock.getHash() === currentHighestBlock.getHash()) {
       return false
     }
+    this._logger.info(4)
     // FAIL if newBlock totalDifficulty < (lt) currentHighestBlock totalDifficulty
     if (new BN(newBlock.getTotalDistance()).lt(new BN(currentHighestBlock.getTotalDistance()))) {
       return false
     }
+    this._logger.info(5)
     // FAIL if malformed timestamp referenced from previous block with five second lag
     if (newBlock.getTimestamp() + 5 <= currentHighestBlock.getTimestamp()) {
       this._logger.debug('purposed block ' + newBlock.getHash() + ' has invalid timestamp ' + newBlock.getTimestamp() + ' from current height timestamp ' + currentHighestBlock.getTimestamp())
       return this.addBestBlock(newBlock)
     }
+    this._logger.info(6)
     // FAIL if timestamp of block is greater than 31 seconds from system time
     if (newBlock.getTimestamp() + 31 < Math.floor(Date.now() * 0.001)) {
       this._logger.debug('purposed block ' + newBlock.getHash() + ' has invalid timestamp ' + newBlock.getTimestamp() + ' from current height timestamp ' + currentHighestBlock.getTimestamp())
       return this.addBestBlock(newBlock)
     }
+    this._logger.info(7)
     // FAIL if newBlock does not reference the current highest block as it's previous hash
     if (newBlock.getPreviousHash() !== currentHighestBlock.getHash()) {
       this._logger.debug('purposed block ' + newBlock.getHash() + ' previous hash not current highest ' + currentHighestBlock.getHash())
       return this.addBestBlock(newBlock)
     }
+    this._logger.info(8)
     // FAIL if newBlock does not reference the current highest block as it's previous hash
     if (validateBlockSequence([newBlock, currentHighestBlock]) !== true) {
+      this._logger.info(8.5)
       this._logger.debug('addition of block ' + newBlock.getHash() + ' creates malformed child blockchain sequence')
       return this.addBestBlock(newBlock)
     }
+    this._logger.info(9)
     // PASS add the new block to the parent position
     this._chain.unshift(newBlock)
     if (this._chain.length > 7) {
       this._chain.pop()
     }
+    this._logger.info(10)
     return true
   }
 

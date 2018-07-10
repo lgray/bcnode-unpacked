@@ -858,6 +858,7 @@ export class Engine {
       //   return Promise.resolve(false)
       // }
     } catch (err) {
+      this._logger.error(err)
       return Promise.reject(err)
     }
   }
