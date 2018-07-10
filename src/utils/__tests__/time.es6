@@ -23,7 +23,7 @@ describe('time', () => {
   describe('running', () => {
     beforeEach(() => {
       mockNow(new Date(MOCK_DATE_UNIX))
-      Sntp.time = jest.fn((callback) => { callback(null, { t: 1142.221312 }) })
+      Sntp.time = jest.fn((opts, callback) => { callback(null, { t: 1142.221312 }) })
       ts.start()
     })
 
