@@ -30,9 +30,11 @@ export class TimeService { // export for tests
 
   ntpGetOffset () {
     this.inFlight = true
-    Sntp.time((err, { t }) => {
+    Sntp.time(OPTIONS, (err, { t } = { t: 0 }) => {
       this.inFlight = false
       if (err) {
+        this._offset = t << 0
+        this.inFlight = false
         this._logger.warn(`Could not get offset from NTP servers, reason ${err.message}`)
         return
       }
