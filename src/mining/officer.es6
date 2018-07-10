@@ -104,7 +104,12 @@ export class MiningOfficer {
         return all
       }, '') + '|'
 
+      const totalBlocks = keys.reduce((all, key) => {
+        return all + this._collectedBlocks[key]
+      }, 0)
+
       this._logger.info('constructing multiverse from blockchains ' + values)
+      this._logger.info('multiverse depth ' + totalBlocks)
       return Promise.resolve(false)
     }
 
@@ -205,6 +210,7 @@ export class MiningOfficer {
           this._workerProcess.on('exit', this._handleWorkerExit.bind(this))
 
           // $FlowFixMe - Flow can't find out that ChildProcess is extended form EventEmitter
+          this._logger.info('sending difficulty threshold to worker: ' + newBlock.getDifficulty())
           this._workerProcess.send({
             currentTimestamp,
             offset: ts.offset,
@@ -265,6 +271,7 @@ export class MiningOfficer {
       }
     }
 
+    this._logger.debug('mining worker process has been killed')
     this._workerProcess = undefined
     return Promise.resolve(true)
   }
