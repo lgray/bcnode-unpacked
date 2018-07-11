@@ -234,13 +234,21 @@ export class Engine {
       self._peerIsResyncing = false
     })
 
-    self.pubsub.subscribe('update.block.latest', '<engine>', (msg) => {
-      self.updateLatestAndStore(msg)
+    this.pubsub.subscribe('update.block.latest', '<engine>', (msg) => {
+      this.miningOfficer.stopMining()
+      this.updateLatestAndStore(msg)
         .then((res) => {
-          self._logger.info(`latest block ${msg.data.getHeight()} has been updated`)
+          this._logger.info(`latest block ${msg.data.getHeight()} has been updated`)
+          this.miningOfficer.rebaseMiner()
+            .then((state) => {
+              this._logger.info(`latest block ${msg.data.getHeight()} has been updated`)
+            })
+            .catch((err) => {
+              this._logger.error(`Error occurred during updateLatestAndStore(), reason: ${err.message}`)
+            })
         })
         .catch((err) => {
-          self._logger.error(`Error occurred during updateLatestAndStore(), reason: ${err.message}`)
+          this._logger.error(`Error occurred during updateLatestAndStore(), reason: ${err.message}`)
         })
     })
 
@@ -254,12 +262,16 @@ export class Engine {
             this._logger.error(`Unable to broadcast mined block, reason: ${err.message}`)
           })
       })
+        .catch((err) => {
+          this._logger.warn(err)
+        })
     })
   }
 
   /**
    * Store a block in persistence unless its Genesis Block
    * @returns Promise
+      ehs._logger.info('pmb' + 4)
    */
   async storeHeight (msg: Object) {
     const self = this
@@ -418,7 +430,7 @@ export class Engine {
     })
 
     this._emitter.on('collectBlock', ({ block }) => {
-      // Persist block if needed
+      1 // Persist block if needed
       if (PERSIST_ROVER_DATA === true) {
         this._writeRoverData(block)
       }
@@ -623,7 +635,9 @@ export class Engine {
         }
         this._logger.info('block ' + newBlock.getHeight() + ' considered next block in current multiverse ')
         // RESTART MINING USED newBlock.getHash()
+
         this.pubsub.publish('update.block.latest', { key: 'bc.block.latest', data: newBlock })
+        // notify the miner
         this.node.broadcastNewBlock(newBlock)
         this.syncFromDepth(conn, newBlock)
           .then(() => {
@@ -663,6 +677,7 @@ export class Engine {
               this._logger.debug(newBlock.getHash() + ' resync lower bound: ' + lowerBound)
               return conn.getPeerInfo((err, peerInfo) => {
                 if (err) {
+                  this._logger.error(err)
                   return Promise.reject(err)
                 }
                 // request proof of the multiverse from the peer
@@ -681,14 +696,17 @@ export class Engine {
                       this._logger.warn(newBlock.getHash() + ' no blocks recieved from proof ')
                       return Promise.resolve(true)
                     }
+                    this._logger.info(1)
                     this._logger.debug(newBlock.getHash() + ' recieved ' + newBlocks.length + ' blocks for multiverse proof')
                     const currentHeights = this.multiverse._chain.map(b => {
                       return b.getHeight()
                     })
-                    this._logger.debug(newBlock.getHash() + ' new heights: ' + JSON.stringify(currentHeights, null, 2))
+                    this._logger.info(2)
+                    this._logger.debug(newBlock.getHash() + ' new heights: ' + currentHeights)
                     const comparableBlocks = newBlocks.filter(a => {
                       if (currentHeights.indexOf(a) > -1) return a
                     })
+                    this._logger.info(3)
                     const sorted = comparableBlocks.sort((a, b) => {
                       if (a.getHeight() > b.getHeight()) {
                         return -1
@@ -698,23 +716,29 @@ export class Engine {
                       }
                       return 0
                     })
+                    this._logger.info(4)
                     const highestBlock = this.multiverse.getHighestBlock()
+                    this._logger.info(5)
                     this._logger.debug(newBlock.getHash() + ' comparing with: ' + highestBlock.getHash() + ' height: ' + highestBlock.getHeight())
+                    this._logger.info(6)
                     if (highestBlock && new BN(sorted[0].getTotalDistance()).gt(new BN(highestBlock.getTotalDistance())) === true) {
                       // overwrite current multiverse
+                      this._logger.info(7)
                       this._logger.debug(newBlock.getHash() + ' approved --> assigning as current multiverse')
                       this.multiverse._candidates.length = 0
                       this.multiverse._chain.length = 0
                       this.multiverse._chain = sorted
                       const lowestBlock = this.multiverse.getLowestBlock()
                       this._logger.debug(newBlock.getHash() + ' setting resync target block hash at height: ' + lowestBlock.getHeight())
-                      this.persistence.put('bc.depth', lowestBlock.getHeight())
+                      return this.persistence.put('bc.depth', lowestBlock.getHeight())
                         .then(() => {
+                          this._logger.info(8)
                           this.pubsub.publish('update.block.latest', { key: 'bc.block.latest', data: newBlock, force: true })
                           this.node.broadcastNewBlock(newBlock)
                           // TODO: restart miner on new multiverse
-                          this.syncFromDepth(conn, this.multiverse.getLowestBlock())
+                          return this.syncFromDepth(conn, this.multiverse.getLowestBlock())
                             .then(synced => {
+                              this._logger.info(9)
                               this._logger.debug(newBlock.getHash() + ' blockchain sync complete')
                             })
                             .catch(e => {
@@ -824,31 +848,28 @@ export class Engine {
       this._logger.warn('Failed to process work provided by miner')
       return Promise.resolve(false)
     }
-
-    try {
-      // Prevent submitting mined block twice
-      if (this._knownBlocksCache.has(newBlock.getHash())) {
-        this._logger.warn('Received duplicate new block ' + newBlock.getHeight() + ' (' + newBlock.getHash() + ')')
-        return Promise.resolve(false)
-      }
-      // Add to multiverse and call persist
-      this._knownBlocksCache.set(newBlock.getHash(), newBlock)
-      this._logger.info('submitting mined block to current multiverse')
-      const isNextBlock = this.multiverse.addNextBlock(newBlock)
-      this._logger.info('submitted mine block is next block in multiverse: ' + isNextBlock)
-      // if (isNextBlock) {
-      // TODO: this will break now that _blocks is not used in multiverse
-      if (this.multiverse.getHighestBlock() !== undefined &&
-          this.multiverse.validateBlockSequenceInline([this.multiverse.getHighestBlock(), newBlock]) === true) {
-        this._server._wsBroadcastMultiverse(this.multiverse)
-        this.pubsub.publish('update.block.latest', { key: 'bc.block.latest', data: newBlock })
-        return Promise.resolve(true)
-      }
+    this._logger.info('pmb' + 1)
+    // Prevent submitting mined block twice
+    if (this._knownBlocksCache.has(newBlock.getHash())) {
+      this._logger.warn('Received duplicate new block ' + newBlock.getHeight() + ' (' + newBlock.getHash() + ')')
       return Promise.resolve(false)
-    } catch (err) {
-      this._logger.error(err)
-      return Promise.reject(err)
     }
+    // Add to multiverse and call persist
+    this._knownBlocksCache.set(newBlock.getHash(), newBlock)
+    this._logger.info('submitting mined block to current multiverse')
+    const isNextBlock = this.multiverse.addNextBlock(newBlock)
+    this._logger.info('submitted mine block is next block in multiverse: ' + isNextBlock)
+    this._logger.info('pmb' + 2)
+    // if (isNextBlock) {
+    // TODO: this will break now that _blocks is not used in multiverse
+    // if (this.multiverse.getHighestBlock() !== undefined &&
+    //    this.multiverse.validateBlockSequenceInline([this.multiverse.getHighestBlock(), newBlock]) === true) {
+    this._logger.info('pmb' + 3)
+    this._server._wsBroadcastMultiverse(this.multiverse)
+    this._logger.info('pmb' + 4)
+    this.pubsub.publish('update.block.latest', { key: 'bc.block.latest', data: newBlock })
+    return Promise.resolve(true)
+    // }
   }
 }
 
