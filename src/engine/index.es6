@@ -302,16 +302,14 @@ export class Engine {
     const self = this
     const block = msg.data
     try {
-      const previousLatest = await self.persistence.get('bc.block.latest')
+      // const previousLatest = await self.persistence.get('bc.block.latest') || 0
       let persistNewBlock = false
-
       if (msg.force !== undefined && msg.force === true) {
         // TODO: trigger purge
         persistNewBlock = true
       }
 
-      if (persistNewBlock === true &&
-         block.getTimestamp() >= previousLatest.getTimestamp()) { // notice you cannot create two blocks in the same second (for when BC moves to 1s block propogation waves)
+      if (persistNewBlock === true) {
         await self.persistence.put('bc.block.latest', block)
         await self.persistence.put('bc.block.' + block.getHeight(), block)
       } else {
