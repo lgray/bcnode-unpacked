@@ -305,7 +305,7 @@ export class Engine {
       const previousLatest = await self.persistence.get('bc.block.latest')
       let persistNewBlock = false
 
-      this._logger.error(`comparing new block ${block.getHeight()} with the latest block at ${previousLatest.getHeight()}`)
+      this._logger.info(`comparing new block ${block.getHeight()} with the latest block at ${previousLatest.getHeight()}`)
       if (previousLatest.getHash() === block.getPreviousHash()) {
         persistNewBlock = true
       }
