@@ -267,7 +267,7 @@ export function mine (currentTimestamp: number, work: string, miner: string, mer
     result = distance(work, blake2bl(miner + merkleRoot + nonceHash + currentLoopTimestamp))
     if (new BN(result, 16).gt(new BN(difficulty, 10)) === true) {
       res = {
-        distance: result,
+        distance: (result).toString(),
         nonce,
         timestamp: currentLoopTimestamp,
         difficulty,
@@ -543,7 +543,7 @@ export function prepareNewBlock (currentTimestamp: number, lastPreviousBlock: Bc
   newBlock.setDifficulty(finalDifficulty)
   newBlock.setMerkleRoot(newMerkleRoot)
   newBlock.setChainRoot(blake2bl(newChainRoot.toString()))
-  newBlock.setDistance(0) // is set to proper value after successful mining
+  newBlock.setDistance('') // is set to proper value after successful mining
   newBlock.setTotalDistance(lastPreviousBlock.getTotalDistance()) // distance from mining solution will be added to this after mining
   newBlock.setNrgGrant(GENESIS_DATA.nrgGrant)
   newBlock.setTargetHash(GENESIS_DATA.targetHash)

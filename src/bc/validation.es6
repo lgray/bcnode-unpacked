@@ -197,7 +197,7 @@ function isDistanceCorrectlyCalculated (newBlock: BcBlock): bool {
       blake2bl(newBlock.getNonce()) +
       newBlock.getTimestamp()
     )
-  )
+  ).toString()
   return receivedDistance === expectedDistance
 }
 
