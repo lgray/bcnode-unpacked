@@ -495,25 +495,12 @@ export function prepareNewBlock (currentTimestamp: number, lastPreviousBlock: Bc
   const newChainRoot = getChildrenRootHash(blockHashes)
   const newBlockCount = getNewBlockCount(lastPreviousBlock.getBlockchainHeaders(), childBlockHeaders)
 
-  let finalDifficulty
-  let finalTimestamp = currentTimestamp
-
-  // recalculate difficulty to be < 2^53-1
-  while (true) {
-    try {
-      const preExpDiff = getNewPreExpDifficulty(
-        finalTimestamp,
-        lastPreviousBlock,
-        newBlockCount
-      )
-      finalDifficulty = getExpFactorDiff(preExpDiff, lastPreviousBlock.getHeight()).toString()
-      break
-    } catch (e) {
-      finalTimestamp += 1
-      logger.debug(`Recalculating difficulty in prepareNewBlock with new finalTimestamp: ${finalTimestamp}`)
-      continue
-    }
-  }
+  const preExpDiff = getNewPreExpDifficulty(
+    currentTimestamp,
+    lastPreviousBlock,
+    newBlockCount
+  )
+  const finalDifficulty = getExpFactorDiff(preExpDiff, lastPreviousBlock.getHeight()).toString()
 
   const newHeight = lastPreviousBlock.getHeight() + 1
   // blockchains, transactions, miner address, height
@@ -564,5 +551,5 @@ export function prepareNewBlock (currentTimestamp: number, lastPreviousBlock: Bc
   newBlock.setTxDistanceSumLimit(GENESIS_DATA.txDistanceSumLimit)
   newBlock.setBlockchainHeaders(childBlockHeaders)
 
-  return [newBlock, finalTimestamp]
+  return [newBlock, currentTimestamp]
 }
