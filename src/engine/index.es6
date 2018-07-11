@@ -303,6 +303,7 @@ export class Engine {
     const block = msg.data
     try {
       const previousLatest = await self.persistence.get('bc.block.latest')
+      let persistNewBlock = false
 
       if (msg.force !== undefined && msg.force === true) {
         // TODO: trigger purge
