@@ -301,6 +301,7 @@ export class MiningOfficer {
   }
 
   async rebaseMiner (): Promise<?boolean> {
+    if (this._canMine !== true) return Promise.resolve(false)
     const staleBlock = this.getCurrentMiningBlock()
     if (staleBlock === undefined) return Promise.resolve(false)
     const lastPreviousBlock = await this.persistence.get('bc.block.latest')

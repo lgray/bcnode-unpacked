@@ -157,6 +157,7 @@ export default class PersistenceRocksDb {
    */
   putPending (blockchain: string = 'bc', opts: Object = { highWaterMark: 100000000, asBuffer: true }): Promise<?boolean> {
     return new Promise((resolve, reject) => {
+      let highest = false
       const iter = this.db.iterator(opts)
       const cycle = () => {
         return iter.next((err, key) => {
@@ -166,10 +167,25 @@ export default class PersistenceRocksDb {
             return this.get(key)
               .then((res) => {
                 const stringKey = key.toString().replace('pending.', '')
+                if (highest === false) {
+                  highest = res
+                } else if (res.getHeight() > highest.getHeight()) {
+                  highest = res
+                }
                 return this.put(stringKey, res).then(cycle)
                   .catch((err) => {
                     return reject(err)
                   })
+              })
+              .catch((err) => {
+                return reject(err)
+              })
+          }
+          // set the last complete sync height
+          if (highest !== false) {
+            return this.put(blockchain + '.block.checkpoint', highest)
+              .then(() => {
+                return resolve(true)
               })
               .catch((err) => {
                 return reject(err)

@@ -187,7 +187,8 @@ export class Engine {
         try {
           await this.persistence.put('bc.block.1', newGenesisBlock)
           await this.persistence.put('bc.block.latest', newGenesisBlock)
-          await this.persistence.put('bc.depth', 1)
+          await this.persistence.put('bc.block.checkpoint', newGenesisBlock)
+          await this.persistence.put('bc.depth', 2)
           this.multiverse.addNextBlock(newGenesisBlock)
           this._logger.info('Genesis block saved to disk ' + newGenesisBlock.getHash())
         } catch (e) {
@@ -235,7 +236,7 @@ export class Engine {
     })
 
     this.pubsub.subscribe('update.block.latest', '<engine>', (msg) => {
-      this.miningOfficer.stopMining()
+      if (this.miningOfficer._canMine) this.miningOfficer.stopMining()
       this.updateLatestAndStore(msg)
         .then((res) => {
           this._logger.info(`latest block ${msg.data.getHeight()} has been updated`)
@@ -254,13 +255,15 @@ export class Engine {
 
     this.pubsub.subscribe('miner.block.new', '<engine>', ({ unfinishedBlock, solution }) => {
       this._processMinedBlock(unfinishedBlock, solution).then((res) => {
-        this._broadcastMinedBlock(unfinishedBlock, solution)
-          .then((res) => {
-            this._logger.info('Broadcasted mined block', res)
-          })
-          .catch((err) => {
-            this._logger.error(`Unable to broadcast mined block, reason: ${err.message}`)
-          })
+        if (res === true) {
+          this._broadcastMinedBlock(unfinishedBlock, solution)
+            .then((res) => {
+              this._logger.info('Broadcasted mined block', res)
+            })
+            .catch((err) => {
+              this._logger.error(`Unable to broadcast mined block, reason: ${err.message}`)
+            })
+        }
       })
         .catch((err) => {
           this._logger.warn(err)
@@ -274,7 +277,6 @@ export class Engine {
       ehs._logger.info('pmb' + 4)
    */
   async storeHeight (msg: Object) {
-    const self = this
     const block = msg.data
     // Block is genesis block
     if (block.getHeight() < 2) {
@@ -282,25 +284,25 @@ export class Engine {
     }
     if (msg.force !== undefined && msg.force === true) {
       try {
-        await self.persistence.put('bc.block.' + block.getHeight(), block)
+        await this.persistence.put('bc.block.' + block.getHeight(), block)
         return Promise.resolve(block)
       } catch (err) {
-        self._logger.warn('unable to store block ' + block.getHeight() + ' - ' + block.getHash())
+        this._logger.warn('unable to store block ' + block.getHeight() + ' - ' + block.getHash())
         return Promise.reject(err)
       }
     } else {
       try {
-        const prev = await self.persistence.get('bc.block.' + (block.getHeight() - 1))
+        const prev = await this.persistence.get('bc.block.' + (block.getHeight() - 1))
         if (prev.getHash() === block.getPreviousHash() &&
           new BN(prev.getTotalDistance()).lt(new BN(block.getTotalDistance()) === true)) {
-          await self.persistence.put('bc.block.' + block.getHeight(), block)
+          await this.persistence.put('bc.block.' + block.getHeight(), block)
           return Promise.resolve(true)
         } else {
           return Promise.reject(new Error('block state did not match'))
         }
       } catch (err) {
-        await self.persistence.put('bc.block.' + block.getHeight(), block)
-        self._logger.warn(' stored orphan ' + block.getHeight() + ' - ' + block.getHash())
+        await this.persistence.put('bc.block.' + block.getHeight(), block)
+        this._logger.warn(' stored orphan ' + block.getHeight() + ' - ' + block.getHash())
         return Promise.resolve(true)
       }
     }
@@ -311,26 +313,46 @@ export class Engine {
    * @returns Promise
    */
   async updateLatestAndStore (msg: Object) {
-    const self = this
     const block = msg.data
     try {
-      // const previousLatest = await self.persistence.get('bc.block.latest') || 0
-      await self.persistence.put('bc.block.latest', block)
-      await self.persistence.put('bc.block.' + block.getHeight(), block)
+      await this.persistence.get('bc.block.checkpoint')
+    } catch (err) {
+      this._logger.debug('setting checkpoint at height: ' + block.getHeight())
+      await this.persistence.put('bc.block.checkpoint', block)
+    }
+    try {
+      const previousLatest = await this.persistence.get('bc.block.latest')
+
+      if (previousLatest.getHash() === block.previousHash()) {
+        await this.persistence.put('bc.block.latest', block)
+        await this.persistence.put('bc.block.' + block.getHeight(), block)
+      } else if (msg.force === true) {
+        await this.persistence.put('bc.block.latest', block)
+        await this.persistence.put('bc.block.' + block.getHeight(), block)
+      } else {
+        this._logger.error('faled to set block ' + block.getHeight() + ' ' + block.getHash() + ' as latest block, wrong previous hash')
+      }
 
       if (msg.multiverse !== undefined) {
         while (msg.multiverse.length > 0) {
           const b = msg.multiverse.pop()
-          await self.persistence.put('bc.block.' + b.getHeight(), b)
+          await this.persistence.put('bc.block.' + b.getHeight(), b)
         }
         return Promise.resolve(true)
       }
       return Promise.resolve(true)
     } catch (err) {
-      self._logger.warn(err)
+      this._logger.warn('no previous block found')
       if (block !== undefined) {
-        await self.persistence.put('bc.block.latest', block)
-        await self.persistence.put('bc.block.' + block.getHeight(), block)
+        await this.persistence.put('bc.block.latest', block)
+        await this.persistence.put('bc.block.' + block.getHeight(), block)
+      }
+      if (msg.multiverse !== undefined) {
+        while (msg.multiverse.length > 0) {
+          const b = msg.multiverse.pop()
+          await this.persistence.put('bc.block.' + b.getHeight(), b)
+        }
+        return Promise.resolve(true)
       }
       return Promise.resolve(true)
     }
@@ -497,12 +519,18 @@ export class Engine {
     try {
       const depthData = await this.persistence.get('bc.depth')
       const depth = parseInt(depthData, 10) // coerce for Flow
+      const checkpoint = await this.persistence.get('bc.block.checkpoint')
+      // where the bottom of the chain is
+      // if the last height was not a genesis block and the depth was 2 then sync only to the height
       if (depth === 2) {
-        // ignore block
-        return false
+        // ignore and return u
+        return Promise.resolve(true)
+      } else if (depth === checkpoint.getHeight()) {
+        // test to see if the depth hash references the checkpoint hash
+        return Promise.resolve(true)
       } else {
-        const upperBound = max(depth - 1, 3) // so we dont get the genesis block
-        const lowerBound = max(depth - 2000, 2)
+        const upperBound = max(depth, checkpoint.getHeight() + 1) // so we dont get the genesis block
+        const lowerBound = max(depth - 2000, checkpoint.getHeight())
         return conn.getPeerInfo((err, peerInfo) => {
           if (err) {
             return Promise.reject(err)
@@ -517,13 +545,13 @@ export class Engine {
               peerLock = 0
             }
             if (peerLock === 1) {
-              // dont send request because the peer in busy
+              // dont send request because the peer is busy
               return Promise.resolve(true)
             } else {
               // request a range from the peer
               await this.persistence.put(peerLockKey, 1)
               // lock the depth for if another block comes while running this
-              await this.persistence.put('depth', depth)
+              await this.persistence.put('bc.depth', depth)
               const query = {
                 queryHash: newBlock.getHash(),
                 queryHeight: upperBound,
@@ -536,10 +564,21 @@ export class Engine {
                   return this.syncSetBlocksInline(blocks)
                     .then((blocksStoredResults) => {
                       // if we didn't get the one block above the genesis block run again
-                      if (lowerBound !== 2) {
+                      if (lowerBound !== checkpoint.getHeight()) {
                         return this.syncFromDepth(conn, newBlock)
                       }
-                      // all done, no more depth so unlock peer
+
+											/*
+											 * test if it connects to the previous synced chain
+											 * this would happen if a peer disconnected from the network
+											 * and was now resyncing
+											 */
+											if (lowerBound > 2) {
+												await this.persistence.get('bc.block.' + (lowerBound - 1))
+												checkpoint.getHash() ==
+											}
+
+                      // all done, no more depth clean up, unlock peer
                       return this.persistence.put(peerLockKey, 0)
                         .then(() => {
                           return this.persistence.put('bc.depth', 2)
@@ -562,7 +601,7 @@ export class Engine {
                         .then(() => {
                           return this.persistence.put('bc.depth', depth)
                             .then(() => {
-                              return Promise.resolve(depth)
+                              return Promise.resolve(false)
                             })
                         })
                         .catch(e => {
@@ -639,7 +678,7 @@ export class Engine {
         this.pubsub.publish('update.block.latest', { key: 'bc.block.latest', data: newBlock })
         // notify the miner
         this.node.broadcastNewBlock(newBlock)
-        this.syncFromDepth(conn, newBlock)
+        return this.syncFromDepth(conn, newBlock)
           .then(() => {
             this._logger.info('depth sync stated')
           })
@@ -647,7 +686,6 @@ export class Engine {
             this._logger.error(e)
           })
         // if depth !== 0
-        // get peer lock
         // if peer unlocked
         // lock peer
         // request lowest multiverse block height, lowest block height - 5000 / 0
@@ -728,15 +766,14 @@ export class Engine {
                       this.multiverse._candidates.length = 0
                       this.multiverse._chain.length = 0
                       this.multiverse._chain = sorted
-                      const lowestBlock = this.multiverse.getLowestBlock()
-                      this._logger.debug(newBlock.getHash() + ' setting resync target block hash at height: ' + lowestBlock.getHeight())
-                      return this.persistence.put('bc.depth', lowestBlock.getHeight())
+										  this._logger.debug('multiverse has been assigned')
+                      return this.persistence.put('bc.depth', highestBlock.getHeight())
                         .then(() => {
                           this._logger.info(8)
                           this.pubsub.publish('update.block.latest', { key: 'bc.block.latest', data: newBlock, force: true })
                           this.node.broadcastNewBlock(newBlock)
-                          // TODO: restart miner on new multiverse
-                          return this.syncFromDepth(conn, this.multiverse.getLowestBlock())
+                          // assign where the last sync began
+                          return this.syncFromDepth(conn, this.multiverse.getHighestBlock())
                             .then(synced => {
                               this._logger.info(9)
                               this._logger.debug(newBlock.getHash() + ' blockchain sync complete')
@@ -872,8 +909,9 @@ export class Engine {
       return Promise.resolve(true)
     } else {
       this._logger.info('local mined block expired')
+      this.miningOfficer.rebaseMiner()
     }
-    return Promise.resolve(true)
+    return Promise.resolve(false)
     // }
   }
 }
