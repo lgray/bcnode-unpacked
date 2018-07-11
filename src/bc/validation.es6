@@ -43,7 +43,7 @@ export const DF_CONFIG: DfConfig = fromPairs(FINGERPRINTS_TEMPLATE.blockchainHea
 
 const logger = getLogger(__filename)
 
-export function isValidBlock (newBlock: BcBlock): bool {
+export function isValidBlock (newBlock: BcBlock, type: number = 0): bool {
   if (newBlock === undefined) {
     return false
   }
@@ -71,9 +71,11 @@ export function isValidBlock (newBlock: BcBlock): bool {
     logger.warn('failed: isMerkleRootCorrectlyCalculated')
     return false
   }
-  if (!isDistanceCorrectlyCalculated(newBlock)) {
-    logger.warn('failed: isDistanceCorrectlyCalculated')
-    return false
+  if (type === 0) {
+    if (!isDistanceCorrectlyCalculated(newBlock)) {
+      logger.warn('failed: isDistanceCorrectlyCalculated')
+      return false
+    }
   }
   return true
 }
