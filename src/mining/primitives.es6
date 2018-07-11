@@ -519,7 +519,19 @@ export function prepareNewBlock (currentTimestamp: number, lastPreviousBlock: Bc
   const newHeight = lastPreviousBlock.getHeight() + 1
   // blockchains, transactions, miner address, height
   // TODO add EMB data to merkleRoot AT
-  const newMerkleRoot = createMerkleRoot(concatAll([blockHashes, newTransactions, [minerAddress, newHeight, GENESIS_DATA.version, GENESIS_DATA.schemaVersion, GENESIS_DATA.nrgGrant, GENESIS_DATA.blockchainFingerprintsRoot]]))
+  const newMerkleRoot = createMerkleRoot(concatAll([
+    blockHashes,
+    newTransactions,
+    [
+      finalDifficulty,
+      minerAddress,
+      newHeight,
+      GENESIS_DATA.version,
+      GENESIS_DATA.schemaVersion,
+      GENESIS_DATA.nrgGrant,
+      GENESIS_DATA.blockchainFingerprintsRoot
+    ]
+  ]))
 
   // nonce, distance, timestamp and difficulty are set to proper values after successful mining of this block
   const newBlock = new BcBlock()

@@ -302,11 +302,11 @@ export class MiningOfficer {
     }
 
     const { nonce, distance, timestamp, difficulty, iterations, timeDiff } = solution
+    this._logger.info(`The calculated block difficulty was ${unfinishedBlock.getDifficulty()}, actual mining difficulty was ${difficulty}`)
     unfinishedBlock.setNonce(nonce)
     unfinishedBlock.setDistance(distance)
-    unfinishedBlock.setTotalDistance(new BN(unfinishedBlock.getTotalDistance()).add(new BN(difficulty)).toString())
+    unfinishedBlock.setTotalDistance(new BN(unfinishedBlock.getTotalDistance()).add(new BN(unfinishedBlock.getDifficulty(), 10)).toString())
     unfinishedBlock.setTimestamp(timestamp)
-    unfinishedBlock.setDifficulty(difficulty)
 
     const unfinishedBlockData = this._unfinishedBlockData
     if (unfinishedBlockData) {
