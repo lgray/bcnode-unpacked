@@ -251,9 +251,9 @@ export class MiningOfficer {
   * @param blockTemplate
   */
   setCurrentMiningBlock (blockTemplate: Object): void {
-    if (blockTemplates === undefined) return null
+    if (blockTemplate === undefined) return null
     this._blockTemplates.length = 0
-    this._blockTemplates.push(blockTemapltes)
+    this._blockTemplates.push(blockTemplate)
   }
 
   /**
@@ -332,7 +332,6 @@ export class MiningOfficer {
 
     if (Object.keys(blockchains).length !== Object.keys(bestCurrentBlocks).length) return Promise.resolve(false)
 
-    const trigger = []
     const candidates = Object.keys(bestCurrentBlocks).reduce((all, key) => {
       const chain = bestCurrentBlocks[key]
       all[key] = blockchains[key].filter((a) => {
@@ -358,8 +357,10 @@ export class MiningOfficer {
       return all
     }, [])
 
+    const block = rebasedBlocks[0]
+
     const [newBlock, finalTimestamp] = prepareNewBlock(
-      currrentTimestamp,
+      currentTimestamp,
       lastPreviousBlock,
       rebasedBlocks,
       rebasedBlocks[0],

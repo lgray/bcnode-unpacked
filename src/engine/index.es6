@@ -430,7 +430,7 @@ export class Engine {
     })
 
     this._emitter.on('collectBlock', ({ block }) => {
-      1 // Persist block if needed
+      // Persist block if needed
       if (PERSIST_ROVER_DATA === true) {
         this._writeRoverData(block)
       }
@@ -864,10 +864,15 @@ export class Engine {
     // TODO: this will break now that _blocks is not used in multiverse
     // if (this.multiverse.getHighestBlock() !== undefined &&
     //    this.multiverse.validateBlockSequenceInline([this.multiverse.getHighestBlock(), newBlock]) === true) {
-    this._logger.info('pmb' + 3)
-    this._server._wsBroadcastMultiverse(this.multiverse)
-    this._logger.info('pmb' + 4)
-    this.pubsub.publish('update.block.latest', { key: 'bc.block.latest', data: newBlock })
+    if (isNextBlock === true) {
+      this._logger.info('pmb' + 3)
+      this._server._wsBroadcastMultiverse(this.multiverse)
+      this._logger.info('pmb' + 4)
+      this.pubsub.publish('update.block.latest', { key: 'bc.block.latest', data: newBlock })
+      return Promise.resolve(true)
+    } else {
+      this._logger.info('local mined block expired')
+    }
     return Promise.resolve(true)
     // }
   }

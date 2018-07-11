@@ -57,7 +57,7 @@ describe(MiningOfficer, () => {
     expect(minerResult.unfinishedBlock.getDistance()).toBe('1024')
     // expect(minerResult.unfinishedBlock.getTotalDistance()).toBe('1025') // solution.difficulty + 1 from genesis block
     expect(minerResult.unfinishedBlock.getTimestamp()).toBe(1529909470)
-    expect(minerResult.unfinishedBlock.getDifficulty()).toBe('2048')
+    expect(minerResult.unfinishedBlock.getDifficulty()).toBe('301284002297523')
   })
 
   it('does not run if not enough blocks from each blockchain', async () => {
