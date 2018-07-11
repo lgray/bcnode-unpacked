@@ -303,18 +303,8 @@ export class Engine {
     const block = msg.data
     try {
       // const previousLatest = await self.persistence.get('bc.block.latest') || 0
-      let persistNewBlock = false
-      if (msg.force !== undefined && msg.force === true) {
-        // TODO: trigger purge
-        persistNewBlock = true
-      }
-
-      if (persistNewBlock === true) {
-        await self.persistence.put('bc.block.latest', block)
-        await self.persistence.put('bc.block.' + block.getHeight(), block)
-      } else {
-        self._logger.warn('new purposed latest block does not match the last')
-      }
+      await self.persistence.put('bc.block.latest', block)
+      await self.persistence.put('bc.block.' + block.getHeight(), block)
 
       if (msg.multiverse !== undefined) {
         while (msg.multiverse.length > 0) {
