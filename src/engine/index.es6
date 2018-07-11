@@ -181,14 +181,14 @@ export class Engine {
       try {
         await this.persistence.get('bc.block.1')
         const latestBlock = await this.persistence.get('bc.block.latest')
-        self._logger.info('highest block height on disk ' + latestBlock.getHeight())
-        self.multiverse.addNextBlock(latestBlock)
+        this._logger.info('highest block height on disk ' + latestBlock.getHeight())
+        this.multiverse.addNextBlock(latestBlock)
       } catch (_) { // genesis block not found
         try {
           await this.persistence.put('bc.block.1', newGenesisBlock)
           await this.persistence.put('bc.block.latest', newGenesisBlock)
           await this.persistence.put('bc.depth', 1)
-          self.multiverse.addNextBlock(newGenesisBlock)
+          this.multiverse.addNextBlock(newGenesisBlock)
           this._logger.info('Genesis block saved to disk ' + newGenesisBlock.getHash())
         } catch (e) {
           this._logger.error(`Error while creating genesis block ${e.message}`)
@@ -731,6 +731,8 @@ export class Engine {
                     this._logger.error(e)
                   })
               })
+            } else {
+              this._logger.info('resync shuould not be done')
             }
           })
           .catch(err => {
@@ -836,13 +838,13 @@ export class Engine {
       this._logger.info('submitted mine block is next block in multiverse: ' + isNextBlock)
       // if (isNextBlock) {
       // TODO: this will break now that _blocks is not used in multiverse
-      this._server._wsBroadcastMultiverse(this.multiverse)
-      this.pubsub.publish('update.block.latest', { key: 'bc.block.latest', data: newBlock, multiverse: this.multiverse._chain })
-      return Promise.resolve(true)
-      // } else {
-      //   // beforeBlockHighest is not available
-      //   return Promise.resolve(false)
-      // }
+      if (this.multiverse.getHighestBlock() !== undefined &&
+          this.multiverse.validateBlockSequenceInline([this.multiverse.getHighestBlock(), newBlock]) === true) {
+        this._server._wsBroadcastMultiverse(this.multiverse)
+        this.pubsub.publish('update.block.latest', { key: 'bc.block.latest', data: newBlock })
+        return Promise.resolve(true)
+      }
+      return Promise.resolve(false)
     } catch (err) {
       this._logger.error(err)
       return Promise.reject(err)

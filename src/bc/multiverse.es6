@@ -293,6 +293,10 @@ export class Multiverse {
     const currentHighestBlock = this.getHighestBlock()
     const currentParentHighestBlock = this.getParentHighestBlock()
 
+    if (this._chain.length === 0) {
+      return Promise.resolve(true)
+    }
+
     // PASS if no highest block exists go with current
     if (currentHighestBlock === null) {
       return Promise.resolve(true)
@@ -306,6 +310,13 @@ export class Multiverse {
     if (newBlock.getTimestamp() + 16 < Math.floor(Date.now() * 0.001)) {
       return Promise.resolve(false)
     }
+
+    if (this._chain.length < 2) {
+      if (new BN(currentHighestBlock.getTotalDistance()).lt(newBlock.getTotalDistance())) {
+        return Promise.resolve(true)
+      }
+    }
+
     if (currentParentHighestBlock === null && currentHighestBlock !== null) {
       if (new BN(newBlock.getTotalDistance()).gt(new BN(currentHighestBlock.getTotalDistance()))) {
         this.addCandidateBlock(newBlock)
