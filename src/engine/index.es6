@@ -303,12 +303,6 @@ export class Engine {
     const block = msg.data
     try {
       const previousLatest = await self.persistence.get('bc.block.latest')
-      let persistNewBlock = false
-
-      this._logger.info(`comparing new block ${block.getHeight()} with the latest block at ${previousLatest.getHeight()}`)
-      if (previousLatest.getHash() === block.getPreviousHash()) {
-        persistNewBlock = true
-      }
 
       if (msg.force !== undefined && msg.force === true) {
         // TODO: trigger purge
@@ -635,7 +629,10 @@ export class Engine {
       const isNextBlock = this.multiverse.addNextBlock(newBlock)
 
       if (isNextBlock) {
-        this._logger.debug('block ' + newBlock.getHeight() + ' considered next block in current multiverse ')
+        if (this.multiverse._chain.length > 1) {
+          this._logger.info('new block ' + newBlock.getHash() + ' references previous Block ' + newBlock.getPreviousHash() + ' for block ' + this.multiverse._chain[1].getHash())
+        }
+        this._logger.info('block ' + newBlock.getHeight() + ' considered next block in current multiverse ')
         // RESTART MINING USED newBlock.getHash()
         this.pubsub.publish('update.block.latest', { key: 'bc.block.latest', data: newBlock })
         this.node.broadcastNewBlock(newBlock)
@@ -656,7 +653,7 @@ export class Engine {
         // if we are done unlock the peer
         // if we are not done re-request a sync
       } else {
-        this._logger.debug('new block ' + newBlock.getHeight() + ' is NOT next block, evaluating resync.')
+        this._logger.info('new block ' + newBlock.getHeight() + ' is NOT next block, evaluating resync.')
         this.multiverse.addResyncRequest(newBlock)
           .then(shouldResync => {
             if (shouldResync === true) {
@@ -724,7 +721,7 @@ export class Engine {
                       this._logger.debug(newBlock.getHash() + ' setting resync target block hash at height: ' + lowestBlock.getHeight())
                       this.persistence.put('bc.depth', lowestBlock.getHeight())
                         .then(() => {
-                          this.pubsub.publish('update.block.latest', { key: 'bc.block.latest', data: newBlock })
+                          this.pubsub.publish('update.block.latest', { key: 'bc.block.latest', data: newBlock, force: true })
                           this.node.broadcastNewBlock(newBlock)
                           // TODO: restart miner on new multiverse
                           this.syncFromDepth(conn, this.multiverse.getLowestBlock())
