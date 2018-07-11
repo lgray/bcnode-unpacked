@@ -212,7 +212,7 @@ export class Multiverse {
       return true
     }
     this._logger.info(15)
-    return false
+    return true
   }
 
   /**
