@@ -766,7 +766,15 @@ export class Engine {
                     this._logger.info(5)
                     this._logger.debug(newBlock.getHash() + ' comparing with: ' + highestBlock.getHash() + ' height: ' + highestBlock.getHeight())
                     this._logger.info(6)
-                    if (highestBlock && new BN(sorted[0].getTotalDistance()).gt(new BN(highestBlock.getTotalDistance())) === true) {
+
+                    let conditional = true
+
+                    if(highestBlock !== undefined){
+                      //conanaOut
+                      conditional = new BN(sorted[0].getTotalDistance()).gt(new BN(highestBlock.getTotalDistance())) === true) {
+                    }
+
+                    if (conditional) {
                       // overwrite current multiverse
                       this._logger.info(7)
                       this._logger.debug(newBlock.getHash() + ' approved --> assigning as current multiverse')
