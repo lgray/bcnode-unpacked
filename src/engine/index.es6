@@ -720,6 +720,7 @@ export class Engine {
               // get the lowest of the current multiverse
               const lowerBound = this.multiverse.getLowestBlock()
               this._logger.debug(newBlock.getHash() + ' resync lower bound: ' + lowerBound)
+              this.miningOfficer.stopMining()
               return conn.getPeerInfo((err, peerInfo) => {
                 if (err) {
                   this._logger.error(err)
@@ -768,11 +769,12 @@ export class Engine {
                     this._logger.debug(newBlock.getHash() + ' comparing with: ' + highestBlock.getHash() + ' height: ' + highestBlock.getHeight())
                     this._logger.info(6)
 
-                    let conditional = true
-
+                    let conditional = false
                     if (highestBlock !== undefined && sorted !== undefined && sorted.length > 0) {
                       // conanaOut
                       conditional = new BN(sorted[0].getTotalDistance()).gt(new BN(highestBlock.getTotalDistance()))
+                    } else if (sorted.length < 1) {
+                      conditional = true
                     }
 
                     if (conditional === true) {
@@ -809,7 +811,7 @@ export class Engine {
                   })
               })
             } else {
-              this._logger.info('resync shuould not be done')
+              this._logger.info('resync should not be done')
             }
           })
           .catch(err => {
@@ -924,7 +926,8 @@ export class Engine {
       this.pubsub.publish('update.block.latest', { key: 'bc.block.latest', data: newBlock })
       return Promise.resolve(true)
     } else {
-      this._logger.info('local mined block expired')
+      this._logger.info('local mined block ' + newBlock.getHeight() + ' does not stack on multiverse height ' + this.multiverse.getHighestBlock().getHeight())
+      this._logger.debug('mined block ' + newBlock.getHeight() + ' cannot go on top of multiverse block ' + this.multiverse.getHighestBlock())
       this.miningOfficer.rebaseMiner()
     }
     return Promise.resolve(false)
