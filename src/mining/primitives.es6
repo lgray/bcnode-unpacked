@@ -25,6 +25,7 @@ import type { Logger } from 'winston'
 
 const similarity = require('compute-cosine-similarity')
 const BN = require('bn.js')
+const Random = require('random-js')
 const {
   call,
   compose,
@@ -262,7 +263,7 @@ export function mine (currentTimestamp: number, work: string, miner: string, mer
       logger.debug(`In timestamp: ${currentLoopTimestamp} recalculated difficulty is: ${difficulty}`)
     }
 
-    let nonce = String(Math.random()) // random string
+    let nonce = String(Math.abs(Random.engines.nativeMath())) // random string
     let nonceHash = blake2bl(nonce)
     result = distance(work, blake2bl(miner + merkleRoot + nonceHash + currentLoopTimestamp))
     if (new BN(result, 16).gt(new BN(difficulty, 10)) === true) {
