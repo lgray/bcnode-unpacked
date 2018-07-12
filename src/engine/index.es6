@@ -751,6 +751,7 @@ export class Engine {
                     const comparableBlocks = newBlocks.filter(a => {
                       if (currentHeights.indexOf(a) > -1) return a
                     })
+                    this._logger.info(comparableBlocks)
                     this._logger.info(3)
                     const sorted = comparableBlocks.sort((a, b) => {
                       if (a.getHeight() > b.getHeight()) {
@@ -769,13 +770,12 @@ export class Engine {
 
                     let conditional = true
 
-                    if (highestBlock !== undefined) {
+                    if (highestBlock !== undefined && sorted !== undefined && sorted.length > 0) {
                       // conanaOut
                       conditional = new BN(sorted[0].getTotalDistance()).gt(new BN(highestBlock.getTotalDistance()))
-                      if (conditional === true) return true
                     }
 
-                    if (conditional) {
+                    if (conditional === true) {
                       // overwrite current multiverse
                       this._logger.info(7)
                       this._logger.debug(newBlock.getHash() + ' approved --> assigning as current multiverse')
