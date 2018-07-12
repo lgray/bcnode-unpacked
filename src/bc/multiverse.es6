@@ -297,8 +297,13 @@ export class Multiverse {
       return Promise.resolve(true)
     }
 
-    // PASS if no highest block exists go with current
+    // pass if no highest block exists go with current
     if (currentHighestBlock === null) {
+      return Promise.resolve(true)
+    }
+
+    // only block is the genesis block
+    if (currentHighestBlock.getHeight() === 1 && newBlock.getHeight() > 1) {
       return Promise.resolve(true)
     }
 
@@ -312,6 +317,7 @@ export class Multiverse {
     }
 
     if (this._chain.length < 2) {
+      this._logger.info('determining if chain current total distance is less than new block')
       if (new BN(currentHighestBlock.getTotalDistance()).lt(newBlock.getTotalDistance())) {
         return Promise.resolve(true)
       }
@@ -323,11 +329,11 @@ export class Multiverse {
         return Promise.resolve(true)
       }
     }
+
     // FAIL if newBlock total difficulty <  currentHighestBlock
     if (new BN(newBlock.getTotalDistance()).lt(new BN(currentHighestBlock.getTotalDistance()))) {
       return Promise.resolve(false)
     }
-
     // make sure that blocks that are added reference child chains
     return this.validateRoveredBlocks(newBlock).then(areAllChildrenRovered => {
       if (!areAllChildrenRovered) {
