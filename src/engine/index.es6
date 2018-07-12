@@ -537,7 +537,7 @@ export class Engine {
         } else {
           return this.persistence.putPending('bc')
         }
-        return Promise.resolve(true)
+        // return Promise.resolve(true)
       } else {
         const upperBound = max(depth, checkpoint.getHeight() + 1) // so we dont get the genesis block
         const lowerBound = max(depth - 2000, checkpoint.getHeight())
@@ -939,6 +939,12 @@ export class Engine {
       this._logger.info('local mined block ' + newBlock.getHeight() + ' does not stack on multiverse height ' + this.multiverse.getHighestBlock().getHeight())
       this._logger.debug('mined block ' + newBlock.getHeight() + ' cannot go on top of multiverse block ' + this.multiverse.getHighestBlock())
       this.miningOfficer.rebaseMiner()
+        .then((res) => {
+          this._logger.info(res)
+        })
+        .catch((e) => {
+          this._logger.error(e)
+        })
     }
     return Promise.resolve(false)
     // }
