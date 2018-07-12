@@ -344,7 +344,7 @@ export class Engine {
     } catch (err) {
       this._logger.error(err)
       this._logger.warn('no previous block found')
-      if (block !== undefined && msg.force == true) {
+      if (block !== undefined && msg.force === true) {
         await this.persistence.put('bc.block.latest', block)
         await this.persistence.put('bc.block.' + block.getHeight(), block)
       }
