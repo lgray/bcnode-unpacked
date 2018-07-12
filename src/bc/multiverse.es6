@@ -244,6 +244,14 @@ export class Multiverse {
       return true // TODO added - check with @schnorr
     }
     this._logger.info(3)
+    this._logger.debug(' highestBlock hash - ' + currentHighestBlock.getHash())
+    this._logger.debug(' highestBlock previousHash - ' + currentHighestBlock.getPreviousHash())
+    this._logger.debug(' highestBlock height - ' + currentHighestBlock.getHeight())
+    this._logger.debug(' highestBlock difficulty - ' + currentHighestBlock.getDifficulty())
+    this._logger.debug(' newBlock hash - ' + newBlock.getHash())
+    this._logger.debug(' newBlock height - ' + newBlock.getHeight())
+    this._logger.debug(' newBlock difficulty - ' + newBlock.getDifficulty())
+    this._logger.debug(' newBlock previousHash - ' + newBlock.getPreviousHash())
     // Fail is the block hashes are identical
     if (currentHighestBlock !== undefined && newBlock.getHash() === currentHighestBlock.getHash()) {
       return false

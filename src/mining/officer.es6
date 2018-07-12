@@ -324,7 +324,10 @@ export class MiningOfficer {
 
     const blockchains = staleBlock.getBlockchainHeaders()
 
+    this._logger.info(lastPreviousBlock)
+
     const blocks = this._knownRovers.reduce((all, roverName) => {
+      this._logger.debug('processing rover ' + roverName)
       const b = lastPreviousBlock[DICT[roverName]]()
       all = all.concat(b)
       return all
