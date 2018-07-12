@@ -702,7 +702,7 @@ export class Engine {
         // if we are not done re-request a sync
       } else {
         this._logger.info('new block ' + newBlock.getHeight() + ' is NOT next block, evaluating resync.')
-        this.multiverse.addResyncRequest(newBlock)
+        this.multiverse.addResyncRequest(newBlock, this.miningOfficer._canMine)
           .then(shouldResync => {
             if (shouldResync === true) {
               this._logger.debug(newBlock.getHash() + ' new block: ' + newBlock.getHeight() + ' should rsync request approved')
