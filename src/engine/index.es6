@@ -535,7 +535,7 @@ export class Engine {
           if (err) {
             return Promise.reject(err)
           }
-          return async () => {
+          return (async () => {
             const peerLockKey = 'bc.peer.' + peerInfo.id.toB58String()
             let peerLock = 1 // assume peer is busy
             try {
@@ -568,16 +568,24 @@ export class Engine {
                         return this.syncFromDepth(conn, newBlock)
                       }
 
-											/*
-											 * test if it connects to the previous synced chain
-											 * this would happen if a peer disconnected from the network
-											 * and was now resyncing
-											 */
-											if (lowerBound > 2) {
-												await this.persistence.get('bc.block.' + (lowerBound - 1))
-												checkpoint.getHash() ==
-											}
-
+                      /*
+                      * test if it connects to the previous synced chain
+                      * this would happen if a peer disconnected from the network
+                      * and was now resyncing
+                      */
+                      if (lowerBound > 2) {
+                        return (async () => {
+                          const assertBlock = await this.persistence.get('bc.block.' + (lowerBound - 1))
+                          // if the hash is not referenced the node could have been synced to a weaker chain
+                          if (checkpoint.previousHash() !== assertBlock.getHash()) {
+                            await this.persistence.push('bc.block.checkpoint', getGenesisBlock)
+                            await this.persistence.push('bc.depth', depth)
+                            return this.syncFromDepth(conn, newBlock)
+                          } else {
+                            return this.persistence.putPending('bc')
+                          }
+                        })()
+                      }
                       // all done, no more depth clean up, unlock peer
                       return this.persistence.put(peerLockKey, 0)
                         .then(() => {
@@ -624,7 +632,7 @@ export class Engine {
                     })
                 })
             }
-          }
+          })()
         })
       }
     } catch (err) {
@@ -766,7 +774,7 @@ export class Engine {
                       this.multiverse._candidates.length = 0
                       this.multiverse._chain.length = 0
                       this.multiverse._chain = sorted
-										  this._logger.debug('multiverse has been assigned')
+                      this._logger.debug('multiverse has been assigned')
                       return this.persistence.put('bc.depth', highestBlock.getHeight())
                         .then(() => {
                           this._logger.info(8)

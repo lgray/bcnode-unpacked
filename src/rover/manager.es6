@@ -77,7 +77,8 @@ export class RoverManager {
     )
     this._rovers[roverName] = rover
     this._timeouts[roverName] = setTimeout(() => {
-      return this._killRover(roverName)
+      this._logger.info('kill rover: ' + roverName)
+      // return this._killRover(roverName)
     }, 1000 * 900)
 
     rover.on('exit', (code, signal) => {
