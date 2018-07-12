@@ -93,8 +93,6 @@ export class MiningOfficer {
     this._paused = paused
   }
 
-  async
-
   async newRoveredBlock (rovers: string[], block: Block): Promise<number|false> {
     this._collectedBlocks[block.getBlockchain()] += 1
 
@@ -223,8 +221,8 @@ export class MiningOfficer {
           // $FlowFixMe - Flow can't find out that ChildProcess is extended form EventEmitter
           this._workerProcess.on('exit', this._handleWorkerExit.bind(this))
 
-          // $FlowFixMe - Flow can't find out that ChildProcess is extended form EventEmitter
           this._logger.info('sending difficulty threshold to worker: ' + newBlock.getDifficulty())
+          // $FlowFixMe - Flow can't find out that ChildProcess is extended form EventEmitter
           this._workerProcess.send({
             currentTimestamp,
             offset: ts.offset,
@@ -259,7 +257,9 @@ export class MiningOfficer {
   * @param blockTemplate
   */
   setCurrentMiningBlock (blockTemplate: Object): void {
-    if (blockTemplate === undefined) return null
+    if (blockTemplate === undefined) {
+      return
+    }
     this._blockTemplates.length = 0
     this._blockTemplates.push(blockTemplate)
   }
