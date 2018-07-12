@@ -172,11 +172,11 @@ export class Engine {
       }
       let res = await this.persistence.put('rovers', roverNames)
       if (res) {
-        this._logger.debug('Stored rovers to persistence')
+        this._logger.info('Stored rovers to persistence')
       }
       res = await this.persistence.put('appversion', versionData)
       if (res) {
-        this._logger.debug('Stored appversion to persistence')
+        this._logger.info('Stored appversion to persistence')
       }
       try {
         await this.persistence.get('bc.block.1')
@@ -205,7 +205,7 @@ export class Engine {
       this._monitor.start()
     }
 
-    this._logger.debug('Engine initialized')
+    this._logger.info('Engine initialized')
 
     self.pubsub.subscribe('state.block.height', '<engine>', (msg) => {
       self.storeHeight(msg).then((res) => {
@@ -316,7 +316,7 @@ export class Engine {
     try {
       await this.persistence.get('bc.block.checkpoint')
     } catch (err) {
-      this._logger.debug('setting checkpoint at height: ' + block.getHeight())
+      this._logger.info('setting checkpoint at height: ' + block.getHeight())
       await this.persistence.put('bc.block.checkpoint', block)
     }
     try {
@@ -481,7 +481,7 @@ export class Engine {
           this.miningOfficer.newRoveredBlock(rovers, block)
             .then((pid: number|false) => {
               if (pid !== false) {
-                this._logger.debug(`collectBlock handler: successfuly send to mining worker (PID: ${pid})`)
+                this._logger.info(`collectBlock handler: successfuly send to mining worker (PID: ${pid})`)
               }
             })
             .catch(err => {
@@ -517,7 +517,7 @@ export class Engine {
    */
   async syncFromDepth (conn: Object, newBlock: BcBlock): Promise<bool|Error> {
     try {
-      this._logger.debug('sync from depth start')
+      this._logger.info('sync from depth start')
       const depthData = await this.persistence.get('bc.depth')
       const depth = parseInt(depthData, 10) // coerce for Flow
       const checkpoint = await this.persistence.get('bc.block.checkpoint')
@@ -525,7 +525,7 @@ export class Engine {
       // if the last height was not a genesis block and the depth was 2 then sync only to the height
       if (depth === 2) {
         // ignore and return u
-        this._logger.debug('depth is 2: sync from depth end')
+        this._logger.info('depth is 2: sync from depth end')
         return Promise.resolve(true)
       } else if (depth <= checkpoint.getHeight()) {
         // test to see if the depth hash references the checkpoint hash
@@ -715,7 +715,7 @@ export class Engine {
         this.multiverse.addResyncRequest(newBlock, this.miningOfficer._canMine)
           .then(shouldResync => {
             if (shouldResync === true) {
-              this._logger.debug(newBlock.getHash() + ' new block: ' + newBlock.getHeight() + ' should rsync request approved')
+              this._logger.info(newBlock.getHash() + ' new block: ' + newBlock.getHeight() + ' should rsync request approved')
               // 1. request multiverse from peer, if fail ignore
               // succeed in getting multiverse -->
               // 2. Compare purposed multiverse sum of difficulty with current sum of diff
@@ -726,10 +726,10 @@ export class Engine {
               //
               //
               const upperBound = newBlock.getHeight()
-              this._logger.debug(newBlock.getHash() + ' resync upper bound: ' + upperBound)
+              this._logger.info(newBlock.getHash() + ' resync upper bound: ' + upperBound)
               // get the lowest of the current multiverse
               const lowerBound = this.multiverse.getLowestBlock()
-              this._logger.debug(newBlock.getHash() + ' resync lower bound: ' + lowerBound)
+              this._logger.info(newBlock.getHash() + ' resync lower bound: ' + lowerBound)
               this.miningOfficer.stopMining()
               return conn.getPeerInfo((err, peerInfo) => {
                 if (err) {
@@ -744,7 +744,7 @@ export class Engine {
                   low: lowerBound,
                   high: upperBound
                 }
-                this._logger.debug(newBlock.getHash() + ' requesting multiverse proof from peer: ' + peerLockKey)
+                this._logger.info(newBlock.getHash() + ' requesting multiverse proof from peer: ' + peerLockKey)
                 this.node.manager.createPeer(peerInfo)
                   .query(query)
                   .then(newBlocks => {
@@ -753,12 +753,12 @@ export class Engine {
                       return Promise.resolve(true)
                     }
                     this._logger.info(1)
-                    this._logger.debug(newBlock.getHash() + ' recieved ' + newBlocks.length + ' blocks for multiverse proof')
+                    this._logger.info(newBlock.getHash() + ' recieved ' + newBlocks.length + ' blocks for multiverse proof')
                     const currentHeights = this.multiverse._chain.map(b => {
                       return b.getHeight()
                     })
                     this._logger.info(2)
-                    this._logger.debug(newBlock.getHash() + ' new heights: ' + currentHeights)
+                    this._logger.info(newBlock.getHash() + ' new heights: ' + currentHeights)
                     const comparableBlocks = newBlocks.filter(a => {
                       if (currentHeights.indexOf(a) > -1) return a
                     })
@@ -776,7 +776,7 @@ export class Engine {
                     this._logger.info(4)
                     const highestBlock = this.multiverse.getHighestBlock()
                     this._logger.info(5)
-                    this._logger.debug(newBlock.getHash() + ' comparing with: ' + highestBlock.getHash() + ' height: ' + highestBlock.getHeight())
+                    this._logger.info(newBlock.getHash() + ' comparing with: ' + highestBlock.getHash() + ' height: ' + highestBlock.getHeight())
                     this._logger.info(6)
 
                     let conditional = false
@@ -790,11 +790,11 @@ export class Engine {
                     if (conditional === true) {
                       // overwrite current multiverse
                       this._logger.info(7)
-                      this._logger.debug(newBlock.getHash() + ' approved --> assigning as current multiverse')
+                      this._logger.info(newBlock.getHash() + ' approved --> assigning as current multiverse')
                       this.multiverse._candidates.length = 0
                       this.multiverse._chain.length = 0
                       this.multiverse._chain = sorted
-                      this._logger.debug('multiverse has been assigned')
+                      this._logger.info('multiverse has been assigned')
                       return this.persistence.put('bc.depth', highestBlock.getHeight())
                         .then(() => {
                           this._logger.info(8)
@@ -804,10 +804,10 @@ export class Engine {
                           return this.syncFromDepth(conn, this.multiverse.getHighestBlock())
                             .then(synced => {
                               this._logger.info(9)
-                              this._logger.debug(newBlock.getHash() + ' blockchain sync complete')
+                              this._logger.info(newBlock.getHash() + ' blockchain sync complete')
                             })
                             .catch(e => {
-                              this._logger.debug(newBlock.getHash() + ' blockchain sync failed')
+                              this._logger.info(newBlock.getHash() + ' blockchain sync failed')
                               this._logger.error(e)
                             })
                         })
@@ -937,7 +937,7 @@ export class Engine {
       return Promise.resolve(true)
     } else {
       this._logger.info('local mined block ' + newBlock.getHeight() + ' does not stack on multiverse height ' + this.multiverse.getHighestBlock().getHeight())
-      this._logger.debug('mined block ' + newBlock.getHeight() + ' cannot go on top of multiverse block ' + this.multiverse.getHighestBlock())
+      this._logger.info('mined block ' + newBlock.getHeight() + ' cannot go on top of multiverse block ' + this.multiverse.getHighestBlock())
       this.miningOfficer.rebaseMiner()
         .then((res) => {
           this._logger.info(res)

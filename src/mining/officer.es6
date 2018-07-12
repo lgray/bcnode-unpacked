@@ -131,7 +131,7 @@ export class MiningOfficer {
 
     // Check if all rovers are enabled
     if (equals(new Set(this._knownRovers), new Set(rovers)) === false) {
-      this._logger.debug(`consumed blockchains manually overridden, mining services disabled, active multiverse rovers: ${JSON.stringify(rovers)}, known: ${JSON.stringify(this._knownRovers)})`)
+      this._logger.info(`consumed blockchains manually overridden, mining services disabled, active multiverse rovers: ${JSON.stringify(rovers)}, known: ${JSON.stringify(this._knownRovers)})`)
       return Promise.resolve(false)
     }
 
@@ -160,7 +160,7 @@ export class MiningOfficer {
       const getKeys: string[] = this._knownRovers.map(chain => `${chain}.block.latest`)
       currentBlocks = await Promise.all(getKeys.map((key) => {
         return this.persistence.get(key).then(block => {
-          this._logger.debug(`Got "${key}"`)
+          this._logger.info(`Got "${key}"`)
           return block
         })
       }))
@@ -171,7 +171,7 @@ export class MiningOfficer {
       try {
         const lastPreviousBlock = await this.persistence.get('bc.block.latest')
         this._logger.info(`Got last previous block (height: ${lastPreviousBlock.getHeight()}) from persistence`)
-        this._logger.debug(`Preparing new block`)
+        this._logger.info(`Preparing new block`)
 
         const currentTimestamp = ts.nowSeconds()
         if (this._unfinishedBlock !== undefined && getBlockchainsBlocksCount(this._unfinishedBlock) >= 6) {
@@ -204,11 +204,11 @@ export class MiningOfficer {
         // if blockchains block count === 5 we will create a block with 6 blockchain blocks (which gets bonus)
         // if it's more, do not restart mining and start with new ones
         if (this._workerProcess && this._unfinishedBlock) {
-          this._logger.debug(`Restarting mining with a new rovered block`)
+          this._logger.info(`Restarting mining with a new rovered block`)
           return this.restartMining()
         }
 
-        this._logger.debug(`Starting miner process with work: "${work}", difficulty: ${newBlock.getDifficulty()}, ${JSON.stringify(this._collectedBlocks, null, 2)}`)
+        this._logger.info(`Starting miner process with work: "${work}", difficulty: ${newBlock.getDifficulty()}, ${JSON.stringify(this._collectedBlocks, null, 2)}`)
         const proc: ChildProcess = fork(MINER_WORKER_PATH)
         this._workerProcess = proc
         if (this._workerProcess !== null) {
@@ -284,14 +284,14 @@ export class MiningOfficer {
       try {
         process.disconnect()
       } catch (err) {
-        this._logger.debug(`Unable to disconnect workerProcess, reason: ${err.message}`)
+        this._logger.info(`Unable to disconnect workerProcess, reason: ${err.message}`)
       }
     }
 
     try {
       process.removeAllListeners()
     } catch (err) {
-      this._logger.debug(`Unable to remove workerProcess listeners, reason: ${err.message}`)
+      this._logger.info(`Unable to remove workerProcess listeners, reason: ${err.message}`)
     }
 
     // $FlowFixMe
@@ -299,11 +299,11 @@ export class MiningOfficer {
       try {
         process.kill()
       } catch (err) {
-        this._logger.debug(`Unable to kill workerProcess, reason: ${err.message}`)
+        this._logger.info(`Unable to kill workerProcess, reason: ${err.message}`)
       }
     }
 
-    this._logger.debug('mining worker process has been killed')
+    this._logger.info('mining worker process has been killed')
     this._workerProcess = undefined
     return Promise.resolve(true)
   }
@@ -316,7 +316,7 @@ export class MiningOfficer {
     const blockHeaderCounts = getNewBlockCount(lastPreviousBlock.getBlockchainHeaders(), staleBlock.getBlockchainHeaders())
     // const currentTimestamp = ts.nowSeconds()
 
-    this._logger.debug('child blocks usable in rebase: ' + blockHeaderCounts)
+    this._logger.info('child blocks usable in rebase: ' + blockHeaderCounts)
 
     if (blockHeaderCounts === 0) {
       return Promise.resolve(false)
@@ -327,8 +327,9 @@ export class MiningOfficer {
     this._logger.info(lastPreviousBlock)
 
     const blocks = this._knownRovers.reduce((all, roverName) => {
-      this._logger.debug('processing rover ' + roverName)
-      const b = lastPreviousBlock[DICT[roverName]]()
+      this._logger.info('processing rover ' + roverName)
+      const method = DICT[roverName]
+      const b = lastPreviousBlock[method]()
       all = all.concat(b)
       return all
     }, [])
@@ -403,11 +404,11 @@ export class MiningOfficer {
     /// / if blockchains block count === 5 we will create a block with 6 blockchain blocks (which gets bonus)
     /// / if it's more, do not restart mining and start with new ones
     // if (this._workerProcess && this._unfinishedBlock) {
-    //  this._logger.debug(`Restarting mining with a new rovered block`)
+    //  this._logger.info(`Restarting mining with a new rovered block`)
     //  return this.restartMining()
     // }
 
-    // this._logger.debug(`Starting miner process with work: "${work}", difficulty: ${newBlock.getDifficulty()}, ${JSON.stringify(this._collectedBlocks, null, 2)}`)
+    // this._logger.info(`Starting miner process with work: "${work}", difficulty: ${newBlock.getDifficulty()}, ${JSON.stringify(this._collectedBlocks, null, 2)}`)
     // const proc: ChildProcess = fork(MINER_WORKER_PATH)
     // this._workerProcess = proc
     // if (this._workerProcess !== null) {
@@ -509,7 +510,7 @@ export class MiningOfficer {
 
   _handleWorkerExit (code: number, signal: string) {
     if (code === 0 || code === null) { // 0 means worker exited on it's own correctly, null that is was terminated from engine
-      this._logger.debug(`Mining worker finished its work (code: ${code})`)
+      this._logger.info(`Mining worker finished its work (code: ${code})`)
     } else {
       this._logger.warn(`Mining worker process exited with code ${code}, signal ${signal}`)
       this._cleanUnfinishedBlock()
