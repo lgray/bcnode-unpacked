@@ -325,12 +325,12 @@ export class MiningOfficer {
     const blockchains = staleBlock.getBlockchainHeaders()
 
     const blocks = this._knownRovers.reduce((all, roverName) => {
-      const b = lastPreviousBlock[DICT[roverName]()]
+      const b = lastPreviousBlock[DICT[roverName]]()
       all = all.concat(b)
       return all
     }, [])
 
-    this._logger.info(blocks)
+    this._logger.info(JSON.stringify(blocks, null, 2))
 
     const bestCurrentBlocks = blocks.reduce((all, chain, i) => {
       if (all[chain.getBlockchain()] === undefined) {
@@ -341,7 +341,7 @@ export class MiningOfficer {
       return all
     }, {})
 
-    this._logger.info(bestCurrentBlocks)
+    this._logger.info(JSON.stringify(bestCurrentBlocks, null, 2))
 
     if (Object.keys(blockchains).length !== Object.keys(bestCurrentBlocks).length) return Promise.resolve(false)
 
@@ -436,7 +436,7 @@ export class MiningOfficer {
     //  // $FlowFixMe - Flow can't properly find worker pid
     //  return Promise.resolve(this._workerProcess.pid)
     // }
-    // return Promise.resolve(false)
+    return Promise.resolve(true)
   }
 
   // FIXME: Review and fix restartMining
