@@ -517,6 +517,7 @@ export class Engine {
    */
   async syncFromDepth (conn: Object, newBlock: BcBlock): Promise<bool|Error> {
     try {
+      this._logger.debug('sync from depth start')
       const depthData = await this.persistence.get('bc.depth')
       const depth = parseInt(depthData, 10) // coerce for Flow
       const checkpoint = await this.persistence.get('bc.block.checkpoint')
@@ -524,9 +525,18 @@ export class Engine {
       // if the last height was not a genesis block and the depth was 2 then sync only to the height
       if (depth === 2) {
         // ignore and return u
+        this._logger.debug('depth is 2: sync from depth end')
         return Promise.resolve(true)
-      } else if (depth === checkpoint.getHeight()) {
+      } else if (depth <= checkpoint.getHeight()) {
         // test to see if the depth hash references the checkpoint hash
+        const assertBlock = await this.persistence.get('bc.block.' + (checkpoint.getHeight() - 1))
+        if (checkpoint.getPreviousHash() !== assertBlock.getHash()) {
+          await this.persistence.put('bc.block.checkpoint', getGenesisBlock)
+          await this.persistence.put('bc.depth', depth)
+          return this.syncFromDepth(conn, newBlock)
+        } else {
+          return this.persistence.putPending('bc')
+        }
         return Promise.resolve(true)
       } else {
         const upperBound = max(depth, checkpoint.getHeight() + 1) // so we dont get the genesis block
@@ -578,8 +588,8 @@ export class Engine {
                           const assertBlock = await this.persistence.get('bc.block.' + (lowerBound - 1))
                           // if the hash is not referenced the node could have been synced to a weaker chain
                           if (checkpoint.getPreviousHash() !== assertBlock.getHash()) {
-                            await this.persistence.push('bc.block.checkpoint', getGenesisBlock)
-                            await this.persistence.push('bc.depth', depth)
+                            await this.persistence.put('bc.block.checkpoint', getGenesisBlock)
+                            await this.persistence.put('bc.depth', depth)
                             return this.syncFromDepth(conn, newBlock)
                           } else {
                             return this.persistence.putPending('bc')
