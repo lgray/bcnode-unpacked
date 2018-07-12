@@ -684,7 +684,7 @@ export class Engine {
         this._logger.info('block ' + newBlock.getHeight() + ' considered next block in current multiverse ')
         // RESTART MINING USED newBlock.getHash()
 
-        this.pubsub.publish('update.block.latest', { key: 'bc.block.latest', data: newBlock })
+        this.pubsub.publish('update.block.latest', { key: 'bc.block.latest', data: newBlock, force: true })
         // notify the miner
         this.node.broadcastNewBlock(newBlock)
         return this.syncFromDepth(conn, newBlock)
