@@ -289,7 +289,7 @@ export class Multiverse {
    * @param newBlock
    * @returns {boolean}
    */
-  addResyncRequest (newBlock: BcBlock): Promise<boolean> {
+  addResyncRequest (newBlock: BcBlock, strict: boolean = true): Promise<boolean> {
     const currentHighestBlock = this.getHighestBlock()
     const currentParentHighestBlock = this.getParentHighestBlock()
 
@@ -335,18 +335,22 @@ export class Multiverse {
       return Promise.resolve(false)
     }
     // make sure that blocks that are added reference child chains
-    return this.validateRoveredBlocks(newBlock).then(areAllChildrenRovered => {
-      if (!areAllChildrenRovered) {
-        return Promise.resolve(false)
-      }
+    if (strict === true) {
+      return this.validateRoveredBlocks(newBlock).then(areAllChildrenRovered => {
+        if (!areAllChildrenRovered) {
+          return Promise.resolve(false)
+        }
 
-      // FAIL if sum of child block heights is less than the rovered child heights
-      if (childrenHeightSum(newBlock) <= childrenHeightSum(currentParentHighestBlock)) {
-        return Promise.resolve(false)
-      }
-      this.addCandidateBlock(newBlock)
-      return Promise.resolve(true)
-    })
+        // FAIL if sum of child block heights is less than the rovered child heights
+        if (childrenHeightSum(newBlock) <= childrenHeightSum(currentParentHighestBlock)) {
+          return Promise.resolve(false)
+        }
+        this.addCandidateBlock(newBlock)
+        return Promise.resolve(true)
+      })
+    }
+    this.addCandidateBlock(newBlock)
+    return Promise.resolve(true)
   }
 
   async validateRoveredBlocks (block: BcBlock): Promise<boolean> {
