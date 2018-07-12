@@ -329,7 +329,7 @@ export class Engine {
         await this.persistence.put('bc.block.latest', block)
         await this.persistence.put('bc.block.' + block.getHeight(), block)
       } else {
-        this._logger.error('faled to set block ' + block.getHeight() + ' ' + block.getHash() + ' as latest block, wrong previous hash')
+        this._logger.error('failed to set block ' + block.getHeight() + ' ' + block.getHash() + ' as latest block, wrong previous hash')
       }
 
       if (msg.multiverse !== undefined) {
