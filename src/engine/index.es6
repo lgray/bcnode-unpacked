@@ -323,7 +323,7 @@ export class Engine {
     try {
       const previousLatest = await this.persistence.get('bc.block.latest')
 
-      if (previousLatest.getHash() === block.previousHash()) {
+      if (previousLatest.getHash() === block.getPreviousHash()) {
         await this.persistence.put('bc.block.latest', block)
         await this.persistence.put('bc.block.' + block.getHeight(), block)
       } else if (msg.force === true) {
@@ -342,8 +342,9 @@ export class Engine {
       }
       return Promise.resolve(true)
     } catch (err) {
+      this._logger.error(err)
       this._logger.warn('no previous block found')
-      if (block !== undefined) {
+      if (block !== undefined && msg.force == true) {
         await this.persistence.put('bc.block.latest', block)
         await this.persistence.put('bc.block.' + block.getHeight(), block)
       }
@@ -558,7 +559,7 @@ export class Engine {
                 low: lowerBound,
                 high: upperBound
               }
-              this.node.manager.createPeer(peerInfo)
+              return this.node.manager.createPeer(peerInfo)
                 .query(query)
                 .then(blocks => {
                   return this.syncSetBlocksInline(blocks)
@@ -577,7 +578,7 @@ export class Engine {
                         return (async () => {
                           const assertBlock = await this.persistence.get('bc.block.' + (lowerBound - 1))
                           // if the hash is not referenced the node could have been synced to a weaker chain
-                          if (checkpoint.previousHash() !== assertBlock.getHash()) {
+                          if (checkpoint.getPreviousHash() !== assertBlock.getHash()) {
                             await this.persistence.push('bc.block.checkpoint', getGenesisBlock)
                             await this.persistence.push('bc.depth', depth)
                             return this.syncFromDepth(conn, newBlock)
@@ -688,7 +689,7 @@ export class Engine {
         this.node.broadcastNewBlock(newBlock)
         return this.syncFromDepth(conn, newBlock)
           .then(() => {
-            this._logger.info('depth sync stated')
+            this._logger.info('depth sync complete')
           })
           .catch(e => {
             this._logger.error(e)
