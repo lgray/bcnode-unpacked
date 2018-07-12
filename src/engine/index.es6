@@ -772,7 +772,7 @@ export class Engine {
                     if (highestBlock !== undefined) {
                       // conanaOut
                       conditional = new BN(sorted[0].getTotalDistance()).gt(new BN(highestBlock.getTotalDistance()))
-                      if (conditional == true) return true
+                      if (conditional === true) return true
                     }
 
                     if (conditional) {
