@@ -239,7 +239,6 @@ export class Engine {
       if (this.miningOfficer._canMine) this.miningOfficer.stopMining()
       this.updateLatestAndStore(msg)
         .then((res) => {
-          this._logger.info(`latest block ${msg.data.getHeight()} has been updated`)
           this.miningOfficer.rebaseMiner()
             .then((state) => {
               this._logger.info(`latest block ${msg.data.getHeight()} has been updated`)
@@ -683,8 +682,7 @@ export class Engine {
         }
         this._logger.info('block ' + newBlock.getHeight() + ' considered next block in current multiverse ')
         // RESTART MINING USED newBlock.getHash()
-
-        this.pubsub.publish('update.block.latest', { key: 'bc.block.latest', data: newBlock, force: true })
+        this.pubsub.publish('update.block.latest', { key: 'bc.block.latest', data: newBlock })
         // notify the miner
         this.node.broadcastNewBlock(newBlock)
         return this.syncFromDepth(conn, newBlock)
