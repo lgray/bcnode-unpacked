@@ -16,7 +16,6 @@ const {
   head,
   identity,
   last,
-  pick,
   reject,
   sort,
   sum
@@ -96,10 +95,10 @@ function numberOfBlockchainsNeededMatchesChildBlock (newBlock: BcBlock): bool {
   }
   // verify that all blockain header lists are non empty and that there is childBlockchainCount of them
   const headerValues = Object.values(newBlock.getBlockchainHeaders().toObject())
-  // logger.info(inspect(headerValues, {depth: 3}))
+  logger.debug(inspect(headerValues, {depth: 3}))
   // $FlowFixMe
   const headerValuesWithLengthGtZero = headerValues.filter(headersList => headersList.length > 0)
-  // logger.info(inspect(headerValuesWithLengthGtZero, {depth: 3}))
+  logger.debug(inspect(headerValuesWithLengthGtZero, {depth: 3}))
   // logger.info(GENESIS_DATA.childBlockchainCount)
   return headerValuesWithLengthGtZero.length === GENESIS_DATA.childBlockchainCount
 }
@@ -212,9 +211,9 @@ function blockchainHeadersAreChain (childHeaderList: BlockchainHeader[], parentH
   if (!firstChildHeader || !lastParentHeader) {
     const nonEmpty = firstChildHeader || lastParentHeader
     if (nonEmpty) {
-      logger.warn(`Last child header or first parent header were empty for chain ${nonEmpty.getBlockchain()}`)
+      logger.warn(`First child header or last parent header were empty for chain ${nonEmpty.getBlockchain()}`)
     } else {
-      logger.warn(`Both last child header and first parent header were missing`)
+      logger.warn(`Both first child header and last parent header were missing`)
     }
     return false
   }
@@ -224,7 +223,7 @@ function blockchainHeadersAreChain (childHeaderList: BlockchainHeader[], parentH
     firstChildHeader.getHash() === lastParentHeader.getHash()
 
   if (!check) {
-    logger.info(`Last child header ${firstChildHeader.toObject()} is not a child of ${lastParentHeader.toObject()}`)
+    logger.info(`chain: "${firstChildHeader.getBlockchain()}" First child header ${inspect(firstChildHeader.toObject())} is not a child of last parent header ${inspect(lastParentHeader.toObject())}`)
     return check
   }
 

@@ -23,6 +23,8 @@
 
 import type { Logger } from 'winston'
 
+const { inspect } = require('util')
+
 const similarity = require('compute-cosine-similarity')
 const BN = require('bn.js')
 const Random = require('random-js')
@@ -427,6 +429,10 @@ function prepareChildBlockHeadersMap (previousBlock: BcBlock, newChildBlock: Blo
   const chainToSet = (chain: string) => `set${chain[0].toUpperCase() + chain.slice(1)}List`
   const chainToGet = (chain: string) => `get${chain[0].toUpperCase() + chain.slice(1)}List`
 
+  logger.debug(`newChildHeadersMap: ${inspect(toPairs(newChildHeadersMap).map(([chain, blocks]) => {
+    return 'chain: ' + chain + ' headers ' + inspect(blocks.map(block => copyHeader(block, 1).toObject()))
+  }), {depth: 3})}`)
+
   const newBlockchainHeaders = new BlockchainHeaders()
   // construct new BlockchainHeaders from newChildHeaders
   toPairs(newChildHeadersMap).forEach(([chain, blocks]) => {
@@ -436,15 +442,19 @@ function prepareChildBlockHeadersMap (previousBlock: BcBlock, newChildBlock: Blo
   // if any list in header is empty take last header from previous block and raise confirmations by 1
   Object.keys(newBlockchainHeaders.toObject()).forEach(listKey => {
     const chain = keyOrMethodToChain(listKey)
-    const isEmpty = newBlockchainHeaders[chainToGet(chain)]().length === 0
-    if (isEmpty) {
+    const newlyAssignedBlocks = newBlockchainHeaders[chainToGet(chain)]()
+    logger.debug(`headers empty check, with method ${chainToGet(chain)}: ${newlyAssignedBlocks.map(b => b.toObject())}`)
+    if (newlyAssignedBlocks.length === 0) {
       const lastHeaderFromPreviousBlock = last(previousBlock.getBlockchainHeaders()[chainToGet(chain)]())
       if (!lastHeaderFromPreviousBlock) {
         throw new Error(`Previous BC block ${previousBlock.getHeight()} does not have any "${chain}" headers`)
       }
-      newBlockchainHeaders[chainToSet(chain)]([copyHeader(lastHeaderFromPreviousBlock, lastHeaderFromPreviousBlock.getBlockchainConfirmationsInParentCount() + 1)])
+      const headerFromPreviousBlock = copyHeader(lastHeaderFromPreviousBlock, lastHeaderFromPreviousBlock.getBlockchainConfirmationsInParentCount() + 1)
+      newBlockchainHeaders[chainToSet(chain)]([headerFromPreviousBlock])
     }
   })
+
+  logger.debug(`prepareChildBlockHeadersMap: previous BC block: ${previousBlock.getHeight()} final headers: ${inspect(Object.values(newBlockchainHeaders.toObject()), {depth: 3})}`)
 
   return newBlockchainHeaders
 }
