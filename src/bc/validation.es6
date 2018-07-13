@@ -13,7 +13,10 @@ const {
   equals,
   flatten,
   fromPairs,
+  head,
   identity,
+  last,
+  pick,
   reject,
   sort,
   sum
@@ -202,23 +205,50 @@ function isDistanceCorrectlyCalculated (newBlock: BcBlock): bool {
 }
 
 function blockchainHeadersAreChain (childHeaderList: BlockchainHeader[], parentHeaderList: BlockchainHeader[]) {
-  // check highest block from child list is higher or equally high as highest block from parent list
-  const pickHighestFromList = (list: BlockchainHeader[]) => {
-    if (list.length === 1) {
-      return list[0]
+  const firstChildHeader = head(childHeaderList)
+  const lastParentHeader = last(parentHeaderList)
+
+  // check if both parent and child have at least one header
+  if (!firstChildHeader || !lastParentHeader) {
+    const nonEmpty = firstChildHeader || lastParentHeader
+    if (nonEmpty) {
+      logger.warn(`Last child header or first parent header were empty for chain ${nonEmpty.getBlockchain()}`)
     } else {
-      return list.reduce((acc, curr) => curr.getHeight() > acc.getHeight() ? curr : acc, list[0])
+      logger.warn(`Both last child header and first parent header were missing`)
+    }
+    return false
+  }
+
+  // check if either the header is the same one or first child header is actual child of last parent header
+  let check = firstChildHeader.getPreviousHash() === lastParentHeader.getHash() ||
+    firstChildHeader.getHash() === lastParentHeader.getHash()
+
+  if (!check) {
+    logger.info(`Last child header ${firstChildHeader.toObject()} is not a child of ${lastParentHeader.toObject()}`)
+    return check
+  }
+
+  // if more than one child header check if child headers form a chain
+  if (childHeaderList.length > 1) {
+    check = aperture(2, childHeaderList).reduce((result, [a, b]) => a.getHash() === b.getPreviousHash() && result, true)
+
+    if (!check) {
+      logger.info(`Child headers do not form a chain`)
+      return check
     }
   }
 
-  const highestChildHeader = pickHighestFromList(childHeaderList)
-  const highestParentHeader = pickHighestFromList(parentHeaderList)
+  // if more than one parent header check if parent headers form a chain
+  if (parentHeaderList.length > 1) {
+    check = aperture(2, parentHeaderList).reduce((result, [a, b]) => a.getHash() === b.getPreviousHash() && result, true)
 
-  // logger.debug(`blockchainHeadersAreChain highestChild ${inspect(highestChildHeader.toObject())}, highestParent: ${inspect(highestParentHeader.toObject())}`)
-  return highestChildHeader !== undefined &&
-    highestParentHeader !== undefined &&
-    (highestChildHeader.getPreviousHash() === highestParentHeader.getHash() ||
-     highestChildHeader.getHash() === highestParentHeader.getHash())
+    if (!check) {
+      logger.info(`Parent headers do not form a chain`)
+      return check
+    }
+  }
+
+  return true
 }
 
 export function validateBlockSequence (blocks: BcBlock[]): bool {
