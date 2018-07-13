@@ -14,10 +14,11 @@ import type { RocksDb } from '../persistence'
 const { fork, ChildProcess } = require('child_process')
 const { writeFileSync } = require('fs')
 const { resolve } = require('path')
+const { inspect } = require('util')
 
 const BN = require('bn.js')
 const debug = require('debug')('bcnode:mining:officer')
-const { equals, all, values } = require('ramda')
+const { all, equals, flatten, fromPairs, last, range, values } = require('ramda')
 
 const { prepareWork, prepareNewBlock, getNewBlockCount } = require('./primitives')
 const { getLogger } = require('../logger')
@@ -36,6 +37,10 @@ type UnfinishedBlockData = {
   iterations: ?number,
   timeDiff: ?number
 }
+
+const keyOrMethodToChain = (keyOrMethod: string) => keyOrMethod.replace(/^get|set/, '').replace(/List$/, '').toLowerCase()
+const chainToSet = (chain: string) => `set${chain[0].toUpperCase() + chain.slice(1)}List`
+const chainToGet = (chain: string) => `get${chain[0].toUpperCase() + chain.slice(1)}List`
 
 export class MiningOfficer {
   _logger: Logger
@@ -146,23 +151,49 @@ export class MiningOfficer {
 
   async startMining (rovers: string[], block: Block): Promise<boolean|number> {
     // get latest block from each child blockchain
-    let currentBlocks
     try {
-      // TODO getBulk
-      const getKeys: string[] = this._knownRovers.map(chain => `${chain}.block.latest`)
-      currentBlocks = await Promise.all(getKeys.map((key) => {
-        return this.persistence.get(key).then(block => {
-          this._logger.info(`Got "${key}"`)
-          return block
-        })
+      const lastPreviousBlock = await this.persistence.get('bc.block.latest')
+      this._logger.info(`Got last previous block (height: ${lastPreviousBlock.getHeight()}) from persistence`)
+      const latestRoveredHeadersKeys: string[] = this._knownRovers.map(chain => `${chain}.block.latest`)
+      const latestBlockHeaders = await this.persistence.getBulk(latestRoveredHeadersKeys)
+      const lastestBlockHeadersHeights = fromPairs(latestBlockHeaders.map(header => [header.getBlockchain(), header.getHeight()]))
+
+      // prepare a list of keys of headers to pull from persistence
+      const newBlockHeadersKeys = flatten(Object.keys(lastPreviousBlock.getBlockchainHeaders().toObject()).map(listKey => {
+        const chain = keyOrMethodToChain(listKey)
+        const lastHeaderInPreviousBlock = last(lastPreviousBlock.getBlockchainHeaders()[chainToGet(chain)]())
+        // TODO if lastPreviousBlock is genesis say from == 1
+
+        let from
+        if (lastPreviousBlock.getHeight() === 1) { // genesis
+          // just pick the last known block for genesis
+          from = lastestBlockHeadersHeights[chain]
+        } else {
+          if (!lastHeaderInPreviousBlock) {
+            throw new Error(`Previous BC block ${lastPreviousBlock.getHeight()} does not have any "${chain}" headers`)
+          }
+          from = lastHeaderInPreviousBlock.getHeight() + 1
+        }
+
+        const to = lastestBlockHeadersHeights[chain]
+
+        if (from === to) {
+          return [`${chain}.block.${from}`]
+        }
+
+        if (from < to) {
+          return []
+        }
+
+        return [chain, range(from, to + 1).map(height => `${chain}.block.${height}`)]
       }))
 
+      this._logger.info(`Loading ${inspect(newBlockHeadersKeys)}`)
+      const currentBlocks = await this.persistence.getBulk(newBlockHeadersKeys)
       this._logger.info(`Loaded ${currentBlocks.length} blocks from persistence`)
 
       // get latest known BC block
       try {
-        const lastPreviousBlock = await this.persistence.get('bc.block.latest')
-        this._logger.info(`Got last previous block (height: ${lastPreviousBlock.getHeight()}) from persistence`)
         this._logger.info(`Preparing new block`)
 
         const currentTimestamp = ts.nowSeconds()
@@ -259,7 +290,7 @@ export class MiningOfficer {
   /**
   * Accessor for block templates
   */
-  getCurrentMiningBlock ():?Object {
+  getCurrentMiningBlock (): ?BcBlock {
     if (this._blockTemplates.length < 1) return
     return this._blockTemplates[0]
   }
@@ -315,8 +346,9 @@ export class MiningOfficer {
   async rebaseMiner (): Promise<?boolean> {
     if (this._canMine !== true) return Promise.resolve(false)
     const staleBlock = this.getCurrentMiningBlock()
-    const staleHeaders = staleBlock.getBlockchainHeaders()
-    if (staleBlock === undefined) return Promise.resolve(false)
+    if (!staleBlock) {
+      return Promise.resolve(false)
+    }
     const lastPreviousBlock = await this.persistence.get('bc.block.latest')
     const previousHeaders = lastPreviousBlock.getBlockchainHeaders()
     const blockHeaderCounts = getNewBlockCount(lastPreviousBlock.getBlockchainHeaders(), staleBlock.getBlockchainHeaders())
