@@ -325,11 +325,11 @@ export class Engine {
       if (previousLatest.getHash() === block.getPreviousHash()) {
         await this.persistence.put('bc.block.latest', block)
         await this.persistence.put('bc.block.' + block.getHeight(), block)
-        await this.putChildHeaders(block)
+        await this.persistence.putChildHeaders(block)
       } else if (msg.force === true) {
         await this.persistence.put('bc.block.latest', block)
         await this.persistence.put('bc.block.' + block.getHeight(), block)
-        await this.putChildHeaders(block)
+        await this.persistence.putChildHeaders(block)
       } else {
         this._logger.error('failed to set block ' + block.getHeight() + ' ' + block.getHash() + ' as latest block, wrong previous hash')
       }
@@ -338,7 +338,7 @@ export class Engine {
         while (msg.multiverse.length > 0) {
           const b = msg.multiverse.pop()
           await this.persistence.put('bc.block.' + b.getHeight(), b)
-          await this.putChildHeaders(b)
+          await this.persistence.putChildHeaders(b)
         }
         return Promise.resolve(true)
       }
@@ -349,13 +349,13 @@ export class Engine {
       if (block !== undefined && msg.force === true) {
         await this.persistence.put('bc.block.latest', block)
         await this.persistence.put('bc.block.' + block.getHeight(), block)
-        await this.putChildHeaders(block)
+        await this.persistence.putChildHeaders(block)
       }
       if (msg.multiverse !== undefined) {
         while (msg.multiverse.length > 0) {
           const b = msg.multiverse.pop()
           await this.persistence.put('bc.block.' + b.getHeight(), b)
-          await this.putChildHeaders(b)
+          await this.persistence.putChildHeaders(b)
         }
         return Promise.resolve(true)
       }
