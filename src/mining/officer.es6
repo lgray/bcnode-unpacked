@@ -156,36 +156,39 @@ export class MiningOfficer {
       this._logger.info(`Got last previous block (height: ${lastPreviousBlock.getHeight()}) from persistence`)
       const latestRoveredHeadersKeys: string[] = this._knownRovers.map(chain => `${chain}.block.latest`)
       const latestBlockHeaders = await this.persistence.getBulk(latestRoveredHeadersKeys)
-      const lastestBlockHeadersHeights = fromPairs(latestBlockHeaders.map(header => [header.getBlockchain(), header.getHeight()]))
+      const latestBlockHeadersHeights = fromPairs(latestBlockHeaders.map(header => [header.getBlockchain(), header.getHeight()]))
+      this._logger.debug(`latestBlockHeadersHeights: ${inspect(latestBlockHeadersHeights)}`)
 
       // prepare a list of keys of headers to pull from persistence
       const newBlockHeadersKeys = flatten(Object.keys(lastPreviousBlock.getBlockchainHeaders().toObject()).map(listKey => {
         const chain = keyOrMethodToChain(listKey)
         const lastHeaderInPreviousBlock = last(lastPreviousBlock.getBlockchainHeaders()[chainToGet(chain)]())
-        // TODO if lastPreviousBlock is genesis say from == 1
 
         let from
+        let to
         if (lastPreviousBlock.getHeight() === 1) { // genesis
           // just pick the last known block for genesis
-          from = lastestBlockHeadersHeights[chain]
+          from = latestBlockHeadersHeights[chain]// TODO check, seems correct
+          to = from
         } else {
           if (!lastHeaderInPreviousBlock) {
             throw new Error(`Previous BC block ${lastPreviousBlock.getHeight()} does not have any "${chain}" headers`)
           }
           from = lastHeaderInPreviousBlock.getHeight() + 1
+          to = latestBlockHeadersHeights[chain]
         }
 
-        const to = lastestBlockHeadersHeights[chain]
+        this._logger.debug(`newBlockHeadersKeys, previous BC: ${lastPreviousBlock.getHeight()}, ${chain}, from: ${from}, to: ${to}`)
 
         if (from === to) {
           return [`${chain}.block.${from}`]
         }
 
-        if (from < to) {
+        if (from > to) {
           return []
         }
 
-        return [chain, range(from, to + 1).map(height => `${chain}.block.${height}`)]
+        return [range(from, to + 1).map(height => `${chain}.block.${height}`)]
       }))
 
       this._logger.info(`Loading ${inspect(newBlockHeadersKeys)}`)
