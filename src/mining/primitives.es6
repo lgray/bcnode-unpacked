@@ -32,8 +32,10 @@ const {
   difference,
   flatten,
   flip,
+  groupBy,
   invoker,
   join,
+  last,
   map,
   // $FlowFixMe - missing in ramda flow-typed annotation
   partialRight,
@@ -41,6 +43,7 @@ const {
   repeat,
   reverse,
   splitEvery,
+  toPairs,
   zip,
   zipWith
 } = require('ramda')
@@ -414,41 +417,36 @@ function prepareChildBlockHeadersMapForGenesis (currentBlockchainHeaders: Block[
  *
  * @param {BcBlock} previousBlock Last known previously mined BC block
  * @param {Block} newChildBlock The last rovereed block - this one triggered the mining
- * @param {bool} shouldAppend flags if the newChildBlock should be appended to a child block sublist or replace
+ * @param {Block[]} newChildHeaders child headers which were rovered since the previousBlock
  * @return {BlockchainHeader[]} Headers of rovered chains with confirmations count calculated
  */
-function prepareChildBlockHeadersMap (previousBlock: BcBlock, newChildBlock: Block, shouldAppend: bool): BlockchainHeaders {
-  let chainWhichTriggeredMining = 'bc'
-  if (newChildBlock.getBlockchain() !== undefined) {
-    chainWhichTriggeredMining = newChildBlock.getBlockchain()
-  }
-  const newMap = new BlockchainHeaders()
-  Object.keys(previousBlock.getBlockchainHeaders().toObject())
-    .forEach((chainKeyName) => {
-      const chain = chainKeyName.replace(/List$/, '')
-      const methodNameGet = `get${chain[0].toUpperCase() + chain.slice(1)}List` // e.g. getBtcList
-      const methodNameSet = `set${chain[0].toUpperCase() + chain.slice(1)}List` // e.g. setBtcList
-      let updatedHeaders
-      if (chainWhichTriggeredMining === chain) {
-        // console.log(`${chain} trigger mining`)
-        updatedHeaders = [copyHeader(newChildBlock, 1)]
-        if (shouldAppend) {
-          // console.log(`unshifting`)
-          updatedHeaders.unshift(previousBlock.getBlockchainHeaders()[methodNameGet]().map(header => {
-            return copyHeader(header, 1)
-          }))
-        }
-      } else {
-        updatedHeaders = previousBlock.getBlockchainHeaders()[methodNameGet]().map(header => {
-          // console.log(`${chain} did not trigger mining, just copying with count+1`)
-          return copyHeader(header, header.getBlockchainConfirmationsInParentCount() + 1)
-        })
-      }
+function prepareChildBlockHeadersMap (previousBlock: BcBlock, newChildBlock: Block, newChildHeaders: Block[]): BlockchainHeaders {
+  const newChildHeadersMap = groupBy(block => block.getBlockchain(), newChildHeaders)
 
-      newMap[methodNameSet](flatten(updatedHeaders)) // need to flatten because in case of append map returns [] and not a single header
-    })
-  // console.log(newMap.toObject())
-  return newMap
+  const keyOrMethodToChain = (keyOrMethod: string) => keyOrMethod.replace(/^get|set/, '').replace(/List$/, '').toLowerCase()
+  const chainToSet = (chain: string) => `set${chain[0].toUpperCase() + chain.slice(1)}List`
+  const chainToGet = (chain: string) => `get${chain[0].toUpperCase() + chain.slice(1)}List`
+
+  const newBlockchainHeaders = new BlockchainHeaders()
+  // construct new BlockchainHeaders from newChildHeaders
+  toPairs(newChildHeadersMap).forEach(([chain, blocks]) => {
+    newBlockchainHeaders[chainToSet(chain)](blocks.map(block => copyHeader(block, 1)))
+  })
+
+  // if any list in header is empty take last header from previous block and raise confirmations by 1
+  Object.keys(newBlockchainHeaders.toObject()).forEach(listKey => {
+    const chain = keyOrMethodToChain(listKey)
+    const isEmpty = newBlockchainHeaders[chainToGet(chain)]().length === 0
+    if (isEmpty) {
+      const lastHeaderFromPreviousBlock = last(previousBlock.getBlockchainHeaders()[chainToGet(chain)]())
+      if (!lastHeaderFromPreviousBlock) {
+        throw new Error(`Previous BC block ${previousBlock.getHeight()} does not have any "${chain}" headers`)
+      }
+      newBlockchainHeaders[chainToSet(chain)]([copyHeader(lastHeaderFromPreviousBlock, lastHeaderFromPreviousBlock.getBlockchainConfirmationsInParentCount() + 1)])
+    }
+  })
+
+  return newBlockchainHeaders
 }
 
 /**
@@ -473,23 +471,22 @@ export function getNewBlockCount (previousBlockHeaders: BlockchainHeaders, curre
  *
  * @param {number} currentTimestamp current timestamp reference
  * @param {BcBlock} lastPreviousBlock Last known previously mined BC block
- * @param {Block[]} childrenCurrentBlocks Last know rovered blocks from each chain
+ * @param {Block[]} newChildHeaders Child headers which were rovered since headers in lastPreviousBlock
  * @param {Block} blockWhichTriggeredMining The last rovered block - this one triggered the mining
  * @param {BcTransaction[]} newTransactions Transactions which will be added to newly mined block
  * @param {string} minerAddress Public addres to which NRG award for mining the block and transactions will be credited to
  * @param {BcBlock} unfinishedBlock If miner was running this is the block currently mined
  * @return {BcBlock} Prepared structure of the new BC block, does not contain `nonce` and `distance` which will be filled after successful mining of the block
  */
-export function prepareNewBlock (currentTimestamp: number, lastPreviousBlock: BcBlock, childrenCurrentBlocks: Block[], blockWhichTriggeredMining: Block, newTransactions: BcTransaction[], minerAddress: string, unfinishedBlock: ?BcBlock): [BcBlock, number] {
-  const shouldAppend = !!unfinishedBlock
+export function prepareNewBlock (currentTimestamp: number, lastPreviousBlock: BcBlock, newChildHeaders: Block[], blockWhichTriggeredMining: Block, newTransactions: BcTransaction[], minerAddress: string, unfinishedBlock: ?BcBlock): [BcBlock, number] {
   let childBlockHeaders
   if (lastPreviousBlock !== undefined && lastPreviousBlock.getHeight() === GENESIS_DATA.height) {
-    childBlockHeaders = prepareChildBlockHeadersMapForGenesis(childrenCurrentBlocks)
+    childBlockHeaders = prepareChildBlockHeadersMapForGenesis(newChildHeaders)
   } else {
     childBlockHeaders = prepareChildBlockHeadersMap(
       unfinishedBlock || lastPreviousBlock,
       blockWhichTriggeredMining,
-      shouldAppend
+      newChildHeaders
     )
   }
   const blockHashes = getChildrenBlocksHashes(blockchainMapToList(childBlockHeaders))
@@ -546,7 +543,7 @@ export function prepareNewBlock (currentTimestamp: number, lastPreviousBlock: Bc
   newBlock.setEmblemChainAddress(GENESIS_DATA.emblemChainAddress)
   newBlock.setTxCount(0)
   newBlock.setTxsList(newTransactions)
-  newBlock.setBlockchainHeadersCount(childrenCurrentBlocks.length)
+  newBlock.setBlockchainHeadersCount(newChildHeaders.length)
   newBlock.setBlockchainFingerprintsRoot(GENESIS_DATA.blockchainFingerprintsRoot)
   newBlock.setTxFeeBase(GENESIS_DATA.txFeeBase)
   newBlock.setTxDistanceSumLimit(GENESIS_DATA.txDistanceSumLimit)
