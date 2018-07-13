@@ -164,23 +164,23 @@ export default class PersistenceRocksDb {
     const headers = block.getBlockchainHeaders()
     return Promise.all([]
       .concat(headers.getBtcList().map((b) => {
-        if (opts.btc) { return this.persistence.put('btc.block.' + b.getHeight(), b) }
+        if (opts.btc) { return this.put('btc.block.' + b.getHeight(), b) }
         return Promise.resolve(false)
       }))
       .concat(headers.getEthList().map((b) => {
-        if (opts.eth) { return this.persistence.put('eth.block.' + b.getHeight(), b) }
+        if (opts.eth) { return this.put('eth.block.' + b.getHeight(), b) }
         return Promise.resolve(false)
       }))
       .concat(headers.getNeoList().map((b) => {
-        if (opts.neo) { return this.persistence.put('neo.block.' + b.getHeight(), b) }
+        if (opts.neo) { return this.put('neo.block.' + b.getHeight(), b) }
         return Promise.resolve(false)
       }))
       .concat(headers.getLskList().map((b) => {
-        if (opts.lsk) { return this.persistence.put('lsk.block.' + b.getHeight(), b) }
+        if (opts.lsk) { return this.put('lsk.block.' + b.getHeight(), b) }
         return Promise.resolve(false)
       }))
       .concat(headers.getWavList().map((b) => {
-        if (opts.wav) { return this.persistence.put('wav.block.' + b.getHeight(), b) }
+        if (opts.wav) { return this.put('wav.block.' + b.getHeight(), b) }
         return Promise.resolve(false)
       }))
     )
