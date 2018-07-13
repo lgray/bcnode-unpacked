@@ -282,11 +282,12 @@ export class Multiverse {
     this._logger.info(8)
     // FAIL if newBlock does not reference the current highest block as it's previous hash
     // note this ignores the first block immediately following the genesis block due to lack of rovered blocks in the genesis block
-    if (newBlock.getHeight() > 2 && validateBlockSequence([newBlock, currentHighestBlock]) !== true) {
-      this._logger.info(8.5)
-      this._logger.info('addition of block ' + newBlock.getHash() + ' creates malformed child blockchain sequence')
-      return this.addBestBlock(newBlock)
-    }
+    // ////////////// ALWAYS FAILS HERE /////////////////
+    // if (newBlock.getHeight() > 2 && validateBlockSequence([newBlock, currentHighestBlock]) !== true) {
+    //   this._logger.info(8.5)
+    //   this._logger.info('addition of block ' + newBlock.getHash() + ' creates malformed child blockchain sequence')
+    //   return this.addBestBlock(newBlock)
+    // }
     this._logger.info(9)
     // PASS add the new block to the parent position
     this._chain.unshift(newBlock)
@@ -373,6 +374,12 @@ export class Multiverse {
         return Promise.resolve(true)
       })
     } else {
+      // Even if multiverse check is not strict always confirmed sum
+      // FAIL if sum of child block heights is less than the rovered child heights
+      if (childrenHeightSum(newBlock) <= childrenHeightSum(currentParentHighestBlock)) {
+        this._logger.info('child height of new block is lower than height the current parent block')
+        return Promise.resolve(false)
+      }
       this.addCandidateBlock(newBlock)
       return Promise.resolve(true)
     }

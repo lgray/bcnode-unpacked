@@ -29,14 +29,6 @@ const ts = require('../utils/time').default // ES6 default export
 
 const MINER_WORKER_PATH = resolve(__filename, '..', '..', 'mining', 'worker.js')
 
-const DICT = {
-  'btc': 'getBtcList',
-  'eth': 'getEthList',
-  'neo': 'getNeoList',
-  'lsk': 'getLskList',
-  'wav': 'getWavList'
-}
-
 type UnfinishedBlockData = {
   lastPreviousBlock: ?BcBlock,
   block: ?Block,
@@ -308,11 +300,25 @@ export class MiningOfficer {
     return Promise.resolve(true)
   }
 
+  sortBlocks (list: Object[]): Object[] {
+    return list.sort((a, b) => {
+      if (a.getHeight() < b.getHeight()) {
+        return 1
+      }
+      if (a.getHeight() > b.getHeight()) {
+        return -1
+      }
+      return 0
+    })
+  }
+
   async rebaseMiner (): Promise<?boolean> {
     if (this._canMine !== true) return Promise.resolve(false)
     const staleBlock = this.getCurrentMiningBlock()
+    const staleHeaders = staleBlock.getBlockchainHeaders()
     if (staleBlock === undefined) return Promise.resolve(false)
     const lastPreviousBlock = await this.persistence.get('bc.block.latest')
+    const previousHeaders = lastPreviousBlock.getBlockchainHeaders()
     const blockHeaderCounts = getNewBlockCount(lastPreviousBlock.getBlockchainHeaders(), staleBlock.getBlockchainHeaders())
     // const currentTimestamp = ts.nowSeconds()
 
@@ -322,15 +328,42 @@ export class MiningOfficer {
       return Promise.resolve(false)
     }
 
-    const blockchains = staleBlock.getBlockchainHeaders()
+    const finalHeaders = []
+    const previousTable = {}
+    previousTable.btc = this.sortBlocks(previousHeaders.getBtcList())
+    const btcListStale = this.sortBllocks(staleHeaders.getBtcList())
+    previousTable.eth = this.sortBlocks(previousHeaders.getEthList())
+    const ethListStale this.sortBlocks(= staleHeaders.getEthList())
+    previousTable.wav = this.sortBlocks(previousHeaders.getWavList())
+    const wavListStale = this.sortBlocks(staleHeaders.getWavList())
+    previousTable.neo = this.sortBlocks(previousHeaders.getNeoList())
+    const neoListStale = this.sortBlocks(staleHeaders.getNeoList())
+    previousTable.lsk = this.sortBlocks(previousHeaders.getLskList())
+    const lskListStale = this.sortBlocks(staleHeaders.getLskList())
 
-    this._logger.info(lastPreviousBlock)
+    const finalTable = {}
+          finalTable.btc = []
+          finalTable.eth = []
+          finalTable.wav = []
+          finalTable.neo = []
+          finalTable.lsk = []
+
+    btcListStale.reduce((all, s) => {
+      if(btcList[0].getHeight() <= s.getHeight()){
+        if(all.btc.length === 0) {
+          all.btc.push(s)
+        } else if(s.getHeight() > btcList[0].getHeight() {
+          all.btc.push(s)
+        }
+      }
+      return all
+    }, finalTable){
+
 
     const blocks = this._knownRovers.reduce((all, roverName) => {
       this._logger.info('processing rover ' + roverName)
-      const method = DICT[roverName]
-      const b = lastPreviousBlock[method]()
-      all = all.concat(b)
+
+      staleHeaders..
       return all
     }, [])
 

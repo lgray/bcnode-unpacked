@@ -224,6 +224,7 @@ function blockchainHeadersAreChain (childHeaderList: BlockchainHeader[], parentH
 export function validateBlockSequence (blocks: BcBlock[]): bool {
   // if any of the submissions are undefined reject the sequence
   if (reject(identity, blocks).length > 0) {
+    logger.info('undefined members in set')
     return false
   }
   // BC: 10 > BC: 9 > BC: 8 ...
@@ -231,9 +232,12 @@ export function validateBlockSequence (blocks: BcBlock[]): bool {
 
   logger.debug(`validateBlockSequence sorted blocks ${sortedBlocks.map(b => b.getHeight()).toString()}`)
   // validate that Bc blocks are all in the same chain
+  logger.info(aperture(2, sortedBlocks))
   const validPairs = aperture(2, sortedBlocks).map(([a, b]) => {
     return a.getPreviousHash() === b.getHash()
   })
+
+  logger.info('validPairs ' + JSON.stringify(validPairs, null, 2))
 
   logger.debug(`validateBlockSequence sorted blocks ${inspect(aperture(2, sortedBlocks.map(b => b.getHeight())))}`)
   if (!all(equals(true), validPairs)) {
@@ -244,7 +248,11 @@ export function validateBlockSequence (blocks: BcBlock[]): bool {
   // validate that highest header from each blockchain list from each block maintains ordering
   // [[BC10, BC9], [BC9, BC8]]
   const pairs = aperture(2, sortedBlocks)
-
+  const heights = pairs.map((a) => {
+    logger.info(a)
+    return [a[0].getHeight(), a[1].getHeight()]
+  })
+  logger.info('pairs printed after this --> ' + JSON.stringify(heights, null, 2))
   // now create:
   // [[btcOrdered, ethOrdered, lskOrdered, neoOrdered, wavOrdered], [btcOrderder, ethOrdered, lskOrdered, neoOrdered, wavOrdered]]
   //                                e.g. BC10, BC9
@@ -262,7 +270,10 @@ export function validateBlockSequence (blocks: BcBlock[]): bool {
   })
   // flatten => [btc10_9Ordered, eth10_9Ordered, lsk10_9Ordered, neo10_9Ordered, wav10_9Ordered, btc9_8Orderded, eth9_8Ordered, lsk9_8Ordered, neo9_8Ordered, wav9_8Ordered]
   logger.debug(`validateBlockSequence validPairSubchains ${inspect(validPairSubchains)}`)
+  logger.info('validPairSubchains printed after this  --> ')
+  logger.info(JSON.stringify(validPairSubchains, null, 2))
   if (!all(equals(true), flatten(validPairSubchains))) {
+    logger.info('failed test of rovers')
     return false
   }
 
