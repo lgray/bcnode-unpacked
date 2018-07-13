@@ -32,7 +32,6 @@ const {
   call,
   compose,
   difference,
-  flatten,
   flip,
   groupBy,
   invoker,
