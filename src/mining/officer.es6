@@ -140,7 +140,7 @@ export class MiningOfficer {
       })
       .catch((err) => {
         this._logger.error(err)
-        return Promise.resolve(false)
+        return Promise.reject(err)
       })
   }
 
@@ -301,7 +301,7 @@ export class MiningOfficer {
 
     const process = this._workerProcess
     if (!process) {
-      return Promise.resolve(false)
+      return Promise.resolve(true)
     }
 
     if (process.connected) {
