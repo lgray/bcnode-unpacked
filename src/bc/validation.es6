@@ -256,6 +256,8 @@ export function validateRoveredSequences (blocks: BcBlock[]): boolean {
     return parent.getHeight() === GENESIS_DATA.height || validateChildHeadersSequence(child, parent)
   })
 
+  logger.debug(`validateRoveredSequences: ${inspect(checks)}`)
+
   return all(equals(true), checks)
 }
 

@@ -22,7 +22,7 @@ const { all, equals, flatten, fromPairs, last, range, values } = require('ramda'
 
 const { prepareWork, prepareNewBlock, getUniqueBlocks } = require('./primitives')
 const { getLogger } = require('../logger')
-const { Block, BcBlock } = require('../protos/core_pb')
+const { Block, BcBlock, BlockchainHeader, BlockchainHeaders } = require('../protos/core_pb')
 const { isDebugEnabled, ensureDebugPath } = require('../debug')
 const { validateRoveredSequences, isValidBlock } = require('../bc/validation')
 const { getBlockchainsBlocksCount } = require('../bc/helper')
@@ -281,20 +281,17 @@ export class MiningOfficer {
   * Manages the current most recent block template used by the miner
   * @param blockTemplate
   */
-  setCurrentMiningHeaders (blockTemplate: Object): void {
-    this._blockTemplates.push(blockTemplate)
+  setCurrentMiningHeaders (blockTemplate: BlockchainHeaders): void {
     if (this._blockTemplates.length > 0) {
-
+      this._blockTemplates.pop()
     }
-    if (blockTemplate === undefined) {
-
-    }
+    this._blockTemplates.push(blockTemplate)
   }
 
   /**
   * Accessor for block templates
   */
-  getCurrentMiningHeaders (): ?BcBlock {
+  getCurrentMiningHeaders (): ?BlockchainHeaders {
     if (this._blockTemplates.length < 1) return
     return this._blockTemplates[0]
   }
@@ -370,7 +367,13 @@ export class MiningOfficer {
       const lastPreviousBlock = await this.persistence.get('bc.block.latest')
       const previousHeaders = lastPreviousBlock.getBlockchainHeaders()
       const uniqueBlockHeaders = getUniqueBlocks(previousHeaders, latestBlockHeaders)
-      const uniqueBlocks = latestBlockHeaders.reduce((set, h) => {
+      const uniqueBlocks = flatten([
+        latestBlockHeaders.getBtcList(),
+        latestBlockHeaders.getEthList(),
+        latestBlockHeaders.getLskList(),
+        latestBlockHeaders.getNeoList(),
+        latestBlockHeaders.getWavList()
+      ]).reduce((set, h: BlockchainHeader) => {
         uniqueBlockHeaders.map((uh) => {
           if (h.getHash() === uh) {
             set.push(uh)
