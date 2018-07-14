@@ -398,7 +398,7 @@ export class MiningOfficer {
 
     // find at least one BTC block plus any additional that may be in the stale block
     btcListStale.reduce((all, s) => {
-      if (btcList[0].getHeight() <= s.getHeight()) {
+      if (btcList[0] && btcList[0].getHeight() <= s.getHeight()) {
         if (all.btc.length === 0) {
           all.btc.push(s)
         } else if (s.getHeight() > btcList[0].getHeight()) {
@@ -411,7 +411,7 @@ export class MiningOfficer {
 
     // find at least one ETH block plus any additional that may be in the stale block
     ethListStale.reduce((all, s) => {
-      if (ethList[0].getHeight() <= s.getHeight()) {
+      if (ethList[0] && ethList[0].getHeight() <= s.getHeight()) {
         if (all.eth.length === 0) {
           all.eth.push(s)
         } else if (s.getHeight() > ethList[0].getHeight()) {
@@ -424,7 +424,7 @@ export class MiningOfficer {
 
     // find at least one WAV block plus any additional that may be in the stale block
     wavListStale.reduce((all, s) => {
-      if (wavList[0].getHeight() <= s.getHeight()) {
+      if (wavList[0] && wavList[0].getHeight() <= s.getHeight()) {
         if (all.wav.length === 0) {
           all.wav.push(s)
         } else if (s.getHeight() > wavList[0].getHeight()) {
@@ -437,7 +437,7 @@ export class MiningOfficer {
 
     // find at least one NEO block plus any additional that may be in the stale block
     neoListStale.reduce((all, s) => {
-      if (neoList[0].getHeight() <= s.getHeight()) {
+      if (neoList[0] && neoList[0].getHeight() <= s.getHeight()) {
         if (all.neo.length === 0) {
           all.neo.push(s)
         } else if (s.getHeight() > neoList[0].getHeight()) {
@@ -450,7 +450,7 @@ export class MiningOfficer {
 
     // find at least one LSK block plus any additional that may be in the stale block
     lskListStale.reduce((all, s) => {
-      if (lskList[0].getHeight() <= s.getHeight()) {
+      if (lskList[0] && lskList[0].getHeight() <= s.getHeight()) {
         if (all.lsk.length === 0) {
           all.lsk.push(s)
         } else if (s.getHeight() > lskList[0].getHeight()) {
