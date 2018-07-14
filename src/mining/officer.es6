@@ -149,7 +149,7 @@ export class MiningOfficer {
     this._cleanUnfinishedBlock()
   }
 
-  async startMining (rovers: string[], block: Block, injectHeaders: ?Object): Promise<bool|number> {
+  async startMining (rovers: string[], block: Block): Promise<bool|number> {
     // get latest block from each child blockchain
     try {
       const lastPreviousBlock = await this.persistence.get('bc.block.latest')
@@ -193,15 +193,7 @@ export class MiningOfficer {
 
       this._logger.info(`Loading ${inspect(newBlockHeadersKeys)}`)
 
-      // if values were passed in to be injected switch to those
-      let currentBlocks
-      if (injectHeaders !== undefined) {
-        currentBlocks = injectHeaders
-        this._logger.info(`Loaded ${currentBlocks.length} through rebasing`)
-      } else {
-        currentBlocks = await this.persistence.getBulk(newBlockHeadersKeys)
-        this._logger.info(`Loaded ${currentBlocks.length} blocks from persistence`)
-      }
+      await currentBlocks = await this.persistence.getBulk(newBlockHeadersKeys)
 
       // get latest known BC block
       try {
@@ -374,14 +366,22 @@ export class MiningOfficer {
       const lastPreviousBlock = await this.persistence.get('bc.block.latest')
       const previousHeaders = lastPreviousBlock.getBlockchainHeaders()
       const uniqueBlockHeaders = getUniqueBlocks(previousHeaders, latestBlockHeaders)
+      const uniqueBlocks = latestBlockHeaders.reduce((set, h) => {
+        uniqueBlockHeaders.map((uh) => {
+          if (h.getHash() === uh) {
+            set.push(uh)
+          }
+        })
+        return set
+      }, [])
 
       this._logger.info('child blocks usable in rebase: ' + uniqueBlockHeaders.length)
 
-      if (uniqueBlockHeaders.length === 0) {
+      if (uniqueBlock.length === 0) {
         return Promise.resolve(false)
       }
 
-      return this.startMining(this._knownRovers, uniqueBlockHeaders.shift(), unique)
+      return this.startMining(this._knownRovers, uniqueBlocks.shift())
     } catch (err) {
       return Promise.reject(err)
     }
