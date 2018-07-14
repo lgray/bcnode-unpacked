@@ -20,7 +20,7 @@ const BN = require('bn.js')
 const debug = require('debug')('bcnode:mining:officer')
 const { all, equals, flatten, fromPairs, last, range, values } = require('ramda')
 
-const { prepareWork, prepareNewBlock, getNewBlockCount } = require('./primitives')
+const { prepareWork, prepareNewBlock, getUniqueBlocks } = require('./primitives')
 const { getLogger } = require('../logger')
 const { Block, BcBlock } = require('../protos/core_pb')
 const { isDebugEnabled, ensureDebugPath } = require('../debug')
@@ -355,193 +355,20 @@ export class MiningOfficer {
    * Restarts the miner by merging any unused rover blocks into a new block
    */
   async rebaseMiner (): Promise<?boolean> {
-    // TODO: make this alias of start mining
     if (this._canMine !== true) return Promise.resolve(false)
-    const staleBlock = this.getCurrentMiningBlock()
-    const staleHeaders = staleBlock.getBlockchainHeaders()
-    if (!staleBlock) {
-      return Promise.resolve(false)
-    }
+    const latestRoveredHeadersKeys: string[] = this._knownRovers.map(chain => `${chain}.block.latest`)
+    const latestBlockHeaders = await this.persistence.getBulk(latestRoveredHeadersKeys)
     const lastPreviousBlock = await this.persistence.get('bc.block.latest')
     const previousHeaders = lastPreviousBlock.getBlockchainHeaders()
-    const blockHeaderCounts = getNewBlockCount(lastPreviousBlock.getBlockchainHeaders(), staleBlock.getBlockchainHeaders())
+    const uniqueBlockHeaders = getUniqueBlocks(previousHeaders, latestBlockHeaders)
 
     this._logger.info('child blocks usable in rebase: ' + blockHeaderCounts)
 
-    if (blockHeaderCounts === 0) {
+    if (uniqueBlockHeaders.length === 0) {
       return Promise.resolve(false)
     }
 
-    // sorts (decending) blocks for each connected hain #3, #2, #1
-    const btcList = this.sortBlocks(previousHeaders.getBtcList())
-    const btcListStale = this.sortBlocks(staleHeaders.getBtcList())
-    const ethList = this.sortBlocks(previousHeaders.getEthList())
-    const ethListStale = this.sortBlocks(staleHeaders.getEthList())
-    const wavList = this.sortBlocks(previousHeaders.getWavList())
-    const wavListStale = this.sortBlocks(staleHeaders.getWavList())
-    const neoList = this.sortBlocks(previousHeaders.getNeoList())
-    const neoListStale = this.sortBlocks(staleHeaders.getNeoList())
-    const lskList = this.sortBlocks(previousHeaders.getLskList())
-    const lskListStale = this.sortBlocks(staleHeaders.getLskList())
-
-    const newBlocks = []
-    const finalTable = {}
-    finalTable.btc = []
-    finalTable.eth = []
-    finalTable.wav = []
-    finalTable.neo = []
-    finalTable.lsk = []
-
-    // find at least one BTC block plus any additional that may be in the stale block
-    btcListStale.reduce((all, s) => {
-      if (btcList[0].getHeight() <= s.getHeight()) {
-        if (all.btc.length === 0) {
-          all.btc.push(s)
-        } else if (s.getHeight() > btcList[0].getHeight()) {
-          newBlocks.push(s)
-          all.btc.push(s)
-        }
-      }
-      return all
-    }, finalTable)
-
-    // find at least one ETH block plus any additional that may be in the stale block
-    ethListStale.reduce((all, s) => {
-      if (ethList[0].getHeight() <= s.getHeight()) {
-        if (all.eth.length === 0) {
-          all.eth.push(s)
-        } else if (s.getHeight() > ethList[0].getHeight()) {
-          newBlocks.push(s)
-          all.eth.push(s)
-        }
-      }
-      return all
-    }, finalTable)
-
-    // find at least one WAV block plus any additional that may be in the stale block
-    wavListStale.reduce((all, s) => {
-      if (wavList[0].getHeight() <= s.getHeight()) {
-        if (all.wav.length === 0) {
-          all.wav.push(s)
-        } else if (s.getHeight() > wavList[0].getHeight()) {
-          newBlocks.push(s)
-          all.wav.push(s)
-        }
-      }
-      return all
-    }, finalTable)
-
-    // find at least one NEO block plus any additional that may be in the stale block
-    neoListStale.reduce((all, s) => {
-      if (neoList[0].getHeight() <= s.getHeight()) {
-        if (all.neo.length === 0) {
-          all.neo.push(s)
-        } else if (s.getHeight() > neoList[0].getHeight()) {
-          newBlocks.push(s)
-          all.neo.push(s)
-        }
-      }
-      return all
-    }, finalTable)
-
-    // find at least one LSK block plus any additional that may be in the stale block
-    lskListStale.reduce((all, s) => {
-      if (lskList[0].getHeight() <= s.getHeight()) {
-        if (all.lsk.length === 0) {
-          all.lsk.push(s)
-        } else if (s.getHeight() > lskList[0].getHeight()) {
-          newBlocks.push(s)
-          all.lsk.push(s)
-        }
-      }
-      return all
-    }, finalTable)
-
-    // finalTable now contains the correct/best block headers for us in mining
-    // the block headers may be identical to those already submitted by block which triggered the rebase
-    const currentTimestamp = ts.nowSeconds()
-    const blocks = Object.keys(finalTable).reduce((all, key) => {
-      all.push(finalTable[key])
-      return all
-    }, [])
-    this._logger.info('rebased blocks into new work: ' + newBlocks.length)
-
-    // if there are no new blocks resturn the process as we will need to wate for a new rovered block
-    // it is extremely unlikely this will occur but it is inevitable
-    if (newBlocks.length < 1) {
-      // stop the miner
-      this.stopMining()
-    }
-
-    const sortedBlocks = this.sortBlocks(blocks)
-    const triggerBlock = sortedBlocks[0] // block which outside timelines triggers mining
-    const blocksWithoutTrigger = sortedBlocks.slice(1, sortedBlocks.length)
-
-    const [newBlock, finalTimestamp] = prepareNewBlock(
-      currentTimestamp,
-      lastPreviousBlock,
-      blocksWithoutTrigger,
-      triggerBlock,
-      [], // TXs Pool
-      this._minerKey,
-      this._unfinishedBlock
-    )
-
-    debug('Restarting mining', this._knownRovers)
-
-    this.setCurrentMiningBlock(triggerBlock)
-
-    const work = prepareWork(lastPreviousBlock.getHash(), newBlock.getBlockchainHeaders())
-    newBlock.setTimestamp(finalTimestamp)
-    this._unfinishedBlock = newBlock
-    this._unfinishedBlockData = {
-      lastPreviousBlock,
-      currentBlocks: newBlock.getBlockchainHeaders(),
-      triggerBlock,
-      iterations: undefined,
-      timeDiff: undefined
-    }
-
-    // if blockchains block count === 5 we will create a block with 6 blockchain blocks (which gets bonus)
-    // if it's more, do not restart mining and start with new ones
-    if (this._workerProcess && this._unfinishedBlock) {
-      this._logger.info(`Restarting mining with a new rovered block`)
-      return this.restartMining()
-    }
-
-    this._logger.info(`Starting miner process with work: "${work}", difficulty: ${newBlock.getDifficulty()}, ${JSON.stringify(this._collectedBlocks, null, 2)}`)
-    const proc: ChildProcess = fork(MINER_WORKER_PATH)
-    this._workerProcess = proc
-    if (this._workerProcess !== null) {
-      // $FlowFixMe - Flow can't find out that ChildProcess is extended form EventEmitter
-      this._workerProcess.on('message', this._handleWorkerFinishedMessage.bind(this))
-
-      // $FlowFixMe - Flow can't find out that ChildProcess is extended form EventEmitter
-      this._workerProcess.on('error', this._handleWorkerError.bind(this))
-
-      // $FlowFixMe - Flow can't find out that ChildProcess is extended form EventEmitter
-      this._workerProcess.on('exit', this._handleWorkerExit.bind(this))
-
-      // $FlowFixMe - Flow can't find out that ChildProcess is extended form EventEmitter
-      this._logger.info('sending difficulty threshold to worker: ' + newBlock.getDifficulty())
-      this._workerProcess.send({
-        currentTimestamp,
-        offset: ts.offset,
-        work,
-        minerKey: this._minerKey,
-        merkleRoot: newBlock.getMerkleRoot(),
-        difficulty: newBlock.getDifficulty(),
-        difficultyData: {
-          currentTimestamp,
-          lastPreviousBlock: lastPreviousBlock.serializeBinary(),
-          // $FlowFixMe
-          newBlockHeaders: newBlock.getBlockchainHeaders().serializeBinary()
-        }})
-
-      // $FlowFixMe - Flow can't properly find worker pid
-      return Promise.resolve(this._workerProcess.pid)
-    }
-    return Promise.resolve(false)
+    return this.startMining(this.knownRovers, uniqueBlockHeaders.pop())
   }
 
   restartMining (): Promise<boolean> {

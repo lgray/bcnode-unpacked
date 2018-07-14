@@ -471,6 +471,18 @@ export function getNewBlockCount (previousBlockHeaders: BlockchainHeaders, curre
 }
 
 /**
+ * How many new child blocks are between previousBlockHeaders and currentBlockHeaders
+ */
+export function getUniqueBlocks (previousBlockHeaders: BlockchainHeaders, currentBlockHeaders: BlockchainHeaders) {
+  // $FlowFixMe - protbuf toObject is not typed
+  const headersToHashes = (headers: BlockchainHeaders) => Object.values(headers.toObject()).reduce((acc, curr) => acc.concat(curr), []).map(headerObj => headerObj.hash)
+  const previousHashes = headersToHashes(previousBlockHeaders)
+  const currentHashes = headersToHashes(currentBlockHeaders)
+
+  return difference(currentHashes, previousHashes)
+}
+
+/**
  * Used for preparing yet non existant BC block protobuf structure. Use before mining starts.
  *
  * - calculates block difficulty (from previous BC block difficulty and height, rovered chains count, and data in child chains headers) and stores it to structure
