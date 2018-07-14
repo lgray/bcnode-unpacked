@@ -358,6 +358,10 @@ export class MiningOfficer {
     // TODO: make this alias of start mining
     if (this._canMine !== true) return Promise.resolve(false)
     const staleBlock = this.getCurrentMiningBlock()
+    if (!staleBlock) {
+      this._logger.debug('No stale block found')
+      return Promise.resolve(true)
+    }
     const staleHeaders = staleBlock.getBlockchainHeaders()
     if (!staleBlock) {
       return Promise.resolve(false)
