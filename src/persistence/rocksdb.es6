@@ -165,23 +165,23 @@ export default class PersistenceRocksDb {
     return Promise.all([]
       .concat(headers.getBtcList().map((b) => {
         if (opts.btc) { return this.put('btc.block.' + b.getHeight(), b) }
-        return Promise.resolve(false)
+        return Promise.resolve(true)
       }))
       .concat(headers.getEthList().map((b) => {
         if (opts.eth) { return this.put('eth.block.' + b.getHeight(), b) }
-        return Promise.resolve(false)
+        return Promise.resolve(true)
       }))
       .concat(headers.getNeoList().map((b) => {
         if (opts.neo) { return this.put('neo.block.' + b.getHeight(), b) }
-        return Promise.resolve(false)
+        return Promise.resolve(true)
       }))
       .concat(headers.getLskList().map((b) => {
         if (opts.lsk) { return this.put('lsk.block.' + b.getHeight(), b) }
-        return Promise.resolve(false)
+        return Promise.resolve(true)
       }))
       .concat(headers.getWavList().map((b) => {
         if (opts.wav) { return this.put('wav.block.' + b.getHeight(), b) }
-        return Promise.resolve(false)
+        return Promise.resolve(true)
       }))
     )
   }

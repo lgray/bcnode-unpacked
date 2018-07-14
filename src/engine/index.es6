@@ -238,15 +238,15 @@ export class Engine {
     this.pubsub.subscribe('update.block.latest', '<engine>', (msg) => {
       this.updateLatestAndStore(msg)
         .then((res) => {
-          if (msg.mined === undefined) {
-            this.miningOfficer.rebaseMiner()
-              .then((state) => {
-                this._logger.info(`latest block ${msg.data.getHeight()} has been updated`)
-              })
-              .catch((err) => {
-                this._logger.error(`Error occurred during updateLatestAndStore(), reason: ${err.message}`)
-              })
-          }
+          // if (msg.mined === undefined) {
+          //  this.miningOfficer.rebaseMiner()
+          //    .then((state) => {
+          //      this._logger.info(`latest block ${msg.data.getHeight()} has been updated`)
+          //    })
+          //    .catch((err) => {
+          //      this._logger.error(`Error occurred during updateLatestAndStore(), reason: ${err.message}`)
+          //    })
+          // }
         })
         .catch((err) => {
           this._logger.error(`Error occurred during updateLatestAndStore(), reason: ${err.message}`)
@@ -315,22 +315,28 @@ export class Engine {
   async updateLatestAndStore (msg: Object) {
     const block = msg.data
     try {
+      this._logger.info('aa')
       await this.persistence.get('bc.block.checkpoint')
     } catch (err) {
+      this._logger.error(errToString(err))
+      this._logger.info('bb')
       this._logger.info('setting checkpoint at height: ' + block.getHeight())
       await this.persistence.put('bc.block.checkpoint', block)
     }
     try {
       const previousLatest = await this.persistence.get('bc.block.latest')
+      this._logger.info('cc')
 
       if (previousLatest.getHash() === block.getPreviousHash()) {
         await this.persistence.put('bc.block.latest', block)
         await this.persistence.put('bc.block.' + block.getHeight(), block)
         await this.persistence.putChildHeaders(block)
+        this._logger.info('ee')
       } else if (msg.force === true) {
         await this.persistence.put('bc.block.latest', block)
         await this.persistence.put('bc.block.' + block.getHeight(), block)
         await this.persistence.putChildHeaders(block)
+        this._logger.info('ff')
       } else {
         this._logger.error('failed to set block ' + block.getHeight() + ' ' + block.getHash() + ' as latest block, wrong previous hash')
       }
@@ -341,11 +347,13 @@ export class Engine {
           await this.persistence.put('bc.block.' + b.getHeight(), b)
           await this.persistence.putChildHeaders(b)
         }
+        this._logger.info('gg')
         return Promise.resolve(true)
       }
       return Promise.resolve(true)
     } catch (err) {
       this._logger.error(errToString(err))
+      this._logger.info('hh')
       this._logger.warn('no previous block found')
       if (block !== undefined && msg.force === true) {
         await this.persistence.put('bc.block.latest', block)
@@ -356,6 +364,7 @@ export class Engine {
         // assert the valid state of the entire sequence of each rovered chain
         const multiverseIsValid = this.miningOfficer.validateRoveredSequences(msg.multiverse)
         if (!multiverseIsValid) return Promise.resolve(false)
+        this._logger.info('mm')
         while (msg.multiverse.length > 0) {
           const b = msg.multiverse.pop()
           await this.persistence.put('bc.block.' + b.getHeight(), b)
@@ -695,7 +704,7 @@ export class Engine {
 
       const isNextBlock = this.multiverse.addNextBlock(newBlock)
 
-      if (isNextBlock) {
+      if (isNextBlock === true) {
         if (this.multiverse._chain.length > 1) {
           this._logger.info('new block ' + newBlock.getHash() + ' references previous Block ' + newBlock.getPreviousHash() + ' for block ' + this.multiverse._chain[1].getHash())
         }
@@ -946,14 +955,14 @@ export class Engine {
       return Promise.resolve(true)
     } else {
       this._logger.info('local mined block ' + newBlock.getHeight() + ' does not stack on multiverse height ' + this.multiverse.getHighestBlock().getHeight())
-      // this._logger.info('mined block ' + newBlock.getHeight() + ' cannot go on top of multiverse block ' + this.multiverse.getHighestBlock())
-      // this.miningOfficer.rebaseMiner()
-      //  .then((res) => {
-      //    this._logger.info(res)
-      //  })
-      //  .catch((e) => {
-      //    this._logger.error(errToString(e))
-      //  })
+      this._logger.info('mined block ' + newBlock.getHeight() + ' cannot go on top of multiverse block ' + this.multiverse.getHighestBlock())
+      this.miningOfficer.rebaseMiner()
+        .then((res) => {
+          this._logger.info(res)
+        })
+        .catch((e) => {
+          this._logger.error(errToString(e))
+        })
     }
     return Promise.resolve(false)
     // }
