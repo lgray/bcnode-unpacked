@@ -329,7 +329,32 @@ export class MiningOfficer {
 
     this._logger.info('mining worker process has been killed')
     this._workerProcess = undefined
-    return Promise.resolve(true)
+
+    try {
+      return Promise.all(this._knownRovers.map((rv) => {
+        return this.persistence.get(rv + '.block.latest')
+          .then((latest) => {
+            return this.persistence.get(rv + '.block.' + (latest.getHeight() + 1))
+              .then((latestCandidate) => {
+                if (latest.getHash() === latestCandidate.getPreviousHash()) {
+                  return this.persistence.put(rv + '.block.latest', latestCandidate)
+                }
+                return Promise.resolve(true)
+              })
+              .catch((err) => {
+                this._logger.error(err)
+                return Promise.resolve(false)
+              })
+          })
+          .catch((err) => {
+            this._logger.error(err)
+            return Promise.resolve(false)
+          })
+      }))
+    } catch (err) {
+      this._logger.error(err)
+      return Promise.resolve(false)
+    }
   }
 
   /*
