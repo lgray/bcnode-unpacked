@@ -236,23 +236,21 @@ export class Engine {
     })
 
     this.pubsub.subscribe('update.block.latest', '<engine>', (msg) => {
-      if (this.miningOfficer._canMine) {
-        this.updateLatestAndStore(msg)
-          .then((res) => {
-            if (msg.mined === undefined) {
-              this.miningOfficer.rebaseMiner()
-                .then((state) => {
-                  this._logger.info(`latest block ${msg.data.getHeight()} has been updated`)
-                })
-                .catch((err) => {
-                  this._logger.error(`Error occurred during updateLatestAndStore(), reason: ${err.message}`)
-                })
-            }
-          })
-          .catch((err) => {
-            this._logger.error(`Error occurred during updateLatestAndStore(), reason: ${err.message}`)
-          })
-      }
+      this.updateLatestAndStore(msg)
+        .then((res) => {
+          if (msg.mined === undefined) {
+            this.miningOfficer.rebaseMiner()
+              .then((state) => {
+                this._logger.info(`latest block ${msg.data.getHeight()} has been updated`)
+              })
+              .catch((err) => {
+                this._logger.error(`Error occurred during updateLatestAndStore(), reason: ${err.message}`)
+              })
+          }
+        })
+        .catch((err) => {
+          this._logger.error(`Error occurred during updateLatestAndStore(), reason: ${err.message}`)
+        })
     })
 
     this.pubsub.subscribe('miner.block.new', '<engine>', ({ unfinishedBlock, solution }) => {
@@ -948,14 +946,14 @@ export class Engine {
       return Promise.resolve(true)
     } else {
       this._logger.info('local mined block ' + newBlock.getHeight() + ' does not stack on multiverse height ' + this.multiverse.getHighestBlock().getHeight())
-      this._logger.info('mined block ' + newBlock.getHeight() + ' cannot go on top of multiverse block ' + this.multiverse.getHighestBlock())
-      this.miningOfficer.rebaseMiner()
-        .then((res) => {
-          this._logger.info(res)
-        })
-        .catch((e) => {
-          this._logger.error(errToString(e))
-        })
+      // this._logger.info('mined block ' + newBlock.getHeight() + ' cannot go on top of multiverse block ' + this.multiverse.getHighestBlock())
+      // this.miningOfficer.rebaseMiner()
+      //  .then((res) => {
+      //    this._logger.info(res)
+      //  })
+      //  .catch((e) => {
+      //    this._logger.error(errToString(e))
+      //  })
     }
     return Promise.resolve(false)
     // }

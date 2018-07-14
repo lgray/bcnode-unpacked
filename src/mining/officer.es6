@@ -149,7 +149,7 @@ export class MiningOfficer {
     this._cleanUnfinishedBlock()
   }
 
-  async startMining (rovers: string[], block: Block): Promise<bool|number> {
+  async startMining (rovers: string[], block: Block, injectHeaders: ?Object): Promise<bool|number> {
     // get latest block from each child blockchain
     try {
       const lastPreviousBlock = await this.persistence.get('bc.block.latest')
@@ -192,13 +192,20 @@ export class MiningOfficer {
       }))
 
       this._logger.info(`Loading ${inspect(newBlockHeadersKeys)}`)
-      const currentBlocks = await this.persistence.getBulk(newBlockHeadersKeys)
-      this._logger.info(`Loaded ${currentBlocks.length} blocks from persistence`)
+
+      // if values were passed in to be injected switch to those
+      let currentBlocks
+      if (injectHeaders !== undefined) {
+        currentBlocks = injectHeaders
+        this._logger.info(`Loaded ${currentBlocks.length} through rebasing`)
+      } else {
+        currentBlocks = await this.persistence.getBulk(newBlockHeadersKeys)
+        this._logger.info(`Loaded ${currentBlocks.length} blocks from persistence`)
+      }
 
       // get latest known BC block
       try {
         this._logger.info(`Preparing new block`)
-
         const currentTimestamp = ts.nowSeconds()
         if (this._unfinishedBlock !== undefined && getBlockchainsBlocksCount(this._unfinishedBlock) >= 6) {
           this._cleanUnfinishedBlock()
@@ -374,7 +381,7 @@ export class MiningOfficer {
         return Promise.resolve(false)
       }
 
-      return this.startMining(this._knownRovers, uniqueBlockHeaders.shift())
+      return this.startMining(this._knownRovers, uniqueBlockHeaders.shift(), unique)
     } catch (err) {
       return Promise.reject(err)
     }
