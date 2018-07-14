@@ -356,19 +356,28 @@ export class MiningOfficer {
    */
   async rebaseMiner (): Promise<?boolean> {
     if (this._canMine !== true) return Promise.resolve(false)
-    const latestRoveredHeadersKeys: string[] = this._knownRovers.map(chain => `${chain}.block.latest`)
-    const latestBlockHeaders = await this.persistence.getBulk(latestRoveredHeadersKeys)
-    const lastPreviousBlock = await this.persistence.get('bc.block.latest')
-    const previousHeaders = lastPreviousBlock.getBlockchainHeaders()
-    const uniqueBlockHeaders = getUniqueBlocks(previousHeaders, latestBlockHeaders)
 
-    this._logger.info('child blocks usable in rebase: ' + uniqueBlockHeaders.length)
+    this.stopMining()
+      .then((stopped) => {
+        return async () => {
+          const latestRoveredHeadersKeys: string[] = this._knownRovers.map(chain => `${chain}.block.latest`)
+          const latestBlockHeaders = await this.persistence.getBulk(latestRoveredHeadersKeys)
+          const lastPreviousBlock = await this.persistence.get('bc.block.latest')
+          const previousHeaders = lastPreviousBlock.getBlockchainHeaders()
+          const uniqueBlockHeaders = getUniqueBlocks(previousHeaders, latestBlockHeaders)
 
-    if (uniqueBlockHeaders.length === 0) {
-      return Promise.resolve(false)
-    }
+          this._logger.info('child blocks usable in rebase: ' + uniqueBlockHeaders.length)
 
-    return this.startMining(this.knownRovers, uniqueBlockHeaders.shift())
+          if (uniqueBlockHeaders.length === 0) {
+            return Promise.resolve(false)
+          }
+
+          return this.startMining(this.knownRovers, uniqueBlockHeaders.shift())
+        }
+      })
+      .catch((err) => {
+        return Promise.reject(err)
+      })
   }
 
   restartMining (): Promise<boolean> {
