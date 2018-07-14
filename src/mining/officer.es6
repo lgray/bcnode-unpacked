@@ -193,7 +193,7 @@ export class MiningOfficer {
 
       this._logger.info(`Loading ${inspect(newBlockHeadersKeys)}`)
 
-      await currentBlocks = await this.persistence.getBulk(newBlockHeadersKeys)
+      const currentBlocks = await this.persistence.getBulk(newBlockHeadersKeys)
 
       // get latest known BC block
       try {
@@ -377,7 +377,7 @@ export class MiningOfficer {
 
       this._logger.info('child blocks usable in rebase: ' + uniqueBlockHeaders.length)
 
-      if (uniqueBlock.length === 0) {
+      if (uniqueBlocks.length === 0) {
         return Promise.resolve(false)
       }
 
