@@ -337,7 +337,7 @@ export class MiningOfficer {
             return this.persistence.get(rv + '.block.' + (latest.getHeight() + 1))
               .then((latestCandidate) => {
                 if (latest.getHash() === latestCandidate.getPreviousHash()) {
-                  return this.persistence.put(rv + '.block.latest', latestCandidate)
+                  return this.persistence.put(latest.getBlockchain() + '.block.latest', latestCandidate)
                 }
                 return Promise.resolve(true)
               })

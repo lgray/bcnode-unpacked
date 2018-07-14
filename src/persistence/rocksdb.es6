@@ -196,7 +196,7 @@ export default class PersistenceRocksDb {
                   return this.put('btc.block.' + b.getHeight(), b)
                 })
                 .catch((err) => {
-                  this._logger.warn(err)
+                  this._logger.debug(err)
                   return this.put('btc.block.' + b.getHeight(), b)
                 })
             }
@@ -220,7 +220,7 @@ export default class PersistenceRocksDb {
                   return this.put('eth.block.' + b.getHeight(), b)
                 })
                 .catch((err) => {
-                  this._logger.warn(err)
+                  this._logger.debug(err)
                   return this.put('eth.block.' + b.getHeight(), b)
                 })
             }
@@ -244,7 +244,7 @@ export default class PersistenceRocksDb {
                   return this.put('wav.block.' + b.getHeight(), b)
                 })
                 .catch((err) => {
-                  this._logger.warn(err)
+                  this._logger.debug(err)
                   return this.put('wav.block.' + b.getHeight(), b)
                 })
             }
@@ -292,7 +292,7 @@ export default class PersistenceRocksDb {
                   return this.put('lsk.block.' + b.getHeight(), b)
                 })
                 .catch((err) => {
-                  this._logger.warn(err)
+                  this._logger.debug(err)
                   return this.put('lsk.block.' + b.getHeight(), b)
                 })
             }
