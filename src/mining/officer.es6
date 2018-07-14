@@ -266,10 +266,12 @@ export class MiningOfficer {
           return Promise.resolve(this._workerProcess.pid)
         }
       } catch (err) {
+        this._logger.error(err)
         this._logger.warn(`Error while getting last previous BC block, reason: ${err.message}`)
         return Promise.reject(err)
       }
     } catch (err) {
+      this._logger.error(err)
       this._logger.warn(`Error while getting current blocks, reason: ${err.message}`)
       return Promise.reject(err)
     }
@@ -280,11 +282,13 @@ export class MiningOfficer {
   * @param blockTemplate
   */
   setCurrentMiningHeaders (blockTemplate: Object): void {
-    if (blockTemplate === undefined) {
-      return
-    }
-    this._blockTemplates.length = 0
     this._blockTemplates.push(blockTemplate)
+    if (this._blockTemplates.length > 0) {
+
+    }
+    if (blockTemplate === undefined) {
+
+    }
   }
 
   /**
@@ -440,6 +444,9 @@ export class MiningOfficer {
   }
 
   _handleWorkerError (error: Error): Promise<boolean> {
+    this._logger.error(error)
+    this._logger.error(error)
+    this._logger.error(error)
     this._logger.warn(`Mining worker process errored, reason: ${error.message}`)
     this._cleanUnfinishedBlock()
 

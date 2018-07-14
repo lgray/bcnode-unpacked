@@ -85,6 +85,9 @@ export class Engine {
     this._storageQueue = queue((fn, cb) => {
       return fn.then((res) => { cb(null, res) }).catch((err) => { cb(err) })
     })
+    process.on('uncaughtError', function (err) {
+      this._logger.error(err)
+    })
 
     this._knownBlocksCache = LRUCache({
       max: config.engine.knownBlocksCache.max
@@ -947,15 +950,16 @@ export class Engine {
     // TODO: this will break now that _blocks is not used in multiverse
     // if (this.multiverse.getHighestBlock() !== undefined &&
     //    this.multiverse.validateBlockSequenceInline([this.multiverse.getHighestBlock(), newBlock]) === true) {
+    this._logger.info('number of blocks in multiverse: ' + this.multiverse._chain.length)
     if (isNextBlock === true) {
       this._logger.info('pmb' + 3)
-      this._server._wsBroadcastMultiverse(this.multiverse)
       this._logger.info('pmb' + 4)
       this.pubsub.publish('update.block.latest', { key: 'bc.block.latest', data: newBlock, mined: true })
+      this._server._wsBroadcastMultiverse(this.multiverse)
       return Promise.resolve(true)
     } else {
       this._logger.info('local mined block ' + newBlock.getHeight() + ' does not stack on multiverse height ' + this.multiverse.getHighestBlock().getHeight())
-      this._logger.info('mined block ' + newBlock.getHeight() + ' cannot go on top of multiverse block ' + this.multiverse.getHighestBlock())
+      this._logger.info('mined block ' + newBlock.getHeight() + ' cannot go on top of multiverse block ' + this.multiverse.getHighestBlock().getHash())
       this.miningOfficer.rebaseMiner()
         .then((res) => {
           this._logger.info(res)
