@@ -287,8 +287,8 @@ export function validateRoveredSequences (blocks: BcBlock[], opts: Object = {
 
   // table now represents the sequence of headers postualated to exists
   // in the provided sequence of block collider blocks
-  return all(Object.keys(validationTable).reduce((submissions, headerList) => {
-    return submissions.push(validateBlockSequence(headerList))
+  return all(Object.keys(validationTable).reduce((submissions, headerListKey) => {
+    return submissions.push(validateBlockSequence(validationTable[headerListKey]))
   }, []))
 }
 
