@@ -55,7 +55,7 @@ const { Block, BcBlock, BcTransaction, BlockchainHeader, BlockchainHeaders } = r
 const ts = require('../utils/time').default // ES6 default export
 const GENESIS_DATA = require('../bc/genesis.raw')
 
-const MINIMUM_DIFFICULTY = new BN(26003944058786, 16)
+const MINIMUM_DIFFICULTY = new BN(28903944058786, 16)
 const MAX_TIMEOUT_SECONDS = 300
 
 const logging = require('../logger')
@@ -136,7 +136,7 @@ export function getDiff (currentBlockTime: number, previousBlockTime: number, pr
   }
 
   // y = previousDifficulty / 1515520 // 1515520 = 74 * 20 * 1024 or the maximum absolute distance of two characters converted from ASCII code.
-  y = bigPreviousDistance.div(new BN(1515520))
+  y = bigPreviousDistance.div(new BN(151550))
   // x = x * y
   x = x.mul(y)
   // x = x + previousDistance
