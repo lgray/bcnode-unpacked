@@ -24,7 +24,7 @@ const {
 const { getLogger } = require('../logger')
 const { blake2bl } = require('../utils/crypto')
 const { concatAll } = require('../utils/ramda')
-const { BcBlock, BlockchainHeader } = require('../protos/core_pb')
+const { BcBlock, BlockchainHeader, Block } = require('../protos/core_pb')
 const {
   getChildrenBlocksHashes,
   getChildrenRootHash,
@@ -203,7 +203,7 @@ function isDistanceCorrectlyCalculated (newBlock: BcBlock): bool {
   return receivedDistance === expectedDistance
 }
 
-function blockchainHeadersAreChain (childHeaderList: BlockchainHeader[], parentHeaderList: BlockchainHeader[]) {
+export function blockchainHeadersAreChain (childHeaderList: BlockchainHeader[]|Block[], parentHeaderList: BlockchainHeader[]|Block[]) {
   const firstChildHeader = head(childHeaderList)
   const lastParentHeader = last(parentHeaderList)
 
