@@ -473,11 +473,11 @@ export function getNewBlockCount (previousBlockHeaders: BlockchainHeaders, curre
 /**
  * How many new child blocks are between previousBlockHeaders and currentBlockHeaders
  */
-export function getUniqueBlocks (previousBlockHeaders: BlockchainHeaders, currentBlockHeaders: BlockchainHeaders) {
+export function getUniqueBlocks (previousBlockHeaders: BlockchainHeaders, currentBlockHeaders: Block[]) {
   // $FlowFixMe - protbuf toObject is not typed
   const headersToHashes = (headers: BlockchainHeaders) => Object.values(headers.toObject()).reduce((acc, curr) => acc.concat(curr), []).map(headerObj => headerObj.hash)
   const previousHashes = headersToHashes(previousBlockHeaders)
-  const currentHashes = headersToHashes(currentBlockHeaders)
+  const currentHashes = currentBlockHeaders.map(block => block.getHash())
 
   return difference(currentHashes, previousHashes)
 }
