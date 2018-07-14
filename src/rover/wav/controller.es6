@@ -212,9 +212,9 @@ export default class Controller {
           getLastHeight().then(({ height, timestamp }) => {
             const ts = timestamp / 1000 << 0
             const requestTime = randRange(ts, ts + dfBound)
-            this._pendingRequests.push([requestTime, height - 1])
+            this._pendingRequests.push([requestTime, height - 4])
             // push second further to future
-            this._pendingRequests.push([requestTime + randRange(5, 15), height])
+            this._pendingRequests.push([requestTime + randRange(5, 15), height - 3])
             cycle()
           }).catch(err => {
             this._logger.warn(`Unable to start roving, could not get block count, err: ${err.message}`)
