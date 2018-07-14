@@ -253,7 +253,7 @@ function blockchainHeadersAreChain (childHeaderList: BlockchainHeader[], parentH
 export function validateRoveredSequences (blocks: BcBlock[]): boolean {
   const sortedBlocks = sort((a, b) => b.getHeight() - a.getHeight(), blocks)
   const checks = aperture(2, sortedBlocks).map(([child, parent]) => {
-    return validateChildHeadersSequence(child, parent)
+    return parent.getHeight() === GENESIS_DATA.height || validateChildHeadersSequence(child, parent)
   })
 
   return all(equals(true), checks)
@@ -308,7 +308,7 @@ export function validateBlockSequence (blocks: BcBlock[]): bool {
   // [[btcOrdered, ethOrdered, lskOrdered, neoOrdered, wavOrdered], [btcOrderder, ethOrdered, lskOrdered, neoOrdered, wavOrdered]]
   //                                e.g. BC10, BC9
   const validPairSubchains = pairs.map(([child, parent]) => {
-    return validateChildHeadersSequence(child, parent)
+    return parent.getHeight() === GENESIS_DATA.height || validateChildHeadersSequence(child, parent)
   })
   // flatten => [btc10_9Ordered, eth10_9Ordered, lsk10_9Ordered, neo10_9Ordered, wav10_9Ordered, btc9_8Orderded, eth9_8Ordered, lsk9_8Ordered, neo9_8Ordered, wav9_8Ordered]
   logger.debug(`validateBlockSequence validPairSubchains ${inspect(validPairSubchains)}`)
