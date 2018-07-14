@@ -149,7 +149,7 @@ export class MiningOfficer {
     this._cleanUnfinishedBlock()
   }
 
-  async startMining (rovers: string[], block: Block): Promise<boolean|number> {
+  async startMining (rovers: string[], block: Block): Promise<bool|number> {
     // get latest block from each child blockchain
     try {
       const lastPreviousBlock = await this.persistence.get('bc.block.latest')
@@ -354,26 +354,24 @@ export class MiningOfficer {
   /*
    * Restarts the miner by merging any unused rover blocks into a new block
    */
-  async rebaseMiner (): Promise<?boolean> {
+  async rebaseMiner (): Promise<bool|number> {
     if (this._canMine !== true) return Promise.resolve(false)
 
-    this.stopMining()
-      .then((stopped) => {
-        return async () => {
-          const latestRoveredHeadersKeys: string[] = this._knownRovers.map(chain => `${chain}.block.latest`)
-          const latestBlockHeaders = await this.persistence.getBulk(latestRoveredHeadersKeys)
-          const lastPreviousBlock = await this.persistence.get('bc.block.latest')
-          const previousHeaders = lastPreviousBlock.getBlockchainHeaders()
-          const uniqueBlockHeaders = getUniqueBlocks(previousHeaders, latestBlockHeaders)
+    return this.stopMining()
+      .then(async (stopped) => {
+        const latestRoveredHeadersKeys: string[] = this._knownRovers.map(chain => `${chain}.block.latest`)
+        const latestBlockHeaders = await this.persistence.getBulk(latestRoveredHeadersKeys)
+        const lastPreviousBlock = await this.persistence.get('bc.block.latest')
+        const previousHeaders = lastPreviousBlock.getBlockchainHeaders()
+        const uniqueBlockHeaders = getUniqueBlocks(previousHeaders, latestBlockHeaders)
 
-          this._logger.info('child blocks usable in rebase: ' + uniqueBlockHeaders.length)
+        this._logger.info('child blocks usable in rebase: ' + uniqueBlockHeaders.length)
 
-          if (uniqueBlockHeaders.length === 0) {
-            return Promise.resolve(false)
-          }
-
-          return this.startMining(this.knownRovers, uniqueBlockHeaders.shift())
+        if (uniqueBlockHeaders.length === 0) {
+          return Promise.resolve(false)
         }
+
+        return this.startMining(this._knownRovers, uniqueBlockHeaders.shift())
       })
       .catch((err) => {
         return Promise.reject(err)
