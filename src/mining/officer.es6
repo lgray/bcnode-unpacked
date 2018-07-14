@@ -374,7 +374,7 @@ export class MiningOfficer {
 
     // sorts (decending) blocks for each connected hain #3, #2, #1
     const btcList = this.sortBlocks(previousHeaders.getBtcList())
-    const btcListStale = this.sortBllocks(staleHeaders.getBtcList())
+    const btcListStale = this.sortBlocks(staleHeaders.getBtcList())
     const ethList = this.sortBlocks(previousHeaders.getEthList())
     const ethListStale = this.sortBlocks(staleHeaders.getEthList())
     const wavList = this.sortBlocks(previousHeaders.getWavList())

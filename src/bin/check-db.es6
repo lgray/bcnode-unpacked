@@ -1,3 +1,5 @@
+/* eslint-disable */
+
 const { aperture, reverse } = require('ramda')
 const { default: RocksDb } = require('../persistence/rocksdb')
 const { isValidBlock, validateBlockSequence } = require('../bc/validation')
