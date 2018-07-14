@@ -258,7 +258,7 @@ export function validateRoveredSequences (blocks: BcBlock[]): boolean {
 
   logger.debug(`validateRoveredSequences: ${inspect(checks)}`)
 
-  return all(equals(true), checks)
+  return all(equals(true), flatten(checks))
 }
 
 function validateChildHeadersSequence (childBlock, parentBlock): bool[] {
