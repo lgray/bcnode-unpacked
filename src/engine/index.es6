@@ -808,7 +808,7 @@ export class Engine {
                       return this.persistence.put('bc.depth', highestBlock.getHeight())
                         .then(() => {
                           this._logger.info(8)
-                          this.pubsub.publish('update.block.latest', { key: 'bc.block.latest', data: newBlock, force: true })
+                          this.pubsub.publish('update.block.latest', { key: 'bc.block.latest', data: newBlock, force: true, multiverse: this.multiverse._chain })
                           this.node.broadcastNewBlock(newBlock)
                           // assign where the last sync began
                           return this.syncFromDepth(conn, this.multiverse.getHighestBlock())
