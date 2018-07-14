@@ -182,65 +182,120 @@ export default class PersistenceRocksDb {
       .concat(this.sortChildHeaders(headers.getBtcList())
         .map((b) => {
           if (opts.btc) {
-            return this.get('btc.block.' + b.getHeight() - 1)
-              .then((res) => {
-                if (res.getHash() === b.getPreviousHash()) {
+            return async () => {
+              const latest = await this.get('btc.block.latest')
+              return this.get('btc.block.' + b.getHeight() - 1)
+                .then((res) => {
+                  if (res.getHash() === b.getPreviousHash() &&
+                    res.getHash() === latest.getHash()) {
+                    return Promise.all([
+                      this.put('btc.block.latest', b),
+                      this.put('btc.block.' + b.getHeight(), b)
+                    ])
+                  }
                   return this.put('btc.block.' + b.getHeight(), b)
-                }
-                return Promise.resolve(false)
-              })
+                })
+                .catch((err) => {
+                  this._logger.warn(err)
+                  return this.put('btc.block.' + b.getHeight(), b)
+                })
+            }
           }
           return Promise.resolve(true)
         }))
       .concat(this.sortChildHeaders(headers.getEthList())
         .map((b) => {
           if (opts.eth) {
-            return this.get('eth.block.' + b.getHeight() - 1)
-              .then((res) => {
-                if (res.getHash() === b.getPreviousHash()) {
+            return async () => {
+              const latest = await this.get('eth.block.latest')
+              return this.get('eth.block.' + b.getHeight() - 1)
+                .then((res) => {
+                  if (res.getHash() === b.getPreviousHash() &&
+                    res.getHash() === latest.getHash()) {
+                    return Promise.all([
+                      this.put('eth.block.latest', b),
+                      this.put('eth.block.' + b.getHeight(), b)
+                    ])
+                  }
                   return this.put('eth.block.' + b.getHeight(), b)
-                }
-                return Promise.resolve(false)
-              })
+                })
+                .catch((err) => {
+                  this._logger.warn(err)
+                  return this.put('eth.block.' + b.getHeight(), b)
+                })
+            }
+          }
+          return Promise.resolve(true)
+        }))
+      .concat(this.sortChildHeaders(headers.getWavList())
+        .map((b) => {
+          if (opts.wav) {
+            return async () => {
+              const latest = await this.get('wav.block.latest')
+              return this.get('wav.block.' + b.getHeight() - 1)
+                .then((res) => {
+                  if (res.getHash() === b.getPreviousHash() &&
+                    res.getHash() === latest.getHash()) {
+                    return Promise.all([
+                      this.put('wav.block.latest', b),
+                      this.put('wav.block.' + b.getHeight(), b)
+                    ])
+                  }
+                  return this.put('wav.block.' + b.getHeight(), b)
+                })
+                .catch((err) => {
+                  this._logger.warn(err)
+                  return this.put('wav.block.' + b.getHeight(), b)
+                })
+            }
           }
           return Promise.resolve(true)
         }))
       .concat(this.sortChildHeaders(headers.getNeoList())
         .map((b) => {
           if (opts.neo) {
-            return this.get('neo.block.' + b.getHeight() - 1)
-              .then((res) => {
-                if (res.getHash() === b.getPreviousHash()) {
+            return async () => {
+              const latest = await this.get('neo.block.latest')
+              return this.get('neo.block.' + b.getHeight() - 1)
+                .then((res) => {
+                  if (res.getHash() === b.getPreviousHash() &&
+                    res.getHash() === latest.getHash()) {
+                    return Promise.all([
+                      this.put('neo.block.latest', b),
+                      this.put('neo.block.' + b.getHeight(), b)
+                    ])
+                  }
                   return this.put('neo.block.' + b.getHeight(), b)
-                }
-                return Promise.resolve(false)
-              })
+                })
+                .catch((err) => {
+                  this._logger.warn(err)
+                  return this.put('neo.block.' + b.getHeight(), b)
+                })
+            }
           }
           return Promise.resolve(true)
         }))
       .concat(this.sortChildHeaders(headers.getLskList())
         .map((b) => {
           if (opts.lsk) {
-            return this.get('lsk.block.' + b.getHeight() - 1)
-              .then((res) => {
-                if (res.getHash() === b.getPreviousHash()) {
+            return async () => {
+              const latest = await this.get('lsk.block.latest')
+              return this.get('lsk.block.' + b.getHeight() - 1)
+                .then((res) => {
+                  if (res.getHash() === b.getPreviousHash() &&
+                    res.getHash() === latest.getHash()) {
+                    return Promise.all([
+                      this.put('lsk.block.latest', b),
+                      this.put('lsk.block.' + b.getHeight(), b)
+                    ])
+                  }
                   return this.put('lsk.block.' + b.getHeight(), b)
-                }
-                return Promise.resolve(false)
-              })
-          }
-          return Promise.resolve(true)
-        }))
-      .concat(this.sortChildHeaders(headers.getWavList())
-        .map((b) => {
-          if (opts.lsk) {
-            return this.get('wav.block.' + b.getHeight() - 1)
-              .then((res) => {
-                if (res.getHash() === b.getPreviousHash()) {
-                  return this.put('wav.block.' + b.getHeight(), b)
-                }
-                return Promise.resolve(false)
-              })
+                })
+                .catch((err) => {
+                  this._logger.warn(err)
+                  return this.put('lsk.block.' + b.getHeight(), b)
+                })
+            }
           }
           return Promise.resolve(true)
         }))
