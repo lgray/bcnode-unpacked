@@ -359,8 +359,11 @@ export class MiningOfficer {
 
     try {
       const stopped = await this.stopMining()
-      this._logger.info(`Miner stopped, result: ${stopped}`)
+      this._logger.info(`Miner stopped, result: ${inspect(stopped)}`)
       const latestBlockHeaders = this.getCurrentMiningHeaders()
+      if (!latestBlockHeaders) {
+        return Promise.resolve(false)
+      }
       const lastPreviousBlock = await this.persistence.get('bc.block.latest')
       const previousHeaders = lastPreviousBlock.getBlockchainHeaders()
       const uniqueBlockHeaders = getUniqueBlocks(previousHeaders, latestBlockHeaders)
