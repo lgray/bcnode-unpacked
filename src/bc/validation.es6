@@ -250,46 +250,26 @@ function blockchainHeadersAreChain (childHeaderList: BlockchainHeader[], parentH
   return true
 }
 
-export function validateRoveredSequences (blocks: BcBlock[], opts: Object = {
-  btc: true,
-  wav: true,
-  neo: true,
-  lsk: true,
-  eth: true
-}): boolean {
-  const headers = blocks.map((a) => {
-    return a.getBlockchainHeaders()
+export function validateRoveredSequences (blocks: BcBlock[]): boolean {
+  const sortedBlocks = sort((a, b) => b.getHeight() - a.getHeight(), blocks)
+  const checks = aperture(2, sortedBlocks).map(([child, parent]) => {
+    return validateChildHeadersSequence(child, parent)
   })
-  // collect all of the blocks from all of the chains
-  const validationTable = headers.reduce((table, headerSet) => {
-    if (opts.btc) {
-      if (table.btc === undefined) { table.btc = [] }
-      table.btc = table.btc.concat(headerSet.getBtcList())
-    }
-    if (opts.wav) {
-      if (table.wav === undefined) { table.wav = [] }
-      table.wav = table.wav.concat(headerSet.getWavList())
-    }
-    if (opts.eth) {
-      if (table.eth === undefined) { table.eth = [] }
-      table.eth = table.eth.concat(headerSet.getEthList())
-    }
-    if (opts.neo) {
-      if (table.neo === undefined) { table.neo = [] }
-      table.neo = table.neo.concat(headerSet.getNeoList())
-    }
-    if (opts.lsk) {
-      if (table.lsk === undefined) { table.lsk = [] }
-      table.lsk = table.lsk.concat(headerSet.getLskList())
-    }
-    return table
-  }, {})
 
-  // table now represents the sequence of headers postualated to exists
-  // in the provided sequence of block collider blocks
-  return all(Object.keys(validationTable).reduce((submissions, headerListKey) => {
-    return submissions.push(validateBlockSequence(validationTable[headerListKey]))
-  }, []))
+  return all(equals(true), checks)
+}
+
+function validateChildHeadersSequence (childBlock, parentBlock): bool[] {
+  const childBlockchainHeaders = childBlock.getBlockchainHeaders()
+  const parentBlockchainHeaders = parentBlock.getBlockchainHeaders()
+  // TODO this should be a map over all members of BlockchainHeaders instance to prevent error after adding another chain to Collider
+  return [
+    blockchainHeadersAreChain(childBlockchainHeaders.getBtcList(), parentBlockchainHeaders.getBtcList()),
+    blockchainHeadersAreChain(childBlockchainHeaders.getEthList(), parentBlockchainHeaders.getEthList()),
+    blockchainHeadersAreChain(childBlockchainHeaders.getLskList(), parentBlockchainHeaders.getLskList()),
+    blockchainHeadersAreChain(childBlockchainHeaders.getNeoList(), parentBlockchainHeaders.getNeoList()),
+    blockchainHeadersAreChain(childBlockchainHeaders.getWavList(), parentBlockchainHeaders.getWavList())
+  ]
 }
 
 export function validateBlockSequence (blocks: BcBlock[]): bool {
@@ -328,16 +308,7 @@ export function validateBlockSequence (blocks: BcBlock[]): bool {
   // [[btcOrdered, ethOrdered, lskOrdered, neoOrdered, wavOrdered], [btcOrderder, ethOrdered, lskOrdered, neoOrdered, wavOrdered]]
   //                                e.g. BC10, BC9
   const validPairSubchains = pairs.map(([child, parent]) => {
-    const childBlockchainHeaders = child.getBlockchainHeaders()
-    const parentBlockchainHeaders = parent.getBlockchainHeaders()
-    // TODO this should be a map over all members of BlockchainHeaders instance to prevent error after adding another chain to Collider
-    return [
-      blockchainHeadersAreChain(childBlockchainHeaders.getBtcList(), parentBlockchainHeaders.getBtcList()),
-      blockchainHeadersAreChain(childBlockchainHeaders.getEthList(), parentBlockchainHeaders.getEthList()),
-      blockchainHeadersAreChain(childBlockchainHeaders.getLskList(), parentBlockchainHeaders.getLskList()),
-      blockchainHeadersAreChain(childBlockchainHeaders.getNeoList(), parentBlockchainHeaders.getNeoList()),
-      blockchainHeadersAreChain(childBlockchainHeaders.getWavList(), parentBlockchainHeaders.getWavList())
-    ]
+    return validateChildHeadersSequence(child, parent)
   })
   // flatten => [btc10_9Ordered, eth10_9Ordered, lsk10_9Ordered, neo10_9Ordered, wav10_9Ordered, btc9_8Orderded, eth9_8Ordered, lsk9_8Ordered, neo9_8Ordered, wav9_8Ordered]
   logger.debug(`validateBlockSequence validPairSubchains ${inspect(validPairSubchains)}`)
