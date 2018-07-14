@@ -14,7 +14,7 @@ import type PersistenceRocksDb from '../persistence/rocksdb'
 const BN = require('bn.js')
 const { all, flatten, zip } = require('ramda')
 
-const { validateBlockSequence, childrenHeightSum } = require('./validation')
+const { validateRoveredSequences, validateBlockSequence, childrenHeightSum } = require('./validation')
 const { standardId } = require('./helper')
 const { getLogger } = require('../logger')
 
@@ -291,11 +291,18 @@ export class Multiverse {
     this._logger.info(9)
     // PASS add the new block to the parent position
     this._chain.unshift(newBlock)
+    const validRovers = validateRoveredSequences([newBlock, currentHighestBlock])
+
+    if (validRovers === false) {
+      this._logger.info('ERROR in multitasking which lead to wayward rovers')
+      return this.addBestBlock(newBlock)
+    }
+
     if (this._chain.length > 7) {
       this._chain.pop()
     }
     this._logger.info(10)
-    return true
+    return validateRoveredSequences
   }
 
   /**

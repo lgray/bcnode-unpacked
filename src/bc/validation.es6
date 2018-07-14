@@ -250,6 +250,48 @@ function blockchainHeadersAreChain (childHeaderList: BlockchainHeader[], parentH
   return true
 }
 
+export function validateRoveredSequences (blocks: BcBlock[], opts: Object = {
+  btc: true,
+  wav: true,
+  neo: true,
+  lsk: true,
+  eth: true
+}): boolean {
+  const headers = blocks.map((a) => {
+    return a.getBlockchainHeaders()
+  })
+  // collect all of the blocks from all of the chains
+  const validationTable = headers.reduce((table, headerSet) => {
+    if (opts.btc) {
+      if (table.btc === undefined) { table.btc = [] }
+      table.btc = table.btc.concat(headerSet.getBtcList())
+    }
+    if (opts.wav) {
+      if (table.wav === undefined) { table.wav = [] }
+      table.wav = table.wav.concat(headerSet.getWavList())
+    }
+    if (opts.eth) {
+      if (table.eth === undefined) { table.eth = [] }
+      table.eth = table.eth.concat(headerSet.getEthList())
+    }
+    if (opts.neo) {
+      if (table.neo === undefined) { table.neo = [] }
+      table.neo = table.neo.concat(headerSet.getNeoList())
+    }
+    if (opts.lsk) {
+      if (table.lsk === undefined) { table.lsk = [] }
+      table.lsk = table.lsk.concat(headerSet.getLskList())
+    }
+    return table
+  }, {})
+
+  // table now represents the sequence of headers postualated to exists
+  // in the provided sequence of block collider blocks
+  return all(Object.keys(validationTable).reduce((submissions, headerList) => {
+    return submissions.push(validateBlockSequence(headerList))
+  }, []))
+}
+
 export function validateBlockSequence (blocks: BcBlock[]): bool {
   // if any of the submissions are undefined reject the sequence
   if (reject(identity, blocks).length > 0) {

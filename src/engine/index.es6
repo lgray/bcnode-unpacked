@@ -239,13 +239,15 @@ export class Engine {
       if (this.miningOfficer._canMine) this.miningOfficer.stopMining()
       this.updateLatestAndStore(msg)
         .then((res) => {
-          this.miningOfficer.rebaseMiner()
-            .then((state) => {
-              this._logger.info(`latest block ${msg.data.getHeight()} has been updated`)
-            })
-            .catch((err) => {
-              this._logger.error(`Error occurred during updateLatestAndStore(), reason: ${err.message}`)
-            })
+          if (msg.mined === undefined) {
+            this.miningOfficer.rebaseMiner()
+              .then((state) => {
+                this._logger.info(`latest block ${msg.data.getHeight()} has been updated`)
+              })
+              .catch((err) => {
+                this._logger.error(`Error occurred during updateLatestAndStore(), reason: ${err.message}`)
+              })
+          }
         })
         .catch((err) => {
           this._logger.error(`Error occurred during updateLatestAndStore(), reason: ${err.message}`)
@@ -352,6 +354,9 @@ export class Engine {
         await this.persistence.putChildHeaders(block)
       }
       if (msg.multiverse !== undefined) {
+        // assert the valid state of the entire sequence of each rovered chain
+        const multiverseIsValid = this.miningOfficer.validateRoveredSequences(msg.multiverse)
+        if (!multiverseIsValid) return Promise.resolve(false)
         while (msg.multiverse.length > 0) {
           const b = msg.multiverse.pop()
           await this.persistence.put('bc.block.' + b.getHeight(), b)
@@ -938,7 +943,7 @@ export class Engine {
       this._logger.info('pmb' + 3)
       this._server._wsBroadcastMultiverse(this.multiverse)
       this._logger.info('pmb' + 4)
-      this.pubsub.publish('update.block.latest', { key: 'bc.block.latest', data: newBlock })
+      this.pubsub.publish('update.block.latest', { key: 'bc.block.latest', data: newBlock, mined: true })
       return Promise.resolve(true)
     } else {
       this._logger.info('local mined block ' + newBlock.getHeight() + ' does not stack on multiverse height ' + this.multiverse.getHighestBlock().getHeight())

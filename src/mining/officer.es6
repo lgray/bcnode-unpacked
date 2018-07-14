@@ -24,7 +24,7 @@ const { prepareWork, prepareNewBlock, getNewBlockCount } = require('./primitives
 const { getLogger } = require('../logger')
 const { Block, BcBlock } = require('../protos/core_pb')
 const { isDebugEnabled, ensureDebugPath } = require('../debug')
-const { isValidBlock } = require('../bc/validation')
+const { validateRoveredSequences, isValidBlock } = require('../bc/validation')
 const { getBlockchainsBlocksCount } = require('../bc/helper')
 const ts = require('../utils/time').default // ES6 default export
 
@@ -332,6 +332,13 @@ export class MiningOfficer {
     return Promise.resolve(true)
   }
 
+  /*
+   * Alias for validation module
+   */
+  validateRoveredSequences (blocks: BcBlock[]): boolean {
+    return validateRoveredSequences(blocks)
+  }
+
   sortBlocks (list: Object[]): Object[] {
     return list.sort((a, b) => {
       if (a.getHeight() < b.getHeight()) {
@@ -344,6 +351,9 @@ export class MiningOfficer {
     })
   }
 
+  /*
+   * Restarts the miner by merging any unused rover blocks into a new block
+   */
   async rebaseMiner (): Promise<?boolean> {
     // TODO: make this alias of start mining
     if (this._canMine !== true) return Promise.resolve(false)
@@ -534,7 +544,6 @@ export class MiningOfficer {
     return Promise.resolve(false)
   }
 
-  // FIXME: Review and fix restartMining
   restartMining (): Promise<boolean> {
     debug('Restarting mining', this._knownRovers)
 
