@@ -213,7 +213,7 @@ export class Engine {
           self._logger.info('wrote block ' + msg.data.getHeight())
         }
       }).catch((err) => {
-        self._logger.error(err)
+        self._logger.error(errToString(err))
       })
     })
 
@@ -346,7 +346,7 @@ export class Engine {
       }
       return Promise.resolve(true)
     } catch (err) {
-      this._logger.error(err)
+      this._logger.error(errToString(err))
       this._logger.warn('no previous block found')
       if (block !== undefined && msg.force === true) {
         await this.persistence.put('bc.block.latest', block)
@@ -618,12 +618,12 @@ export class Engine {
                             })
                         })
                         .catch(e => {
-                          this._logger.error(e)
+                          this._logger.error(errToString(e))
                           return Promise.reject(e)
                         })
                     })
                     .catch(e => {
-                      this._logger.error(e)
+                      this._logger.error(errToString(e))
                       // unlock the peer
                       return this.persistence.put(peerLockKey, 0)
                         .then(() => {
@@ -710,7 +710,7 @@ export class Engine {
             this._logger.info('depth sync complete')
           })
           .catch(e => {
-            this._logger.error(e)
+            this._logger.error(errToString(e))
           })
         // if depth !== 0
         // if peer unlocked
@@ -743,7 +743,7 @@ export class Engine {
               this.miningOfficer.stopMining()
               return conn.getPeerInfo((err, peerInfo) => {
                 if (err) {
-                  this._logger.error(err)
+                  this._logger.error(errToString(err))
                   return Promise.reject(err)
                 }
                 // request proof of the multiverse from the peer
@@ -818,16 +818,16 @@ export class Engine {
                             })
                             .catch(e => {
                               this._logger.info(newBlock.getHash() + ' blockchain sync failed')
-                              this._logger.error(e)
+                              this._logger.error(errToString(e))
                             })
                         })
                         .catch(e => {
-                          this._logger.error(e)
+                          this._logger.error(errToString(e))
                         })
                     }
                   })
                   .catch(e => {
-                    this._logger.error(e)
+                    this._logger.error(errToString(e))
                   })
               })
             } else {
@@ -835,7 +835,7 @@ export class Engine {
             }
           })
           .catch(err => {
-            this._logger.error(err)
+            this._logger.error(errToString(err))
           })
       }
     }
@@ -953,7 +953,7 @@ export class Engine {
           this._logger.info(res)
         })
         .catch((e) => {
-          this._logger.error(e)
+          this._logger.error(errToString(e))
         })
     }
     return Promise.resolve(false)
