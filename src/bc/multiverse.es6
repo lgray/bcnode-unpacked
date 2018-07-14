@@ -302,7 +302,7 @@ export class Multiverse {
       this._chain.pop()
     }
     this._logger.info(10)
-    return validateRoveredSequences
+    return true
   }
 
   /**
