@@ -8,7 +8,7 @@
  */
 import type Logger from 'winston'
 const RocksDb = require('rocksdb')
-
+const BN = require('bn.js')
 const debug = require('debug')('bcnode:persistence:rocksdb')
 const { BcBlock } = require('../protos/core_pb')
 const { serialize, deserialize } = require('./codec')
@@ -150,6 +150,22 @@ export default class PersistenceRocksDb {
         return Promise.all(results.filter(a => a !== null))
       })
   }
+
+  /**
+   * Sorts the given headers from lowest to highest
+   * @param headers
+   */
+  sortChildHeaders (headers: Object[]): Object[] {
+    return headers.sort((a, b) => {
+      if (new BN(a.getHeight()).gt(new BN(b.getHeight())) === true) {
+        return 1
+      }
+      if (new BN(a.getHeight()).lt(new BN(b.getHeight())) === true) {
+        return -1
+      }
+      return 0
+    })
+  }
   /**
    * Write the child headers contained within a BC Block to disk
    * @param block BcBlock containing
@@ -163,26 +179,71 @@ export default class PersistenceRocksDb {
   }): Promise<*> {
     const headers = block.getBlockchainHeaders()
     return Promise.all([]
-      .concat(headers.getBtcList().map((b) => {
-        if (opts.btc) { return this.put('btc.block.' + b.getHeight(), b) }
-        return Promise.resolve(true)
-      }))
-      .concat(headers.getEthList().map((b) => {
-        if (opts.eth) { return this.put('eth.block.' + b.getHeight(), b) }
-        return Promise.resolve(true)
-      }))
-      .concat(headers.getNeoList().map((b) => {
-        if (opts.neo) { return this.put('neo.block.' + b.getHeight(), b) }
-        return Promise.resolve(true)
-      }))
-      .concat(headers.getLskList().map((b) => {
-        if (opts.lsk) { return this.put('lsk.block.' + b.getHeight(), b) }
-        return Promise.resolve(true)
-      }))
-      .concat(headers.getWavList().map((b) => {
-        if (opts.wav) { return this.put('wav.block.' + b.getHeight(), b) }
-        return Promise.resolve(true)
-      }))
+      .concat(this.sortChildHeaders(headers.getBtcList())
+        .map((b) => {
+          if (opts.btc) {
+            return this.get('btc.block.' + b.getHeight() - 1)
+              .then((res) => {
+                if (res.getHash() === b.getPreviousHash()) {
+                  return this.put('btc.block.' + b.getHeight(), b)
+                }
+                return Promise.resolve(false)
+              })
+          }
+          return Promise.resolve(true)
+        }))
+      .concat(this.sortChildHeaders(headers.getEthList())
+        .map((b) => {
+          if (opts.eth) {
+            return this.get('eth.block.' + b.getHeight() - 1)
+              .then((res) => {
+                if (res.getHash() === b.getPreviousHash()) {
+                  return this.put('eth.block.' + b.getHeight(), b)
+                }
+                return Promise.resolve(false)
+              })
+          }
+          return Promise.resolve(true)
+        }))
+      .concat(this.sortChildHeaders(headers.getNeoList())
+        .map((b) => {
+          if (opts.neo) {
+            return this.get('neo.block.' + b.getHeight() - 1)
+              .then((res) => {
+                if (res.getHash() === b.getPreviousHash()) {
+                  return this.put('neo.block.' + b.getHeight(), b)
+                }
+                return Promise.resolve(false)
+              })
+          }
+          return Promise.resolve(true)
+        }))
+      .concat(this.sortChildHeaders(headers.getLskList())
+        .map((b) => {
+          if (opts.lsk) {
+            return this.get('lsk.block.' + b.getHeight() - 1)
+              .then((res) => {
+                if (res.getHash() === b.getPreviousHash()) {
+                  return this.put('lsk.block.' + b.getHeight(), b)
+                }
+                return Promise.resolve(false)
+              })
+          }
+          return Promise.resolve(true)
+        }))
+      .concat(this.sortChildHeaders(headers.getWavList())
+        .map((b) => {
+          if (opts.lsk) {
+            return this.get('wav.block.' + b.getHeight() - 1)
+              .then((res) => {
+                if (res.getHash() === b.getPreviousHash()) {
+                  return this.put('wav.block.' + b.getHeight(), b)
+                }
+                return Promise.resolve(false)
+              })
+          }
+          return Promise.resolve(true)
+        }))
     )
   }
 
