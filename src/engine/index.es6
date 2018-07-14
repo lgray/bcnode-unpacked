@@ -946,8 +946,8 @@ export class Engine {
       this.pubsub.publish('update.block.latest', { key: 'bc.block.latest', data: newBlock, mined: true })
       return Promise.resolve(true)
     } else {
-      this._logger.info('local mined block ' + newBlock.getHeight() + ' does not stack on multiverse height ' + this.multiverse.getHighestBlock().getHeight())
-      this._logger.info('mined block ' + newBlock.getHeight() + ' cannot go on top of multiverse block ' + this.multiverse.getHighestBlock())
+      // this._logger.info('local mined block ' + newBlock.getHeight() + ' does not stack on multiverse height ' + this.multiverse.getHighestBlock().getHeight())
+      // this._logger.info('mined block ' + newBlock.getHeight() + ' cannot go on top of multiverse block ' + this.multiverse.getHighestBlock())
       this.miningOfficer.rebaseMiner()
         .then((res) => {
           this._logger.info(res)
