@@ -214,8 +214,6 @@ export class MiningOfficer {
           this._unfinishedBlock
         )
 
-        this.setCurrentMiningBlock(newBlock)
-
         const work = prepareWork(lastPreviousBlock.getHash(), newBlock.getBlockchainHeaders())
         newBlock.setTimestamp(finalTimestamp)
         this._unfinishedBlock = newBlock
@@ -226,6 +224,8 @@ export class MiningOfficer {
           iterations: undefined,
           timeDiff: undefined
         }
+
+        this.setCurrentMiningHeaders(newBlock.getBlockchainHeaders())
 
         // if blockchains block count === 5 we will create a block with 6 blockchain blocks (which gets bonus)
         // if it's more, do not restart mining and start with new ones
@@ -280,7 +280,7 @@ export class MiningOfficer {
   * Manages the current most recent block template used by the miner
   * @param blockTemplate
   */
-  setCurrentMiningBlock (blockTemplate: Object): void {
+  setCurrentMiningHeaders (blockTemplate: Object): void {
     if (blockTemplate === undefined) {
       return
     }
@@ -291,7 +291,7 @@ export class MiningOfficer {
   /**
   * Accessor for block templates
   */
-  getCurrentMiningBlock (): ?BcBlock {
+  getCurrentMiningHeaders (): ?BcBlock {
     if (this._blockTemplates.length < 1) return
     return this._blockTemplates[0]
   }
@@ -360,8 +360,7 @@ export class MiningOfficer {
     try {
       const stopped = await this.stopMining()
       this._logger.info(`Miner stopped, result: ${stopped}`)
-      const latestRoveredHeadersKeys: string[] = this._knownRovers.map(chain => `${chain}.block.latest`)
-      const latestBlockHeaders = await this.persistence.getBulk(latestRoveredHeadersKeys)
+      const latestBlockHeaders = this.getCurrentMiningHeaders()
       const lastPreviousBlock = await this.persistence.get('bc.block.latest')
       const previousHeaders = lastPreviousBlock.getBlockchainHeaders()
       const uniqueBlockHeaders = getUniqueBlocks(previousHeaders, latestBlockHeaders)
