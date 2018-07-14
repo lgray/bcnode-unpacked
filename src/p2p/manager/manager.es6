@@ -20,10 +20,12 @@ const { Peer } = require('../peer')
 const { PeerNode } = require('../node')
 const { registerProtocols } = require('../protocol')
 const logging = require('../../logger')
+const { config } = require('../../config')
 
 const { PROTOCOL_PREFIX } = require('../protocol/version')
 
 const BC_P2P_PASSIVE = !!process.env.BC_P2P_PASSIVE
+export const QUORUM_SIZE: number = config.p2p.quorum.size
 
 export const DATETIME_STARTED_AT = Date.now()
 
@@ -110,6 +112,10 @@ export class PeerManager {
     return this._peerNode
   }
 
+  get hasQuorum (): bool {
+    return this._peerBookConnected.getPeersCount() >= QUORUM_SIZE
+  }
+
   createPeer (peerId: PeerInfo): Peer {
     return new Peer(this.bundle, peerId)
   }
@@ -120,7 +126,7 @@ export class PeerManager {
     // return false
   }
 
-  onPeerDiscovery (peer: PeerInfo) {
+  onPeerDiscovery (peer: PeerInfo): Promise<bool> {
     const peerId = peer.id.toB58String()
     debug('Event - peer:discovery', peerId)
 
@@ -130,28 +136,31 @@ export class PeerManager {
       debug(`Adding newly discovered peer '${peerId}' to discoveredPeerBook, count: ${this.peerBookDiscovered.getPeersCount()}`)
     } else {
       debug(`Discovered peer ${peerId} already in discoveredPeerBook`)
-      return
     }
 
     if (!BC_P2P_PASSIVE && !this.peerBookConnected.has(peer)) {
       debug(`Dialing newly discovered peer ${peerId}`)
-      return this.bundle.dial(peer, (err) => {
-        if (err) {
-          const errMsg = `Dialing discovered peer '${peerId}' failed, reason: '${err.message}' - peer will be redialed`
-          debug(errMsg)
-          this._logger.debug(errMsg)
+      return new Promise((resolve, reject) => {
+        this.bundle.dial(peer, (err) => {
+          if (err) {
+            const errMsg = `Dialing discovered peer '${peerId}' failed, reason: '${err.message}' - peer will be redialed`
+            debug(errMsg)
+            this._logger.debug(errMsg)
 
-          // Throwing error is not needed, peer will be dialed once circuit is enabled
-          if (this.peerBookDiscovered.has(peer)) {
-            this.peerBookDiscovered.remove(peer)
+            // Throwing error is not needed, peer will be dialed once circuit is enabled
+            if (this.peerBookDiscovered.has(peer)) {
+              this.peerBookDiscovered.remove(peer)
+            }
+
+            reject(err)
           }
 
-          return
-        }
-
-        this._logger.info(`Discovered peer successfully dialed ${peerId}`)
+          this._logger.info(`Discovered peer successfully dialed ${peerId}`)
+          resolve(true)
+        })
       })
     }
+    return Promise.resolve(false)
   }
 
   onPeerConnect (peer: PeerInfo) {
@@ -168,7 +177,6 @@ export class PeerManager {
 
         this.peerNode.triggerBlockSync()
       }
-
     } else {
       debug(`Peer '${peerId}', already in connectedPeerBook`)
       return
@@ -183,7 +191,7 @@ export class PeerManager {
     this._checkPeerStatus(peer)
   }
 
-  onPeerDisconnect (peer: PeerInfo) {
+  onPeerDisconnect (peer: PeerInfo): Promise<bool> {
     const peerId = peer.id.toB58String()
     debug('Event - peer:disconnect', peerId)
 
@@ -199,6 +207,8 @@ export class PeerManager {
     if (this._peerBookDiscovered.has(peer)) {
       this._peerBookDiscovered.remove(peer)
     }
+
+    return Promise.resolve(true)
   }
 
   registerProtocols (bundle: Bundle) {
