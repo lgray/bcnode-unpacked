@@ -362,13 +362,13 @@ export class MiningOfficer {
     const previousHeaders = lastPreviousBlock.getBlockchainHeaders()
     const uniqueBlockHeaders = getUniqueBlocks(previousHeaders, latestBlockHeaders)
 
-    this._logger.info('child blocks usable in rebase: ' + blockHeaderCounts)
+    this._logger.info('child blocks usable in rebase: ' + uniqueBlockHeaders.length)
 
     if (uniqueBlockHeaders.length === 0) {
       return Promise.resolve(false)
     }
 
-    return this.startMining(this.knownRovers, uniqueBlockHeaders.pop())
+    return this.startMining(this.knownRovers, uniqueBlockHeaders.shift())
   }
 
   restartMining (): Promise<boolean> {
