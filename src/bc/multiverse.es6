@@ -365,20 +365,21 @@ export class Multiverse {
       return Promise.resolve(false)
     }
     // make sure that blocks that are added reference child chains
-    return this.validateRoveredBlocks(newBlock).then(areAllChildrenRovered => {
-      if (!areAllChildrenRovered) {
-        this._logger.info('failed resync req: not all rovers have found blocks')
-        return Promise.resolve(false)
-      }
+    return Promise.resolve(true)
+    // return this.validateRoveredBlocks(newBlock).then(areAllChildrenRovered => {
+    //  if (!areAllChildrenRovered) {
+    //    this._logger.info('failed resync req: not all rovers have found blocks')
+    //    return Promise.resolve(false)
+    //  }
 
-      // FAIL if sum of child block heights is less than the rovered child heights
-      if (childrenHeightSum(newBlock) <= childrenHeightSum(currentParentHighestBlock)) {
-        this._logger.info('child height of new block is lower than height the current parent block')
-        return Promise.resolve(false)
-      }
-      this.addCandidateBlock(newBlock)
-      return Promise.resolve(true)
-    })
+    //  // FAIL if sum of child block heights is less than the rovered child heights
+    //  if (childrenHeightSum(newBlock) <= childrenHeightSum(currentParentHighestBlock)) {
+    //    this._logger.info('child height of new block is lower than height the current parent block')
+    //    return Promise.resolve(false)
+    //  }
+    //  this.addCandidateBlock(newBlock)
+    //  return Promise.resolve(true)
+    // })
   }
 
   async validateRoveredBlocks (block: BcBlock): Promise<boolean> {
