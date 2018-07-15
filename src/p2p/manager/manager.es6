@@ -167,6 +167,20 @@ export class PeerManager {
     const peerId = peer.id.toB58String()
     debug('Event - peer:connect', peerId)
 
+    const disconnectPeer = () => {
+      if (this.peerBookConnected.has(peer)) {
+        this.peerBookConnected.remove(peer)
+      }
+
+      if (this.peerBookDiscovered.has(peer)) {
+        this.peerBookDiscovered.remove(peer)
+      }
+
+      if (peer.isConnected()) {
+        peer.disconnect()
+      }
+    }
+
     if (this.peerBookConnected.has(peer)) {
       debug(`Peer '${peerId}', already in connectedPeerBook`)
       return Promise.resolve(false)
@@ -175,9 +189,7 @@ export class PeerManager {
     // Check if QUORUM_SIZE is reached
     if (this.peerBookConnected.getPeersCount() > QUORUM_SIZE) {
       debug(`Peer '${peerId}', quorum already reached`)
-      if (peer.isConnected()) {
-        peer.disconnect()
-      }
+      disconnectPeer()
 
       return Promise.resolve(false)
     }
@@ -203,13 +215,7 @@ export class PeerManager {
       })
       .catch((err) => {
         debug(`Unable to check peer status`, err)
-        if (this.peerBookConnected.has(peer)) {
-          this.peerBookConnected.remove(peer)
-        }
-
-        if (peer.isConnected()) {
-          peer.disconnect()
-        }
+        disconnectPeer()
       })
   }
 
