@@ -318,28 +318,23 @@ export class Engine {
   async updateLatestAndStore (msg: Object) {
     const block = msg.data
     try {
-      this._logger.info('aa')
       await this.persistence.get('bc.block.checkpoint')
     } catch (err) {
       this._logger.error(errToString(err))
-      this._logger.info('bb')
       this._logger.info('setting checkpoint at height: ' + block.getHeight())
       await this.persistence.put('bc.block.checkpoint', block)
     }
     try {
       const previousLatest = await this.persistence.get('bc.block.latest')
-      this._logger.info('cc')
 
       if (previousLatest.getHash() === block.getPreviousHash()) {
         await this.persistence.put('bc.block.latest', block)
         await this.persistence.put('bc.block.' + block.getHeight(), block)
         await this.persistence.putChildHeaders(block)
-        this._logger.info('ee')
       } else if (msg.force === true) {
         await this.persistence.put('bc.block.latest', block)
         await this.persistence.put('bc.block.' + block.getHeight(), block)
         await this.persistence.putChildHeaders(block)
-        this._logger.info('ff')
       } else {
         this._logger.error('failed to set block ' + block.getHeight() + ' ' + block.getHash() + ' as latest block, wrong previous hash')
       }
@@ -350,13 +345,11 @@ export class Engine {
           await this.persistence.put('bc.block.' + b.getHeight(), b)
           await this.persistence.forcePutChildHeaders(b)
         }
-        this._logger.info('gg')
         return Promise.resolve(true)
       }
       return Promise.resolve(true)
     } catch (err) {
       this._logger.error(errToString(err))
-      this._logger.info('hh')
       this._logger.warn('no previous block found')
       if (block !== undefined && msg.force === true) {
         await this.persistence.put('bc.block.latest', block)
@@ -367,7 +360,6 @@ export class Engine {
         // assert the valid state of the entire sequence of each rovered chain
         const multiverseIsValid = this.miningOfficer.validateRoveredSequences(msg.multiverse)
         if (!multiverseIsValid) return Promise.resolve(false)
-        this._logger.info('mm')
         while (msg.multiverse.length > 0) {
           const b = msg.multiverse.pop()
           await this.persistence.put('bc.block.' + b.getHeight(), b)

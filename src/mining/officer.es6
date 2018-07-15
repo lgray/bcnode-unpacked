@@ -342,17 +342,17 @@ export class MiningOfficer {
                 return Promise.resolve(true)
               })
               .catch((err) => {
-                this._logger.error(err)
+                this._logger.debug(err)
                 return Promise.resolve(false)
               })
           })
           .catch((err) => {
-            this._logger.error(err)
+            this._logger.debug(err)
             return Promise.resolve(false)
           })
       }))
     } catch (err) {
-      this._logger.error(err)
+      this._logger.debug(err)
       return Promise.resolve(false)
     }
   }

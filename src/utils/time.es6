@@ -75,9 +75,9 @@ export class TimeService { // export for tests
 
   now (): number {
     if (this.lastSyncedAt === undefined) {
-      this._logger.error('TimeService did not sync at least once, either there is error while syncing or you have to start() it')
+      this._logger.debug('TimeService did not sync at least once, either there is error while syncing or you have to start() it')
     } else if (Date.now() - (this.lastSyncedAt || 0) > REFRESH_INTERVAL * 5) {
-      this._logger.warn('TimeService did not sync in last five minutes, there is an error in NTP sync')
+      this._logger.debug('TimeService did not sync in last five minutes, there is an error in NTP sync')
     }
     return Date.now() + this._offset
   }
