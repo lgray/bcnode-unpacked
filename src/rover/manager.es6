@@ -21,6 +21,7 @@ const { RpcClient } = require('../rpc')
 
 const ROVER_RESTART_TIMEOUT = 5000
 const ROVED_DATA_PATH = path.resolve(__dirname, '..', '..', '_debug')
+export const ROVER_DF_VOID_EXIT_CODE = 16
 
 /**
  * Rover lookup table
@@ -41,10 +42,12 @@ export const rovers = {
 export class RoverManager {
   _logger: Object // eslint-disable-line no-undef
   _rovers: Object // eslint-disable-line no-undef
+  _timeouts: Object // eslint-disable-line no-undef
 
   constructor () {
     this._logger = logging.getLogger(__filename)
     this._rovers = {}
+    this._timeouts = {}
   }
 
   get rovers (): Object {
@@ -73,14 +76,20 @@ export class RoverManager {
       }
     )
     this._rovers[roverName] = rover
+    this._timeouts[roverName] = setTimeout(() => {
+      this._logger.info('kill rover: ' + roverName)
+      // return this._killRover(roverName)
+    }, 1000 * 900)
 
     rover.on('exit', (code, signal) => {
       this._logger.warn(`Rover ${roverName} exited (code: ${code}, signal: ${signal}) - restarting in ${ROVER_RESTART_TIMEOUT / 1000}s`)
       delete this._rovers[roverName]
       // TODO ROVER_RESTART_TIMEOUT should not be static 5s but probably some exponential backoff series separate for each rover
-      setTimeout(() => {
-        this.startRover(roverName)
-      }, ROVER_RESTART_TIMEOUT)
+      if (code !== ROVER_DF_VOID_EXIT_CODE) {
+        setTimeout(() => {
+          this.startRover(roverName)
+        }, ROVER_RESTART_TIMEOUT)
+      }
     })
 
     return true
@@ -135,7 +144,6 @@ export class RoverManager {
     files.forEach((f) => {
       const json = fs.readFileSync(f).toString()
       const obj = JSON.parse(json)
-
       const block = new Block()
       block.setBlockchain(obj.blockchain)
       block.setHash(obj.hash)
@@ -145,9 +153,12 @@ export class RoverManager {
       block.setMerkleRoot(obj.merkleRoot)
 
       debug(`Replaying roved block`, f, obj)
+
       rpc.rover.collectBlock(block, (err) => {
         if (err) {
           debug(`Unable to collect block ${f}`, err)
+        } else {
+          debug('recieved block from ' + obj.blockchain)
         }
       })
     })

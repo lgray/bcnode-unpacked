@@ -9,7 +9,7 @@
 
   "bc": {
     "council": {
-      "enabled": true,
+      "enabled": false,
       "url": "http://council.blockcollider.org"
     },
 
@@ -45,12 +45,12 @@
     },
 
     "quorum": {
-      "size": 16
+      "size": 11
     },
 
     "rendezvous": {
-      "webrtc": "/dns4/dns-r1.blockcollider.org/tcp/9090/ws/p2p-webrtc-star",
-      "websocket": "/dns4/dns-r1.blockcollider.org/tcp/9091/ws/p2p-websocket-star"
+      "webrtc": "/dns4/54.85.22.247/tcp/9090/ws/p2p-webrtc-star",
+      "websocket": "/dns4/54.85.22.247/tcp/9090/ws/p2p-websocket-star"
     },
 
     "stats": {

@@ -47,12 +47,14 @@ const main = () => {
       return function (timestamp: number) {
         const newBlockCount = getNewBlockCount(lastPreviousBlockProto.getBlockchainHeaders(), newBlockHeadersProto)
 
+        globalLog.info(`Worker processing new blocks: ${JSON.stringify(newBlockCount, null, 2)}`)
+
         const preExpDiff = getNewPreExpDifficulty(
           timestamp,
           lastPreviousBlockProto,
           newBlockCount
         )
-        return getExpFactorDiff(preExpDiff, lastPreviousBlockProto.getHeight()).toNumber()
+        return getExpFactorDiff(preExpDiff, lastPreviousBlockProto.getHeight()).toString()
       }
     }
 

@@ -11,7 +11,8 @@ const Sntp = require('sntp')
 
 const { getLogger } = require('../logger/index')
 
-const REFRESH_INTERVAL = 60000 // 60s
+const REFRESH_INTERVAL = 10 * 60 * 1000 // 10m
+const OPTIONS = { host: 'pool.ntp.org' }
 
 export class TimeService { // export for tests
   _offset: number;
@@ -29,16 +30,18 @@ export class TimeService { // export for tests
 
   ntpGetOffset () {
     this.inFlight = true
-    Sntp.offset((err, offset) => {
+    Sntp.time(OPTIONS, (err, { t } = { t: 0 }) => {
       this.inFlight = false
       if (err) {
+        this._offset = t << 0
+        this.inFlight = false
         this._logger.warn(`Could not get offset from NTP servers, reason ${err.message}`)
         return
       }
-      this._offset = offset
+      this._offset = t << 0
       this.inFlight = false
       this.lastSyncedAt = Date.now()
-      this._logger.debug(`NTP sync successful, got offset: ${offset}`)
+      this._logger.debug(`NTP sync successful, got offset: ${this._offset}`)
     })
   }
 
@@ -72,9 +75,9 @@ export class TimeService { // export for tests
 
   now (): number {
     if (this.lastSyncedAt === undefined) {
-      this._logger.warn('TimeService did not sync at least once, either there is error while syncing or you have to start() it')
+      this._logger.debug('TimeService did not sync at least once, either there is error while syncing or you have to start() it')
     } else if (Date.now() - (this.lastSyncedAt || 0) > REFRESH_INTERVAL * 5) {
-      this._logger.warn('TimeService did not sync in last five minutes, there is an error in NTP sync')
+      this._logger.debug('TimeService did not sync in last five minutes, there is an error in NTP sync')
     }
     return Date.now() + this._offset
   }

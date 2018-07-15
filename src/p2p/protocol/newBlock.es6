@@ -36,7 +36,8 @@ export const register = (manager: PeerManager, bundle: Bundle) => {
           const bytes = wireData[0]
           const raw = new Uint8Array(bytes)
           const block = BcBlock.deserializeBinary(raw)
-          if (!isValidBlock(block)) {
+          // determine if block is valid using the 1 type
+          if (!isValidBlock(block, 1)) {
             debug('Received block was not valid')
             // TODO this peer should make to the the blacklist
             return
