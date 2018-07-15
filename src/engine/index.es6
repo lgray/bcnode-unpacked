@@ -342,8 +342,10 @@ export class Engine {
       if (msg.multiverse !== undefined) {
         while (msg.multiverse.length > 0) {
           const b = msg.multiverse.pop()
-          await this.persistence.put('bc.block.' + b.getHeight(), b)
-          await this.persistence.forcePutChildHeaders(b)
+          if (b.getHeight() > 1) {
+            await this.persistence.put('bc.block.' + b.getHeight(), b)
+            await this.persistence.forcePutChildHeaders(b)
+          }
         }
         return Promise.resolve(true)
       }
@@ -362,8 +364,10 @@ export class Engine {
         if (!multiverseIsValid) return Promise.resolve(false)
         while (msg.multiverse.length > 0) {
           const b = msg.multiverse.pop()
-          await this.persistence.put('bc.block.' + b.getHeight(), b)
-          await this.persistence.putChildHeaders(b)
+          if (b.getHeight() > 1) {
+            await this.persistence.put('bc.block.' + b.getHeight(), b)
+            await this.persistence.putChildHeaders(b)
+          }
         }
         return Promise.resolve(true)
       }
@@ -529,6 +533,7 @@ export class Engine {
    * @param newBlock Block itself
    */
   async syncFromDepth (conn: Object, newBlock: BcBlock): Promise<bool|Error> {
+    // disabled until
     try {
       this._logger.info('sync from depth start')
       const depthData = await this.persistence.get('bc.depth')
@@ -708,13 +713,6 @@ export class Engine {
         this.pubsub.publish('update.block.latest', { key: 'bc.block.latest', data: newBlock })
         // notify the miner
         this.node.broadcastNewBlock(newBlock)
-        return this.syncFromDepth(conn, newBlock)
-          .then(() => {
-            this._logger.info('depth sync complete')
-          })
-          .catch(e => {
-            this._logger.error(errToString(e))
-          })
         // if depth !== 0
         // if peer unlocked
         // lock peer
