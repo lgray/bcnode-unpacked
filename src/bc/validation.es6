@@ -7,6 +7,7 @@
  * @flow
  */
 const { inspect } = require('util')
+const BN = require('bn.js')
 const {
   all,
   aperture,
@@ -74,6 +75,10 @@ export function isValidBlock (newBlock: BcBlock, type: number = 0): bool {
     return false
   }
   if (type === 0) {
+    if (!isDistanceAboveDifficulty(newBlock)) {
+      logger.warn('failed: isDistanceAboveDifficulty')
+      return false
+    }
     if (!isDistanceCorrectlyCalculated(newBlock)) {
       logger.warn('failed: isDistanceCorrectlyCalculated')
       return false
@@ -184,6 +189,14 @@ function isMerkleRootCorrectlyCalculated (newBlock: BcBlock): bool {
   ]))
 
   return receivedMerkleRoot === expectedMerkleRoot
+}
+
+function isDistanceAboveDifficulty (newBlock: BcBlock): bool {
+  logger.info('isDistanceCorrectlyCalculated validation running')
+  const receivedDistance = newBlock.getDistance()
+  const recievedDifficulty = newBlock.getDifficulty() // !! NOTE: This is the difficulty for THIS block and not for the parent.
+
+  return new BN(receivedDistance).gt(new BN(recievedDifficulty))
 }
 
 function isDistanceCorrectlyCalculated (newBlock: BcBlock): bool {
