@@ -36,7 +36,7 @@ _debug/
 _logs/
 
 # Flowtype
-.flow-typed
+flow-typed/
 
 # Artifacts (root)
 root/.cargo/
