@@ -55,7 +55,8 @@ const { Block, BcBlock, BcTransaction, BlockchainHeader, BlockchainHeaders } = r
 const ts = require('../utils/time').default // ES6 default export
 const GENESIS_DATA = require('../bc/genesis.raw')
 
-const MINIMUM_DIFFICULTY = new BN(28903944058786, 16)
+const MINIMUM_DIFFICULTY = new BN(23903944058786, 16)
+// testnet: 11801972029393
 const MAX_TIMEOUT_SECONDS = 300
 
 const logging = require('../logger')
@@ -108,10 +109,10 @@ export function getExpFactorDiff (calculatedDifficulty: BN, parentBlockHeight: n
 export function getDiff (currentBlockTime: number, previousBlockTime: number, previousDistance: string, minimalDifficulty: number, newBlockCount: number): BN {
   // https://github.com/ethereum/EIPs/blob/master/EIPS/eip-2.md
 
-  let bigMinimalDifficulty = new BN(minimalDifficulty, 10)
+  let bigMinimalDifficulty = new BN(minimalDifficulty, 16)
 
-  const bigPreviousBlockTime = new BN(previousBlockTime, 10)
-  const bigPreviousDistance = new BN(previousDistance, 10)
+  const bigPreviousBlockTime = new BN(previousBlockTime, 16)
+  const bigPreviousDistance = new BN(previousDistance, 16)
   const bigCurentBlockTime = new BN(currentBlockTime, 16)
   const bigMinus99 = new BN(-99, 16)
   const big1 = new BN(1, 16)
@@ -136,7 +137,7 @@ export function getDiff (currentBlockTime: number, previousBlockTime: number, pr
   }
 
   // y = previousDifficulty / 1515520 // 1515520 = 74 * 20 * 1024 or the maximum absolute distance of two characters converted from ASCII code.
-  y = bigPreviousDistance.div(new BN(151550))
+  y = bigPreviousDistance.div(new BN(15166, 16))
   // x = x * y
   x = x.mul(y)
   // x = x + previousDistance
@@ -270,7 +271,7 @@ export function mine (currentTimestamp: number, work: string, miner: string, mer
     let nonce = String(Math.abs(Random.engines.nativeMath())) // random string
     let nonceHash = blake2bl(nonce)
     result = distance(work, blake2bl(miner + merkleRoot + nonceHash + currentLoopTimestamp))
-    if (new BN(result, 16).gt(new BN(difficulty, 10)) === true) {
+    if (new BN(result, 16).gt(new BN(difficulty, 16)) === true) {
       res = {
         distance: (result).toString(),
         nonce,

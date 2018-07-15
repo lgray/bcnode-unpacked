@@ -167,6 +167,83 @@ export default class PersistenceRocksDb {
     })
   }
   /**
+   * TODO: Turn this into optional condition
+   * Write the child headers contained within a BC Block to disk
+   * @param block BcBlock containing
+   */
+  async forcePutChildHeaders (block: BcBlock, opts: Object = {
+    btc: true,
+    neo: true,
+    lsk: true,
+    eth: true,
+    wav: true
+  }): Promise<*> {
+    const headers = block.getBlockchainHeaders()
+    return Promise.all([]
+      .concat(this.sortChildHeaders(headers.getBtcList()).reverse()
+        .map((b, i) => {
+          if (opts.btc) {
+            if (i < 1) {
+              return this.put('btc.block.latest', b)
+                .then(() => {
+                  return this.put('btc.block.' + b.getHeight(), b)
+                })
+            }
+            return this.put('btc.block.' + b.getHeight(), b)
+          }
+        }))
+      .concat(this.sortChildHeaders(headers.getEthList()).reverse()
+        .map((b, i) => {
+          if (opts.eth) {
+            if (i < 1) {
+              return this.put('eth.block.latest', b)
+                .then(() => {
+                  return this.put('eth.block.' + b.getHeight(), b)
+                })
+            }
+            return this.put('eth.block.' + b.getHeight(), b)
+          }
+        }))
+      .concat(this.sortChildHeaders(headers.getNeoList()).reverse()
+        .map((b, i) => {
+          if (opts.neo) {
+            if (i < 1) {
+              return this.put('neo.block.latest', b)
+                .then(() => {
+                  return this.put('neo.block.' + b.getHeight(), b)
+                })
+            }
+            return this.put('neo.block.' + b.getHeight(), b)
+          }
+        }))
+      .concat(this.sortChildHeaders(headers.getLskList()).reverse()
+        .map((b, i) => {
+          if (opts.lsk) {
+            if (i < 1) {
+              return this.put('lsk.block.latest', b)
+                .then(() => {
+                  return this.put('lsk.block.' + b.getHeight(), b)
+                })
+            }
+            return this.put('lsk.block.' + b.getHeight(), b)
+          }
+        }))
+      .concat(this.sortChildHeaders(headers.getLskList()).reverse()
+        .map((b, i) => {
+          if (opts.wav) {
+            if (i < 1) {
+              return this.put('wav.block.latest', b)
+                .then(() => {
+                  return this.put('wav.block.' + b.getHeight(), b)
+                })
+            }
+            return this.put('wav.block.' + b.getHeight(), b)
+          }
+        }))
+    )
+  }
+
+  /**
    * Write the child headers contained within a BC Block to disk
    * @param block BcBlock containing
    */

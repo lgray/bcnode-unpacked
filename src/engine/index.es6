@@ -348,7 +348,7 @@ export class Engine {
         while (msg.multiverse.length > 0) {
           const b = msg.multiverse.pop()
           await this.persistence.put('bc.block.' + b.getHeight(), b)
-          await this.persistence.putChildHeaders(b)
+          await this.persistence.forcePutChildHeaders(b)
         }
         this._logger.info('gg')
         return Promise.resolve(true)
