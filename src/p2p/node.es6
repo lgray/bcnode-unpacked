@@ -316,51 +316,51 @@ export class PeerNode {
     this.manager.peerBookConnected.getAllArray().map(peer => {
       this.reportSyncPeriod(true)
       this.manager.createPeer(peer)
-      //  .getMultiverse()
-      //  .then((multiverse) => {
-      //    debug('Got multiverse from peer', peer.id.toB58String(), toObject(multiverse))
-      //    peerMultiverses.push(multiverse)
+        .getMultiverse()
+        .then((multiverse) => {
+          debug('Got multiverse from peer', peer.id.toB58String())
+          // peerMultiverses.push(multiverse)
 
-      //    if (peerMultiverses.length >= PEER_QUORUM_SIZE) {
-      //      const candidates = peerMultiverses.reduce((acc: Array<Object>, peerMultiverse) => {
-      //        if (peerMultiverse.length > 0 && validateBlockSequence(peerMultiverse)) {
-      //          acc.push(peerMultiverse)
-      //        }
+          // if (peerMultiverses.length >= PEER_QUORUM_SIZE) {
+          //  const candidates = peerMultiverses.reduce((acc: Array<Object>, peerMultiverse) => {
+          //    if (peerMultiverse.length > 0 && validateBlockSequence(peerMultiverse)) {
+          //      acc.push(peerMultiverse)
+          //    }
 
-      //        return acc
-      //      }, [])
+          //    return acc
+          //  }, [])
 
-      //      if (candidates.length >= PEER_QUORUM_SIZE) {
-      //        const uniqueCandidates = uniqBy((candidate) => candidate[0].getHash(), candidates)
-      //        if (uniqueCandidates.length === 1) {
-      //          // TODO: Commit as active multiverse and begin full sync from known peers
-      //        } else {
-      //          const peerMultiverseByDifficultySum = uniqueCandidates
-      //            .map(peerBlocks => peerBlocks[0])
-      //            .sort(blockByTotalDistanceSorter)
+          //  if (candidates.length >= PEER_QUORUM_SIZE) {
+          //    const uniqueCandidates = uniqBy((candidate) => candidate[0].getHash(), candidates)
+          //    if (uniqueCandidates.length === 1) {
+          //      // TODO: Commit as active multiverse and begin full sync from known peers
+          //    } else {
+          //      const peerMultiverseByDifficultySum = uniqueCandidates
+          //        .map(peerBlocks => peerBlocks[0])
+          //        .sort(blockByTotalDistanceSorter)
 
-      //          const winningMultiverse = peerMultiverseByDifficultySum[0]
-      //          // TODO split the work among multiple correct candidates
-      //          // const syncCandidates = candidates.filter((candidate) => {
-      //          //   if (winner.getHash() === candidate[0].getHash()) {
-      //          //     return true
-      //          //   }
-      //          //   return false
-      //          // })
-      //          const lowestBlock = this.multiverse.getLowestBlock()
-      //          // TODO handle winningMultiverse[0] === undefined, see sentry BCNODE-6F
-      //          if (lowestBlock && lowestBlock.getHash() !== winningMultiverse[0].getHash()) {
-      //            this._blockPool.maximumHeight = lowestBlock.getHeight()
-      //            // insert into the multiverse
-      //            winningMultiverse.map(block => this.multiverse.addNextBlock(block))
-      //            // TODO: Use RXP
-      //            // Report not syncing
-      //            this.reportSyncPeriod(false)
-      //          }
-      //        }
-      //      }
-      //    }
-      //  })
+          //      const winningMultiverse = peerMultiverseByDifficultySum[0]
+          //      // TODO split the work among multiple correct candidates
+          //      // const syncCandidates = candidates.filter((candidate) => {
+          //      //   if (winner.getHash() === candidate[0].getHash()) {
+          //      //     return true
+          //      //   }
+          //      //   return false
+          //      // })
+          //      const lowestBlock = this.multiverse.getLowestBlock()
+          //      // TODO handle winningMultiverse[0] === undefined, see sentry BCNODE-6F
+          //      if (lowestBlock && lowestBlock.getHash() !== winningMultiverse[0].getHash()) {
+          //        this._blockPool.maximumHeight = lowestBlock.getHeight()
+          //        // insert into the multiverse
+          //        winningMultiverse.map(block => this.multiverse.addNextBlock(block))
+          //        // TODO: Use RXP
+          //        // Report not syncing
+          //        this.reportSyncPeriod(false)
+          //      }
+          //    }
+          //  }
+          // }
+        })
     })
   }
 }

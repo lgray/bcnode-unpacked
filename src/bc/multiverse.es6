@@ -185,10 +185,10 @@ export class Multiverse {
     this._logger.info(12)
     // if no block is available go by total difficulty
     // FAIL if new block not within 16 seconds of local time
-    if (newBlock.getTimestamp() + 16 < Math.floor(Date.now() * 0.001)) {
-      this._logger.info('bestBlock: failed timestamp ')
-      return false
-    }
+    // if (newBlock.getTimestamp() + 16 < Math.floor(Date.now() * 0.001)) {
+    //  this._logger.info('bestBlock: failed timestamp ')
+    //  return false
+    // }
     this._logger.info(13)
     // if there is no current parent, this block is the right lbock
     if (currentParentHighestBlock === false) {

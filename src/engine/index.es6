@@ -53,6 +53,7 @@ export class Engine {
   _knownBlocksCache: LRUCache<string, BcBlock>
   _rawBlocks: LRUCache<number, Block>
   _node: Node
+  _rsync: boolean
   _persistence: PersistenceRocksDb
   _pubsub: PubSub
   _rovers: RoverManager
@@ -99,6 +100,7 @@ export class Engine {
       max: config.engine.rawBlocksCache.max
     })
 
+    this._rsync = false
     this._peerIsSyncing = false
     this._peerIsResyncing = false
     this._miningOfficer = new MiningOfficer(this._pubsub, this._persistence, opts)
@@ -244,13 +246,13 @@ export class Engine {
       this.updateLatestAndStore(msg)
         .then((res) => {
           if (msg.mined === undefined) {
-            this.miningOfficer.rebaseMiner()
-              .then((state) => {
-                this._logger.info(`latest block ${msg.data.getHeight()} has been updated`)
-              })
-              .catch((err) => {
-                this._logger.error(`Error occurred during updateLatestAndStore(), reason: ${err.message}`)
-              })
+            // this.miningOfficer.rebaseMiner()
+            //  .then((state) => {
+            //    this._logger.info(`latest block ${msg.data.getHeight()} has been updated`)
+            //  })
+            //  .catch((err) => {
+            //    this._logger.error(`Error occurred during updateLatestAndStore(), reason: ${err.message}`)
+            //  })
           }
         })
         .catch((err) => {
@@ -727,8 +729,9 @@ export class Engine {
         this._logger.info('new block ' + newBlock.getHeight() + ' is NOT next block, evaluating resync.')
         this.multiverse.addResyncRequest(newBlock, this.miningOfficer._canMine)
           .then(shouldResync => {
-            if (shouldResync === true) {
+            if (shouldResync === true && this._rsync === true) {
               this._logger.info(newBlock.getHash() + ' new block: ' + newBlock.getHeight() + ' should rsync request approved')
+              this._rsync = true
               // 1. request multiverse from peer, if fail ignore
               // succeed in getting multiverse -->
               // 2. Compare purposed multiverse sum of difficulty with current sum of diff
@@ -761,6 +764,8 @@ export class Engine {
                 this.node.manager.createPeer(peerInfo)
                   .query(query)
                   .then(newBlocks => {
+                    this._rsync = false
+
                     if (newBlocks === undefined) {
                       this._logger.warn(newBlock.getHash() + ' no blocks recieved from proof ')
                       return Promise.resolve(true)
@@ -839,20 +844,31 @@ export class Engine {
                   this._logger.error(errToString(err))
                   return Promise.reject(err)
                 }
+
+                try {
+                  const targetPeer = peerInfo.id.toB58String()
+
+                  this.node.manager.peerBookConnected.getAllArray().map(peer => {
+                    const newPeer = peer.id.toB58String()
+                    this._logger.debug(`Sending to peer ${peer}`)
+                    if (newPeer === targetPeer) {
+                      const url = `${PROTOCOL_PREFIX}/newblock`
+                      this.node.bundle.dialProtocol(peer, url, (err, conn) => {
+                        if (err) {
+                          this._logger.error('Error sending message to peer', peer.id.toB58String(), err)
+                          return err
+                        }
+
+                        // TODO JSON.stringify?
+                        pull(pull.values([newBlock.serializeBinary()]), conn)
+                      })
+                    }
+                  })
+                } catch (err) {
+                  this._logger.debug(err)
+                }
                 // request proof of the multiverse from the peer
-                const url = `${PROTOCOL_PREFIX}/newblock`
-                this.bundle.dialProtocol(peerInfo, url, (err, cn) => {
-                  if (err) {
-                    this._logger.error('Error sending message to peer', err)
-                    return err
-                  }
-                  // TODO JSON.stringify?
-                  pull(pull.values([newBlock.serializeBinary()]), cn)
-                })
               })
-                .catch(err => {
-                  this._logger.error(errToString(err))
-                })
             }
           })
       }
