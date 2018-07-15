@@ -46,7 +46,7 @@ export const DF_CONFIG: DfConfig = fromPairs(FINGERPRINTS_TEMPLATE.blockchainHea
 
 const logger = getLogger(__filename)
 
-export function isValidBlock (newBlock: BcBlock, type: number = 0): bool {
+export function isValidBlock (newBlock: BcBlock, type: number = 1): bool {
   if (newBlock === undefined) {
     return false
   }
@@ -66,15 +66,15 @@ export function isValidBlock (newBlock: BcBlock, type: number = 0): bool {
     logger.warn('failed: isChainRootCorrectlyCalculated')
     return false
   }
-  if (!areDarkFibersValid(newBlock)) {
-    logger.warn('failed: areDarkFibersValid')
-    return false
-  }
   if (!isMerkleRootCorrectlyCalculated(newBlock)) {
     logger.warn('failed: isMerkleRootCorrectlyCalculated')
     return false
   }
   if (type === 0) {
+    if (!areDarkFibersValid(newBlock)) {
+      logger.warn('failed: areDarkFibersValid')
+      return false
+    }
     if (!isDistanceAboveDifficulty(newBlock)) {
       logger.warn('failed: isDistanceAboveDifficulty')
       return false
