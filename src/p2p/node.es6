@@ -315,7 +315,7 @@ export class PeerNode {
 
     this.manager.peerBookConnected.getAllArray().map(peer => {
       this.reportSyncPeriod(true)
-      // this.manager.createPeer(peer)
+      this.manager.createPeer(peer)
       //  .getMultiverse()
       //  .then((multiverse) => {
       //    debug('Got multiverse from peer', peer.id.toB58String(), toObject(multiverse))
