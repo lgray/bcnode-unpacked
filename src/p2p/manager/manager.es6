@@ -138,7 +138,7 @@ export class PeerManager {
       debug(`Discovered peer ${peerId} already in discoveredPeerBook`)
     }
 
-    if (!BC_P2P_PASSIVE && !this.peerBookConnected.has(peer)) {
+    if (!BC_P2P_PASSIVE && !this.peerBookConnected.has(peer) && (this.peerBookConnected.getPeersCount() < QUORUM_SIZE)) {
       debug(`Dialing newly discovered peer ${peerId}`)
       return new Promise((resolve, reject) => {
         this.bundle.dial(peer, (err) => {
