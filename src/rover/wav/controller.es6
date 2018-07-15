@@ -25,6 +25,7 @@ const { createUnifiedBlock } = require('../helper')
 const { getBackoff } = require('../utils')
 const { randRange } = require('../../utils/ramda')
 const ts = require('../../utils/time').default // ES6 default export
+const { ROVER_DF_VOID_EXIT_CODE } = require('../manager')
 
 const WAVES_NODE_ADDRESS = WavesApi.MAINNET_CONFIG.nodeAddress
 
@@ -201,7 +202,7 @@ export default class Controller {
       process.exit(3)
     })
 
-    const dfBound = this._config.dfConfig.wav.dfBound
+    const { dfBound, dfVoid } = this._config.dfConfig.wav
 
     const cycle = () => {
       this._timeoutDescriptor = setTimeout(() => {
@@ -211,9 +212,9 @@ export default class Controller {
           getLastHeight().then(({ height, timestamp }) => {
             const ts = timestamp / 1000 << 0
             const requestTime = randRange(ts, ts + dfBound)
-            this._pendingRequests.push([requestTime, height - 1])
+            this._pendingRequests.push([requestTime, height - 4])
             // push second further to future
-            this._pendingRequests.push([requestTime + randRange(5, 15), height])
+            this._pendingRequests.push([requestTime + randRange(5, 15), height - 3])
             cycle()
           }).catch(err => {
             this._logger.warn(`Unable to start roving, could not get block count, err: ${err.message}`)
@@ -272,13 +273,18 @@ export default class Controller {
       }
       this._logger.debug(`Fibers count ${this._pendingFibers.length}`)
       const fiberTs = this._pendingFibers[0][0]
-      if (fiberTs + dfBound <= ts.nowSeconds()) {
+      if (fiberTs + dfBound < ts.nowSeconds()) {
         const [, fiberBlock] = this._pendingFibers.shift()
         this._logger.debug('WAV Fiber is ready, going to call this._rpc.rover.collectBlock()')
 
         if (this._config.isStandalone) {
           this._logger.debug(`Would publish block: ${inspect(fiberBlock.toObject())}`)
           return
+        }
+
+        if (fiberTs + dfVoid < ts.nowSeconds()) {
+          this._logger.debug(`Would publish block: ${inspect(fiberBlock.toObject())}`)
+          process.exit(ROVER_DF_VOID_EXIT_CODE)
         }
 
         this._rpc.rover.collectBlock(fiberBlock, (err, response) => {

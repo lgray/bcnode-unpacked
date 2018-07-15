@@ -10,35 +10,40 @@
 import type { Logger } from 'winston'
 import type { RpcServer } from '../../server'
 
-const { Null } = require('../../../protos/core_pb')
+const { Null, Block } = require('../../../protos/core_pb')
 const logging: Logger = require('../../../logger')
+const { blockchainHeadersAreChain } = require('../../../bc/validation')
 
 const log = logging.getLogger(__filename)
 
 export default function (context: RpcServer, call: Object, callback: Function) {
   const block = call.request
   const blockchain = block.getBlockchain()
-  const key = `${blockchain}.block.latest`
+  const latestKey = `${blockchain}.block.latest`
   const heightKey = `${blockchain}.block.${block.getHeight()}`
 
   const { server: { engine: { persistence } } } = context
-  persistence.get(key).then(oldLatest => {
+  persistence.get(latestKey).then(oldLatest => {
     // there is older latest block, make previous from it
-    log.debug(`We have old latest ${key}`)
-    return persistence.put(`${blockchain}.block.previous`, oldLatest).then(() => {
-      log.debug(`Stored previous for ${blockchain}`)
-      return persistence.put(key, block).then(() => {
-        log.debug(`Stored latest for ${blockchain}`)
-      }).then(() => {
-        return persistence.put(heightKey, block).then(() => {
-          log.debug(`Stored height ${block.getHeight()} for ${blockchain}`)
+    // $FlowFixMe
+    const latestAndNewFormAChain = blockchainHeadersAreChain([block], [oldLatest])
+    log.debug(`We have old latest ${latestKey}`)
+    return persistence.put(heightKey, block).then(() => {
+      log.debug(`Stored height ${block.getHeight()} for ${blockchain}`)
+    }).then(() => {
+      if (latestAndNewFormAChain) {
+        return persistence.put(latestKey, block).then(() => {
+          log.debug(`Stored latest for ${blockchain}`)
           callback(null, new Null())
         })
-      })
+      } else {
+        log.debug(`Did not store latest for ${blockchain}, new block does not form a chain with previous latest one`)
+        callback(null, new Null())
+      }
     })
   }, _ => { // there is no older latest block, just store
     log.debug(`Did not have latest for ${blockchain}`)
-    return persistence.put(key, block).then(() => {
+    return persistence.put(latestKey, block).then(() => {
       log.debug(`Stored latest for ${blockchain}`)
     }).then(() => {
       return persistence.put(heightKey, block).then(() => {
