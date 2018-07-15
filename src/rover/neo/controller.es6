@@ -93,6 +93,9 @@ function _createUnifiedBlock (block: NeoBlock): Block {
   return msg
 }
 
+type PendingRequestPair = [number, number]
+type PendingFiberPair = [number, Block]
+
 /**
  * NEO Controller
  */
@@ -106,8 +109,8 @@ export default class Controller {
   _networkRefreshIntervalDescriptor: IntervalID
   _checkFibersIntervalID: IntervalID
   _backoff: Backoff
-  _pendingRequests: Array<[number, number]>
-  _pendingFibers: Array<[number, Block]>
+  _pendingRequests: Array<PendingRequestPair>
+  _pendingFibers: Array<PendingFiberPair>
 
   constructor (config: { isStandalone: bool, dfConfig: DfConfig }) {
     this._config = config
