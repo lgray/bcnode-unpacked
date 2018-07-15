@@ -81,11 +81,10 @@ export class PeerManager {
       }
     }, 10 * 1000)
 
-    //this.engine.pubsub.subscribe('update.block.latest', '<engine>', (block) => {
+    // this.engine.pubsub.subscribe('update.block.latest', '<engine>', (block) => {
     //  self.engine.restartMiner(block)
-    //})
-    //this.pubsub.publish('block.mined', { type: 'block.mined', data: newBlockObj })
-
+    // })
+    // this.pubsub.publish('block.mined', { type: 'block.mined', data: newBlockObj })
   }
 
   get bundle (): Bundle {
@@ -175,7 +174,7 @@ export class PeerManager {
         this._quorumSyncing = true
         this._lastQuorumSync = new Date()
 
-        this.peerNode.triggerBlockSync()
+        // this.peerNode.triggerBlockSync()
       }
     } else {
       debug(`Peer '${peerId}', already in connectedPeerBook`)

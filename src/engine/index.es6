@@ -843,7 +843,7 @@ export class Engine {
   }
 
   receiveSyncPeriod (peerIsSyncing: bool) {
-    this.miningOfficer.paused = peerIsSyncing
+    this._logger.info('peer sync request')
   }
 
   /**
