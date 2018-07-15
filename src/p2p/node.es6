@@ -14,11 +14,11 @@ const { inspect } = require('util')
 const PeerInfo = require('peer-info')
 const waterfall = require('async/waterfall')
 const pull = require('pull-stream')
-const { uniqBy } = require('ramda')
+// const { uniqBy } = require('ramda')
 
 const debug = require('debug')('bcnode:p2p:node')
 const { config } = require('../config')
-const { toObject } = require('../helper/debug')
+// const { toObject } = require('../helper/debug')
 const { getVersion } = require('../helper/version')
 const logging = require('../logger')
 
@@ -27,14 +27,14 @@ const { ManagedPeerBook } = require('./book')
 const Bundle = require('./bundle').default
 const Signaling = require('./signaling').websocket
 const { PeerManager, DATETIME_STARTED_AT, QUORUM_SIZE } = require('./manager/manager')
-const { validateBlockSequence } = require('../bc/validation')
+// const { validateBlockSequence } = require('../bc/validation')
 const { Multiverse } = require('../bc/multiverse')
 const { BlockPool } = require('../bc/blockpool')
-const { blockByTotalDistanceSorter } = require('../engine/helper')
+// const { blockByTotalDistanceSorter } = require('../engine/helper')
 
 const { PROTOCOL_PREFIX, NETWORK_ID } = require('./protocol/version')
 
-const { PEER_QUORUM_SIZE } = require('./quorum')
+// const { PEER_QUORUM_SIZE } = require('./quorum')
 
 export class PeerNode {
   _logger: Object // eslint-disable-line no-undef
@@ -309,57 +309,58 @@ export class PeerNode {
 
   // get the best multiverse from all peers
   triggerBlockSync () {
-    const peerMultiverses = []
+    // const peerMultiverses = []
     // Notify miner to stop mining
     this.reportSyncPeriod(true)
 
     this.manager.peerBookConnected.getAllArray().map(peer => {
-      this.manager.createPeer(peer)
-        .getMultiverse()
-        .then((multiverse) => {
-          debug('Got multiverse from peer', peer.id.toB58String(), toObject(multiverse))
-          peerMultiverses.push(multiverse)
+      this.reportSyncPeriod(true)
+      // this.manager.createPeer(peer)
+      //  .getMultiverse()
+      //  .then((multiverse) => {
+      //    debug('Got multiverse from peer', peer.id.toB58String(), toObject(multiverse))
+      //    peerMultiverses.push(multiverse)
 
-          if (peerMultiverses.length >= PEER_QUORUM_SIZE) {
-            const candidates = peerMultiverses.reduce((acc: Array<Object>, peerMultiverse) => {
-              if (peerMultiverse.length > 0 && validateBlockSequence(peerMultiverse)) {
-                acc.push(peerMultiverse)
-              }
+      //    if (peerMultiverses.length >= PEER_QUORUM_SIZE) {
+      //      const candidates = peerMultiverses.reduce((acc: Array<Object>, peerMultiverse) => {
+      //        if (peerMultiverse.length > 0 && validateBlockSequence(peerMultiverse)) {
+      //          acc.push(peerMultiverse)
+      //        }
 
-              return acc
-            }, [])
+      //        return acc
+      //      }, [])
 
-            if (candidates.length >= PEER_QUORUM_SIZE) {
-              const uniqueCandidates = uniqBy((candidate) => candidate[0].getHash(), candidates)
-              if (uniqueCandidates.length === 1) {
-                // TODO: Commit as active multiverse and begin full sync from known peers
-              } else {
-                const peerMultiverseByDifficultySum = uniqueCandidates
-                  .map(peerBlocks => peerBlocks[0])
-                  .sort(blockByTotalDistanceSorter)
+      //      if (candidates.length >= PEER_QUORUM_SIZE) {
+      //        const uniqueCandidates = uniqBy((candidate) => candidate[0].getHash(), candidates)
+      //        if (uniqueCandidates.length === 1) {
+      //          // TODO: Commit as active multiverse and begin full sync from known peers
+      //        } else {
+      //          const peerMultiverseByDifficultySum = uniqueCandidates
+      //            .map(peerBlocks => peerBlocks[0])
+      //            .sort(blockByTotalDistanceSorter)
 
-                const winningMultiverse = peerMultiverseByDifficultySum[0]
-                // TODO split the work among multiple correct candidates
-                // const syncCandidates = candidates.filter((candidate) => {
-                //   if (winner.getHash() === candidate[0].getHash()) {
-                //     return true
-                //   }
-                //   return false
-                // })
-                const lowestBlock = this.multiverse.getLowestBlock()
-                // TODO handle winningMultiverse[0] === undefined, see sentry BCNODE-6F
-                if (lowestBlock && lowestBlock.getHash() !== winningMultiverse[0].getHash()) {
-                  this._blockPool.maximumHeight = lowestBlock.getHeight()
-                  // insert into the multiverse
-                  winningMultiverse.map(block => this.multiverse.addNextBlock(block))
-                  // TODO: Use RXP
-                  // Report not syncing
-                  this.reportSyncPeriod(false)
-                }
-              }
-            }
-          }
-        })
+      //          const winningMultiverse = peerMultiverseByDifficultySum[0]
+      //          // TODO split the work among multiple correct candidates
+      //          // const syncCandidates = candidates.filter((candidate) => {
+      //          //   if (winner.getHash() === candidate[0].getHash()) {
+      //          //     return true
+      //          //   }
+      //          //   return false
+      //          // })
+      //          const lowestBlock = this.multiverse.getLowestBlock()
+      //          // TODO handle winningMultiverse[0] === undefined, see sentry BCNODE-6F
+      //          if (lowestBlock && lowestBlock.getHash() !== winningMultiverse[0].getHash()) {
+      //            this._blockPool.maximumHeight = lowestBlock.getHeight()
+      //            // insert into the multiverse
+      //            winningMultiverse.map(block => this.multiverse.addNextBlock(block))
+      //            // TODO: Use RXP
+      //            // Report not syncing
+      //            this.reportSyncPeriod(false)
+      //          }
+      //        }
+      //      }
+      //    }
+      //  })
     })
   }
 }
