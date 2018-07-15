@@ -681,10 +681,9 @@ export class Engine {
       debug(`Adding received block into cache of known blocks - ${newBlock.getHash()}`)
       this._knownBlocksCache.set(newBlock.getHash(), newBlock)
       this._logger.info('Received new block from peer', newBlock.getHeight())
-
-      if(!this.miningOfficer._canMine) {
-          this._logger.info('block ' + newBlock.getHash() + ' cached: recieved before rovers established multiverse steady state')
-          return
+      if (!this.miningOfficer._canMine) {
+        this._logger.info('block ' + newBlock.getHash() + ' cached: recieved before rovers established multiverse steady state')
+        return
       }
 
       // EVAL NEXT
