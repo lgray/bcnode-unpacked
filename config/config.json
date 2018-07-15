@@ -50,7 +50,7 @@
 
     "rendezvous": {
       "webrtc": "/dns4/dns-r2.blockcollider.org/tcp/9090/ws/p2p-webrtc-star",
-      "websocket": "/dns4/dns-r2.blockcollider.org/tcp/9091/ws/p2p-websocket-star"
+      "websocket": "/dns4/dns-r2.blockcollider.org/tcp/9090/ws/p2p-websocket-star"
     },
 
     "stats": {
