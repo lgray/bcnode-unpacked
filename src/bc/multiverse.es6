@@ -14,7 +14,7 @@ import type PersistenceRocksDb from '../persistence/rocksdb'
 const BN = require('bn.js')
 const { all, flatten, zip } = require('ramda')
 
-const { validateRoveredSequences, validateBlockSequence, childrenHeightSum } = require('./validation')
+const { validateRoveredSequences, validateBlockSequence } = require('./validation')
 const { standardId } = require('./helper')
 const { getLogger } = require('../logger')
 
@@ -185,10 +185,10 @@ export class Multiverse {
     this._logger.info(12)
     // if no block is available go by total difficulty
     // FAIL if new block not within 16 seconds of local time
-    if (newBlock.getTimestamp() + 16 < Math.floor(Date.now() * 0.001)) {
-      this._logger.info('bestBlock: failed timestamp ')
-      return false
-    }
+    // if (newBlock.getTimestamp() + 16 < Math.floor(Date.now() * 0.001)) {
+    //  this._logger.info('bestBlock: failed timestamp ')
+    //  return false
+    // }
     this._logger.info(13)
     // if there is no current parent, this block is the right lbock
     if (currentParentHighestBlock === false) {
@@ -365,20 +365,21 @@ export class Multiverse {
       return Promise.resolve(false)
     }
     // make sure that blocks that are added reference child chains
-    return this.validateRoveredBlocks(newBlock).then(areAllChildrenRovered => {
-      if (!areAllChildrenRovered) {
-        this._logger.info('failed resync req: not all rovers have found blocks')
-        return Promise.resolve(false)
-      }
+    return Promise.resolve(true)
+    // return this.validateRoveredBlocks(newBlock).then(areAllChildrenRovered => {
+    //  if (!areAllChildrenRovered) {
+    //    this._logger.info('failed resync req: not all rovers have found blocks')
+    //    return Promise.resolve(false)
+    //  }
 
-      // FAIL if sum of child block heights is less than the rovered child heights
-      if (childrenHeightSum(newBlock) <= childrenHeightSum(currentParentHighestBlock)) {
-        this._logger.info('child height of new block is lower than height the current parent block')
-        return Promise.resolve(false)
-      }
-      this.addCandidateBlock(newBlock)
-      return Promise.resolve(true)
-    })
+    //  // FAIL if sum of child block heights is less than the rovered child heights
+    //  if (childrenHeightSum(newBlock) <= childrenHeightSum(currentParentHighestBlock)) {
+    //    this._logger.info('child height of new block is lower than height the current parent block')
+    //    return Promise.resolve(false)
+    //  }
+    //  this.addCandidateBlock(newBlock)
+    //  return Promise.resolve(true)
+    // })
   }
 
   async validateRoveredBlocks (block: BcBlock): Promise<boolean> {
