@@ -7610,7 +7610,7 @@ libp2p-crypto-secp256k1@~0.2.2:
     safe-buffer "^5.1.1"
     secp256k1 "^3.3.0"
 
-libp2p-crypto@^0.12.1, libp2p-crypto@~0.12.1:
+libp2p-crypto@~0.12.1:
   version "0.12.1"
   resolved "https://registry.yarnpkg.com/libp2p-crypto/-/libp2p-crypto-0.12.1.tgz#4a870d269ba3150dfe014e4f9aea1e55076015c8"
   dependencies:
@@ -7843,25 +7843,25 @@ libp2p-webrtc-star@^0.14.0:
     stream-to-pull-stream "^1.7.2"
     webrtcsupport "github:ipfs/webrtcsupport"
 
-libp2p-websocket-star@^0.8.0:
-  version "0.8.0"
-  resolved "https://registry.yarnpkg.com/libp2p-websocket-star/-/libp2p-websocket-star-0.8.0.tgz#ec98eba4107ed586cefe9a2286eb81e02cac8254"
+"libp2p-websocket-star@https://github.com/korczis/js-libp2p-websocket-star.git":
+  version "0.8.1"
+  resolved "https://github.com/korczis/js-libp2p-websocket-star.git#b27adfd1b4099cbafa96383054f23155aadc31ab"
   dependencies:
-    async "^2.6.0"
+    async "^2.6.1"
     class-is "^1.1.0"
     data-queue "0.0.3"
     debug "^3.1.0"
-    interface-connection "^0.3.2"
-    libp2p-crypto "^0.12.1"
+    interface-connection "~0.3.2"
+    libp2p-crypto "~0.13.0"
     mafmt "^6.0.0"
     merge-recursive "0.0.3"
-    multiaddr "^4.0.0"
+    multiaddr "^5.0.0"
     once "^1.4.0"
-    peer-id "^0.10.7"
-    peer-info "^0.14.0"
-    pull-stream "^3.6.7"
-    socket.io-client "^2.1.0"
-    socket.io-pull-stream "^0.1.5"
+    peer-id "~0.10.7"
+    peer-info "~0.14.1"
+    pull-stream "^3.6.8"
+    socket.io-client "^2.1.1"
+    socket.io-pull-stream "~0.1.5"
     uuid "^3.2.1"
 
 libp2p-websockets@^0.12.0:
@@ -10237,7 +10237,7 @@ pull-stream-to-stream@^1.3.4:
   version "1.3.4"
   resolved "https://registry.yarnpkg.com/pull-stream-to-stream/-/pull-stream-to-stream-1.3.4.tgz#3f81d8216bd18d2bfd1a198190471180e2738399"
 
-pull-stream@^3.2.3, pull-stream@^3.6.1, pull-stream@^3.6.2, pull-stream@^3.6.7:
+pull-stream@^3.2.3, pull-stream@^3.6.1, pull-stream@^3.6.2, pull-stream@^3.6.7, pull-stream@^3.6.8:
   version "3.6.8"
   resolved "https://registry.yarnpkg.com/pull-stream/-/pull-stream-3.6.8.tgz#d63dee1c55ff2023fd380f724c387e931b752413"
 
@@ -11634,7 +11634,7 @@ socket.io-client@2.0.3:
     socket.io-parser "~3.1.1"
     to-array "0.1.4"
 
-socket.io-client@2.1.1, socket.io-client@^2.1.0:
+socket.io-client@2.1.1, socket.io-client@^2.1.0, socket.io-client@^2.1.1:
   version "2.1.1"
   resolved "https://registry.yarnpkg.com/socket.io-client/-/socket.io-client-2.1.1.tgz#dcb38103436ab4578ddb026638ae2f21b623671f"
   dependencies:
@@ -11688,7 +11688,7 @@ socket.io-parser@~3.2.0:
     debug "~3.1.0"
     isarray "2.0.1"
 
-socket.io-pull-stream@^0.1.5:
+socket.io-pull-stream@~0.1.5:
   version "0.1.5"
   resolved "https://registry.yarnpkg.com/socket.io-pull-stream/-/socket.io-pull-stream-0.1.5.tgz#4e5d282b93635d8bf7780da405d82fc149346710"
   dependencies:
