@@ -7,13 +7,16 @@
  * @flow
  */
 const { inspect } = require('util')
+const BN = require('bn.js')
 const {
   all,
   aperture,
   equals,
   flatten,
   fromPairs,
+  head,
   identity,
+  last,
   reject,
   sort,
   sum
@@ -22,7 +25,7 @@ const {
 const { getLogger } = require('../logger')
 const { blake2bl } = require('../utils/crypto')
 const { concatAll } = require('../utils/ramda')
-const { BcBlock, BlockchainHeader } = require('../protos/core_pb')
+const { BcBlock, BlockchainHeader, Block } = require('../protos/core_pb')
 const {
   getChildrenBlocksHashes,
   getChildrenRootHash,
@@ -43,7 +46,7 @@ export const DF_CONFIG: DfConfig = fromPairs(FINGERPRINTS_TEMPLATE.blockchainHea
 
 const logger = getLogger(__filename)
 
-export function isValidBlock (newBlock: BcBlock): bool {
+export function isValidBlock (newBlock: BcBlock, type: number = 1): bool {
   if (newBlock === undefined) {
     return false
   }
@@ -63,17 +66,23 @@ export function isValidBlock (newBlock: BcBlock): bool {
     logger.warn('failed: isChainRootCorrectlyCalculated')
     return false
   }
-  if (!areDarkFibersValid(newBlock)) {
-    logger.warn('failed: areDarkFibersValid')
-    return false
-  }
   if (!isMerkleRootCorrectlyCalculated(newBlock)) {
     logger.warn('failed: isMerkleRootCorrectlyCalculated')
     return false
   }
-  if (!isDistanceCorrectlyCalculated(newBlock)) {
-    logger.warn('failed: isDistanceCorrectlyCalculated')
-    return false
+  if (type === 0) {
+    if (!areDarkFibersValid(newBlock)) {
+      logger.warn('failed: areDarkFibersValid')
+      return false
+    }
+    if (!isDistanceAboveDifficulty(newBlock)) {
+      logger.warn('failed: isDistanceAboveDifficulty')
+      return false
+    }
+    if (!isDistanceCorrectlyCalculated(newBlock)) {
+      logger.warn('failed: isDistanceCorrectlyCalculated')
+      return false
+    }
   }
   return true
 }
@@ -91,10 +100,10 @@ function numberOfBlockchainsNeededMatchesChildBlock (newBlock: BcBlock): bool {
   }
   // verify that all blockain header lists are non empty and that there is childBlockchainCount of them
   const headerValues = Object.values(newBlock.getBlockchainHeaders().toObject())
-  // logger.info(inspect(headerValues, {depth: 3}))
+  logger.debug(inspect(headerValues, {depth: 3}))
   // $FlowFixMe
   const headerValuesWithLengthGtZero = headerValues.filter(headersList => headersList.length > 0)
-  // logger.info(inspect(headerValuesWithLengthGtZero, {depth: 3}))
+  logger.debug(inspect(headerValuesWithLengthGtZero, {depth: 3}))
   // logger.info(GENESIS_DATA.childBlockchainCount)
   return headerValuesWithLengthGtZero.length === GENESIS_DATA.childBlockchainCount
 }
@@ -146,11 +155,18 @@ function areDarkFibersValid (newBlock: BcBlock): bool {
   logger.info('areDarkFibersValid validation running')
   const newBlockTimestampMs = newBlock.getTimestamp() * 1000
   const blockchainHeadersList = blockchainMapToList(newBlock.getBlockchainHeaders())
-  const dfHeadersChecks = blockchainHeadersList.map(header => {
+  const dfBoundHeadersChecks = blockchainHeadersList.map(header => {
     // e.g. NEO 1000 (rovered ts)  <=    1400 (mined time) -   300 (dfBound for NEO)
     return header.getTimestamp() <= newBlockTimestampMs - DF_CONFIG[header.getBlockchain()].dfBound * 1000
   })
-  return all(equals(true), dfHeadersChecks)
+  logger.debug(`dfBoundHeadersChecks: ${inspect(dfBoundHeadersChecks)}`)
+
+  const dfVoidHeadersChecks = blockchainHeadersList.map(header => {
+    const { dfVoid } = DF_CONFIG[header.getBlockchain()]
+    return dfVoid === 0 || newBlockTimestampMs < header.getTimestamp() + dfVoid * 1000
+  })
+  logger.debug(`dfVoidHeadersChecks: ${inspect(dfVoidHeadersChecks)}`)
+  return all(equals(true), dfBoundHeadersChecks) && all(equals(true), dfVoidHeadersChecks)
 }
 
 function isMerkleRootCorrectlyCalculated (newBlock: BcBlock): bool {
@@ -161,10 +177,26 @@ function isMerkleRootCorrectlyCalculated (newBlock: BcBlock): bool {
   const expectedMerkleRoot = createMerkleRoot(concatAll([
     blockHashes,
     newBlock.getTxsList(),
-    [newBlock.getMiner(), newBlock.getHeight(), newBlock.getVersion(), newBlock.getSchemaVersion(), newBlock.getNrgGrant(), GENESIS_DATA.blockchainFingerprintsRoot]
+    [
+      newBlock.getDifficulty(),
+      newBlock.getMiner(),
+      newBlock.getHeight(),
+      newBlock.getVersion(),
+      newBlock.getSchemaVersion(),
+      newBlock.getNrgGrant(),
+      GENESIS_DATA.blockchainFingerprintsRoot
+    ]
   ]))
 
   return receivedMerkleRoot === expectedMerkleRoot
+}
+
+function isDistanceAboveDifficulty (newBlock: BcBlock): bool {
+  logger.info('isDistanceCorrectlyCalculated validation running')
+  const receivedDistance = newBlock.getDistance()
+  const recievedDifficulty = newBlock.getDifficulty() // !! NOTE: This is the difficulty for THIS block and not for the parent.
+
+  return new BN(receivedDistance).gt(new BN(recievedDifficulty))
 }
 
 function isDistanceCorrectlyCalculated (newBlock: BcBlock): bool {
@@ -180,30 +212,85 @@ function isDistanceCorrectlyCalculated (newBlock: BcBlock): bool {
       blake2bl(newBlock.getNonce()) +
       newBlock.getTimestamp()
     )
-  )
+  ).toString()
   return receivedDistance === expectedDistance
 }
 
-function blockainHeadersOrdered (childHeaderList: BlockchainHeader[], parentHeaderList: BlockchainHeader[]) {
-  // check highest block from child list is higher or equally high as highest block from parent list
-  const pickHighestFromList = (list: BlockchainHeader[]) => {
-    if (list.length === 1) {
-      return list[0]
+export function blockchainHeadersAreChain (childHeaderList: BlockchainHeader[]|Block[], parentHeaderList: BlockchainHeader[]|Block[]) {
+  const firstChildHeader = head(childHeaderList)
+  const lastParentHeader = last(parentHeaderList)
+
+  // check if both parent and child have at least one header
+  if (!firstChildHeader || !lastParentHeader) {
+    const nonEmpty = firstChildHeader || lastParentHeader
+    if (nonEmpty) {
+      logger.warn(`First child header or last parent header were empty for chain ${nonEmpty.getBlockchain()}`)
     } else {
-      return list.reduce((acc, curr) => curr.getHeight() > acc.getHeight() ? curr : acc, list[0])
+      logger.warn(`Both first child header and last parent header were missing`)
+    }
+    return false
+  }
+
+  // check if either the header is the same one or first child header is actual child of last parent header
+  let check = firstChildHeader.getPreviousHash() === lastParentHeader.getHash() ||
+    firstChildHeader.getHash() === lastParentHeader.getHash()
+
+  if (!check) {
+    logger.info(`chain: "${firstChildHeader.getBlockchain()}" First child header ${inspect(firstChildHeader.toObject())} is not a child of last parent header ${inspect(lastParentHeader.toObject())}`)
+    return check
+  }
+
+  // if more than one child header check if child headers form a chain
+  if (childHeaderList.length > 1) {
+    check = aperture(2, childHeaderList).reduce((result, [a, b]) => a.getHash() === b.getPreviousHash() && result, true)
+
+    if (!check) {
+      logger.info(`Child headers do not form a chain`)
+      return check
     }
   }
 
-  const highestChildHeader = pickHighestFromList(childHeaderList)
-  const highestParentHeader = pickHighestFromList(parentHeaderList)
+  // if more than one parent header check if parent headers form a chain
+  if (parentHeaderList.length > 1) {
+    check = aperture(2, parentHeaderList).reduce((result, [a, b]) => a.getHash() === b.getPreviousHash() && result, true)
 
-  // logger.debug(`blockainHeadersOrdered highestChild ${inspect(highestChildHeader.toObject())}, highestParent: ${inspect(highestParentHeader.toObject())}`)
-  return highestChildHeader !== undefined && highestParentHeader !== undefined && highestChildHeader.getHeight() >= highestParentHeader.getHeight()
+    if (!check) {
+      logger.info(`Parent headers do not form a chain`)
+      return check
+    }
+  }
+
+  return true
+}
+
+export function validateRoveredSequences (blocks: BcBlock[]): boolean {
+  const sortedBlocks = sort((a, b) => b.getHeight() - a.getHeight(), blocks)
+  const checks = aperture(2, sortedBlocks).map(([child, parent]) => {
+    return parent.getHeight() === GENESIS_DATA.height || validateChildHeadersSequence(child, parent)
+  })
+
+  logger.debug(`validateRoveredSequences: ${inspect(checks)}`)
+
+  return all(equals(true), flatten(checks))
+}
+
+function validateChildHeadersSequence (childBlock, parentBlock): bool[] {
+  const childBlockchainHeaders = childBlock.getBlockchainHeaders()
+  const parentBlockchainHeaders = parentBlock.getBlockchainHeaders()
+  // TODO this should be a map over all members of BlockchainHeaders instance to prevent error after adding another chain to Collider
+  return [
+    blockchainHeadersAreChain(childBlockchainHeaders.getBtcList(), parentBlockchainHeaders.getBtcList()),
+    blockchainHeadersAreChain(childBlockchainHeaders.getEthList(), parentBlockchainHeaders.getEthList()),
+    blockchainHeadersAreChain(childBlockchainHeaders.getLskList(), parentBlockchainHeaders.getLskList()),
+    blockchainHeadersAreChain(childBlockchainHeaders.getNeoList(), parentBlockchainHeaders.getNeoList()),
+    blockchainHeadersAreChain(childBlockchainHeaders.getWavList(), parentBlockchainHeaders.getWavList())
+  ]
 }
 
 export function validateBlockSequence (blocks: BcBlock[]): bool {
   // if any of the submissions are undefined reject the sequence
   if (reject(identity, blocks).length > 0) {
+    logger.info('undefined members in set')
     return false
   }
   // BC: 10 > BC: 9 > BC: 8 ...
@@ -211,9 +298,12 @@ export function validateBlockSequence (blocks: BcBlock[]): bool {
 
   logger.debug(`validateBlockSequence sorted blocks ${sortedBlocks.map(b => b.getHeight()).toString()}`)
   // validate that Bc blocks are all in the same chain
+  logger.info(aperture(2, sortedBlocks))
   const validPairs = aperture(2, sortedBlocks).map(([a, b]) => {
     return a.getPreviousHash() === b.getHash()
   })
+
+  logger.info('validPairs ' + JSON.stringify(validPairs, null, 2))
 
   logger.debug(`validateBlockSequence sorted blocks ${inspect(aperture(2, sortedBlocks.map(b => b.getHeight())))}`)
   if (!all(equals(true), validPairs)) {
@@ -224,25 +314,23 @@ export function validateBlockSequence (blocks: BcBlock[]): bool {
   // validate that highest header from each blockchain list from each block maintains ordering
   // [[BC10, BC9], [BC9, BC8]]
   const pairs = aperture(2, sortedBlocks)
-
+  const heights = pairs.map((a) => {
+    logger.info(a)
+    return [a[0].getHeight(), a[1].getHeight()]
+  })
+  logger.info('pairs printed after this --> ' + JSON.stringify(heights, null, 2))
   // now create:
   // [[btcOrdered, ethOrdered, lskOrdered, neoOrdered, wavOrdered], [btcOrderder, ethOrdered, lskOrdered, neoOrdered, wavOrdered]]
   //                                e.g. BC10, BC9
   const validPairSubchains = pairs.map(([child, parent]) => {
-    const childBlockchainHeaders = child.getBlockchainHeaders()
-    const parentBlockchainHeaders = parent.getBlockchainHeaders()
-    // TODO this should be a map over all members of BlockchainHeaders instance to prevent error after adding another chain to Collider
-    return [
-      blockainHeadersOrdered(childBlockchainHeaders.getBtcList(), parentBlockchainHeaders.getBtcList()),
-      blockainHeadersOrdered(childBlockchainHeaders.getEthList(), parentBlockchainHeaders.getEthList()),
-      blockainHeadersOrdered(childBlockchainHeaders.getLskList(), parentBlockchainHeaders.getLskList()),
-      blockainHeadersOrdered(childBlockchainHeaders.getNeoList(), parentBlockchainHeaders.getNeoList()),
-      blockainHeadersOrdered(childBlockchainHeaders.getWavList(), parentBlockchainHeaders.getWavList())
-    ]
+    return parent.getHeight() === GENESIS_DATA.height || validateChildHeadersSequence(child, parent)
   })
   // flatten => [btc10_9Ordered, eth10_9Ordered, lsk10_9Ordered, neo10_9Ordered, wav10_9Ordered, btc9_8Orderded, eth9_8Ordered, lsk9_8Ordered, neo9_8Ordered, wav9_8Ordered]
   logger.debug(`validateBlockSequence validPairSubchains ${inspect(validPairSubchains)}`)
+  logger.info('validPairSubchains printed after this  --> ')
+  logger.info(JSON.stringify(validPairSubchains, null, 2))
   if (!all(equals(true), flatten(validPairSubchains))) {
+    logger.info('failed test of rovers')
     return false
   }
 

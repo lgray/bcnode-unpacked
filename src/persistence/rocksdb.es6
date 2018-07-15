@@ -8,7 +8,7 @@
  */
 import type Logger from 'winston'
 const RocksDb = require('rocksdb')
-
+const BN = require('bn.js')
 const debug = require('debug')('bcnode:persistence:rocksdb')
 const { BcBlock } = require('../protos/core_pb')
 const { serialize, deserialize } = require('./codec')
@@ -134,6 +134,296 @@ export default class PersistenceRocksDb {
       .then((results) => {
         return Promise.all(results.filter(a => a !== null))
       })
+  }
+
+  putBulk (key: Array<*>, opts: Object = { asBuffer: true }): Promise<Array<Object>> {
+    const valid = key.filter((k) => {
+      if (k.length === 2) {
+        return k
+      }
+    })
+    const promises = valid.map((k) => {
+      return this.put(k[0], k[1])
+    })
+    return Promise.all(promises.map((p) => p.catch(e => null)))
+      .then((results) => {
+        return Promise.all(results.filter(a => a !== null))
+      })
+  }
+
+  /**
+   * Sorts the given headers from lowest to highest
+   * @param headers
+   */
+  sortChildHeaders (headers: Object[]): Object[] {
+    return headers.sort((a, b) => {
+      if (new BN(a.getHeight()).gt(new BN(b.getHeight())) === true) {
+        return 1
+      }
+      if (new BN(a.getHeight()).lt(new BN(b.getHeight())) === true) {
+        return -1
+      }
+      return 0
+    })
+  }
+  /**
+   * TODO: Turn this into optional condition
+   * Write the child headers contained within a BC Block to disk
+   * @param block BcBlock containing
+   */
+  async forcePutChildHeaders (block: BcBlock, opts: Object = {
+    btc: true,
+    neo: true,
+    lsk: true,
+    eth: true,
+    wav: true
+  }): Promise<*> {
+    const headers = block.getBlockchainHeaders()
+    return Promise.all([]
+      .concat(this.sortChildHeaders(headers.getBtcList()).reverse()
+        .map((b, i) => {
+          if (opts.btc) {
+            if (i < 1) {
+              return this.put('btc.block.latest', b)
+                .then(() => {
+                  return this.put('btc.block.' + b.getHeight(), b)
+                })
+            }
+            return this.put('btc.block.' + b.getHeight(), b)
+          }
+        }))
+      .concat(this.sortChildHeaders(headers.getEthList()).reverse()
+        .map((b, i) => {
+          if (opts.eth) {
+            if (i < 1) {
+              return this.put('eth.block.latest', b)
+                .then(() => {
+                  return this.put('eth.block.' + b.getHeight(), b)
+                })
+            }
+            return this.put('eth.block.' + b.getHeight(), b)
+          }
+        }))
+      .concat(this.sortChildHeaders(headers.getNeoList()).reverse()
+        .map((b, i) => {
+          if (opts.neo) {
+            if (i < 1) {
+              return this.put('neo.block.latest', b)
+                .then(() => {
+                  return this.put('neo.block.' + b.getHeight(), b)
+                })
+            }
+            return this.put('neo.block.' + b.getHeight(), b)
+          }
+        }))
+      .concat(this.sortChildHeaders(headers.getLskList()).reverse()
+        .map((b, i) => {
+          if (opts.lsk) {
+            if (i < 1) {
+              return this.put('lsk.block.latest', b)
+                .then(() => {
+                  return this.put('lsk.block.' + b.getHeight(), b)
+                })
+            }
+            return this.put('lsk.block.' + b.getHeight(), b)
+          }
+        }))
+      .concat(this.sortChildHeaders(headers.getLskList()).reverse()
+        .map((b, i) => {
+          if (opts.wav) {
+            if (i < 1) {
+              return this.put('wav.block.latest', b)
+                .then(() => {
+                  return this.put('wav.block.' + b.getHeight(), b)
+                })
+            }
+            return this.put('wav.block.' + b.getHeight(), b)
+          }
+        }))
+    )
+  }
+
+  /**
+   * Write the child headers contained within a BC Block to disk
+   * @param block BcBlock containing
+   */
+  async putChildHeaders (block: BcBlock, opts: Object = {
+    btc: true,
+    neo: true,
+    lsk: true,
+    eth: true,
+    wav: true
+  }): Promise<*> {
+    const headers = block.getBlockchainHeaders()
+    return Promise.all([]
+      .concat(this.sortChildHeaders(headers.getBtcList())
+        .map((b) => {
+          if (opts.btc) {
+            return async () => {
+              const latest = await this.get('btc.block.latest')
+              return this.get('btc.block.' + b.getHeight() - 1)
+                .then((res) => {
+                  if (res.getHash() === b.getPreviousHash() &&
+                    res.getHash() === latest.getHash()) {
+                    return Promise.all([
+                      this.put('btc.block.latest', b),
+                      this.put('btc.block.' + b.getHeight(), b)
+                    ])
+                  }
+                  return this.put('btc.block.' + b.getHeight(), b)
+                })
+                .catch((err) => {
+                  this._logger.debug(err)
+                  return this.put('btc.block.' + b.getHeight(), b)
+                })
+            }
+          }
+          return Promise.resolve(true)
+        }))
+      .concat(this.sortChildHeaders(headers.getEthList())
+        .map((b) => {
+          if (opts.eth) {
+            return async () => {
+              const latest = await this.get('eth.block.latest')
+              return this.get('eth.block.' + b.getHeight() - 1)
+                .then((res) => {
+                  if (res.getHash() === b.getPreviousHash() &&
+                    res.getHash() === latest.getHash()) {
+                    return Promise.all([
+                      this.put('eth.block.latest', b),
+                      this.put('eth.block.' + b.getHeight(), b)
+                    ])
+                  }
+                  return this.put('eth.block.' + b.getHeight(), b)
+                })
+                .catch((err) => {
+                  this._logger.debug(err)
+                  return this.put('eth.block.' + b.getHeight(), b)
+                })
+            }
+          }
+          return Promise.resolve(true)
+        }))
+      .concat(this.sortChildHeaders(headers.getWavList())
+        .map((b) => {
+          if (opts.wav) {
+            return async () => {
+              const latest = await this.get('wav.block.latest')
+              return this.get('wav.block.' + b.getHeight() - 1)
+                .then((res) => {
+                  if (res.getHash() === b.getPreviousHash() &&
+                    res.getHash() === latest.getHash()) {
+                    return Promise.all([
+                      this.put('wav.block.latest', b),
+                      this.put('wav.block.' + b.getHeight(), b)
+                    ])
+                  }
+                  return this.put('wav.block.' + b.getHeight(), b)
+                })
+                .catch((err) => {
+                  this._logger.debug(err)
+                  return this.put('wav.block.' + b.getHeight(), b)
+                })
+            }
+          }
+          return Promise.resolve(true)
+        }))
+      .concat(this.sortChildHeaders(headers.getNeoList())
+        .map((b) => {
+          if (opts.neo) {
+            return async () => {
+              const latest = await this.get('neo.block.latest')
+              return this.get('neo.block.' + b.getHeight() - 1)
+                .then((res) => {
+                  if (res.getHash() === b.getPreviousHash() &&
+                    res.getHash() === latest.getHash()) {
+                    return Promise.all([
+                      this.put('neo.block.latest', b),
+                      this.put('neo.block.' + b.getHeight(), b)
+                    ])
+                  }
+                  return this.put('neo.block.' + b.getHeight(), b)
+                })
+                .catch((err) => {
+                  this._logger.warn(err)
+                  return this.put('neo.block.' + b.getHeight(), b)
+                })
+            }
+          }
+          return Promise.resolve(true)
+        }))
+      .concat(this.sortChildHeaders(headers.getLskList())
+        .map((b) => {
+          if (opts.lsk) {
+            return async () => {
+              const latest = await this.get('lsk.block.latest')
+              return this.get('lsk.block.' + b.getHeight() - 1)
+                .then((res) => {
+                  if (res.getHash() === b.getPreviousHash() &&
+                    res.getHash() === latest.getHash()) {
+                    return Promise.all([
+                      this.put('lsk.block.latest', b),
+                      this.put('lsk.block.' + b.getHeight(), b)
+                    ])
+                  }
+                  return this.put('lsk.block.' + b.getHeight(), b)
+                })
+                .catch((err) => {
+                  this._logger.debug(err)
+                  return this.put('lsk.block.' + b.getHeight(), b)
+                })
+            }
+          }
+          return Promise.resolve(true)
+        }))
+    )
+  }
+
+  /**
+   * Write pending values to perminent values
+   * @param opts
+   */
+  putPending (blockchain: string = 'bc', opts: Object = { highWaterMark: 100000000, asBuffer: true }): Promise<?boolean> {
+    return new Promise((resolve, reject) => {
+      let highest = false
+      const iter = this.db.iterator(opts)
+      const cycle = () => {
+        return iter.next((err, key) => {
+          if (err) {
+            return reject(err)
+          } else if (key !== undefined && key.indexOf('pending.' + blockchain) > -1) {
+            return this.get(key)
+              .then((res) => {
+                const stringKey = key.toString().replace('pending.', '')
+                if (highest === false) {
+                  highest = res
+                } else if (res.getHeight() > highest.getHeight()) {
+                  highest = res
+                }
+                return this.put(stringKey, res).then(cycle)
+                  .catch((err) => {
+                    return reject(err)
+                  })
+              })
+              .catch((err) => {
+                return reject(err)
+              })
+          }
+          // set the last complete sync height
+          if (highest !== false) {
+            return this.put(blockchain + '.block.checkpoint', highest)
+              .then(() => {
+                return resolve(true)
+              })
+              .catch((err) => {
+                return reject(err)
+              })
+          }
+          return resolve(true)
+        })
+      }
+      return cycle()
+    })
   }
 
   /**

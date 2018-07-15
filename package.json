@@ -1,6 +1,6 @@
 {
   "name": "bcnode",
-  "version": "0.6.1",
+  "version": "0.7.0",
   "description": "Block Collider JS Network Node with miner and rovers",
   "main": "lib/src/init.js",
   "scripts": {
@@ -195,6 +195,7 @@
     "prompt": "^1.0.0",
     "prop-types": "^15.6.1",
     "ramda": "^0.25.0",
+    "random-js": "1.0.8",
     "raven": "^2.6.0",
     "raven-js": "^3.24.2",
     "react": "^16.3.2",

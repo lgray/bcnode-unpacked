@@ -14,7 +14,7 @@ import type PersistenceRocksDb from '../persistence/rocksdb'
 const BN = require('bn.js')
 const { all, flatten, zip } = require('ramda')
 
-const { validateBlockSequence, childrenHeightSum } = require('./validation')
+const { validateRoveredSequences, validateBlockSequence, childrenHeightSum } = require('./validation')
 const { standardId } = require('./helper')
 const { getLogger } = require('../logger')
 
@@ -70,12 +70,57 @@ export class Multiverse {
   }
 
   /**
+   * Accessor for validation function
+   * @returns {*}
+   */
+  validateBlockSequence (blocks: BcBlock[]): boolean {
+    return validateBlockSequence(blocks)
+  }
+
+  /**
+   * Valid Block Range
+   * @returns {*}
+   */
+  async validateBlockSequenceInline (blocks: BcBlock[]): Promise<bool> {
+    if (blocks === undefined || blocks.length < 1) {
+      return Promise.resolve(false)
+    }
+    const sorted = blocks.sort((a, b) => {
+      if (a.getHeight() < b.getHeight()) {
+        return 1
+      }
+      if (a.getHeight() > b.getHeight()) {
+        return -1
+      }
+      return 0
+    })
+    // check if the actually sequence itself is valid
+    const upperBound = sorted[0]
+    const lowerBound = sorted[sorted.length - 1]
+    const upperBoundChild = await this.persistence.get(`pending.bc.block.${sorted[0].getHeight() + 1}`)
+    // current pending block does not match the purposed block at that height
+    if (upperBoundChild === undefined || upperBound.getHash() !== upperBoundChild.getPreviousHash()) return Promise.reject(new Error('pending block does not match purposed block'))
+    // add the child block of the sequence
+    sorted.unshift(upperBoundChild)
+    if (lowerBound === 1) {
+      // if at final depth this will equal 1 or the genesis block
+      const lowerBoundParent = await this.persistence.get('bc.block.1')
+      if (lowerBound.getPreviousHash() !== lowerBoundParent.getHash()) return Promise.reject(new Error('sync did not resolve to genesis block'))
+      // add the genesis block to the sequence
+      sorted.push(lowerBoundParent)
+    }
+    // finally check the entire sequence
+    if (!validateBlockSequence(sorted)) return Promise.reject(new Error('block sequence invalid'))
+    return Promise.resolve(true)
+  }
+
+  /**
    * Get highest block in Multiverse
    * @returns {*}
    */
   getHighestBlock (): BcBlock|null {
     if (this._chain.length === 0) {
-      return null
+      return
     }
     return this._chain[0]
   }
@@ -104,40 +149,74 @@ export class Multiverse {
   }
 
   /**
+   * check if a block exists
+   * @param newBlock
+   * @returns {boolean}
+   */
+  hasBlock (newBlock: BcBlock): boolean {
+    if (this._chain.length < 1) {
+      return false
+    }
+    return this._chain.reduce((state, b) => {
+      if (state === true) {
+        return state
+      } else if (b.getHash() === newBlock.getHash()) {
+        return true
+      }
+      return false
+    }, false)
+  }
+
+  /**
    * Check if immmediate height is better
    * @param newBlock
    * @returns {boolean}
    */
   addBestBlock (newBlock: BcBlock): boolean {
+    this._logger.info(11)
     const currentHighestBlock = this.getHighestBlock()
     const currentParentHighestBlock = this.getParentHighestBlock()
-    if (currentHighestBlock === null) {
+    if (currentHighestBlock === null || currentHighestBlock === undefined) {
       // assume we always have current highest block
-      throw Error('Cannot get currentHighestBlock')
+      this._logger.error('Cannot get currentHighestBlock')
+      this._logger.info('bestBlock: failed  ')
+      return true
     }
+    this._logger.info(12)
     // if no block is available go by total difficulty
     // FAIL if new block not within 16 seconds of local time
-    if (newBlock.getTimestamp() + 21 < Math.floor(Date.now() * 0.001)) {
+    if (newBlock.getTimestamp() + 16 < Math.floor(Date.now() * 0.001)) {
+      this._logger.info('bestBlock: failed timestamp ')
       return false
     }
+    this._logger.info(13)
+    // if there is no current parent, this block is the right lbock
     if (currentParentHighestBlock === false) {
-      if (new BN(newBlock.getTotalDifficulty()).gt(new BN(currentHighestBlock.getTotalDifficulty()))) {
+      if (new BN(newBlock.getTotalDistance()).gt(new BN(currentHighestBlock.getTotalDistance()))) {
+        this._logger.info('bestBlock failed newBlock total distance < currentHighestBlock total distance')
         this._chain.length = 0
         this._chain.push(newBlock)
         return true
       }
       return false
     }
+    this._logger.info(14)
     // FAIL if newBlock total difficulty <  currentHighestBlock
-    if (new BN(newBlock.getTotalDifficulty()).lt(new BN(currentHighestBlock.getTotalDifficulty()))) {
+    if (new BN(newBlock.getTotalDistance()).lt(new BN(currentHighestBlock.getTotalDistance()))) {
+      this._logger.info('bestBlock failed newBlock total distance < currentHighestBlock total distance')
       return false
     }
-    if (currentParentHighestBlock !== null && newBlock.getPreviousHash() === currentParentHighestBlock.getHash() && validateBlockSequence([newBlock, currentParentHighestBlock]) === true) {
+    // if the current block at the same height is better switch
+    if (currentParentHighestBlock !== null &&
+        currentParentHighestBlock !== undefined &&
+        newBlock.getPreviousHash() === currentParentHighestBlock.getHash() &&
+        validateBlockSequence([newBlock, currentParentHighestBlock]) === true) {
+      this._logger.info('new block at its height greater total than block in multiverse')
       this._chain.shift()
       this._chain.unshift(newBlock)
       return true
     }
-
+    this._logger.info(15)
     return false
   }
 
@@ -147,46 +226,82 @@ export class Multiverse {
    * @returns {boolean}
    */
   addNextBlock (newBlock: BcBlock): boolean {
+    // return false for empty block
+    if (newBlock === undefined || newBlock === null) {
+      return false
+    }
+    this._logger.info(1)
     // if there are no blocks in the multiverse this block is the highest
     if (this._chain.length === 0) {
       this._chain.push(newBlock)
       return true
     }
+    this._logger.info(2)
     const currentHighestBlock = this.getHighestBlock()
     // PASS no other candidate in Multiverse
-    if (currentHighestBlock === null) {
+    if (currentHighestBlock === null || currentHighestBlock === undefined) {
       this._chain.unshift(newBlock)
       return true // TODO added - check with @schnorr
     }
-    // FAIL if newBlock totalDifficulty < (lt) currentHighestBlock totalDifficulty
-    if (new BN(newBlock.getTotalDifficulty()).lt(new BN(currentHighestBlock.getTotalDifficulty()))) {
+    this._logger.info(3)
+    this._logger.info(' highestBlock hash - ' + currentHighestBlock.getHash())
+    this._logger.info(' highestBlock previousHash - ' + currentHighestBlock.getPreviousHash())
+    this._logger.info(' highestBlock height - ' + currentHighestBlock.getHeight())
+    this._logger.info(' highestBlock difficulty - ' + currentHighestBlock.getDifficulty())
+    this._logger.info(' newBlock hash - ' + newBlock.getHash())
+    this._logger.info(' newBlock height - ' + newBlock.getHeight())
+    this._logger.info(' newBlock difficulty - ' + newBlock.getDifficulty())
+    this._logger.info(' newBlock previousHash - ' + newBlock.getPreviousHash())
+    // Fail is the block hashes are identical
+    if (currentHighestBlock !== undefined && newBlock.getHash() === currentHighestBlock.getHash()) {
       return false
     }
+    this._logger.info(4)
+    // FAIL if newBlock totalDifficulty < (lt) currentHighestBlock totalDifficulty
+    if (new BN(newBlock.getTotalDistance()).lt(new BN(currentHighestBlock.getTotalDistance()))) {
+      return false
+    }
+    this._logger.info(5)
     // FAIL if malformed timestamp referenced from previous block with five second lag
     if (newBlock.getTimestamp() + 5 <= currentHighestBlock.getTimestamp()) {
-      this._logger.debug('purposed block ' + newBlock.getHash() + ' has invalid timestamp ' + newBlock.getTimestamp() + ' from current height timestamp ' + currentHighestBlock.getTimestamp())
+      this._logger.info('purposed block ' + newBlock.getHash() + ' has invalid timestamp ' + newBlock.getTimestamp() + ' from current height timestamp ' + currentHighestBlock.getTimestamp())
       return this.addBestBlock(newBlock)
     }
+    this._logger.info(6)
     // FAIL if timestamp of block is greater than 31 seconds from system time
     if (newBlock.getTimestamp() + 31 < Math.floor(Date.now() * 0.001)) {
-      this._logger.debug('purposed block ' + newBlock.getHash() + ' has invalid timestamp ' + newBlock.getTimestamp() + ' from current height timestamp ' + currentHighestBlock.getTimestamp())
+      this._logger.info('purposed block ' + newBlock.getHash() + ' has invalid timestamp ' + newBlock.getTimestamp() + ' from current height timestamp ' + currentHighestBlock.getTimestamp())
       return this.addBestBlock(newBlock)
     }
+    this._logger.info(7)
     // FAIL if newBlock does not reference the current highest block as it's previous hash
     if (newBlock.getPreviousHash() !== currentHighestBlock.getHash()) {
-      this._logger.debug('purposed block ' + newBlock.getHash() + ' previous hash not current highest ' + currentHighestBlock.getHash())
+      this._logger.info('purposed block ' + newBlock.getHash() + ' previous hash not current highest ' + currentHighestBlock.getHash())
       return this.addBestBlock(newBlock)
     }
+    this._logger.info(8)
     // FAIL if newBlock does not reference the current highest block as it's previous hash
-    if (validateBlockSequence([newBlock, currentHighestBlock]) !== true) {
-      this._logger.debug('addition of block ' + newBlock.getHash() + ' creates malformed child blockchain sequence')
-      return this.addBestBlock(newBlock)
-    }
+    // note this ignores the first block immediately following the genesis block due to lack of rovered blocks in the genesis block
+    // ////////////// ALWAYS FAILS HERE /////////////////
+    // if (newBlock.getHeight() > 2 && validateBlockSequence([newBlock, currentHighestBlock]) !== true) {
+    //   this._logger.info(8.5)
+    //   this._logger.info('addition of block ' + newBlock.getHash() + ' creates malformed child blockchain sequence')
+    //   return this.addBestBlock(newBlock)
+    // }
+    this._logger.info(9)
     // PASS add the new block to the parent position
     this._chain.unshift(newBlock)
+    const validRovers = validateRoveredSequences([newBlock, currentHighestBlock])
+
+    if (validRovers === false) {
+      this._logger.info('ERROR in multitasking which lead to wayward rovers')
+      return this.addBestBlock(newBlock)
+    }
+
     if (this._chain.length > 7) {
       this._chain.pop()
     }
+    this._logger.info(10)
     return true
   }
 
@@ -196,38 +311,69 @@ export class Multiverse {
    * @param newBlock
    * @returns {boolean}
    */
-  addResyncRequest (newBlock: BcBlock): Promise<boolean> {
+  addResyncRequest (newBlock: BcBlock, strict: boolean = true): Promise<boolean> {
     const currentHighestBlock = this.getHighestBlock()
     const currentParentHighestBlock = this.getParentHighestBlock()
 
-    // PASS if no highest block exists go with current
-    if (currentHighestBlock === null) {
+    if (this._chain.length === 0) {
+      this._logger.info('passed resync req: currentHighestBlock is null')
       return Promise.resolve(true)
+    }
+
+    // pass if no highest block exists go with current
+    if (currentHighestBlock === null) {
+      this._logger.info('passed resync req: currentHighestBlock is null')
+      return Promise.resolve(true)
+    }
+
+    // only block is the genesis block
+    if (currentHighestBlock.getHeight() === 1 && newBlock.getHeight() > 1) {
+      this._logger.info('passed resync req: new block was above genesis')
+      return Promise.resolve(true)
+    }
+
+    // Fail is the block hashes are identical
+    if (newBlock.getHash() === currentHighestBlock.getHash()) {
+      this._logger.info('failed resync req: newBlock hash matches')
+      return Promise.resolve(false)
     }
 
     // FAIL if new block not within 16 seconds of local time
     if (newBlock.getTimestamp() + 16 < Math.floor(Date.now() * 0.001)) {
+      this._logger.info('failed resync req: time below 16 seconds')
       return Promise.resolve(false)
     }
+
+    if (this._chain.length < 2) {
+      this._logger.info('determining if chain current total distance is less than new block')
+      if (new BN(currentHighestBlock.getTotalDistance()).lt(newBlock.getTotalDistance())) {
+        return Promise.resolve(true)
+      }
+    }
+
     if (currentParentHighestBlock === null && currentHighestBlock !== null) {
-      if (new BN(newBlock.getTotalDifficulty()).gt(new BN(currentHighestBlock.getTotalDifficulty()))) {
+      if (new BN(newBlock.getTotalDistance()).gt(new BN(currentHighestBlock.getTotalDistance()))) {
+        this._logger.info('passed resync req: total distance of new block is greater than current highest')
         this.addCandidateBlock(newBlock)
         return Promise.resolve(true)
       }
     }
+
     // FAIL if newBlock total difficulty <  currentHighestBlock
-    if (new BN(newBlock.getTotalDifficulty()).lt(new BN(currentHighestBlock.getTotalDifficulty()))) {
+    if (new BN(newBlock.getTotalDistance()).lt(new BN(currentHighestBlock.getTotalDistance()))) {
+      this._logger.info('failed resync req: new block distance is lower than highest block')
       return Promise.resolve(false)
     }
-
     // make sure that blocks that are added reference child chains
     return this.validateRoveredBlocks(newBlock).then(areAllChildrenRovered => {
       if (!areAllChildrenRovered) {
+        this._logger.info('failed resync req: not all rovers have found blocks')
         return Promise.resolve(false)
       }
 
       // FAIL if sum of child block heights is less than the rovered child heights
       if (childrenHeightSum(newBlock) <= childrenHeightSum(currentParentHighestBlock)) {
+        this._logger.info('child height of new block is lower than height the current parent block')
         return Promise.resolve(false)
       }
       this.addCandidateBlock(newBlock)
@@ -281,7 +427,7 @@ export class Multiverse {
   // NOTE: Multiverse print disabled. Why?
   print () {
     // this._logger.info(this._blocks)
-    this._logger.debug('multiverse print disabled')
+    this._logger.info('multiverse print disabled')
   }
 }
 

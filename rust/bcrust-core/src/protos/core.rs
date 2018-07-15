@@ -978,11 +978,11 @@ pub struct BcBlock {
     pub schema_version: u64,
     pub height: u64,
     pub miner: ::std::string::String,
-    pub difficulty: f32,
+    pub difficulty: ::std::string::String,
     pub timestamp: u64,
     pub merkle_root: ::std::string::String,
     pub chain_root: ::std::string::String,
-    pub distance: u64,
+    pub distance: ::std::string::String,
     pub total_distance: ::std::string::String,
     pub nonce: ::std::string::String,
     pub nrg_grant: u64,
@@ -1197,26 +1197,37 @@ impl BcBlock {
         &mut self.miner
     }
 
-    // float difficulty = 7;
+    // string difficulty = 7;
 
     pub fn clear_difficulty(&mut self) {
-        self.difficulty = 0.;
+        self.difficulty.clear();
     }
 
     // Param is passed by value, moved
-    pub fn set_difficulty(&mut self, v: f32) {
+    pub fn set_difficulty(&mut self, v: ::std::string::String) {
         self.difficulty = v;
     }
 
-    pub fn get_difficulty(&self) -> f32 {
-        self.difficulty
+    // Mutable pointer to the field.
+    // If field is not initialized, it is initialized with default value first.
+    pub fn mut_difficulty(&mut self) -> &mut ::std::string::String {
+        &mut self.difficulty
     }
 
-    fn get_difficulty_for_reflect(&self) -> &f32 {
+    // Take field
+    pub fn take_difficulty(&mut self) -> ::std::string::String {
+        ::std::mem::replace(&mut self.difficulty, ::std::string::String::new())
+    }
+
+    pub fn get_difficulty(&self) -> &str {
         &self.difficulty
     }
 
-    fn mut_difficulty_for_reflect(&mut self) -> &mut f32 {
+    fn get_difficulty_for_reflect(&self) -> &::std::string::String {
+        &self.difficulty
+    }
+
+    fn mut_difficulty_for_reflect(&mut self) -> &mut ::std::string::String {
         &mut self.difficulty
     }
 
@@ -1311,26 +1322,37 @@ impl BcBlock {
         &mut self.chain_root
     }
 
-    // uint64 distance = 11;
+    // string distance = 11;
 
     pub fn clear_distance(&mut self) {
-        self.distance = 0;
+        self.distance.clear();
     }
 
     // Param is passed by value, moved
-    pub fn set_distance(&mut self, v: u64) {
+    pub fn set_distance(&mut self, v: ::std::string::String) {
         self.distance = v;
     }
 
-    pub fn get_distance(&self) -> u64 {
-        self.distance
+    // Mutable pointer to the field.
+    // If field is not initialized, it is initialized with default value first.
+    pub fn mut_distance(&mut self) -> &mut ::std::string::String {
+        &mut self.distance
     }
 
-    fn get_distance_for_reflect(&self) -> &u64 {
+    // Take field
+    pub fn take_distance(&mut self) -> ::std::string::String {
+        ::std::mem::replace(&mut self.distance, ::std::string::String::new())
+    }
+
+    pub fn get_distance(&self) -> &str {
         &self.distance
     }
 
-    fn mut_distance_for_reflect(&mut self) -> &mut u64 {
+    fn get_distance_for_reflect(&self) -> &::std::string::String {
+        &self.distance
+    }
+
+    fn mut_distance_for_reflect(&mut self) -> &mut ::std::string::String {
         &mut self.distance
     }
 
@@ -1982,11 +2004,7 @@ impl ::protobuf::Message for BcBlock {
                     ::protobuf::rt::read_singular_proto3_string_into(wire_type, is, &mut self.miner)?;
                 },
                 7 => {
-                    if wire_type != ::protobuf::wire_format::WireTypeFixed32 {
-                        return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
-                    }
-                    let tmp = is.read_float()?;
-                    self.difficulty = tmp;
+                    ::protobuf::rt::read_singular_proto3_string_into(wire_type, is, &mut self.difficulty)?;
                 },
                 8 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
@@ -2002,11 +2020,7 @@ impl ::protobuf::Message for BcBlock {
                     ::protobuf::rt::read_singular_proto3_string_into(wire_type, is, &mut self.chain_root)?;
                 },
                 11 => {
-                    if wire_type != ::protobuf::wire_format::WireTypeVarint {
-                        return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
-                    }
-                    let tmp = is.read_uint64()?;
-                    self.distance = tmp;
+                    ::protobuf::rt::read_singular_proto3_string_into(wire_type, is, &mut self.distance)?;
                 },
                 12 => {
                     ::protobuf::rt::read_singular_proto3_string_into(wire_type, is, &mut self.total_distance)?;
@@ -2130,8 +2144,8 @@ impl ::protobuf::Message for BcBlock {
         if !self.miner.is_empty() {
             my_size += ::protobuf::rt::string_size(6, &self.miner);
         }
-        if self.difficulty != 0. {
-            my_size += 5;
+        if !self.difficulty.is_empty() {
+            my_size += ::protobuf::rt::string_size(7, &self.difficulty);
         }
         if self.timestamp != 0 {
             my_size += ::protobuf::rt::value_size(8, self.timestamp, ::protobuf::wire_format::WireTypeVarint);
@@ -2142,8 +2156,8 @@ impl ::protobuf::Message for BcBlock {
         if !self.chain_root.is_empty() {
             my_size += ::protobuf::rt::string_size(10, &self.chain_root);
         }
-        if self.distance != 0 {
-            my_size += ::protobuf::rt::value_size(11, self.distance, ::protobuf::wire_format::WireTypeVarint);
+        if !self.distance.is_empty() {
+            my_size += ::protobuf::rt::string_size(11, &self.distance);
         }
         if !self.total_distance.is_empty() {
             my_size += ::protobuf::rt::string_size(12, &self.total_distance);
@@ -2231,8 +2245,8 @@ impl ::protobuf::Message for BcBlock {
         if !self.miner.is_empty() {
             os.write_string(6, &self.miner)?;
         }
-        if self.difficulty != 0. {
-            os.write_float(7, self.difficulty)?;
+        if !self.difficulty.is_empty() {
+            os.write_string(7, &self.difficulty)?;
         }
         if self.timestamp != 0 {
             os.write_uint64(8, self.timestamp)?;
@@ -2243,8 +2257,8 @@ impl ::protobuf::Message for BcBlock {
         if !self.chain_root.is_empty() {
             os.write_string(10, &self.chain_root)?;
         }
-        if self.distance != 0 {
-            os.write_uint64(11, self.distance)?;
+        if !self.distance.is_empty() {
+            os.write_string(11, &self.distance)?;
         }
         if !self.total_distance.is_empty() {
             os.write_string(12, &self.total_distance)?;
@@ -2384,7 +2398,7 @@ impl ::protobuf::MessageStatic for BcBlock {
                     BcBlock::get_miner_for_reflect,
                     BcBlock::mut_miner_for_reflect,
                 ));
-                fields.push(::protobuf::reflect::accessor::make_simple_field_accessor::<_, ::protobuf::types::ProtobufTypeFloat>(
+                fields.push(::protobuf::reflect::accessor::make_simple_field_accessor::<_, ::protobuf::types::ProtobufTypeString>(
                     "difficulty",
                     BcBlock::get_difficulty_for_reflect,
                     BcBlock::mut_difficulty_for_reflect,
@@ -2404,7 +2418,7 @@ impl ::protobuf::MessageStatic for BcBlock {
                     BcBlock::get_chain_root_for_reflect,
                     BcBlock::mut_chain_root_for_reflect,
                 ));
-                fields.push(::protobuf::reflect::accessor::make_simple_field_accessor::<_, ::protobuf::types::ProtobufTypeUint64>(
+                fields.push(::protobuf::reflect::accessor::make_simple_field_accessor::<_, ::protobuf::types::ProtobufTypeString>(
                     "distance",
                     BcBlock::get_distance_for_reflect,
                     BcBlock::mut_distance_for_reflect,
@@ -3215,16 +3229,16 @@ static file_descriptor_proto_data: &'static [u8] = b"\
     \x01(\tR\x0cpreviousHash\x12\x18\n\x07version\x18\x03\x20\x01(\x04R\x07v\
     ersion\x12%\n\x0eschema_version\x18\x04\x20\x01(\x04R\rschemaVersion\x12\
     \x16\n\x06height\x18\x05\x20\x01(\x04R\x06height\x12\x14\n\x05miner\x18\
-    \x06\x20\x01(\tR\x05miner\x12\x1e\n\ndifficulty\x18\x07\x20\x01(\x02R\nd\
-    ifficulty\x12\x1c\n\ttimestamp\x18\x08\x20\x01(\x04R\ttimestamp\x12\x1f\
-    \n\x0bmerkle_root\x18\t\x20\x01(\tR\nmerkleRoot\x12\x1d\n\nchain_root\
-    \x18\n\x20\x01(\tR\tchainRoot\x12\x1a\n\x08distance\x18\x0b\x20\x01(\x04\
-    R\x08distance\x12%\n\x0etotal_distance\x18\x0c\x20\x01(\tR\rtotalDistanc\
-    e\x12\x14\n\x05nonce\x18\r\x20\x01(\tR\x05nonce\x12\x1b\n\tnrg_grant\x18\
-    \x0e\x20\x01(\x04R\x08nrgGrant\x12\x1f\n\x0btarget_hash\x18\x0f\x20\x01(\
-    \tR\ntargetHash\x12#\n\rtarget_height\x18\x10\x20\x01(\x04R\x0ctargetHei\
-    ght\x12!\n\x0ctarget_miner\x18\x11\x20\x01(\tR\x0btargetMiner\x12)\n\x10\
-    target_signature\x18\x12\x20\x01(\tR\x0ftargetSignature\x12\x10\n\x03twn\
+    \x06\x20\x01(\tR\x05miner\x12\x1e\n\ndifficulty\x18\x07\x20\x01(\tR\ndif\
+    ficulty\x12\x1c\n\ttimestamp\x18\x08\x20\x01(\x04R\ttimestamp\x12\x1f\n\
+    \x0bmerkle_root\x18\t\x20\x01(\tR\nmerkleRoot\x12\x1d\n\nchain_root\x18\
+    \n\x20\x01(\tR\tchainRoot\x12\x1a\n\x08distance\x18\x0b\x20\x01(\tR\x08d\
+    istance\x12%\n\x0etotal_distance\x18\x0c\x20\x01(\tR\rtotalDistance\x12\
+    \x14\n\x05nonce\x18\r\x20\x01(\tR\x05nonce\x12\x1b\n\tnrg_grant\x18\x0e\
+    \x20\x01(\x04R\x08nrgGrant\x12\x1f\n\x0btarget_hash\x18\x0f\x20\x01(\tR\
+    \ntargetHash\x12#\n\rtarget_height\x18\x10\x20\x01(\x04R\x0ctargetHeight\
+    \x12!\n\x0ctarget_miner\x18\x11\x20\x01(\tR\x0btargetMiner\x12)\n\x10tar\
+    get_signature\x18\x12\x20\x01(\tR\x0ftargetSignature\x12\x10\n\x03twn\
     \x18\x13\x20\x01(\x04R\x03twn\x12\x10\n\x03tws\x18\x14\x20\x03(\tR\x03tw\
     s\x12#\n\remblem_weight\x18\x15\x20\x01(\x04R\x0cemblemWeight\x125\n\x17\
     emblem_chain_block_hash\x18\x16\x20\x01(\tR\x14emblemChainBlockHash\x12A\

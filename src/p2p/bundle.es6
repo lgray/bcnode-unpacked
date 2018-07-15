@@ -8,6 +8,8 @@
  */
 import { ManagedPeerBook } from './book'
 
+const debug = require('debug')('bcnode:bundle')
+
 const libp2p = require('libp2p')
 const KadDHT = require('libp2p-kad-dht')
 const Mplex = require('libp2p-mplex')
@@ -22,6 +24,7 @@ export class Bundle extends libp2p {
   peerInfo: ManagedPeerBook
   peerBook: ?ManagedPeerBook
   options: Object
+  _discoveryEnabled: bool
 
   constructor (peerInfo: PeerInfo, peerBook: ManagedPeerBook, opts: Object) {
     const signaling = opts.signaling
@@ -46,6 +49,63 @@ export class Bundle extends libp2p {
     }
 
     super(modules, peerInfo, peerBook, opts)
+    this._discoveryEnabled = true
+  }
+
+  get discoveryEnabled (): bool {
+    return this._discoveryEnabled
+  }
+
+  /**
+   * Start discovery services
+   *
+   * @returns {Promise<boolean>}
+   */
+  startDiscovery (): Promise<bool> {
+    debug('startDiscovery()')
+
+    if (this.discoveryEnabled) {
+      debug('startDiscovery() - Discovery already started')
+      return Promise.resolve(false)
+    }
+
+    const methods = this.modules.discovery || []
+    methods.forEach((discovery) => {
+      const tag = discovery.tag
+      debug('startDiscovery() - starting', tag)
+      discovery.start((res) => {
+        debug('startDiscovery() - Discovery started', arguments)
+      })
+    })
+
+    this._discoveryEnabled = true
+    return Promise.resolve(true)
+  }
+
+  /**
+   * Stop discovery services
+   *
+   * @returns {Promise<boolean>}
+   */
+  stopDiscovery (): Promise<bool> {
+    debug('stopDiscovery()')
+
+    if (!this.discoveryEnabled) {
+      debug('startDiscovery() - Discovery already stopped')
+      return Promise.resolve(false)
+    }
+
+    const methods = this.modules.discovery || []
+    methods.forEach((discovery) => {
+      const tag = discovery.tag
+      debug('stopDiscovery() - stopping', tag)
+      discovery.stop((res) => {
+        debug('stopDiscovery() - Discovery stopped', arguments)
+      })
+    })
+
+    this._discoveryEnabled = false
+    return Promise.resolve(true)
   }
 }
 

@@ -14,11 +14,11 @@ const { inspect } = require('util')
 const PeerInfo = require('peer-info')
 const waterfall = require('async/waterfall')
 const pull = require('pull-stream')
-const { uniqBy } = require('ramda')
+// const { uniqBy } = require('ramda')
 
 const debug = require('debug')('bcnode:p2p:node')
 const { config } = require('../config')
-const { toObject } = require('../helper/debug')
+// const { toObject } = require('../helper/debug')
 const { getVersion } = require('../helper/version')
 const logging = require('../logger')
 
@@ -26,15 +26,15 @@ const { BcBlock } = require('../protos/core_pb')
 const { ManagedPeerBook } = require('./book')
 const Bundle = require('./bundle').default
 const Signaling = require('./signaling').websocket
-const { PeerManager, DATETIME_STARTED_AT } = require('./manager/manager')
-const { validateBlockSequence } = require('../bc/validation')
+const { PeerManager, DATETIME_STARTED_AT, QUORUM_SIZE } = require('./manager/manager')
+// const { validateBlockSequence } = require('../bc/validation')
 const { Multiverse } = require('../bc/multiverse')
 const { BlockPool } = require('../bc/blockpool')
-const { blockByTotalDistanceSorter } = require('../engine/helper')
+// const { blockByTotalDistanceSorter } = require('../engine/helper')
 
 const { PROTOCOL_PREFIX, NETWORK_ID } = require('./protocol/version')
 
-const { PEER_QUORUM_SIZE } = require('./quorum')
+// const { PEER_QUORUM_SIZE } = require('./quorum')
 
 export class PeerNode {
   _logger: Object // eslint-disable-line no-undef
@@ -155,7 +155,12 @@ export class PeerNode {
         this._logger.info('Registering event handlers')
 
         this.bundle.on('peer:discovery', (peer) => {
-          return this.manager.onPeerDiscovery(peer)
+          return this.manager.onPeerDiscovery(peer).then(() => {
+            if (this._shouldStopDiscovery()) {
+              debug(`peer:discovery - Quorum of ${QUORUM_SIZE} reached, stopping discovery`)
+              return this.stopDiscovery()
+            }
+          })
         })
 
         this.bundle.on('peer:connect', (peer) => {
@@ -163,7 +168,12 @@ export class PeerNode {
         })
 
         this.bundle.on('peer:disconnect', (peer) => {
-          return this.manager.onPeerDisconnect(peer)
+          return this.manager.onPeerDisconnect(peer).then(() => {
+            if (this._shouldStartDiscovery()) {
+              debug(`peer:disconnect - Quorum of ${QUORUM_SIZE} not reached, starting discovery`)
+              return this.startDiscovery()
+            }
+          })
         })
 
         cb(null)
@@ -191,6 +201,94 @@ export class PeerNode {
     return true
   }
 
+  /**
+   *  Start (all) discovery services
+   *
+   * @returns {Promise}
+   */
+  startDiscovery (): Promise<bool> {
+    debug('startDiscovery()')
+
+    if (!this.bundle) {
+      return Promise.resolve(false)
+    }
+
+    return this.bundle.startDiscovery()
+  }
+
+  /**
+   * Stop (all) discovery services
+   *
+   * @returns {Promise}
+   */
+  stopDiscovery (): Promise<bool> {
+    debug('stopDiscovery()')
+
+    if (!this.bundle) {
+      return Promise.resolve(false)
+    }
+
+    return this.bundle.stopDiscovery()
+  }
+
+  /**
+   * Should be discovery started?
+   *
+   * - Is bundle initialized?
+   * - Is discovery already started?
+   * - Is the quorum not reached yet?
+   *
+   * @returns {boolean}
+   * @private
+   */
+  _shouldStartDiscovery (): bool {
+    debug('_shouldStartDiscovery()')
+
+    // Check if bundle is initialized and discovery is enabled
+    const bundle = this.bundle
+    if (!bundle || bundle.discoveryEnabled) {
+      debug('_shouldStartDiscovery() - discovery enabled')
+      return false
+    }
+
+    // Check if manager is initialized
+    const manager = this.manager
+    if (!manager) {
+      debug('_shouldStartDiscovery() - manager null')
+      return false
+    }
+
+    return !manager.hasQuorum
+  }
+
+  /**
+   * Should be discovery stopped?
+   *
+   * - Is bundle initialized?
+   * - Is discovery already stopped?
+   * - Is the quorum reached already?
+   *
+   * @returns {*}
+   * @private
+   */
+  _shouldStopDiscovery (): bool {
+    debug('_shouldStopDiscovery()')
+
+    // Check if bundle is initialized and discovery is enabled
+    const bundle = this.bundle
+    if (!bundle || !bundle.discoveryEnabled) {
+      return false
+    }
+
+    // Check if manager is initialized
+    const manager = this.manager
+    if (!manager) {
+      return false
+    }
+
+    return manager.hasQuorum
+  }
+
   broadcastNewBlock (block: BcBlock) {
     this._logger.debug(`Broadcasting msg to peers, ${inspect(block.toObject())}`)
 
@@ -211,57 +309,58 @@ export class PeerNode {
 
   // get the best multiverse from all peers
   triggerBlockSync () {
-    const peerMultiverses = []
+    // const peerMultiverses = []
     // Notify miner to stop mining
     this.reportSyncPeriod(true)
 
     this.manager.peerBookConnected.getAllArray().map(peer => {
-      this.manager.createPeer(peer)
-        .getMultiverse()
-        .then((multiverse) => {
-          debug('Got multiverse from peer', peer.id.toB58String(), toObject(multiverse))
-          peerMultiverses.push(multiverse)
+      this.reportSyncPeriod(true)
+      // this.manager.createPeer(peer)
+      //  .getMultiverse()
+      //  .then((multiverse) => {
+      //    debug('Got multiverse from peer', peer.id.toB58String(), toObject(multiverse))
+      //    peerMultiverses.push(multiverse)
 
-          if (peerMultiverses.length >= PEER_QUORUM_SIZE) {
-            const candidates = peerMultiverses.reduce((acc: Array<Object>, peerMultiverse) => {
-              if (peerMultiverse.length > 0 && validateBlockSequence(peerMultiverse)) {
-                acc.push(peerMultiverse)
-              }
+      //    if (peerMultiverses.length >= PEER_QUORUM_SIZE) {
+      //      const candidates = peerMultiverses.reduce((acc: Array<Object>, peerMultiverse) => {
+      //        if (peerMultiverse.length > 0 && validateBlockSequence(peerMultiverse)) {
+      //          acc.push(peerMultiverse)
+      //        }
 
-              return acc
-            }, [])
+      //        return acc
+      //      }, [])
 
-            if (candidates.length >= PEER_QUORUM_SIZE) {
-              const uniqueCandidates = uniqBy((candidate) => candidate[0].getHash(), candidates)
-              if (uniqueCandidates.length === 1) {
-                // TODO: Commit as active multiverse and begin full sync from known peers
-              } else {
-                const peerMultiverseByDifficultySum = uniqueCandidates
-                  .map(peerBlocks => peerBlocks[0])
-                  .sort(blockByTotalDistanceSorter)
+      //      if (candidates.length >= PEER_QUORUM_SIZE) {
+      //        const uniqueCandidates = uniqBy((candidate) => candidate[0].getHash(), candidates)
+      //        if (uniqueCandidates.length === 1) {
+      //          // TODO: Commit as active multiverse and begin full sync from known peers
+      //        } else {
+      //          const peerMultiverseByDifficultySum = uniqueCandidates
+      //            .map(peerBlocks => peerBlocks[0])
+      //            .sort(blockByTotalDistanceSorter)
 
-                const winningMultiverse = peerMultiverseByDifficultySum[0]
-                // TODO split the work among multiple correct candidates
-                // const syncCandidates = candidates.filter((candidate) => {
-                //   if (winner.getHash() === candidate[0].getHash()) {
-                //     return true
-                //   }
-                //   return false
-                // })
-                const lowestBlock = this.multiverse.getLowestBlock()
-                // TODO handle winningMultiverse[0] === undefined, see sentry BCNODE-6F
-                if (lowestBlock && lowestBlock.getHash() !== winningMultiverse[0].getHash()) {
-                  this._blockPool.maximumHeight = lowestBlock.getHeight()
-                  // insert into the multiverse
-                  winningMultiverse.map(block => this.multiverse.addNextBlock(block))
-                  // TODO: Use RXP
-                  // Report not syncing
-                  this.reportSyncPeriod(false)
-                }
-              }
-            }
-          }
-        })
+      //          const winningMultiverse = peerMultiverseByDifficultySum[0]
+      //          // TODO split the work among multiple correct candidates
+      //          // const syncCandidates = candidates.filter((candidate) => {
+      //          //   if (winner.getHash() === candidate[0].getHash()) {
+      //          //     return true
+      //          //   }
+      //          //   return false
+      //          // })
+      //          const lowestBlock = this.multiverse.getLowestBlock()
+      //          // TODO handle winningMultiverse[0] === undefined, see sentry BCNODE-6F
+      //          if (lowestBlock && lowestBlock.getHash() !== winningMultiverse[0].getHash()) {
+      //            this._blockPool.maximumHeight = lowestBlock.getHeight()
+      //            // insert into the multiverse
+      //            winningMultiverse.map(block => this.multiverse.addNextBlock(block))
+      //            // TODO: Use RXP
+      //            // Report not syncing
+      //            this.reportSyncPeriod(false)
+      //          }
+      //        }
+      //      }
+      //    }
+      //  })
     })
   }
 }
