@@ -14,7 +14,7 @@ import type PersistenceRocksDb from '../persistence/rocksdb'
 const BN = require('bn.js')
 const { all, flatten, zip } = require('ramda')
 
-const { validateRoveredSequences, validateBlockSequence, childrenHeightSum } = require('./validation')
+const { validateRoveredSequences, validateBlockSequence } = require('./validation')
 const { standardId } = require('./helper')
 const { getLogger } = require('../logger')
 
