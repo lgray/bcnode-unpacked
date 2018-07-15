@@ -137,7 +137,7 @@ export class PeerManager {
       debug(`Discovered peer ${peerId} already in discoveredPeerBook`)
     }
 
-    if (!BC_P2P_PASSIVE && !this.peerBookConnected.has(peer)) {
+    if (!BC_P2P_PASSIVE && !this.peerBookConnected.has(peer) && (this.peerBookConnected.getPeersCount() < QUORUM_SIZE)) {
       debug(`Dialing newly discovered peer ${peerId}`)
       return new Promise((resolve, reject) => {
         this.bundle.dial(peer, (err) => {
@@ -159,35 +159,58 @@ export class PeerManager {
         })
       })
     }
+
     return Promise.resolve(false)
   }
 
-  onPeerConnect (peer: PeerInfo) {
+  onPeerConnect (peer: PeerInfo): Promise<bool> {
     const peerId = peer.id.toB58String()
     debug('Event - peer:connect', peerId)
 
-    if (!this.peerBookConnected.has(peer)) {
-      this.peerBookConnected.put(peer)
-      debug(`Connected new peer '${peerId}', adding to connectedPeerBook, count: ${this.peerBookConnected.getPeersCount()}`)
-
-      if (!this._lastQuorumSync && this.peerBookConnected.getPeersCount() >= PEER_QUORUM_SIZE) {
-        this._quorumSyncing = true
-        this._lastQuorumSync = new Date()
-
-        // this.peerNode.triggerBlockSync()
-      }
-    } else {
+    if (this.peerBookConnected.has(peer)) {
       debug(`Peer '${peerId}', already in connectedPeerBook`)
-      return
+      return Promise.resolve(false)
     }
 
-    this.createPeer(peer)
-      .getLatestHeader()
-      .then((header) => {
-        debug('Peer latest header', peer.id.toB58String(), toObject(header))
-      })
+    // Check if QUORUM_SIZE is reached
+    if (this.peerBookConnected.getPeersCount() > QUORUM_SIZE) {
+      debug(`Peer '${peerId}', quorum already reached`)
+      if (peer.isConnected()) {
+        peer.disconnect()
+      }
+
+      return Promise.resolve(false)
+    }
+
+    debug(`Connected new peer '${peerId}', adding to connectedPeerBook, count: ${this.peerBookConnected.getPeersCount()}`)
+
+    if (!this._lastQuorumSync && this.peerBookConnected.getPeersCount() >= PEER_QUORUM_SIZE) {
+      this._quorumSyncing = true
+      this._lastQuorumSync = new Date()
+
+      // this.peerNode.triggerBlockSync()
+    }
+
+    this.peerBookConnected.put(peer)
 
     this._checkPeerStatus(peer)
+      .then((peer) => {
+        return this.createPeer(peer)
+          .getLatestHeader()
+          .then((header) => {
+            debug('Peer latest header', peer.id.toB58String(), toObject(header))
+          })
+      })
+      .catch((err) => {
+        debug(`Unable to check peer status`, err)
+        if (this.peerBookConnected.has(peer)) {
+          this.peerBookConnected.remove(peer)
+        }
+
+        if (peer.isConnected()) {
+          peer.disconnect()
+        }
+      })
   }
 
   onPeerDisconnect (peer: PeerInfo): Promise<bool> {
@@ -225,57 +248,60 @@ export class PeerManager {
     }
 
     debug('Dialing /status protocol', peerId)
-    this.bundle.dialProtocol(peer, `${PROTOCOL_PREFIX}/status`, (err, conn) => {
-      const peerId = peer.id.toB58String()
+    return new Promise((resolve, reject) => {
+      this.bundle.dialProtocol(peer, `${PROTOCOL_PREFIX}/status`, (err, conn) => {
+        const peerId = peer.id.toB58String()
 
-      if (err) {
-        debug('Error dialing /status protocol', peerId, err)
-        this._logger.error('Error dialing /status protocol', peerId)
+        if (err) {
+          debug('Error dialing /status protocol', peerId, err)
+          this._logger.error('Error dialing /status protocol', peerId)
 
-        // FIXME: Propagate corectly
-        // throw err
+          // FIXME: Propagate corectly
+          // throw err
 
-        return
-      }
+          return reject(err)
+        }
 
-      debug('Pulling latest /status', peerId)
-      pull(
-        conn,
-        pull.collect((err, wireData) => {
-          if (err) {
-            debug('Error pulling latest /status', peerId, err)
-
-            // FIXME: Propagate corectly
-            // throw err
-
-            return
-          }
-
-          debug('Getting latest peer info', peerId)
-          conn.getPeerInfo((err, peerInfo) => {
+        debug('Pulling latest /status', peerId)
+        pull(
+          conn,
+          pull.collect((err, wireData) => {
             if (err) {
-              debug('Error getting latest peer info', peerId, err)
+              debug('Error pulling latest /status', peerId, err)
 
               // FIXME: Propagate corectly
               // throw err
 
-              return
+              return reject(err)
             }
 
-            if (this.peerBookConnected.has(peer)) {
-              debug('Updating peer with meta/status', peerId)
-              const existingPeer = this.peerBookConnected.get(peer)
+            debug('Getting latest peer info', peerId)
+            conn.getPeerInfo((err, peerInfo) => {
+              if (err) {
+                debug('Error getting latest peer info', peerId, err)
 
-              const status = JSON.parse(wireData[0])
-              existingPeer.meta = mergeDeepRight(meta, status)
-            } else {
-              debug('Unable to update peer meta/status, not in peerBookConnected', peerId)
-            }
+                // FIXME: Propagate corectly
+                // throw err
 
-            this.engine._emitter.emit('peerConnected', { peer })
+                return reject(err)
+              }
+
+              if (this.peerBookConnected.has(peer)) {
+                debug('Updating peer with meta/status', peerId)
+                const existingPeer = this.peerBookConnected.get(peer)
+
+                const status = JSON.parse(wireData[0])
+                existingPeer.meta = mergeDeepRight(meta, status)
+              } else {
+                debug('Unable to update peer meta/status, not in peerBookConnected', peerId)
+              }
+
+              this.engine._emitter.emit('peerConnected', { peer })
+              return resolve(peer)
+            })
           })
-        })
-      )
+        )
+      })
     })
   }
 }
