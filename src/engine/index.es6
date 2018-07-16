@@ -344,7 +344,7 @@ export class Engine {
         await this.persistence.put('bc.block.latest', block)
         await this.persistence.put('bc.block.' + block.getHeight(), block)
         await this.persistence.putChildHeaders(block)
-      } else if (msg.force === true) {
+      } else if (msg.force === true || previousLatest.getHeight() === 1) {
         await this.persistence.put('bc.block.latest', block)
         await this.persistence.put('bc.block.' + block.getHeight(), block)
         await this.persistence.forcePutChildHeaders(block)
