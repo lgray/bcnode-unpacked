@@ -11,6 +11,9 @@ Dockerfile
 # IntelliJ Idea Project
 .idea/
 
+# Helper scripts
+.scripts/
+
 # Downloadedfiles
 protoc-3.5.1-linux-x86_64.zip
 
@@ -32,6 +35,9 @@ _data/
 _debug/
 _logs/
 
+# Flowtype
+flow-typed/
+
 # Artifacts (root)
 root/.cargo/
 
@@ -42,16 +48,22 @@ doc/
 docs/
 lib/
 !lib/bc/genesis.raw.json
+
 native/target/
 native/artifacts.json
 native/index.node
+
 node_modules/
+
 public/assets/
+
 src/native/artifacts.json
 src/native/target/
 src/protos/*.js
+
 root/
 rust/bcrust-core/target/
+
 target/
 tmp/
 

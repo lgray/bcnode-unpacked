@@ -162,6 +162,9 @@ function _createUnifiedBlock (block): Block {
   return msg
 }
 
+type PendingRequestPair = [number, number]
+type PendingFiberPair = [number, Block]
+
 /**
  * WAV Controller
  */
@@ -174,8 +177,8 @@ export default class Controller {
   _blockCache: LRUCache<string, bool>
   _lastBlockHeight: number
   _backoff: Backoff
-  _pendingRequests: Array<[number, number]>
-  _pendingFibers: Array<[number, Block]>
+  _pendingRequests: Array<PendingRequestPair>
+  _pendingFibers: Array<PendingFiberPair>
 
   constructor (config: { isStandalone: bool, dfConfig: DfConfig }) {
     this._config = config
