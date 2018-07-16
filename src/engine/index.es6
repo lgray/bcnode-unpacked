@@ -214,9 +214,10 @@ export class Engine {
       this._monitor.start()
     }
 
-    this.integrityCheck().then(() => {
-      this._logger.info('Engine initialized')
-    })
+    this.integrityCheck()
+      .then(() => {
+        this._logger.info('Engine initialized')
+      })
       .catch((err) => {
         this._logger.error(err)
         this._logger.info('critical failure in integrity check')
@@ -804,20 +805,25 @@ export class Engine {
                       this.multiverse._chain = sorted
                       this._logger.info('multiverse has been assigned')
                       this._rsync = false
-                      return this.persistence.put('bc.depth', highestBlock.getHeight())
+                      return this.persistence.put('bc.depth', this.multiverse.getHighestBlock())
                         .then(() => {
                           this._logger.info(8)
                           this.pubsub.publish('update.block.latest', { key: 'bc.block.latest', data: newBlock, force: true, multiverse: this.multiverse._chain })
                           this.node.broadcastNewBlock(newBlock)
                           return this.persistence.put('rsync', 'n')
                             .then(() => {
+                              this._logger.debug('rsync unlocked')
                               const targetHeight = this.mulitiverse.getLowestBlock().getHeight() - 1
+                              // dont have to sync
                               if (targetHeight === 1) {
                                 return Promise.resolve(true)
                               }
                               this.persistence.get('bc.block.' + targetHeight).then((e) => {
-                                this._logger.debug('rsync unlocked')
-                                return this.syncFromDepth(conn, this.multiverse.getHighestBlock())
+                                // already have this multiverse on disk
+                                return Promise.resolve(true)
+                              }).catch((err) => {
+                                this._logger.debug(err)
+                                return this.syncFromDepth(conn, this.multiverse.getHighestBlock()())
                                   .then(synced => {
                                     this._logger.info(9)
                                     this._logger.info(newBlock.getHash() + ' blockchain sync complete')
@@ -826,8 +832,6 @@ export class Engine {
                                     this._logger.info(newBlock.getHash() + ' blockchain sync failed')
                                     this._logger.error(errToString(e))
                                   })
-                              }).catch((err) => {
-                                return Promise.reject(err)
                               })
                             })
                             .catch((e) => {
