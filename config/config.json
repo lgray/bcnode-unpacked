@@ -49,7 +49,7 @@
     },
 
     "rendezvous": {
-      "webrtc": "/dns4/dns-r2.blockcollider.org/tcp/9090/ws/p2p-webrtc-star",
+      "webrtc": "/dns4/54.197.91.112/tcp/9090/ws/p2p-webrtc-star",
       "websocket": "/dns4/dns-r2.blockcollider.org/tcp/9090/ws/p2p-websocket-star"
     },
 
@@ -99,7 +99,7 @@
   },
 
   "sentry": {
-    "enabled": true,
+    "enabled": false,
     "url": "https://8f889605ace248d88784796a32903c9e@sentry.io/1202649"
   },
 
