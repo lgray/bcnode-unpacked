@@ -293,6 +293,7 @@ export class Multiverse {
     this._logger.info(9)
     // PASS add the new block to the parent position
     this._chain.unshift(newBlock)
+
     const validRovers = validateRoveredSequences([newBlock, currentHighestBlock])
 
     if (validRovers === false) {

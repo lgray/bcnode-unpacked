@@ -260,7 +260,9 @@ export class Engine {
             })
         })
         .catch((err) => {
+          this._logger.info(errToString(err))
           this._logger.error(`Error occurred during updateLatestAndStore(), reason: ${err.message}`)
+          process.exit()
         })
     })
 
