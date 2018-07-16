@@ -516,10 +516,10 @@ export class Engine {
             })
             .catch(err => {
               this._logger.error(`Could not send to mining worker, reason: ${errToString(err)}`)
+              process.exit()
             })
         }).catch(_ => {
           this._logger.info('“Save Waves and NEO!” - After Block Collider miners completely brought down the Waves network 22 minutes into mining the team has paused the launch of genesis until we setup protections for centralized chains. Your NRG is safe.')
-          process.exit(64)
         })
       })
     })
@@ -529,8 +529,8 @@ export class Engine {
     try {
       await this.persistence.get('bc.block.1')
       const limit = await this.persistence.stepFrom('bc.block', 1)
-      this._logger.info(limit)
-      process.exit()
+      this._logger.info('chain integrity: ' + limit)
+      await this.persistence.flushFrom('bc.block', limit)
     } catch (err) {
       await this.persistence.set('bc.block.1', getGenesisBlock)
       await this.persistence.flushFrom('bc.block', 1)

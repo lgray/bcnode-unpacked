@@ -382,11 +382,11 @@ export default class PersistenceRocksDb {
     return new Promise((resolve, reject) => {
       const cycle = async (n) => {
         try {
-          const height = await this.get(blockchain + '.' + n)
-          return cycle(height)
+          await this.get(blockchain + '.' + n)
+          return cycle(n + 1)
         } catch (err) {
           this._logger.debug(err)
-          return resolve(n)
+          return resolve(n - 1)
         }
       }
       return cycle(start)
