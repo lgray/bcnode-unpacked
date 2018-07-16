@@ -378,6 +378,53 @@ export default class PersistenceRocksDb {
         }))
     )
   }
+  async stepFrom (blockchain: string, start: Number, opts: Object = { highWaterMark: 100000000, asBuffer: true }): Promise<?Number> {
+    return new Promise((resolve, reject) => {
+      const cycle = async (n) => {
+        try {
+          const height = await this.get(blockchain + '.' + n)
+          return cycle(height)
+        } catch (err) {
+          this._logger.debug(err)
+          return resolve(n)
+        }
+      }
+      return cycle(start)
+    })
+  }
+
+  flushFrom (blockchain: string, start: Number, until: Number = 0, opts: Object = { highWaterMark: 100000000, asBuffer: true }): Promise<?boolean> {
+    return new Promise((resolve, reject) => {
+      const iter = this.db.iterator(opts)
+      const cycle = () => {
+        return iter.next((err, key) => {
+          if (err) {
+            return reject(err)
+          } else if (key !== undefined && key.indexOf(blockchain) > -1) {
+            let pass = false
+            if (until > 0) {
+              if (key.indexOf('.') > -1 && key.split('.').pop() < until) {
+                pass = true
+              }
+            }
+            if (pass) {
+              if (Number(key.split('.').pop()) > start) {
+                return this.del(key).then(cycle).catch((e) => {
+                  return reject(err)
+                })
+              }
+            }
+            return cycle()
+          } else if (key !== undefined) {
+            return cycle()
+          } else {
+            return resolve(true)
+          }
+        })
+      }
+      return cycle()
+    })
+  }
 
   /**
    * Write pending values to perminent values

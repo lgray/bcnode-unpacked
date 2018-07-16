@@ -186,12 +186,14 @@ export class Engine {
         this._logger.info('Stored appversion to persistence')
       }
       try {
+        await this.persistence.put('rsync', 'n')
         await this.persistence.get('bc.block.1')
         const latestBlock = await this.persistence.get('bc.block.latest')
         this._logger.info('highest block height on disk ' + latestBlock.getHeight())
         this.multiverse.addNextBlock(latestBlock)
       } catch (_) { // genesis block not found
         try {
+          await this.persistence.put('rsync', 'n')
           await this.persistence.put('bc.block.1', newGenesisBlock)
           await this.persistence.put('bc.block.latest', newGenesisBlock)
           await this.persistence.put('bc.block.checkpoint', newGenesisBlock)
@@ -516,6 +518,18 @@ export class Engine {
     })
   }
 
+  async integrityCheck () {
+    try {
+      await this.persistence.get('bc.block.1')
+      const limit = await this.persistence.stepFrom('bc.block', 1)
+      this._logger.info(limit)
+      process.exit()
+    } catch (err) {
+      await this.persistence.set('bc.block.1', getGenesisBlock)
+      await this.persistence.flushFrom('bc.block', 1)
+    }
+  }
+
   /**
    * Takes a range of blocks and validates them against within the contents of a parent and child
    * TODO: Move this to a better location
@@ -549,20 +563,9 @@ export class Engine {
         // ignore and return u
         this._logger.info('depth is 2: sync from depth end')
         return Promise.resolve(true)
-      } else if (depth <= checkpoint.getHeight()) {
-        // test to see if the depth hash references the checkpoint hash
-        const assertBlock = await this.persistence.get('bc.block.' + (checkpoint.getHeight() - 1))
-        if (checkpoint.getPreviousHash() !== assertBlock.getHash()) {
-          await this.persistence.put('bc.block.checkpoint', getGenesisBlock)
-          await this.persistence.put('bc.depth', depth)
-          return this.syncFromDepth(conn, newBlock)
-        } else {
-          return this.persistence.putPending('bc')
-        }
         // return Promise.resolve(true)
       } else {
-        const upperBound = max(depth, checkpoint.getHeight() + 1) // so we dont get the genesis block
-        const lowerBound = max(depth - 2000, checkpoint.getHeight())
+        const upperBound = max(depth, checkpoint.getHeight()) + 1 // so we dont get the genesis block
         return conn.getPeerInfo((err, peerInfo) => {
           if (err) {
             return Promise.reject(err)
@@ -587,7 +590,7 @@ export class Engine {
               const query = {
                 queryHash: newBlock.getHash(),
                 queryHeight: upperBound,
-                low: lowerBound,
+                low: 2,
                 high: upperBound
               }
               return this.node.manager.createPeer(peerInfo)
@@ -596,28 +599,12 @@ export class Engine {
                   return this.syncSetBlocksInline(blocks)
                     .then((blocksStoredResults) => {
                       // if we didn't get the one block above the genesis block run again
-                      if (lowerBound !== checkpoint.getHeight()) {
-                        return this.syncFromDepth(conn, newBlock)
-                      }
 
                       /*
                       * test if it connects to the previous synced chain
                       * this would happen if a peer disconnected from the network
                       * and was now resyncing
                       */
-                      if (lowerBound > 2) {
-                        return (async () => {
-                          const assertBlock = await this.persistence.get('bc.block.' + (lowerBound - 1))
-                          // if the hash is not referenced the node could have been synced to a weaker chain
-                          if (checkpoint.getPreviousHash() !== assertBlock.getHash()) {
-                            await this.persistence.put('bc.block.checkpoint', getGenesisBlock)
-                            await this.persistence.put('bc.depth', depth)
-                            return this.syncFromDepth(conn, newBlock)
-                          } else {
-                            return this.persistence.putPending('bc')
-                          }
-                        })()
-                      }
                       // all done, no more depth clean up, unlock peer
                       return this.persistence.put(peerLockKey, 0)
                         .then(() => {
@@ -729,9 +716,8 @@ export class Engine {
         this._logger.info('new block ' + newBlock.getHeight() + ' is NOT next block, evaluating resync.')
         this.multiverse.addResyncRequest(newBlock, this.miningOfficer._canMine)
           .then(shouldResync => {
-            if (shouldResync === true && this._rsync === true) {
+            if (shouldResync === true) {
               this._logger.info(newBlock.getHash() + ' new block: ' + newBlock.getHeight() + ' should rsync request approved')
-              this._rsync = true
               // 1. request multiverse from peer, if fail ignore
               // succeed in getting multiverse -->
               // 2. Compare purposed multiverse sum of difficulty with current sum of diff
@@ -758,14 +744,12 @@ export class Engine {
                   queryHash: newBlock.getHash(),
                   queryHeight: upperBound,
                   low: lowerBound,
-                  high: upperBound
+                  high: newBlock.getHash()
                 }
                 this._logger.info(newBlock.getHash() + ' requesting multiverse proof from peer: ' + peerLockKey)
                 this.node.manager.createPeer(peerInfo)
                   .query(query)
                   .then(newBlocks => {
-                    this._rsync = false
-
                     if (newBlocks === undefined) {
                       this._logger.warn(newBlock.getHash() + ' no blocks recieved from proof ')
                       return Promise.resolve(true)
@@ -801,7 +785,7 @@ export class Engine {
                     if (highestBlock !== undefined && sorted !== undefined && sorted.length > 0) {
                       // conanaOut
                       conditional = new BN(sorted[0].getTotalDistance()).gt(new BN(highestBlock.getTotalDistance()))
-                    } else if (sorted.length < 1) {
+                    } else if (sorted.length < 6) {
                       conditional = true
                     }
 
@@ -813,61 +797,84 @@ export class Engine {
                       this.multiverse._chain.length = 0
                       this.multiverse._chain = sorted
                       this._logger.info('multiverse has been assigned')
+                      this._rsync = false
                       return this.persistence.put('bc.depth', highestBlock.getHeight())
                         .then(() => {
                           this._logger.info(8)
                           this.pubsub.publish('update.block.latest', { key: 'bc.block.latest', data: newBlock, force: true, multiverse: this.multiverse._chain })
                           this.node.broadcastNewBlock(newBlock)
+                          return this.persistence.put('rsync', 'n')
+                            .then(() => {
+                              const targetHeight = this.mulitiverse.getLowestBlock().getHeight() - 1
+                              if (targetHeight === 1) {
+                                return Promise.resolve(true)
+                              }
+                              this.persistence.get('bc.block.' + targetHeight).then((e) => {
+                                this._logger.debug('rsync unlocked')
+                                return this.syncFromDepth(conn, this.multiverse.getHighestBlock())
+                                  .then(synced => {
+                                    this._logger.info(9)
+                                    this._logger.info(newBlock.getHash() + ' blockchain sync complete')
+                                  })
+                                  .catch(e => {
+                                    this._logger.info(newBlock.getHash() + ' blockchain sync failed')
+                                    this._logger.error(errToString(e))
+                                  })
+                              }).catch((err) => {
+                                return Promise.reject(err)
+                              })
+                            })
+                            .catch((e) => {
+                              this._logger.debug(e)
+                            })
                           // assign where the last sync began
-                          return this.syncFromDepth(conn, this.multiverse.getHighestBlock())
-                            .then(synced => {
-                              this._logger.info(9)
-                              this._logger.info(newBlock.getHash() + ' blockchain sync complete')
-                            })
-                            .catch(e => {
-                              this._logger.info(newBlock.getHash() + ' blockchain sync failed')
-                              this._logger.error(errToString(e))
-                            })
                         })
                         .catch(e => {
                           this._logger.error(errToString(e))
+                          return this.persistence.put('rsync', 'n')
                         })
                     }
                   })
                   .catch(e => {
+                    this._rsync = false
                     this._logger.error(errToString(e))
+                    return this.persistence.put('rsync', 'n')
                   })
               })
             } else {
-              return conn.getPeerInfo((err, peerInfo) => {
-                if (err) {
-                  this._logger.error(errToString(err))
-                  return Promise.reject(err)
-                }
-
-                try {
-                  const targetPeer = peerInfo.id.toB58String()
-
-                  this.node.manager.peerBookConnected.getAllArray().map(peer => {
-                    const newPeer = peer.id.toB58String()
-                    this._logger.debug(`Sending to peer ${peer}`)
-                    if (newPeer === targetPeer) {
-                      const url = `${PROTOCOL_PREFIX}/newblock`
-                      this.node.bundle.dialProtocol(peer, url, (err, conn) => {
-                        if (err) {
-                          this._logger.error('Error sending message to peer', peer.id.toB58String(), err)
-                          return err
-                        }
-
-                        // TODO JSON.stringify?
-                        pull(pull.values([newBlock.serializeBinary()]), conn)
-                      })
+              this.persistence.get('rsync').then((r) => {
+                if (r === 'n') {
+                  return conn.getPeerInfo((err, peerInfo) => {
+                    if (err) {
+                      this._logger.error(errToString(err))
+                      return Promise.reject(err)
                     }
+
+                    try {
+                      const targetPeer = peerInfo.id.toB58String()
+
+                      this.node.manager.peerBookConnected.getAllArray().map(peer => {
+                        const newPeer = peer.id.toB58String()
+                        this._logger.debug(`Sending to peer ${peer}`)
+                        if (newPeer === targetPeer) {
+                          const url = `${PROTOCOL_PREFIX}/newblock`
+                          this.node.bundle.dialProtocol(peer, url, (err, conn) => {
+                            if (err) {
+                              this._logger.error('Error sending message to peer', peer.id.toB58String(), err)
+                              return err
+                            }
+
+                            // TODO JSON.stringify?
+                            pull(pull.values([newBlock.serializeBinary()]), conn)
+                          })
+                        }
+                      })
+                    } catch (err) {
+                      this._logger.debug(err)
+                    }
+                    // request proof of the multiverse from the peer
                   })
-                } catch (err) {
-                  this._logger.debug(err)
                 }
-                // request proof of the multiverse from the peer
               })
             }
           })

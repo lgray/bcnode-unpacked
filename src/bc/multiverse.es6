@@ -311,9 +311,14 @@ export class Multiverse {
    * @param newBlock
    * @returns {boolean}
    */
-  addResyncRequest (newBlock: BcBlock, strict: boolean = true): Promise<boolean> {
+  async addResyncRequest (newBlock: BcBlock, strict: boolean = true): Promise<boolean> {
     const currentHighestBlock = this.getHighestBlock()
     const currentParentHighestBlock = this.getParentHighestBlock()
+    const rsyncLock = await this.persistence.get('rsync')
+
+    if (rsyncLock !== 'n') {
+      return Promise.resolve(false)
+    }
 
     if (this._chain.length === 0) {
       this._logger.info('passed resync req: currentHighestBlock is null')
@@ -323,12 +328,14 @@ export class Multiverse {
     // pass if no highest block exists go with current
     if (currentHighestBlock === null) {
       this._logger.info('passed resync req: currentHighestBlock is null')
+      await this.persistence.put('rsync', 'y')
       return Promise.resolve(true)
     }
 
     // only block is the genesis block
     if (currentHighestBlock.getHeight() === 1 && newBlock.getHeight() > 1) {
       this._logger.info('passed resync req: new block was above genesis')
+      await this.persistence.put('rsync', 'y')
       return Promise.resolve(true)
     }
 
@@ -347,6 +354,7 @@ export class Multiverse {
     if (this._chain.length < 2) {
       this._logger.info('determining if chain current total distance is less than new block')
       if (new BN(currentHighestBlock.getTotalDistance()).lt(newBlock.getTotalDistance())) {
+        await this.persistence.put('rsync', 'y')
         return Promise.resolve(true)
       }
     }
@@ -355,6 +363,7 @@ export class Multiverse {
       if (new BN(newBlock.getTotalDistance()).gt(new BN(currentHighestBlock.getTotalDistance()))) {
         this._logger.info('passed resync req: total distance of new block is greater than current highest')
         this.addCandidateBlock(newBlock)
+        await this.persistence.put('rsync', 'y')
         return Promise.resolve(true)
       }
     }
