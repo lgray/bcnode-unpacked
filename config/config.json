@@ -45,7 +45,7 @@
     },
 
     "quorum": {
-      "size": 11 
+      "size": 19 
     },
 
     "rendezvous": {
@@ -99,7 +99,7 @@
   },
 
   "sentry": {
-    "enabled": false,
+    "enabled": true,
     "url": "https://8f889605ace248d88784796a32903c9e@sentry.io/1202649"
   },
 
