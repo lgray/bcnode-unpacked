@@ -347,7 +347,7 @@ export class Engine {
       } else if (msg.force === true) {
         await this.persistence.put('bc.block.latest', block)
         await this.persistence.put('bc.block.' + block.getHeight(), block)
-        await this.persistence.putChildHeaders(block)
+        await this.persistence.forcePutChildHeaders(block)
       } else {
         this._logger.error('failed to set block ' + block.getHeight() + ' ' + block.getHash() + ' as latest block, wrong previous hash')
       }
@@ -369,7 +369,7 @@ export class Engine {
       if (block !== undefined && msg.force === true) {
         await this.persistence.put('bc.block.latest', block)
         await this.persistence.put('bc.block.' + block.getHeight(), block)
-        await this.persistence.putChildHeaders(block)
+        await this.persistence.forcePutChildHeaders(block)
       } else {
         this._logger.warn('submitted block ' + block.getHeight() + ' ' + block.getHash() + ' will not be persisted')
       }
@@ -1016,13 +1016,13 @@ export class Engine {
     } else {
       this._logger.info('local mined block ' + newBlock.getHeight() + ' does not stack on multiverse height ' + this.multiverse.getHighestBlock().getHeight())
       this._logger.info('mined block ' + newBlock.getHeight() + ' cannot go on top of multiverse block ' + this.multiverse.getHighestBlock().getHash())
-      this.miningOfficer.rebaseMining()
-        .then((res) => {
-          this._logger.info(res)
-        })
-        .catch((e) => {
-          this._logger.error(errToString(e))
-        })
+      // this.miningOfficer.rebaseMining()
+      //  .then((res) => {
+      //    this._logger.info(res)
+      //  })
+      //  .catch((e) => {
+      //    this._logger.error(errToString(e))
+      //  })
     }
     return Promise.resolve(false)
     // }

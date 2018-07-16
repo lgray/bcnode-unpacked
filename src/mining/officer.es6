@@ -389,12 +389,20 @@ export class MiningOfficer {
       const stopped = await this.stopMining()
       this._logger.info(`Miner stopped, result: ${inspect(stopped)}`)
       const latestRoveredHeadersKeys: string[] = this._knownRovers.map(chain => `${chain}.block.latest`)
-      const currentRoveredBlockHeaders = await this.persistence.getBulk(latestRoveredHeadersKeys)
+      this._logger.info(latestRoveredHeadersKeys)
+      const currentRoveredBlocks = await this.persistence.getBulk(latestRoveredHeadersKeys)
 
       const lastPreviousBlock = await this.persistence.get('bc.block.latest')
       const previousHeaders = lastPreviousBlock.getBlockchainHeaders()
 
-      const uniqueBlockHeaders = getUniqueBlocks(previousHeaders, currentRoveredBlockHeaders)
+      if (currentRoveredBlocks.length !== Object.keys(previousHeaders).length) {
+        this._logger.info(currentRoveredBlocks.length + ' current rovered blocks does not have ' + Object.keys(previousHeaders).length)
+        return Promise.resolve(false)
+      }
+
+      this._logger.info(currentRoveredBlocks)
+
+      const uniqueBlockHeaders = getUniqueBlocks(previousHeaders, currentRoveredBlocks)
       const uniqueBlocks = flatten([
         lastPreviousBlock.getBtcList(),
         lastPreviousBlock.getEthList(),

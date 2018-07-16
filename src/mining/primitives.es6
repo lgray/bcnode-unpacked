@@ -476,7 +476,7 @@ export function getNewBlockCount (previousBlockHeaders: BlockchainHeaders, curre
  */
 export function getUniqueBlocks (previousBlockHeaders: BlockchainHeaders, currentBlockHeaders: BlockchainHeaders) {
   // $FlowFixMe - protbuf toObject is not typed
-  const headersToHashes = (headers: currentBlockHeaders) => Object.values(currentBlockHeaders.toObject()).reduce((acc, curr) => acc.concat(curr), []).map(headerObj => headerObj.hash)
+  const headersToHashes = (headers: BlockchainHeaders) => Object.values(previousBlockHeaders.toObject()).reduce((acc, curr) => acc.concat(curr), []).map(headerObj => headerObj.hash)
   const previousHashes = headersToHashes(previousBlockHeaders)
   const currentHashes = headersToHashes(currentBlockHeaders)
 
