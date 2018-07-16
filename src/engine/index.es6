@@ -214,7 +214,13 @@ export class Engine {
       this._monitor.start()
     }
 
-    this._logger.info('Engine initialized')
+    this.integrityCheck().then(() => {
+      this._logger.info('Engine initialized')
+    })
+      .catch((err) => {
+        this._logger.error(err)
+        this._logger.info('critical failure in integrity check')
+      })
 
     self.pubsub.subscribe('state.block.height', '<engine>', (msg) => {
       self.storeHeight(msg).then((res) => {

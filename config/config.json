@@ -50,7 +50,7 @@
 
     "rendezvous": {
       "webrtc": "/dns4/54.85.22.247/tcp/9090/ws/p2p-webrtc-star",
-      "websocket": "/dns4/54.85.22.247/tcp/9091/ws/p2p-websocket-star"
+      "websocket": "/dns4/54.85.22.247/tcp/9090/ws/p2p-websocket-star"
     },
 
     "stats": {
