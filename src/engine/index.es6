@@ -376,7 +376,6 @@ export class Engine {
       if (msg.multiverse !== undefined) {
         // assert the valid state of the entire sequence of each rovered chain
         const multiverseIsValid = this.miningOfficer.validateRoveredSequences(msg.multiverse)
-        if (!multiverseIsValid) return Promise.resolve(false)
         while (msg.multiverse.length > 0) {
           const b = msg.multiverse.pop()
           if (b.getHeight() > 1) {
@@ -810,7 +809,9 @@ export class Engine {
                       this._logger.info(2)
                       this._logger.info(newBlock.getHash() + ' new heights: ' + currentHeights)
                       const comparableBlocks = newBlocks.filter(a => {
-                        if (currentHeights.indexOf(a) > -1) return a
+                        if (currentHeights.indexOf(a.getHeight()) > -1) {
+                          return a
+                        }
                       })
                       this._logger.info(comparableBlocks)
                       this._logger.info(3)

@@ -232,6 +232,7 @@ export class Multiverse {
     }
     this._logger.info(1)
     // if there are no blocks in the multiverse this block is the highest
+    // in default setup the contructor loads the genesis block into the multiverse
     if (this._chain.length === 0) {
       this._chain.push(newBlock)
       return true
