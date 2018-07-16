@@ -398,6 +398,7 @@ export default class PersistenceRocksDb {
       const iter = this.db.iterator(opts)
       const cycle = () => {
         return iter.next((err, key) => {
+          this._logger.info(key)
           if (err) {
             return reject(err)
           } else if (key !== undefined && key.indexOf(blockchain) > -1) {

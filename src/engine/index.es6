@@ -214,14 +214,13 @@ export class Engine {
       this._monitor.start()
     }
 
-    this.integrityCheck()
-      .then(() => {
-        this._logger.info('Engine initialized')
-      })
-      .catch((err) => {
-        this._logger.error(err)
-        this._logger.info('critical failure in integrity check')
-      })
+    try {
+      await this.integrityCheck()
+      this._logger.info('in')
+    } catch (err) {
+      this._logger.error(err)
+      this._logger.info('critical failure in integrity check')
+    }
 
     self.pubsub.subscribe('state.block.height', '<engine>', (msg) => {
       self.storeHeight(msg).then((res) => {
@@ -533,9 +532,11 @@ export class Engine {
       const limit = await this.persistence.stepFrom('bc.block', 1)
       this._logger.info('chain integrity: ' + limit)
       await this.persistence.flushFrom('bc.block', limit)
+      return limit
     } catch (err) {
       await this.persistence.set('bc.block.1', getGenesisBlock)
       await this.persistence.flushFrom('bc.block', 1)
+      return 1
     }
   }
 

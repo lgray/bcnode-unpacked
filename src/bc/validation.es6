@@ -46,7 +46,7 @@ export const DF_CONFIG: DfConfig = fromPairs(FINGERPRINTS_TEMPLATE.blockchainHea
 
 const logger = getLogger(__filename)
 
-export function isValidBlock (newBlock: BcBlock, type: number = 1): bool {
+export function isValidBlock (newBlock: BcBlock, type: number = 0): bool {
   if (newBlock === undefined) {
     return false
   }
