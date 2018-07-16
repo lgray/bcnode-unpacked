@@ -375,7 +375,7 @@ export class Engine {
       }
       if (msg.multiverse !== undefined) {
         // assert the valid state of the entire sequence of each rovered chain
-        const multiverseIsValid = this.miningOfficer.validateRoveredSequences(msg.multiverse)
+        // DISABLED for BT: const multiverseIsValid = this.miningOfficer.validateRoveredSequences(msg.multiverse)
         while (msg.multiverse.length > 0) {
           const b = msg.multiverse.pop()
           if (b.getHeight() > 1) {
