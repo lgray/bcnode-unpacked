@@ -255,27 +255,18 @@ export default class PersistenceRocksDb {
     wav: true
   }): Promise<*> {
     const headers = block.getBlockchainHeaders()
+    const table = {}
     return Promise.all([]
       .concat(this.sortChildHeaders(headers.getBtcList())
         .map((b) => {
           if (opts.btc) {
             return async () => {
-              const latest = await this.get('btc.block.latest')
-              return this.get('btc.block.' + b.getHeight() - 1)
-                .then((res) => {
-                  if (res.getHash() === b.getPreviousHash() &&
-                    res.getHash() === latest.getHash()) {
-                    return Promise.all([
-                      this.put('btc.block.latest', b),
-                      this.put('btc.block.' + b.getHeight(), b)
-                    ])
-                  }
-                  return this.put('btc.block.' + b.getHeight(), b)
-                })
-                .catch((err) => {
-                  this._logger.debug(err)
-                  return this.put('btc.block.' + b.getHeight(), b)
-                })
+              if (table[b.getBlockchain()] === undefined) {
+                table[b.getBlockchain()] = b
+              } else if (b.getHeight() > table[b.getBlockchain()].getHeight()) {
+                table[b.getBlockchain()] = b
+              }
+              await this.put('btc.block.' + b.getHeight(), b)
             }
           }
           return Promise.resolve(true)
@@ -284,22 +275,12 @@ export default class PersistenceRocksDb {
         .map((b) => {
           if (opts.eth) {
             return async () => {
-              const latest = await this.get('eth.block.latest')
-              return this.get('eth.block.' + b.getHeight() - 1)
-                .then((res) => {
-                  if (res.getHash() === b.getPreviousHash() &&
-                    res.getHash() === latest.getHash()) {
-                    return Promise.all([
-                      this.put('eth.block.latest', b),
-                      this.put('eth.block.' + b.getHeight(), b)
-                    ])
-                  }
-                  return this.put('eth.block.' + b.getHeight(), b)
-                })
-                .catch((err) => {
-                  this._logger.debug(err)
-                  return this.put('eth.block.' + b.getHeight(), b)
-                })
+              if (table[b.getBlockchain()] === undefined) {
+                table[b.getBlockchain()] = b
+              } else if (b.getHeight() > table[b.getBlockchain()].getHeight()) {
+                table[b.getBlockchain()] = b
+              }
+              await this.put('eth.block.' + b.getHeight(), b)
             }
           }
           return Promise.resolve(true)
@@ -308,22 +289,12 @@ export default class PersistenceRocksDb {
         .map((b) => {
           if (opts.wav) {
             return async () => {
-              const latest = await this.get('wav.block.latest')
-              return this.get('wav.block.' + b.getHeight() - 1)
-                .then((res) => {
-                  if (res.getHash() === b.getPreviousHash() &&
-                    res.getHash() === latest.getHash()) {
-                    return Promise.all([
-                      this.put('wav.block.latest', b),
-                      this.put('wav.block.' + b.getHeight(), b)
-                    ])
-                  }
-                  return this.put('wav.block.' + b.getHeight(), b)
-                })
-                .catch((err) => {
-                  this._logger.debug(err)
-                  return this.put('wav.block.' + b.getHeight(), b)
-                })
+              if (table[b.getBlockchain()] === undefined) {
+                table[b.getBlockchain()] = b
+              } else if (b.getHeight() > table[b.getBlockchain()].getHeight()) {
+                table[b.getBlockchain()] = b
+              }
+              await this.put('wav.block.' + b.getHeight(), b)
             }
           }
           return Promise.resolve(true)
@@ -332,22 +303,12 @@ export default class PersistenceRocksDb {
         .map((b) => {
           if (opts.neo) {
             return async () => {
-              const latest = await this.get('neo.block.latest')
-              return this.get('neo.block.' + b.getHeight() - 1)
-                .then((res) => {
-                  if (res.getHash() === b.getPreviousHash() &&
-                    res.getHash() === latest.getHash()) {
-                    return Promise.all([
-                      this.put('neo.block.latest', b),
-                      this.put('neo.block.' + b.getHeight(), b)
-                    ])
-                  }
-                  return this.put('neo.block.' + b.getHeight(), b)
-                })
-                .catch((err) => {
-                  this._logger.warn(err)
-                  return this.put('neo.block.' + b.getHeight(), b)
-                })
+              if (table[b.getBlockchain()] === undefined) {
+                table[b.getBlockchain()] = b
+              } else if (b.getHeight() > table[b.getBlockchain()].getHeight()) {
+                table[b.getBlockchain()] = b
+              }
+              await this.put('neo.block.' + b.getHeight(), b)
             }
           }
           return Promise.resolve(true)
@@ -356,27 +317,57 @@ export default class PersistenceRocksDb {
         .map((b) => {
           if (opts.lsk) {
             return async () => {
-              const latest = await this.get('lsk.block.latest')
-              return this.get('lsk.block.' + b.getHeight() - 1)
-                .then((res) => {
-                  if (res.getHash() === b.getPreviousHash() &&
-                    res.getHash() === latest.getHash()) {
-                    return Promise.all([
-                      this.put('lsk.block.latest', b),
-                      this.put('lsk.block.' + b.getHeight(), b)
-                    ])
-                  }
-                  return this.put('lsk.block.' + b.getHeight(), b)
-                })
-                .catch((err) => {
-                  this._logger.debug(err)
-                  return this.put('lsk.block.' + b.getHeight(), b)
-                })
+              if (table[b.getBlockchain()] === undefined) {
+                table[b.getBlockchain()] = b
+              } else if (b.getHeight() > table[b.getBlockchain()].getHeight()) {
+                table[b.getBlockchain()] = b
+              }
+              await this.put('lsk.block.' + b.getHeight(), b)
             }
           }
           return Promise.resolve(true)
         }))
-    )
+      // restrict to sequence only
+      // .concat(this.sortChildHeaders(headers.getEthList())
+      //  .map((b) => {
+      //    if (opts.eth) {
+      //      return async () => {
+      //        const latest = await this.get('eth.block.latest')
+      //        return this.get('eth.block.' + b.getHeight() - 1)
+      //          .then((res) => {
+      //            if (res.getHash() === b.getPreviousHash() &&
+      //              res.getHash() === latest.getHash()) {
+      //              return Promise.all([
+      //                this.put('eth.block.latest', b),
+      //                this.put('eth.block.' + b.getHeight(), b)
+      //              ])
+      //            }
+      //            return this.put('eth.block.' + b.getHeight(), b)
+      //          })
+      //          .catch((err) => {
+      //            this._logger.debug(err)
+      //            return this.put('eth.block.' + b.getHeight(), b)
+      //          })
+      //      }
+      //    }
+      //    return Promise.resolve(true)
+      //  }))
+    ).then(() => {
+      return async () => {
+        const currentLatest = await Promise.all(Object.keys(table).map((chain) => {
+          return this.get(chain + '.block.latest')
+        }))
+        await Promise.all(currentLatest.map((latest) => {
+          if (table[latest.getBlockchain()].getHeight() > latest.getHeight()) {
+            return this.put(latest.getBlockchain() + '.block.latest', table[latest.getBlockchain()])
+          } else {
+            return Promise.resolve(true)
+          }
+        }))
+      }
+    }).catch((err) => {
+      return Promise.reject(err)
+    })
   }
   async stepFrom (blockchain: string, start: Number, opts: Object = { highWaterMark: 100000000, asBuffer: true }): Promise<?Number> {
     return new Promise((resolve, reject) => {
@@ -393,19 +384,33 @@ export default class PersistenceRocksDb {
     })
   }
 
-  flushFrom (blockchain: string, start: Number, until: Number = 0, opts: Object = { highWaterMark: 100000000, asBuffer: true }): Promise<?boolean> {
+  /**
+   * Removes blocks stored in persistence that match a given blockchain
+   * @param blockchain string
+   * @param start Number
+   * @param start Number
+   * @param opts
+   */
+  flushFrom (blockchain: string, start: Number = 2, until: Number = 0, opts: Object = { highWaterMark: 100000000, asBuffer: true }): Promise<?boolean> {
+    let count = 0
     return new Promise((resolve, reject) => {
       const iter = this.db.iterator(opts)
       const cycle = () => {
         return iter.next((err, key) => {
-          this._logger.info(key)
+          if (key !== undefined) {
+            count++
+          }
+          this._logger.info('---------------------' + key)
           if (err) {
             return reject(err)
           } else if (key !== undefined && key.indexOf(blockchain) > -1) {
-            let pass = false
+            // default is to flush continuously unless until is defined
+            let pass = true
             if (until > 0) {
               if (key.indexOf('.') > -1 && key.split('.').pop() < until) {
                 pass = true
+              } else {
+                pass = false
               }
             }
             if (pass) {
@@ -419,6 +424,7 @@ export default class PersistenceRocksDb {
           } else if (key !== undefined) {
             return cycle()
           } else {
+            this._logger.info('flushed ' + count + ' of ' + blockchain)
             return resolve(true)
           }
         })
@@ -429,6 +435,7 @@ export default class PersistenceRocksDb {
 
   /**
    * Write pending values to perminent values
+   * @param blockchain string
    * @param opts
    */
   putPending (blockchain: string = 'bc', opts: Object = { highWaterMark: 100000000, asBuffer: true }): Promise<?boolean> {

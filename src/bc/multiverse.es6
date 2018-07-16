@@ -348,7 +348,7 @@ export class Multiverse {
     }
 
     // FAIL if new block not within 16 seconds of local time
-    if (newBlock.getTimestamp() + 16 < Math.floor(Date.now() * 0.001)) {
+    if (newBlock.getTimestamp() + 33 < Math.floor(Date.now() * 0.001)) {
       this._logger.info('failed resync req: time below 16 seconds')
       return Promise.resolve(false)
     }
@@ -363,7 +363,7 @@ export class Multiverse {
 
     if (currentParentHighestBlock === null && currentHighestBlock !== null) {
       if (new BN(newBlock.getTotalDistance()).gt(new BN(currentHighestBlock.getTotalDistance()))) {
-        this._logger.info('passed resync req: total distance of new block is greater than current highest')
+        this._logger.info('passed resync: total distance of new block is greater than current highest')
         this.addCandidateBlock(newBlock)
         await this.persistence.put('rsync', 'y')
         return Promise.resolve(true)
@@ -377,10 +377,10 @@ export class Multiverse {
     }
     // make sure that blocks that are added reference child chains
     return this.validateRoveredBlocks(newBlock).then(areAllChildrenRovered => {
-      // if (!areAllChildrenRovered) {
-      //  this._logger.info('failed resync req: not all rovers have found blocks')
-      //  return Promise.resolve(false)
-      // }
+      if (!areAllChildrenRovered) {
+        this._logger.info('failed resync req: not all rovers have found blocks')
+      // return Promise.resolve(false)
+      }
 
       // FAIL if sum of child block heights is less than the rovered child heights
       if (childrenHeightSum(newBlock) <= childrenHeightSum(currentParentHighestBlock)) {
@@ -394,6 +394,7 @@ export class Multiverse {
 
   async validateRoveredBlocks (block: BcBlock): Promise<boolean> {
     // construct key array like ['btc.block.528089', ..., 'wav.block.1057771', 'wav.blocks.1057771']
+    this._logger.info('evaluate rovered headers weight')
     const receivedBlocks = flatten(Object.values(block.getBlockchainHeaders().toObject()))
     const keys = receivedBlocks
       // $FlowFixMe - Object.values is not generic
@@ -407,7 +408,7 @@ export class Multiverse {
 
     const pairs = zip(receivedBlocks, blocks)
 
-    return Promise.resolve(all(flag => flag === true, pairs.map(([received, expected]) => {
+    const isChained = Promise.resolve(all(flag => flag === true, pairs.map(([received, expected]) => {
       // $FlowFixMe
       return received.hash === expected.getHash() &&
         // $FlowFixMe
@@ -417,6 +418,11 @@ export class Multiverse {
         // $FlowFixMe
         received.timestamp === expected.getTimestamp()
     })))
+
+    if (isChained !== true) {
+      this._logger.info('failed chained check')
+    }
+    return isChained
   }
 
   /**

@@ -154,13 +154,16 @@ export class MiningOfficer {
     try {
       const lastPreviousBlock = await this.persistence.get('bc.block.latest')
       this._logger.info(`Got last previous block (height: ${lastPreviousBlock.getHeight()}) from persistence`)
+      // [eth.block.latest,btc.block.latest,neo.block.latest...]
       const latestRoveredHeadersKeys: string[] = this._knownRovers.map(chain => `${chain}.block.latest`)
       const latestBlockHeaders = await this.persistence.getBulk(latestRoveredHeadersKeys)
+      // { eth: 200303, btc:2389, neo:933 }
       const latestBlockHeadersHeights = fromPairs(latestBlockHeaders.map(header => [header.getBlockchain(), header.getHeight()]))
       this._logger.debug(`latestBlockHeadersHeights: ${inspect(latestBlockHeadersHeights)}`)
 
       // prepare a list of keys of headers to pull from persistence
       const newBlockHeadersKeys = flatten(Object.keys(lastPreviousBlock.getBlockchainHeaders().toObject()).map(listKey => {
+        this._logger.info('assembling minimum heights for ' + listKey)
         const chain = keyOrMethodToChain(listKey)
         const lastHeaderInPreviousBlock = last(lastPreviousBlock.getBlockchainHeaders()[chainToGet(chain)]())
 
