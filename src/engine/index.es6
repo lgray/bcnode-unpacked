@@ -254,15 +254,13 @@ export class Engine {
     this.pubsub.subscribe('update.block.latest', '<engine>', (msg) => {
       this.updateLatestAndStore(msg)
         .then((res) => {
-          if (msg.mined === undefined) {
-            // this.miningOfficer.rebaseMiner()
-            //  .then((state) => {
-            //    this._logger.info(`latest block ${msg.data.getHeight()} has been updated`)
-            //  })
-            //  .catch((err) => {
-            //    this._logger.error(`Error occurred during updateLatestAndStore(), reason: ${err.message}`)
-            //  })
-          }
+          this.miningOfficer.rebaseMiner()
+            .then((state) => {
+              this._logger.info(`latest block ${msg.data.getHeight()} has been updated`)
+            })
+            .catch((err) => {
+              this._logger.error(`Error occurred during updateLatestAndStore(), reason: ${err.message}`)
+            })
         })
         .catch((err) => {
           this._logger.error(`Error occurred during updateLatestAndStore(), reason: ${err.message}`)
@@ -308,7 +306,10 @@ export class Engine {
       }
     } else {
       try {
-        const prev = await this.persistence.get('bc.block.' + (block.getHeight() - 1))
+        let prev = getGenesisBlock()
+        if ((block.getHeight() - 1) > 0) {
+          prev = await this.persistence.get('bc.block.' + (block.getHeight() - 1))
+        }
         if (prev.getHash() === block.getPreviousHash() &&
           new BN(prev.getTotalDistance()).lt(new BN(block.getTotalDistance()) === true)) {
           await this.persistence.put('bc.block.' + block.getHeight(), block)
@@ -528,6 +529,7 @@ export class Engine {
   async integrityCheck () {
     try {
       await this.persistence.get('bc.block.1')
+      this._logger.info('chain integrity check running')
       const limit = await this.persistence.stepFrom('bc.block', 1)
       this._logger.info('chain integrity: ' + limit)
       await this.persistence.flushFrom('bc.block', limit)

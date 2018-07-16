@@ -385,19 +385,19 @@ export class MiningOfficer {
     try {
       const stopped = await this.stopMining()
       this._logger.info(`Miner stopped, result: ${inspect(stopped)}`)
-      const latestBlockHeaders = this.getCurrentMiningHeaders()
-      if (!latestBlockHeaders) {
-        return Promise.resolve(false)
-      }
+      const latestRoveredHeadersKeys: string[] = this._knownRovers.map(chain => `${chain}.block.latest`)
+      const currentRoveredBlockHeaders = await this.persistence.getBulk(latestRoveredHeadersKeys)
+
       const lastPreviousBlock = await this.persistence.get('bc.block.latest')
       const previousHeaders = lastPreviousBlock.getBlockchainHeaders()
-      const uniqueBlockHeaders = getUniqueBlocks(previousHeaders, latestBlockHeaders)
+
+      const uniqueBlockHeaders = getUniqueBlocks(previousHeaders, currentRoveredBlockHeaders)
       const uniqueBlocks = flatten([
-        latestBlockHeaders.getBtcList(),
-        latestBlockHeaders.getEthList(),
-        latestBlockHeaders.getLskList(),
-        latestBlockHeaders.getNeoList(),
-        latestBlockHeaders.getWavList()
+        lastPreviousBlock.getBtcList(),
+        lastPreviousBlock.getEthList(),
+        lastPreviousBlock.getLskList(),
+        lastPreviousBlock.getNeoList(),
+        lastPreviousBlock.getWavList()
       ]).reduce((set, h: BlockchainHeader) => {
         uniqueBlockHeaders.map((uh) => {
           if (h.getHash() === uh) {
@@ -407,7 +407,7 @@ export class MiningOfficer {
         return set
       }, [])
 
-      this._logger.info('child blocks usable in rebase: ' + uniqueBlockHeaders.length)
+      this._logger.info('miner rebase: ' + uniqueBlockHeaders.length)
 
       if (uniqueBlocks.length === 0) {
         return Promise.resolve(false)
