@@ -758,7 +758,14 @@ export class Engine {
         // RESTART MINING USED newBlock.getHash()
         this.pubsub.publish('update.block.latest', { key: 'bc.block.latest', data: newBlock })
         // notify the miner
-        this.node.broadcastNewBlock(newBlock)
+        return conn.getPeerInfo((err, peerInfo) => {
+          if (err) {
+            this._logger.error(err)
+          } else {
+            // broadcast to other peers without sending back to the peer that sent it to us
+            this.node.broadcastNewBlock(newBlock, peerInfo.id.toB58String())
+          }
+        })
         // if depth !== 0
         // if peer unlocked
         // lock peer
@@ -853,11 +860,12 @@ export class Engine {
                         this.multiverse._chain = sorted
                         this._logger.info('multiverse has been assigned')
                         this._rsync = false
-                        return this.persistence.put('bc.depth', this.multiverse.getHighestBlock())
+                        return this.persistence.put('bc.depth', this.multiverse.getHighestBlock().getHeight())
                           .then(() => {
                             this._logger.info(8)
                             this.pubsub.publish('update.block.latest', { key: 'bc.block.latest', data: newBlock, force: true, multiverse: this.multiverse._chain })
-                            this.node.broadcastNewBlock(newBlock)
+                            // broadcast to other peers without sending back to the peer that sent it to us
+                            this.node.broadcastNewBlock(newBlock, peerInfo.id.toB58String())
                             return this.persistence.put('rsync', 'n')
                               .then(() => {
                                 this._logger.debug('rsync unlocked')
@@ -1022,7 +1030,7 @@ export class Engine {
     } else {
       this._logger.info('local mined block ' + newBlock.getHeight() + ' does not stack on multiverse height ' + this.multiverse.getHighestBlock().getHeight())
       this._logger.info('mined block ' + newBlock.getHeight() + ' cannot go on top of multiverse block ' + this.multiverse.getHighestBlock().getHash())
-      this.miningOfficer.stopMining()
+      this.miningOfficer.rebaseMining()
         .then((res) => {
           this._logger.info(res)
         })

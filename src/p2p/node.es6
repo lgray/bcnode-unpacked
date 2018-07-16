@@ -289,21 +289,24 @@ export class PeerNode {
     return manager.hasQuorum
   }
 
-  broadcastNewBlock (block: BcBlock) {
+  broadcastNewBlock (block: BcBlock, withoutPeerId: ?string) {
     this._logger.debug(`Broadcasting msg to peers, ${inspect(block.toObject())}`)
 
     const url = `${PROTOCOL_PREFIX}/newblock`
     this.manager.peerBookConnected.getAllArray().map(peer => {
       this._logger.debug(`Sending to peer ${peer}`)
-      this.bundle.dialProtocol(peer, url, (err, conn) => {
-        if (err) {
-          this._logger.error('Error sending message to peer', peer.id.toB58String(), err)
-          return err
-        }
+      const peerId = peer.id.toB58String()
+      if (withoutPeerId === undefined || peerId !== withoutPeerId) {
+        this.bundle.dialProtocol(peer, url, (err, conn) => {
+          if (err) {
+            this._logger.error('Error sending message to peer', peer.id.toB58String(), err)
+            return err
+          }
 
-        // TODO JSON.stringify?
-        pull(pull.values([block.serializeBinary()]), conn)
-      })
+          // TODO JSON.stringify?
+          pull(pull.values([block.serializeBinary()]), conn)
+        })
+      }
     })
   }
 

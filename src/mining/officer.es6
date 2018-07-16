@@ -383,7 +383,7 @@ export class MiningOfficer {
    * Restarts the miner by merging any unused rover blocks into a new block
    */
   async rebaseMiner (): Promise<bool|number> {
-    if (this._canMine !== true) return Promise.resolve(false)
+    // if (this._canMine !== true) return Promise.resolve(false)
 
     try {
       const stopped = await this.stopMining()
