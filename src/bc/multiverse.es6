@@ -14,7 +14,7 @@ import type PersistenceRocksDb from '../persistence/rocksdb'
 const BN = require('bn.js')
 const { all, flatten, zip } = require('ramda')
 
-const { validateRoveredSequences, validateBlockSequence } = require('./validation')
+const { validateRoveredSequences, validateBlockSequence, childrenHeightSum } = require('./validation')
 const { standardId } = require('./helper')
 const { getLogger } = require('../logger')
 
@@ -254,25 +254,27 @@ export class Multiverse {
     this._logger.info(' newBlock previousHash - ' + newBlock.getPreviousHash())
     // Fail is the block hashes are identical
     if (currentHighestBlock !== undefined && newBlock.getHash() === currentHighestBlock.getHash()) {
+      this._logger.warn('newBlock hash === currentHighestBlock hash')
       return false
     }
     this._logger.info(4)
     // FAIL if newBlock totalDifficulty < (lt) currentHighestBlock totalDifficulty
     if (new BN(newBlock.getTotalDistance()).lt(new BN(currentHighestBlock.getTotalDistance()))) {
+      this._logger.warn('new Block totalDistance ' + newBlock.getTotalDistance() + 'less than currentHighestBlock' + currentHighestBlock.getTotalDistance())
       return false
     }
     this._logger.info(5)
     // FAIL if malformed timestamp referenced from previous block with five second lag
-    if (newBlock.getTimestamp() + 5 <= currentHighestBlock.getTimestamp()) {
-      this._logger.info('purposed block ' + newBlock.getHash() + ' has invalid timestamp ' + newBlock.getTimestamp() + ' from current height timestamp ' + currentHighestBlock.getTimestamp())
-      return this.addBestBlock(newBlock)
-    }
+    // if (newBlock.getTimestamp() + 5 <= currentHighestBlock.getTimestamp()) {
+    //  this._logger.info('purposed block ' + newBlock.getHash() + ' has invalid timestamp ' + newBlock.getTimestamp() + ' from current height timestamp ' + currentHighestBlock.getTimestamp())
+    //  return this.addBestBlock(newBlock)
+    // }
     this._logger.info(6)
     // FAIL if timestamp of block is greater than 31 seconds from system time
-    if (newBlock.getTimestamp() + 31 < Math.floor(Date.now() * 0.001)) {
-      this._logger.info('purposed block ' + newBlock.getHash() + ' has invalid timestamp ' + newBlock.getTimestamp() + ' from current height timestamp ' + currentHighestBlock.getTimestamp())
-      return this.addBestBlock(newBlock)
-    }
+    // if (newBlock.getTimestamp() + 31 < Math.floor(Date.now() * 0.001)) {
+    //   this._logger.info('purposed block ' + newBlock.getHash() + ' has invalid timestamp ' + newBlock.getTimestamp() + ' from current height timestamp ' + currentHighestBlock.getTimestamp())
+    //   return this.addBestBlock(newBlock)
+    // }
     this._logger.info(7)
     // FAIL if newBlock does not reference the current highest block as it's previous hash
     if (newBlock.getPreviousHash() !== currentHighestBlock.getHash()) {
@@ -283,11 +285,11 @@ export class Multiverse {
     // FAIL if newBlock does not reference the current highest block as it's previous hash
     // note this ignores the first block immediately following the genesis block due to lack of rovered blocks in the genesis block
     // ////////////// ALWAYS FAILS HERE /////////////////
-    // if (newBlock.getHeight() > 2 && validateBlockSequence([newBlock, currentHighestBlock]) !== true) {
-    //   this._logger.info(8.5)
-    //   this._logger.info('addition of block ' + newBlock.getHash() + ' creates malformed child blockchain sequence')
-    //   return this.addBestBlock(newBlock)
-    // }
+    if (newBlock.getHeight() > 2 && validateBlockSequence([newBlock, currentHighestBlock]) !== true) {
+      this._logger.info(8.5)
+      this._logger.info('addition of block ' + newBlock.getHash() + ' creates malformed child blockchain sequence')
+      return this.addBestBlock(newBlock)
+    }
     this._logger.info(9)
     // PASS add the new block to the parent position
     this._chain.unshift(newBlock)
