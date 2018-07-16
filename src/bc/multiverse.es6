@@ -377,10 +377,10 @@ export class Multiverse {
     }
     // make sure that blocks that are added reference child chains
     return this.validateRoveredBlocks(newBlock).then(areAllChildrenRovered => {
-      if (!areAllChildrenRovered) {
-        this._logger.info('failed resync req: not all rovers have found blocks')
-        return Promise.resolve(false)
-      }
+      // if (!areAllChildrenRovered) {
+      //  this._logger.info('failed resync req: not all rovers have found blocks')
+      //  return Promise.resolve(false)
+      // }
 
       // FAIL if sum of child block heights is less than the rovered child heights
       if (childrenHeightSum(newBlock) <= childrenHeightSum(currentParentHighestBlock)) {
