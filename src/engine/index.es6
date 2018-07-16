@@ -10,9 +10,7 @@
 import type { Logger } from 'winston'
 import type { BcBlock } from '../protos/core_pb'
 
-const { PROTOCOL_PREFIX } = require('../p2p/protocol/version')
 const debug = require('debug')('bcnode:engine')
-const pull = require('pull-stream')
 const { EventEmitter } = require('events')
 const { queue } = require('async')
 const { resolve } = require('path')
@@ -554,7 +552,7 @@ export class Engine {
     }
   }
 
-  async sendPeerLatestBlock (conn: Object, newBlock: BcBlock): Promise<?boolean> {
+  async sendPeerLatestBlock (conn: Object, newBlock: BcBlock): Promise<*> {
     return conn.getPeerInfo((err, peerInfo) => {
       if (err) {
         this._logger.error(errToString(err))
@@ -563,23 +561,9 @@ export class Engine {
 
       try {
         const targetPeer = peerInfo.id.toB58String()
-        return this.node.manager.peerBookConnected.getAllArray().map(peer => {
-          const newPeer = peer.id.toB58String()
-          this._logger.debug(`Sending to peer ${peer}`)
-          if (newPeer === targetPeer) {
-            const url = `${PROTOCOL_PREFIX}/newblock`
-            this.node.bundle.dialProtocol(peer, url, (err, conn) => {
-              if (err) {
-                this._logger.error('Error sending message to peer', peer.id.toB58String(), err)
-                return err
-              }
-              // TODO JSON.stringify?
-              pull(pull.values([newBlock.serializeBinary()]), conn)
-            })
-          }
-        })
+        return this.node.sendBlockToPeer(newBlock, targetPeer)
       } catch (err) {
-        this._logger.debug(err)
+        return Promise.reject(err)
       }
       // request proof of the multiverse from the peer
     })

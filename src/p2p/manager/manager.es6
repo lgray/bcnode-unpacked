@@ -210,7 +210,10 @@ export class PeerManager {
         return this.createPeer(peer)
           .getLatestHeader()
           .then((header) => {
-            debug('Peer latest header', peer.id.toB58String(), toObject(header))
+            return Promise.resolve(header)
+          })
+          .catch((err) => {
+            return Promise.reject(err)
           })
       })
       .catch((err) => {

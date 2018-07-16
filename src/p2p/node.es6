@@ -165,6 +165,20 @@ export class PeerNode {
 
         this.bundle.on('peer:connect', (peer) => {
           return this.manager.onPeerConnect(peer)
+            .then((header) => {
+              if (header !== undefined && header.getHeight !== undefined) {
+
+              }
+            })
+            .catch((err) => {
+              this._logger.error(err)
+              return this.manager.onPeerDisconnect(peer).then(() => {
+                if (this._shouldStartDiscovery()) {
+                  debug(`peer:disconnect - Quorum of ${QUORUM_SIZE} not reached, starting discovery`)
+                  return this.startDiscovery()
+                }
+              })
+            })
         })
 
         this.bundle.on('peer:disconnect', (peer) => {
@@ -287,6 +301,25 @@ export class PeerNode {
     }
 
     return manager.hasQuorum
+  }
+
+  sendBlockToPeer (block: BcBlock, peerId: string) {
+    this._logger.debug(`Broadcasting msg to peers, ${inspect(block.toObject())}`)
+
+    const url = `${PROTOCOL_PREFIX}/newblock`
+    this.manager.peerBookConnected.getAllArray().map(peer => {
+      this._logger.debug(`Sending to peer ${peer}`)
+      if (peerId === peer.id.toB58String()) {
+        this.bundle.dialProtocol(peer, url, (err, conn) => {
+          if (err) {
+            this._logger.error('Error sending message to peer', peer.id.toB58String(), err)
+            return err
+          }
+          // TODO JSON.stringify?
+          pull(pull.values([block.serializeBinary()]), conn)
+        })
+      }
+    })
   }
 
   broadcastNewBlock (block: BcBlock, withoutPeerId: ?string) {
