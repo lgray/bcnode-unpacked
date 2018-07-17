@@ -240,7 +240,6 @@ export class Multiverse {
     this._logger.info(' highestBlock height - ' + currentHighestBlock.getHeight())
     this._logger.info(' highestBlock difficulty - ' + currentHighestBlock.getDifficulty())
     this._logger.info(' newBlock hash - ' + newBlock.getHash())
-    this._logger.info(' newBlock height - ' + newBlock.getHeight())
     this._logger.info(' newBlock difficulty - ' + newBlock.getDifficulty())
     this._logger.info(' newBlock previousHash - ' + newBlock.getPreviousHash())
     // Fail is the block hashes are identical

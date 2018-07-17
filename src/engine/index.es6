@@ -590,7 +590,7 @@ export class Engine {
    * @param conn Connection the block was received from
    * @param newBlock Block itself
    */
-  async syncFromDepth (conn: Object, newBlock: BcBlock): Promise<bool|Error> {
+  async proveTwo (conn: Object, newBlock: BcBlock): Promise<bool|Error> {
     // disabled until
     try {
       this._logger.info('sync from depth start')
@@ -600,12 +600,13 @@ export class Engine {
       // where the bottom of the chain is
       // if the last height was not a genesis block and the depth was 2 then sync only to the height
       if (depth === 2) {
-        // ignore and return u
+        // chain has be sequenced backwards until block of height 2
         this._logger.info('depth is 2: sync from depth end')
         return Promise.resolve(true)
         // return Promise.resolve(true)
       } else {
-        const upperBound = max(depth, checkpoint.getHeight()) + 1 // so we dont get the genesis block
+        const upperBound = max(depth, 2) + 1 // so we dont get the genesis block
+        const lowBound = max(depth - 2000, 2) + 1 // so we dont get the genesis block
         return conn.getPeerInfo((err, peerInfo) => {
           if (err) {
             return Promise.reject(err)
@@ -626,11 +627,11 @@ export class Engine {
               // request a range from the peer
               await this.persistence.put(peerLockKey, 1)
               // lock the depth for if another block comes while running this
-              await this.persistence.put('bc.depth', depth)
+              await this.persistence.put('bc.depth', lowBound)
               const query = {
                 queryHash: newBlock.getHash(),
                 queryHeight: upperBound,
-                low: 2,
+                low: dept,
                 high: upperBound
               }
               return this.node.manager.createPeer(peerInfo)
@@ -648,7 +649,7 @@ export class Engine {
                       // all done, no more depth clean up, unlock peer
                       return this.persistence.put(peerLockKey, 0)
                         .then(() => {
-                          return this.persistence.put('bc.depth', 2)
+                          return this.persistence.put('bc.depth', lowBound)
                             .then(() => {
                               return this.persistence.putPending('bc')
                             })
@@ -872,7 +873,7 @@ export class Engine {
                                       return Promise.resolve(true)
                                     }).catch((err) => {
                                       this._logger.debug(err)
-                                      return this.syncFromDepth(conn, this.multiverse.getHighestBlock()())
+                                      return this.proveTwo(conn, this.multiverse.getHighestBlock()())
                                         .then(synced => {
                                           this._logger.info(9)
                                           this._logger.info(newBlock.getHash() + ' blockchain sync complete')
