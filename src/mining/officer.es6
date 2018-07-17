@@ -389,7 +389,7 @@ export class MiningOfficer {
 
     try {
       const stopped = await this.stopMining()
-      this._logger.info(`Miner stopped, result: ${inspect(stopped)}`)
+      this._logger.info(`miner rebased, result: ${inspect(stopped)}`)
       const latestRoveredHeadersKeys: string[] = this._knownRovers.map(chain => `${chain}.block.latest`)
       this._logger.info(latestRoveredHeadersKeys)
       const currentRoveredBlocks = await this.persistence.getBulk(latestRoveredHeadersKeys)
@@ -404,7 +404,7 @@ export class MiningOfficer {
       }
       this._logger.info(currentRoveredBlocks)
       const uniqueBlocks = getUniqueBlocks(previousHeaders, currentRoveredBlocks)
-      this._logger.info('miner rebase: ' + uniqueBlocks.length)
+      this._logger.info('stale branch blocks: ' + uniqueBlocks.length)
       if (uniqueBlocks.length === 0) {
         return Promise.resolve(false)
       }
