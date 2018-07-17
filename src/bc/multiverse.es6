@@ -209,8 +209,8 @@ export class Multiverse {
     // if the current block at the same height is better switch
     if (currentParentHighestBlock !== null &&
         currentParentHighestBlock !== undefined &&
-        newBlock.getPreviousHash() === currentParentHighestBlock.getHash() &&
-        validateBlockSequence([newBlock, currentParentHighestBlock]) === true) {
+        newBlock.getPreviousHash() === currentParentHighestBlock.getHash()) {
+      // validateBlockSequence([newBlock, currentParentHighestBlock]) === true) {
       this._logger.info('new block at its height greater total than block in multiverse')
       this._chain.shift()
       this._chain.unshift(newBlock)
@@ -380,8 +380,8 @@ export class Multiverse {
     // make sure that blocks that are added reference child chains
     return this.validateRoveredBlocks(newBlock).then(areAllChildrenRovered => {
       if (!areAllChildrenRovered) {
-        this._logger.info('failed resync req: not all rovers have found blocks')
-      // return Promise.resolve(false)
+        this._logger.warn('failed resync req: not all rovers have found blocks')
+      // return Promise.resolve(false) // TODO: enabled in AT
       }
 
       // FAIL if sum of child block heights is less than the rovered child heights
