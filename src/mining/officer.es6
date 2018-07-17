@@ -181,6 +181,10 @@ export class MiningOfficer {
           to = latestBlockHeadersHeights[chain]
         }
 
+        if (from > 50) {
+          from = 50
+        }
+
         this._logger.debug(`newBlockHeadersKeys, previous BC: ${lastPreviousBlock.getHeight()}, ${chain}, from: ${from}, to: ${to}`)
 
         if (from === to) {
