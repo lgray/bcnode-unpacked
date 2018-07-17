@@ -395,8 +395,8 @@ export class MiningOfficer {
       const lastPreviousBlock = await this.persistence.get('bc.block.latest')
       const previousHeaders = lastPreviousBlock.getBlockchainHeaders()
 
-      if (currentRoveredBlocks.length !== Object.keys(previousHeaders).length) {
-        this._logger.info(currentRoveredBlocks.length + ' current rovered blocks does not have ' + Object.keys(previousHeaders).length)
+      if (currentRoveredBlocks.length !== Object.keys(previousHeaders.toObject()).length) {
+        this._logger.info(currentRoveredBlocks.length + ' current rovered blocks does not have ' + Object.keys(previousHeaders.toObject()).length)
         return Promise.resolve(false)
       }
 

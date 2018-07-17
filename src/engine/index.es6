@@ -347,7 +347,7 @@ export class Engine {
       } else if (msg.force === true || previousLatest.getHeight() === 1) {
         await this.persistence.put('bc.block.latest', block)
         await this.persistence.put('bc.block.' + block.getHeight(), block)
-        await this.persistence.forcePutChildHeaders(block)
+        await this.persistence.putChildHeaders(block)
       } else {
         this._logger.error('failed to set block ' + block.getHeight() + ' ' + block.getHash() + ' as latest block, wrong previous hash')
       }
@@ -369,7 +369,7 @@ export class Engine {
       if (block !== undefined && msg.force === true) {
         await this.persistence.put('bc.block.latest', block)
         await this.persistence.put('bc.block.' + block.getHeight(), block)
-        await this.persistence.forcePutChildHeaders(block)
+        await this.persistence.putChildHeaders(block)
       } else {
         this._logger.warn('submitted block ' + block.getHeight() + ' ' + block.getHash() + ' will not be persisted')
       }

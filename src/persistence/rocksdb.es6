@@ -257,16 +257,25 @@ export default class PersistenceRocksDb {
     const headers = block.getBlockchainHeaders()
     const table = {}
     return Promise.all([]
+      // restrict to sequence only
       .concat(this.sortChildHeaders(headers.getBtcList())
         .map((b) => {
           if (opts.btc) {
             return async () => {
-              if (table[b.getBlockchain()] === undefined) {
-                table[b.getBlockchain()] = b
-              } else if (b.getHeight() > table[b.getBlockchain()].getHeight()) {
-                table[b.getBlockchain()] = b
-              }
-              await this.put('btc.block.' + b.getHeight(), b)
+              return this.get('btc.block.latest')
+                .then((res) => {
+                  if (b.getHeight() > res.getHeight()) {
+                    return Promise.all([
+                      this.put('btc.block.latest', b),
+                      this.put('btc.block.' + b.getHeight(), b)
+                    ])
+                  }
+                  return this.put('btc.block.' + b.getHeight(), b)
+                })
+                .catch((err) => {
+                  this._logger.debug(err)
+                  return this.put('btc.block.' + b.getHeight(), b)
+                })
             }
           }
           return Promise.resolve(true)
@@ -275,12 +284,20 @@ export default class PersistenceRocksDb {
         .map((b) => {
           if (opts.eth) {
             return async () => {
-              if (table[b.getBlockchain()] === undefined) {
-                table[b.getBlockchain()] = b
-              } else if (b.getHeight() > table[b.getBlockchain()].getHeight()) {
-                table[b.getBlockchain()] = b
-              }
-              await this.put('eth.block.' + b.getHeight(), b)
+              return this.get('eth.block.latest')
+                .then((res) => {
+                  if (b.getHeight() > res.getHeight()) {
+                    return Promise.all([
+                      this.put('eth.block.latest', b),
+                      this.put('eth.block.' + b.getHeight(), b)
+                    ])
+                  }
+                  return this.put('eth.block.' + b.getHeight(), b)
+                })
+                .catch((err) => {
+                  this._logger.debug(err)
+                  return this.put('eth.block.' + b.getHeight(), b)
+                })
             }
           }
           return Promise.resolve(true)
@@ -289,26 +306,20 @@ export default class PersistenceRocksDb {
         .map((b) => {
           if (opts.wav) {
             return async () => {
-              if (table[b.getBlockchain()] === undefined) {
-                table[b.getBlockchain()] = b
-              } else if (b.getHeight() > table[b.getBlockchain()].getHeight()) {
-                table[b.getBlockchain()] = b
-              }
-              await this.put('wav.block.' + b.getHeight(), b)
-            }
-          }
-          return Promise.resolve(true)
-        }))
-      .concat(this.sortChildHeaders(headers.getNeoList())
-        .map((b) => {
-          if (opts.neo) {
-            return async () => {
-              if (table[b.getBlockchain()] === undefined) {
-                table[b.getBlockchain()] = b
-              } else if (b.getHeight() > table[b.getBlockchain()].getHeight()) {
-                table[b.getBlockchain()] = b
-              }
-              await this.put('neo.block.' + b.getHeight(), b)
+              return this.get('wav.block.latest')
+                .then((res) => {
+                  if (b.getHeight() > res.getHeight()) {
+                    return Promise.all([
+                      this.put('wav.block.latest', b),
+                      this.put('wav.block.' + b.getHeight(), b)
+                    ])
+                  }
+                  return this.put('wav.block.' + b.getHeight(), b)
+                })
+                .catch((err) => {
+                  this._logger.debug(err)
+                  return this.put('wav.block.' + b.getHeight(), b)
+                })
             }
           }
           return Promise.resolve(true)
@@ -317,41 +328,46 @@ export default class PersistenceRocksDb {
         .map((b) => {
           if (opts.lsk) {
             return async () => {
-              if (table[b.getBlockchain()] === undefined) {
-                table[b.getBlockchain()] = b
-              } else if (b.getHeight() > table[b.getBlockchain()].getHeight()) {
-                table[b.getBlockchain()] = b
-              }
-              await this.put('lsk.block.' + b.getHeight(), b)
+              return this.get('lsk.block.latest')
+                .then((res) => {
+                  if (b.getHeight() > res.getHeight()) {
+                    return Promise.all([
+                      this.put('lsk.block.latest', b),
+                      this.put('lsk.block.' + b.getHeight(), b)
+                    ])
+                  }
+                  return this.put('lsk.block.' + b.getHeight(), b)
+                })
+                .catch((err) => {
+                  this._logger.debug(err)
+                  return this.put('lsk.block.' + b.getHeight(), b)
+                })
             }
           }
           return Promise.resolve(true)
         }))
-      // restrict to sequence only
-      // .concat(this.sortChildHeaders(headers.getEthList())
-      //  .map((b) => {
-      //    if (opts.eth) {
-      //      return async () => {
-      //        const latest = await this.get('eth.block.latest')
-      //        return this.get('eth.block.' + b.getHeight() - 1)
-      //          .then((res) => {
-      //            if (res.getHash() === b.getPreviousHash() &&
-      //              res.getHash() === latest.getHash()) {
-      //              return Promise.all([
-      //                this.put('eth.block.latest', b),
-      //                this.put('eth.block.' + b.getHeight(), b)
-      //              ])
-      //            }
-      //            return this.put('eth.block.' + b.getHeight(), b)
-      //          })
-      //          .catch((err) => {
-      //            this._logger.debug(err)
-      //            return this.put('eth.block.' + b.getHeight(), b)
-      //          })
-      //      }
-      //    }
-      //    return Promise.resolve(true)
-      //  }))
+      .concat(this.sortChildHeaders(headers.getNeoList())
+        .map((b) => {
+          if (opts.neo) {
+            return async () => {
+              return this.get('neo.block.latest')
+                .then((res) => {
+                  if (b.getHeight() > res.getHeight()) {
+                    return Promise.all([
+                      this.put('neo.block.latest', b),
+                      this.put('neo.block.' + b.getHeight(), b)
+                    ])
+                  }
+                  return this.put('neo.block.' + b.getHeight(), b)
+                })
+                .catch((err) => {
+                  this._logger.debug(err)
+                  return this.put('neo.block.' + b.getHeight(), b)
+                })
+            }
+          }
+          return Promise.resolve(true)
+        }))
     ).then(() => {
       return async () => {
         const currentLatest = await Promise.all(Object.keys(table).map((chain) => {
