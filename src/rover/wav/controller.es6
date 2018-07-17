@@ -189,7 +189,11 @@ export default class Controller {
     this._backoff = getBackoff()
     this._pendingRequests = []
     this._pendingFibers = []
-    ts.start()
+    try {
+      ts.start()
+    } catch (err) {
+      this._logger.error(err)
+    }
   }
 
   init () {
