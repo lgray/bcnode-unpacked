@@ -22,7 +22,7 @@ const { all, equals, flatten, fromPairs, last, range, values } = require('ramda'
 
 const { prepareWork, prepareNewBlock, getUniqueBlocks } = require('./primitives')
 const { getLogger } = require('../logger')
-const { Block, BcBlock, BlockchainHeader, BlockchainHeaders } = require('../protos/core_pb')
+const { Block, BcBlock, BlockchainHeaders } = require('../protos/core_pb')
 const { isDebugEnabled, ensureDebugPath } = require('../debug')
 const { validateRoveredSequences, isValidBlock } = require('../bc/validation')
 const { getBlockchainsBlocksCount } = require('../bc/helper')
@@ -181,10 +181,6 @@ export class MiningOfficer {
           to = latestBlockHeadersHeights[chain]
         }
 
-        if (from > 50) {
-          from = 50
-        }
-
         this._logger.debug(`newBlockHeadersKeys, previous BC: ${lastPreviousBlock.getHeight()}, ${chain}, from: ${from}, to: ${to}`)
 
         if (from === to) {
@@ -194,6 +190,8 @@ export class MiningOfficer {
         if (from > to) {
           return []
         }
+
+        this._logger.info('chain: ' + chain + 'from: ' + from + ' to: ' + to)
 
         return [range(from, to + 1).map(height => `${chain}.block.${height}`)]
       }))
@@ -395,39 +393,21 @@ export class MiningOfficer {
       const latestRoveredHeadersKeys: string[] = this._knownRovers.map(chain => `${chain}.block.latest`)
       this._logger.info(latestRoveredHeadersKeys)
       const currentRoveredBlocks = await this.persistence.getBulk(latestRoveredHeadersKeys)
-
       const lastPreviousBlock = await this.persistence.get('bc.block.latest')
       const previousHeaders = lastPreviousBlock.getBlockchainHeaders()
-
-      if (currentRoveredBlocks.length !== Object.keys(previousHeaders.toObject()).length) {
-        this._logger.info(currentRoveredBlocks.length + ' current rovered blocks does not have ' + Object.keys(previousHeaders.toObject()).length)
+      if (lastPreviousBlock === undefined) {
         return Promise.resolve(false)
       }
-
+      this._logger.info(currentRoveredBlocks.length + ' blocks have been rovered from a total of ' + Object.keys(previousHeaders.toObject()).length)
+      if (currentRoveredBlocks.length !== Object.keys(previousHeaders.toObject()).length) {
+        return Promise.resolve(false)
+      }
       this._logger.info(currentRoveredBlocks)
-
-      const uniqueBlockHeaders = getUniqueBlocks(previousHeaders, currentRoveredBlocks)
-      const uniqueBlocks = flatten([
-        lastPreviousBlock.getBtcList(),
-        lastPreviousBlock.getEthList(),
-        lastPreviousBlock.getLskList(),
-        lastPreviousBlock.getNeoList(),
-        lastPreviousBlock.getWavList()
-      ]).reduce((set, h: BlockchainHeader) => {
-        uniqueBlockHeaders.map((uh) => {
-          if (h.getHash() === uh) {
-            set.push(uh)
-          }
-        })
-        return set
-      }, [])
-
-      this._logger.info('miner rebase: ' + uniqueBlockHeaders.length)
-
+      const uniqueBlocks = getUniqueBlocks(previousHeaders, currentRoveredBlocks)
+      this._logger.info('miner rebase: ' + uniqueBlocks.length)
       if (uniqueBlocks.length === 0) {
         return Promise.resolve(false)
       }
-
       return this.startMining(this._knownRovers, uniqueBlocks.shift())
     } catch (err) {
       return Promise.reject(err)
@@ -487,8 +467,6 @@ export class MiningOfficer {
   }
 
   _handleWorkerError (error: Error): Promise<boolean> {
-    this._logger.error(error)
-    this._logger.error(error)
     this._logger.error(error)
     this._logger.warn(`Mining worker process errored, reason: ${error.message}`)
     this._cleanUnfinishedBlock()

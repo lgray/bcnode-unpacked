@@ -331,7 +331,7 @@ export function validateBlockSequence (blocks: BcBlock[]): bool {
   logger.info(JSON.stringify(validPairSubchains, null, 2))
   if (!all(equals(true), flatten(validPairSubchains))) {
     logger.info('failed test of rovers')
-    return false // TODO: AT -> is enabled in validation
+    // return false // TODO: AT -> is enabled in validation
   }
 
   return true

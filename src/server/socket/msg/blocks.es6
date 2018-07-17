@@ -22,6 +22,7 @@ module.exports = {
         firstBlock = block
         const firstBlockHeight = firstBlock.getHeight()
         const count = Math.min(payload.data.count || 10, firstBlockHeight) - 1
+        logger.info('requesting block height from server')
         return Promise.all(
           reverse(
             range(firstBlockHeight - count, firstBlockHeight)

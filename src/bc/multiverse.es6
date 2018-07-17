@@ -244,6 +244,10 @@ export class Multiverse {
       this._chain.unshift(newBlock)
       return true // TODO added - check with @schnorr
     }
+    if (newBlock.getHeight() - 10 > currentHighestBlock.getHeight()) {
+      this._chain.unshift(newBlock)
+      return false // TODO added - check with @schnorr
+    }
     this._logger.info(3)
     this._logger.info(' highestBlock hash - ' + currentHighestBlock.getHash())
     this._logger.info(' highestBlock previousHash - ' + currentHighestBlock.getPreviousHash())

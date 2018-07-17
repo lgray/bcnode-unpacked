@@ -809,8 +809,10 @@ export class Engine {
                       this._logger.info(2)
                       this._logger.info(newBlock.getHash() + ' new heights: ' + currentHeights)
                       const comparableBlocks = newBlocks.filter(a => {
-                        if (currentHeights.indexOf(a.getHeight()) > -1) {
-                          return a
+                        if (a !== undefined) {
+                          if (a.getHeight !== undefined && currentHeights.indexOf(a.getHeight()) > -1) {
+                            return a
+                          }
                         }
                       })
                       this._logger.info(comparableBlocks)
@@ -826,6 +828,7 @@ export class Engine {
                       })
                       this._logger.info(4)
                       const highestBlock = this.multiverse.getHighestBlock()
+                      const lowestBlock = this.multiverse.getLowestBlock()
                       this._logger.info(5)
                       this._logger.info(newBlock.getHash() + ' comparing with: ' + highestBlock.getHash() + ' height: ' + highestBlock.getHeight())
                       this._logger.info(6)
@@ -847,12 +850,14 @@ export class Engine {
                         this.multiverse._chain = sorted
                         this._logger.info('multiverse has been assigned')
                         this._rsync = false
+
                         return this.persistence.put('bc.depth', this.multiverse.getHighestBlock().getHeight())
                           .then(() => {
                             this._logger.info(8)
                             this.pubsub.publish('update.block.latest', { key: 'bc.block.latest', data: newBlock, force: true, multiverse: this.multiverse._chain })
                             // broadcast to other peers without sending back to the peer that sent it to us
                             this.node.broadcastNewBlock(newBlock, peerInfo.id.toB58String())
+
                             return this.persistence.put('rsync', 'n')
                               .then(() => {
                                 this._logger.debug('rsync unlocked')
@@ -861,21 +866,24 @@ export class Engine {
                                 if (targetHeight === 1) {
                                   return Promise.resolve(true)
                                 }
-                                this.persistence.get('bc.block.' + targetHeight).then((e) => {
-                                // already have this multiverse on disk
-                                  return Promise.resolve(true)
-                                }).catch((err) => {
-                                  this._logger.debug(err)
-                                  return this.syncFromDepth(conn, this.multiverse.getHighestBlock()())
-                                    .then(synced => {
-                                      this._logger.info(9)
-                                      this._logger.info(newBlock.getHash() + ' blockchain sync complete')
-                                    })
-                                    .catch(e => {
-                                      this._logger.info(newBlock.getHash() + ' blockchain sync failed')
-                                      this._logger.error(errToString(e))
-                                    })
-                                })
+
+                                if (lowestBlock.getHash() === this.multiverse.getLowestBlock().getHash()) {
+                                  this.persistence.get('bc.block.' + targetHeight).then((e) => {
+                                  // already have this multiverse on disk
+                                    return Promise.resolve(true)
+                                  }).catch((err) => {
+                                    this._logger.debug(err)
+                                    return this.syncFromDepth(conn, this.multiverse.getHighestBlock()())
+                                      .then(synced => {
+                                        this._logger.info(9)
+                                        this._logger.info(newBlock.getHash() + ' blockchain sync complete')
+                                      })
+                                      .catch(e => {
+                                        this._logger.info(newBlock.getHash() + ' blockchain sync failed')
+                                        this._logger.error(errToString(e))
+                                      })
+                                  })
+                                }
                               })
                               .catch((e) => {
                                 this._logger.debug(e)
