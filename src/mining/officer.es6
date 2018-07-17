@@ -398,11 +398,13 @@ export class MiningOfficer {
       if (lastPreviousBlock === undefined) {
         return Promise.resolve(false)
       }
-      this._logger.info(currentRoveredBlocks.length + ' blocks have been rovered from a total of ' + Object.keys(previousHeaders.toObject()).length)
+      if (currentRoveredBlocks !== undefined && currentRoveredBlocks.length > 0) {
+        const perc = (currentRoveredBlocks.length / Object.keys(previousHeaders.toObject()).length) * 100
+        this._logger.info('multiverse sync state: ' + perc + '%')
+      }
       if (currentRoveredBlocks.length !== Object.keys(previousHeaders.toObject()).length) {
         return Promise.resolve(false)
       }
-      this._logger.info(currentRoveredBlocks)
       const uniqueBlocks = getUniqueBlocks(previousHeaders, currentRoveredBlocks)
       this._logger.info('stale branch blocks: ' + uniqueBlocks.length)
       if (uniqueBlocks.length === 0) {

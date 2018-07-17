@@ -20,7 +20,6 @@ const { getLogger } = require('../logger')
 
 export class Multiverse {
   _chain: BcBlock[]
-  _candidates: BcBlock[]
   _height: number
   _created: number
   _id: string
@@ -31,7 +30,6 @@ export class Multiverse {
     this._persistence = persistence
     this._id = standardId()
     this._chain = []
-    this._candidates = []
     this._logger = getLogger(`bc.multiverse.${this._id}`, false)
     this._height = 0
     this._created = Math.floor(Date.now() * 0.001)
@@ -137,18 +135,6 @@ export class Multiverse {
   }
 
   /**
-   * Add candidate block to candidate list (max 12)
-   * @param newBlock
-   * @returns {*}
-   */
-  addCandidateBlock (newBlock: BcBlock) {
-    this._candidates.unshift(newBlock)
-    if (this._candidates.length > 12) {
-      this._candidates.pop()
-    }
-  }
-
-  /**
    * check if a block exists
    * @param newBlock
    * @returns {boolean}
@@ -172,7 +158,7 @@ export class Multiverse {
    * @param newBlock
    * @returns {boolean}
    */
-  addBestBlock (newBlock: BcBlock): boolean {
+  addBestBlock (newBlock: BcBlock): Promise<?boolean> {
     this._logger.info(11)
     const currentHighestBlock = this.getHighestBlock()
     const currentParentHighestBlock = this.getParentHighestBlock()
@@ -180,7 +166,7 @@ export class Multiverse {
       // assume we always have current highest block
       this._logger.error('Cannot get currentHighestBlock')
       this._logger.info('bestBlock: failed  ')
-      return true
+      return Promise.resolve(true)
     }
     this._logger.info(12)
     // if no block is available go by total difficulty
@@ -196,15 +182,15 @@ export class Multiverse {
         this._logger.info('bestBlock failed newBlock total distance < currentHighestBlock total distance')
         this._chain.length = 0
         this._chain.push(newBlock)
-        return true
+        return Promise.resolve(true)
       }
-      return false
+      return Promise.resolve(false)
     }
     this._logger.info(14)
     // FAIL if newBlock total difficulty <  currentHighestBlock
     if (new BN(newBlock.getTotalDistance()).lt(new BN(currentHighestBlock.getTotalDistance()))) {
       this._logger.info('bestBlock failed newBlock total distance < currentHighestBlock total distance')
-      return false
+      return Promise.resolve(false)
     }
     // if the current block at the same height is better switch
     if (currentParentHighestBlock !== null &&
@@ -214,10 +200,10 @@ export class Multiverse {
       this._logger.info('new block at its height greater total than block in multiverse')
       this._chain.shift()
       this._chain.unshift(newBlock)
-      return true
+      return Promise.resolve(true)
     }
     this._logger.info(15)
-    return false
+    return Promise.resolve(false)
   }
 
   /**
@@ -225,28 +211,28 @@ export class Multiverse {
    * @param block New block
    * @returns {boolean}
    */
-  addNextBlock (newBlock: BcBlock): boolean {
+  async addNextBlock (newBlock: BcBlock): Promise<?boolean> {
     // return false for empty block
     if (newBlock === undefined || newBlock === null) {
-      return false
+      return Promise.resolve(false)
     }
     this._logger.info(1)
     // if there are no blocks in the multiverse this block is the highest
     // in default setup the contructor loads the genesis block into the multiverse
     if (this._chain.length === 0) {
       this._chain.push(newBlock)
-      return true
+      return Promise.resolve(true)
     }
     this._logger.info(2)
     const currentHighestBlock = this.getHighestBlock()
     // PASS no other candidate in Multiverse
     if (currentHighestBlock === null || currentHighestBlock === undefined) {
       this._chain.unshift(newBlock)
-      return true // TODO added - check with @schnorr
+      return Promise.resolve(true)
     }
     if (newBlock.getHeight() - 10 > currentHighestBlock.getHeight()) {
       this._chain.unshift(newBlock)
-      return false // TODO added - check with @schnorr
+      return Promise.resolve(false)
     }
     this._logger.info(3)
     this._logger.info(' highestBlock hash - ' + currentHighestBlock.getHash())
@@ -260,13 +246,13 @@ export class Multiverse {
     // Fail is the block hashes are identical
     if (currentHighestBlock !== undefined && newBlock.getHash() === currentHighestBlock.getHash()) {
       this._logger.warn('newBlock hash === currentHighestBlock hash')
-      return false
+      return Promise.resolve(false)
     }
     this._logger.info(4)
     // FAIL if newBlock totalDifficulty < (lt) currentHighestBlock totalDifficulty
     if (new BN(newBlock.getTotalDistance()).lt(new BN(currentHighestBlock.getTotalDistance()))) {
       this._logger.warn('new Block totalDistance ' + newBlock.getTotalDistance() + 'less than currentHighestBlock' + currentHighestBlock.getTotalDistance())
-      return false
+      return Promise.resolve(false)
     }
     this._logger.info(5)
     // FAIL if malformed timestamp referenced from previous block with five second lag
@@ -310,7 +296,7 @@ export class Multiverse {
       this._chain.pop()
     }
     this._logger.info(10)
-    return true
+    return Promise.resolve(true)
   }
 
   /**
@@ -370,7 +356,6 @@ export class Multiverse {
     if (currentParentHighestBlock === null && currentHighestBlock !== null) {
       if (new BN(newBlock.getTotalDistance()).gt(new BN(currentHighestBlock.getTotalDistance()))) {
         this._logger.info('passed resync: total distance of new block is greater than current highest')
-        this.addCandidateBlock(newBlock)
         await this.persistence.put('rsync', 'y')
         return Promise.resolve(true)
       }
@@ -393,7 +378,6 @@ export class Multiverse {
         this._logger.info('child height of new block is lower than height the current parent block')
         return Promise.resolve(false)
       }
-      this.addCandidateBlock(newBlock)
       return Promise.resolve(true)
     })
   }
