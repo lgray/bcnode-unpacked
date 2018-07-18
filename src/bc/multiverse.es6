@@ -224,7 +224,7 @@ export class Multiverse {
       return Promise.resolve(true)
     }
     this._logger.info(2)
-    const currentHighestBlock = this.getHighestBlock()
+    const currentHighestBlock = await this.persistence.get('bc.block.latest')
     // PASS no other candidate in Multiverse
     if (currentHighestBlock === null || currentHighestBlock === undefined) {
       this._chain.unshift(newBlock)
@@ -287,7 +287,7 @@ export class Multiverse {
     const validRovers = validateRoveredSequences([newBlock, currentHighestBlock])
 
     if (validRovers === false) {
-      this._logger.info('ERROR in multitasking which lead to wayward rovers')
+      this._logger.info('ERROR in multiverse resulting in wayward rovers')
       return this.addBestBlock(newBlock)
     }
 

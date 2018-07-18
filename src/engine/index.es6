@@ -330,6 +330,7 @@ export class Engine {
    */
   async updateLatestAndStore (msg: Object) {
     const block = msg.data
+    this._logger.info('store block: ' + block.getHeight() + ' ' + block.getHash())
     try {
       await this.persistence.get('bc.block.checkpoint')
     } catch (err) {
@@ -753,7 +754,7 @@ export class Engine {
       // after target adds weighted fusion positioning to also evaluate block  -> (X1,Y1) = D1/D1 + D2 * (X1,Y1) + D2 / D1 + D2 * (X2, Y2)
       // encourages grouped transactions from one tower to be more likely to enter a winning block in batch due to lowest distance
 
-      this.multiverse.addNextBlock(newBlock).then((isNextBlock) => {
+      return this.multiverse.addNextBlock(newBlock).then((isNextBlock) => {
         if (isNextBlock === true) {
           if (this.multiverse._chain.length > 1) {
             this._logger.info('new block ' + newBlock.getHash() + ' references previous Block ' + newBlock.getPreviousHash() + ' for block ' + this.multiverse._chain[1].getHash())
@@ -1031,33 +1032,34 @@ export class Engine {
     // Add to multiverse and call persist
     this._knownBlocksCache.set(newBlock.getHash(), newBlock)
     this._logger.info('submitting mined block to current multiverse')
-    this.multiverse.addNextBlock(newBlock).then((isNextBlock) => {
-      this._logger.info('submitted mine block is next block in multiverse: ' + isNextBlock)
-      this._logger.info('pmb' + 2)
-      // if (isNextBlock) {
-      // TODO: this will break now that _blocks is not used in multiverse
-      // if (this.multiverse.getHighestBlock() !== undefined &&
-      //    this.multiverse.validateBlockSequenceInline([this.multiverse.getHighestBlock(), newBlock]) === true) {
-      this._logger.info('number of blocks in multiverse: ' + this.multiverse._chain.length)
-      if (isNextBlock === true) {
-        this._logger.info('pmb' + 3)
-        this.pubsub.publish('update.block.latest', { key: 'bc.block.latest', data: newBlock, mined: true })
-        this._server._wsBroadcastMultiverse(this.multiverse)
-        return Promise.resolve(true)
-      } else {
-        this._logger.info('local mined block ' + newBlock.getHeight() + ' does not stack on multiverse height ' + this.multiverse.getHighestBlock().getHeight())
-        this._logger.info('mined block ' + newBlock.getHeight() + ' cannot go on top of multiverse block ' + this.multiverse.getHighestBlock().getHash())
-      // this.miningOfficer.rebaseMining()
-      //  .then((res) => {
-      //    this._logger.info(res)
-      //  })
-      //  .catch((e) => {
-      //    this._logger.error(errToString(e))
-      //  })
-      }
-      return Promise.resolve(false)
-    // }
-    })
+    return this.multiverse.addNextBlock(newBlock)
+      .then((isNextBlock) => {
+        this._logger.info('submitted mine block is next block in multiverse: ' + isNextBlock)
+        this._logger.info('pmb' + 2)
+        // if (isNextBlock) {
+        // TODO: this will break now that _blocks is not used in multiverse
+        // if (this.multiverse.getHighestBlock() !== undefined &&
+        //    this.multiverse.validateBlockSequenceInline([this.multiverse.getHighestBlock(), newBlock]) === true) {
+        this._logger.info('number of blocks in multiverse: ' + this.multiverse._chain.length)
+        if (isNextBlock === true) {
+          this._logger.info('pmb' + 3)
+          this.pubsub.publish('update.block.latest', { key: 'bc.block.latest', data: newBlock, mined: true })
+          this._server._wsBroadcastMultiverse(this.multiverse)
+          return Promise.resolve(true)
+        } else {
+          this._logger.info('local mined block ' + newBlock.getHeight() + ' does not stack on multiverse height ' + this.multiverse.getHighestBlock().getHeight())
+          this._logger.info('mined block ' + newBlock.getHeight() + ' cannot go on top of multiverse block ' + this.multiverse.getHighestBlock().getHash())
+          // this.miningOfficer.rebaseMining()
+          //  .then((res) => {
+          //    this._logger.info(res)
+          //  })
+          //  .catch((e) => {
+          //    this._logger.error(errToString(e))
+          //  })
+        }
+        return Promise.resolve(false)
+        // }
+      })
       .catch((err) => {
         this._logger.error(err)
       })
