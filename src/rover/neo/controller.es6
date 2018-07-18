@@ -153,7 +153,7 @@ export default class Controller {
         this._logger.debug(`Pending requests: ${inspect(this._pendingRequests)}, pending fibers: ${inspect(this._pendingFibers.map(([ts, b]) => { return [ts, b.toObject()] }))}`)
 
         if (isEmpty(this._pendingRequests)) {
-          node.rpc.getBlockCount().then(height => node.rpc.getBlock(height - 1)).then(block => {
+          node.rpc.getBlockCount().then(height => node.rpc.getBlock(height - 3)).then(block => {
             const ts = block.time
             const requestTime = randRange(ts, ts + dfBound)
             this._pendingRequests.push([requestTime, block.index])
@@ -193,9 +193,9 @@ export default class Controller {
           }).catch(err => {
             this._logger.warn(`Error while getting new block height: ${requestBlockHeight}, err: ${errToString(err)}`)
             // postpone remaining requests
-            this._pendingRequests = this._pendingRequests.map(([ts, height]) => [ts + 10, height])
+            this._pendingRequests = this._pendingRequests.map(([ts, height]) => [ts + 12, height])
             // prepend currentrequest back but schedule to try it in [now, now + 10s]
-            this._pendingRequests.unshift([randRange(ts.nowSeconds(), ts.nowSeconds() + 10), requestBlockHeight])
+            this._pendingRequests.unshift([randRange(ts.nowSeconds(), ts.nowSeconds() + 12), requestBlockHeight])
             cycle()
           })
         } else {
