@@ -115,7 +115,7 @@ export class MiningOfficer {
         return all + this._collectedBlocks[key]
       }, 0)
 
-      this._logger.info('constructing multiverse from blockchains ' + values)
+      this._logger.info('constructing multiverse with blockchains ' + values)
       this._logger.info('multiverse depth ' + totalBlocks)
       return Promise.resolve(false)
     }

@@ -810,7 +810,7 @@ export class Engine {
                       queryHash: newBlock.getHash(),
                       queryHeight: upperBound,
                       low: lowerBound,
-                      high: newBlock.getHash()
+                      high: upperBound
                     }
                     this._logger.info(newBlock.getHash() + ' multiverse peer proof: ' + peerLockKey)
                     this.node.manager.createPeer(peerInfo)
@@ -1058,6 +1058,9 @@ export class Engine {
       return Promise.resolve(false)
     // }
     })
+      .catch((err) => {
+        this._logger.error(err)
+      })
   }
 }
 
