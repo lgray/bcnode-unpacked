@@ -302,7 +302,7 @@ export class MiningOfficer {
   }
 
   stopMining (): Promise<bool> {
-    debug('Stopping mining')
+    debug('stop mining')
 
     const process = this._workerProcess
     if (!process) {
@@ -332,7 +332,6 @@ export class MiningOfficer {
       }
     }
 
-    this._logger.info('mining worker process has been killed')
     this._workerProcess = undefined
 
     try {
@@ -493,7 +492,7 @@ export class MiningOfficer {
   }
 
   _cleanUnfinishedBlock () {
-    debug('Cleaning unfinished block')
+    debug('cleaning unfinished block')
     this._unfinishedBlock = undefined
     this._unfinishedBlockData = undefined
   }

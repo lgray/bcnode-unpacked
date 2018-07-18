@@ -298,12 +298,9 @@ export function validateBlockSequence (blocks: BcBlock[]): bool {
 
   logger.debug(`validateBlockSequence sorted blocks ${sortedBlocks.map(b => b.getHeight()).toString()}`)
   // validate that Bc blocks are all in the same chain
-  logger.info(aperture(2, sortedBlocks))
   const validPairs = aperture(2, sortedBlocks).map(([a, b]) => {
     return a.getPreviousHash() === b.getHash()
   })
-
-  logger.info('validPairs ' + JSON.stringify(validPairs, null, 2))
 
   logger.debug(`validateBlockSequence sorted blocks ${inspect(aperture(2, sortedBlocks.map(b => b.getHeight())))}`)
   if (!all(equals(true), validPairs)) {
@@ -327,10 +324,8 @@ export function validateBlockSequence (blocks: BcBlock[]): bool {
   })
   // flatten => [btc10_9Ordered, eth10_9Ordered, lsk10_9Ordered, neo10_9Ordered, wav10_9Ordered, btc9_8Orderded, eth9_8Ordered, lsk9_8Ordered, neo9_8Ordered, wav9_8Ordered]
   logger.debug(`validateBlockSequence validPairSubchains ${inspect(validPairSubchains)}`)
-  logger.info('validPairSubchains printed after this  --> ')
-  logger.info(JSON.stringify(validPairSubchains, null, 2))
   if (!all(equals(true), flatten(validPairSubchains))) {
-    logger.info('failed test of rovers')
+    logger.debug('failed test of rovers')
     // return false // TODO: AT -> is enabled in validation
   }
 

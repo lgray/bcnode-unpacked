@@ -230,6 +230,7 @@ export class Multiverse {
       this._chain.unshift(newBlock)
       return Promise.resolve(true)
     }
+    // case fails over into the resync
     if (newBlock.getHeight() - 10 > currentHighestBlock.getHeight()) {
       this._chain.unshift(newBlock)
       return Promise.resolve(false)
@@ -250,6 +251,11 @@ export class Multiverse {
     this._logger.info(4)
     // FAIL if newBlock totalDifficulty < (lt) currentHighestBlock totalDifficulty
     if (new BN(newBlock.getTotalDistance()).lt(new BN(currentHighestBlock.getTotalDistance()))) {
+      this._logger.warn('new Block totalDistance ' + newBlock.getTotalDistance() + 'less than currentHighestBlock' + currentHighestBlock.getTotalDistance())
+      return Promise.resolve(false)
+    }
+    // FAIL if newBlock does not include additional rover blocks
+    if (newBlock.getBlockchainHeadersCount() === '0') {
       this._logger.warn('new Block totalDistance ' + newBlock.getTotalDistance() + 'less than currentHighestBlock' + currentHighestBlock.getTotalDistance())
       return Promise.resolve(false)
     }
@@ -373,7 +379,7 @@ export class Multiverse {
       }
 
       // FAIL if sum of child block heights is less than the rovered child heights
-      if (childrenHeightSum(newBlock) <= childrenHeightSum(currentParentHighestBlock)) {
+      if (childrenHeightSum(newBlock) <= childrenHeightSum(currentHighestBlock)) {
         this._logger.info('child height of new block is lower than height the current parent block')
         return Promise.resolve(false)
       }

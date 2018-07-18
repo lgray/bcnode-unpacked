@@ -1023,32 +1023,36 @@ export class Engine {
       this._logger.warn('Failed to process work provided by miner')
       return Promise.resolve(false)
     }
-    this._logger.info('pmb' + 1)
     // Prevent submitting mined block twice
     if (this._knownBlocksCache.has(newBlock.getHash())) {
       this._logger.warn('Received duplicate new block ' + newBlock.getHeight() + ' (' + newBlock.getHash() + ')')
-      return this.miningOfficer.stopMining()
+      return this.miningOfficer.rebaseMining().then((r) => {
+        this._logger.info('end mining')
+      })
+        .catch((e) => {
+          this._logger.warn('unable to stop miner')
+          this._logger.error(e)
+        })
     }
     // Add to multiverse and call persist
     this._knownBlocksCache.set(newBlock.getHash(), newBlock)
     this._logger.info('submitting mined block to current multiverse')
     return this.multiverse.addNextBlock(newBlock)
       .then((isNextBlock) => {
-        this._logger.info('submitted mine block is next block in multiverse: ' + isNextBlock)
-        this._logger.info('pmb' + 2)
+        this._logger.info('accepted multiverse addition: ' + isNextBlock)
         // if (isNextBlock) {
         // TODO: this will break now that _blocks is not used in multiverse
         // if (this.multiverse.getHighestBlock() !== undefined &&
         //    this.multiverse.validateBlockSequenceInline([this.multiverse.getHighestBlock(), newBlock]) === true) {
-        this._logger.info('number of blocks in multiverse: ' + this.multiverse._chain.length)
+        this._logger.info('multiverse coverage: ' + this.multiverse._chain.length)
         if (isNextBlock === true) {
           this._logger.info('pmb' + 3)
           this.pubsub.publish('update.block.latest', { key: 'bc.block.latest', data: newBlock, mined: true })
           this._server._wsBroadcastMultiverse(this.multiverse)
           return Promise.resolve(true)
         } else {
-          this._logger.info('local mined block ' + newBlock.getHeight() + ' does not stack on multiverse height ' + this.multiverse.getHighestBlock().getHeight())
-          this._logger.info('mined block ' + newBlock.getHeight() + ' cannot go on top of multiverse block ' + this.multiverse.getHighestBlock().getHash())
+          this._logger.warn('local mined block ' + newBlock.getHeight() + ' does not stack on multiverse height ' + this.multiverse.getHighestBlock().getHeight())
+          this._logger.warn('mined block ' + newBlock.getHeight() + ' cannot go on top of multiverse block ' + this.multiverse.getHighestBlock().getHash())
           // this.miningOfficer.rebaseMining()
           //  .then((res) => {
           //    this._logger.info(res)
