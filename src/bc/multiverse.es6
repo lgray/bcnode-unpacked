@@ -211,7 +211,7 @@ export class Multiverse {
    * @param block New block
    * @returns {boolean}
    */
-  async addNextBlock (newBlock: BcBlock): Promise<?boolean> {
+  async addNextBlock (newBlock: BcBlock, type: Number = 0): Promise<?boolean> {
     // return false for empty block
     if (newBlock === undefined || newBlock === null) {
       return Promise.resolve(false)

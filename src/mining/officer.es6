@@ -452,7 +452,7 @@ export class MiningOfficer {
       unfinishedBlockData.timeDiff = timeDiff
     }
 
-    if (!isValidBlock(unfinishedBlock)) {
+    if (!isValidBlock(unfinishedBlock, 1)) {
       this._logger.warn(`The mined block is not valid`)
       this._cleanUnfinishedBlock()
       return
@@ -464,7 +464,12 @@ export class MiningOfficer {
 
     this.pubsub.publish('miner.block.new', { unfinishedBlock, solution })
     this._cleanUnfinishedBlock()
-    this.stopMining()
+    return this.stopMining().then(() => {
+      this._logger.info('miner pending new work')
+    })
+      .catch((err) => {
+        this._logger.error(err)
+      })
   }
 
   _handleWorkerError (error: Error): Promise<boolean> {
@@ -477,7 +482,12 @@ export class MiningOfficer {
       return Promise.resolve(false)
     }
 
-    return this.stopMining()
+    return this.stopMining().then(() => {
+      this._logger.info('miner pending new work')
+    })
+      .catch((e) => {
+        this._logger.erorr(e)
+      })
   }
 
   _handleWorkerExit (code: number, signal: string) {
