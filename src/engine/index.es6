@@ -596,7 +596,7 @@ export class Engine {
       this._logger.info('sync from depth start')
       const depthData = await this.persistence.get('bc.depth')
       const depth = parseInt(depthData, 10) // coerce for Flow
-      const checkpoint = await this.persistence.get('bc.block.checkpoint')
+      // const checkpoint = await this.persistence.get('bc.block.checkpoint')
       // where the bottom of the chain is
       // if the last height was not a genesis block and the depth was 2 then sync only to the height
       if (depth === 2) {
@@ -606,7 +606,7 @@ export class Engine {
         // return Promise.resolve(true)
       } else {
         const upperBound = max(depth, 2) + 1 // so we dont get the genesis block
-        const lowBound = max(depth - 2000, 2) + 1 // so we dont get the genesis block
+        const lowBound = max(depth - 1000, 2) // so we dont get the genesis block
         return conn.getPeerInfo((err, peerInfo) => {
           if (err) {
             return Promise.reject(err)
@@ -630,8 +630,8 @@ export class Engine {
               await this.persistence.put('bc.depth', lowBound)
               const query = {
                 queryHash: newBlock.getHash(),
-                queryHeight: upperBound,
-                low: dept,
+                queryHeight: newBlock.getHeight(),
+                low: lowBound,
                 high: upperBound
               }
               return this.node.manager.createPeer(peerInfo)
@@ -647,20 +647,39 @@ export class Engine {
                       * and was now resyncing
                       */
                       // all done, no more depth clean up, unlock peer
-                      return this.persistence.put(peerLockKey, 0)
-                        .then(() => {
-                          return this.persistence.put('bc.depth', lowBound)
-                            .then(() => {
-                              return this.persistence.putPending('bc')
+                      if (lowBound === 2) {
+                        return this.persistence.put(peerLockKey, 0)
+                          .then(() => {
+                            return this.persistence.put('bc.depth', 2)
+                              .then(() => {
+                                return this.persistence.putPending('bc')
+                              })
+                              .catch((e) => {
+                                return Promise.reject(e)
+                              })
+                          })
+                          .catch(e => {
+                            this._logger.error(errToString(e))
+                            return Promise.reject(e)
+                          })
+                      } else {
+                        return this.persistence.put('bc.depth', lowBound)
+                          .then(() => {
+                            const sorted = blocks.sort((a, b) => {
+                              if (a.getHeight() > b.getHeight()) {
+                                return -1
+                              }
+                              if (a.getHeight() < b.getHeight()) {
+                                return 1
+                              }
+                              return 0
                             })
-                            .catch((e) => {
-                              return Promise.reject(e)
-                            })
-                        })
-                        .catch(e => {
-                          this._logger.error(errToString(e))
-                          return Promise.reject(e)
-                        })
+                            return this.proveTwo(conn, sorted.pop())
+                          })
+                          .catch((e) => {
+                            return Promise.reject(e)
+                          })
+                      }
                     })
                     .catch(e => {
                       this._logger.error(errToString(e))
@@ -793,12 +812,12 @@ export class Engine {
                       low: lowerBound,
                       high: newBlock.getHash()
                     }
-                    this._logger.info(newBlock.getHash() + ' requesting multiverse proof from peer: ' + peerLockKey)
+                    this._logger.info(newBlock.getHash() + ' multiverse peer proof: ' + peerLockKey)
                     this.node.manager.createPeer(peerInfo)
                       .query(query)
                       .then(newBlocks => {
                         if (newBlocks === undefined) {
-                          this._logger.warn(newBlock.getHash() + ' no blocks recieved from proof ')
+                          this._logger.warn(newBlock.getHash() + ' incomplete proof')
                           return Promise.resolve(true)
                         }
                         this._logger.info(1)
