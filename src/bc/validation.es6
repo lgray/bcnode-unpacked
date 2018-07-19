@@ -66,6 +66,10 @@ export function isValidBlock (newBlock: BcBlock, type: number = 0): bool {
     logger.warn('failed: isChainRootCorrectlyCalculated')
     return false
   }
+  if (!isFieldLengthBounded(newBlock)) {
+    logger.warn('failed: isFieldLengthBounded')
+    return false
+  }
   if (!isMerkleRootCorrectlyCalculated(newBlock)) {
     logger.warn('failed: isMerkleRootCorrectlyCalculated')
     return false
