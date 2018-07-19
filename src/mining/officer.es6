@@ -156,7 +156,7 @@ export class MiningOfficer {
   }
 
   startTimer (name: string): void {
-    this._timers[name] = Math.floor(Date().now() * 0.001)
+    this._timers[name] = Math.floor(Date.now() * 0.001)
   }
 
   stopTimer (name: string): ?Number {
