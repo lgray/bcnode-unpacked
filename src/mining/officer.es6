@@ -18,7 +18,7 @@ const { inspect } = require('util')
 
 const BN = require('bn.js')
 const debug = require('debug')('bcnode:mining:officer')
-const { all, equals, flatten, fromPairs, last, range, values } = require('ramda')
+const { mean, all, equals, flatten, fromPairs, last, range, values } = require('ramda')
 
 const { prepareWork, prepareNewBlock, getUniqueBlocks } = require('./primitives')
 const { getLogger } = require('../logger')
@@ -47,7 +47,10 @@ export class MiningOfficer {
   _minerKey: string
   _pubsub: PubSub
   _persistence: RocksDb
+  _timers: Object
+  _timerResults: Object
   _knownRovers: string[]
+  _speedResults: number[]
 
   _collectedBlocks: { [blockchain: string]: number }
   _canMine: bool
@@ -64,11 +67,14 @@ export class MiningOfficer {
     this._persistence = persistence
     this._knownRovers = opts.rovers
 
+    this._speedResults = []
     this._collectedBlocks = {}
     for (let roverName of this._knownRovers) {
       this._collectedBlocks[roverName] = 0
     }
     this._canMine = false
+    this._timers = {}
+    this._timerResults = {}
     this._unfinishedBlockData = { block: undefined, lastPreviousBlock: undefined, currentBlocks: {}, timeDiff: undefined, iterations: undefined }
     this._paused = false
     this._blockTemplates = []
@@ -149,11 +155,36 @@ export class MiningOfficer {
     this._cleanUnfinishedBlock()
   }
 
+  startTimer (name: string): void {
+    this._timers[name] = Math.floor(Date().now() * 0.001)
+  }
+
+  stopTimer (name: string): ?Number {
+    if (this._timers[name] !== undefined) {
+      const startTime = delete this._timers[name]
+      const elapsed = Math.floor(Date.now() * 0.001) - startTime
+      if (this._timerResults[name] === undefined) {
+        this._timerResults[name] = []
+      }
+      this._timerResults[name].push(elapsed)
+      return elapsed
+    } else {
+      return 0
+    }
+  }
+
+  getTimerResults (name: string): ?Number {
+    if (this._timerResults[name] !== undefined && this._timerResults[name].length > 4) {
+      return mean(this._timerResults[name])
+    }
+    return false
+  }
+
   async startMining (rovers: string[], block: Block): Promise<bool|number> {
     // get latest block from each child blockchain
     try {
       const lastPreviousBlock = await this.persistence.get('bc.block.latest')
-      this._logger.info(`Got last previous block (height: ${lastPreviousBlock.getHeight()}) from persistence`)
+      this._logger.info(`persisted block height: ${lastPreviousBlock.getHeight()}`)
       // [eth.block.latest,btc.block.latest,neo.block.latest...]
       const latestRoveredHeadersKeys: string[] = this._knownRovers.map(chain => `${chain}.block.latest`)
       const latestBlockHeaders = await this.persistence.getBulk(latestRoveredHeadersKeys)
@@ -163,7 +194,7 @@ export class MiningOfficer {
 
       // prepare a list of keys of headers to pull from persistence
       const newBlockHeadersKeys = flatten(Object.keys(lastPreviousBlock.getBlockchainHeaders().toObject()).map(listKey => {
-        this._logger.info('assembling minimum heights for ' + listKey)
+        this._logger.debug('assembling minimum heights for ' + listKey)
         const chain = keyOrMethodToChain(listKey)
         const lastHeaderInPreviousBlock = last(lastPreviousBlock.getBlockchainHeaders()[chainToGet(chain)]())
 
@@ -175,7 +206,7 @@ export class MiningOfficer {
           to = from
         } else {
           if (!lastHeaderInPreviousBlock) {
-            throw new Error(`Previous BC block ${lastPreviousBlock.getHeight()} does not have any "${chain}" headers`)
+            throw new Error(`previous BC block ${lastPreviousBlock.getHeight()} failed minimum "${chain}" state changes`)
           }
           from = lastHeaderInPreviousBlock.getHeight() + 1
           to = latestBlockHeadersHeights[chain]
@@ -253,6 +284,7 @@ export class MiningOfficer {
 
           this._logger.info('sending difficulty threshold to worker: ' + newBlock.getDifficulty())
           // $FlowFixMe - Flow can't find out that ChildProcess is extended form EventEmitter
+          this._startTimer('w1')
           this._workerProcess.send({
             currentTimestamp,
             offset: ts.offset,
@@ -462,10 +494,12 @@ export class MiningOfficer {
       this._writeMiningData(unfinishedBlock, solution)
     }
 
-    this.pubsub.publish('miner.block.new', { unfinishedBlock, solution })
+    this.stopTimer('w1')
     this._cleanUnfinishedBlock()
     return this.stopMining().then(() => {
-      this._logger.info('miner pending new work')
+      const speed = this.getTimerResults()
+      this._logger.info('hash rate: ' + (iterations / speed))
+      this.pubsub.publish('miner.block.new', { unfinishedBlock, solution })
     })
       .catch((err) => {
         this._logger.error(err)

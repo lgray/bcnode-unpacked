@@ -27,7 +27,7 @@ process.on('unhandledRejection', (err) => {
  */
 const main = () => {
   process.title = 'bc-miner-worker'
-  globalLog.debug('Starting miner worker')
+  globalLog.debug('miner recieved updated work')
 
   process.on('message', ({currentTimestamp, offset, work, minerKey, merkleRoot, difficulty, difficultyData}) => {
     ts.offsetOverride(offset)
@@ -47,7 +47,7 @@ const main = () => {
       return function (timestamp: number) {
         const newBlockCount = getNewBlockCount(lastPreviousBlockProto.getBlockchainHeaders(), newBlockHeadersProto)
 
-        globalLog.info(`additional work: ${JSON.stringify(newBlockCount, null, 2)}`)
+        globalLog.info(`stale states: ${JSON.stringify(newBlockCount, null, 2)}`)
 
         const preExpDiff = getNewPreExpDifficulty(
           timestamp,
@@ -69,7 +69,8 @@ const main = () => {
       )
 
       // send solution and exit
-      globalLog.info(`Solution found: ${JSON.stringify(solution, null, 2)}`)
+
+      globalLog.info(`solution found: ${JSON.stringify(solution, null, 2)}`)
       process.send(solution)
       process.exit(0)
     } catch (e) {

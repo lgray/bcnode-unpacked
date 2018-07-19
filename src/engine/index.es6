@@ -1046,7 +1046,6 @@ export class Engine {
         //    this.multiverse.validateBlockSequenceInline([this.multiverse.getHighestBlock(), newBlock]) === true) {
         this._logger.info('multiverse coverage: ' + this.multiverse._chain.length)
         if (isNextBlock === true) {
-          this._logger.info('pmb' + 3)
           this.pubsub.publish('update.block.latest', { key: 'bc.block.latest', data: newBlock, mined: true })
           this._server._wsBroadcastMultiverse(this.multiverse)
           return Promise.resolve(true)

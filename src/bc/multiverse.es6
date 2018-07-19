@@ -311,9 +311,9 @@ export class Multiverse {
    * @returns {boolean}
    */
   async addResyncRequest (newBlock: BcBlock, strict: boolean = true): Promise<boolean> {
-    const currentHighestBlock = this.getHighestBlock()
     const currentParentHighestBlock = this.getParentHighestBlock()
     const rsyncLock = await this.persistence.get('rsync')
+    const currentHighestBlock = await this.persistence.get('bc.block.latest')
 
     if (rsyncLock !== 'n') {
       return Promise.resolve(false)
