@@ -10,7 +10,7 @@
 const assert = require('assert')
 const EventEmitter = require('events')
 const { DPT, RLPx, ETH, _util } = require('ethereumjs-devp2p')
-const ethereumCommon = require('ethereum-common')
+const ethereumCommon = require('ethereumjs-common')
 const EthereumBlock = require('ethereumjs-block')
 const EthereumTx = require('ethereumjs-tx')
 const LRUCache = require('lru-cache')
@@ -23,15 +23,15 @@ const { getPrivateKey } = require('../utils')
 
 const { config } = require('../../config')
 
-const BOOTNODES = ethereumCommon
-  .bootstrapNodes
-  .map(node => {
-    return {
-      address: node.ip,
-      udpPort: node.port,
-      tcpPort: node.port
-    }
-  }).concat(config.rovers.eth.altBootNodes)
+const ec = new ethereumCommon('mainnet')
+
+const BOOTNODES = ec.bootstrapNodes().map(node => {
+  return {
+    address: node.ip,
+    udpPort: node.port,
+    tcpPort: node.port
+  }
+}).concat(config.rovers.eth.altBootNodes)
 
 const DAO_FORK_SUPPORT = true
 

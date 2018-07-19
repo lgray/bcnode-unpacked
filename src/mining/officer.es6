@@ -190,11 +190,11 @@ export class MiningOfficer {
       const latestBlockHeaders = await this.persistence.getBulk(latestRoveredHeadersKeys)
       // { eth: 200303, btc:2389, neo:933 }
       const latestBlockHeadersHeights = fromPairs(latestBlockHeaders.map(header => [header.getBlockchain(), header.getHeight()]))
-      this._logger.debug(`latestBlockHeadersHeights: ${inspect(latestBlockHeadersHeights)}`)
+      this._logger.info(`latestBlockHeadersHeights: ${inspect(latestBlockHeadersHeights)}`)
 
       // prepare a list of keys of headers to pull from persistence
       const newBlockHeadersKeys = flatten(Object.keys(lastPreviousBlock.getBlockchainHeaders().toObject()).map(listKey => {
-        this._logger.debug('assembling minimum heights for ' + listKey)
+        this._logger.info('assembling minimum heights for ' + listKey)
         const chain = keyOrMethodToChain(listKey)
         const lastHeaderInPreviousBlock = last(lastPreviousBlock.getBlockchainHeaders()[chainToGet(chain)]())
 
@@ -206,13 +206,13 @@ export class MiningOfficer {
           to = from
         } else {
           if (!lastHeaderInPreviousBlock) {
-            throw new Error(`previous BC block ${lastPreviousBlock.getHeight()} failed minimum "${chain}" state changes`)
+            throw new Error(`previous NRG block ${lastPreviousBlock.getHeight()} failed minimum "${chain}" state changes`)
           }
           from = lastHeaderInPreviousBlock.getHeight() + 1
           to = latestBlockHeadersHeights[chain]
         }
 
-        this._logger.debug(`newBlockHeadersKeys, previous BC: ${lastPreviousBlock.getHeight()}, ${chain}, from: ${from}, to: ${to}`)
+        this._logger.info(`newBlockHeadersKeys, heights nrg: ${lastPreviousBlock.getHeight()}, ${chain}, from: ${from}, to: ${to}`)
 
         if (from === to) {
           return [`${chain}.block.${from}`]
@@ -233,7 +233,7 @@ export class MiningOfficer {
 
       // get latest known BC block
       try {
-        this._logger.info(`Preparing new block`)
+        this._logger.info(`preparing new block`)
         const currentTimestamp = ts.nowSeconds()
         if (this._unfinishedBlock !== undefined && getBlockchainsBlocksCount(this._unfinishedBlock) >= 6) {
           this._cleanUnfinishedBlock()
@@ -265,8 +265,13 @@ export class MiningOfficer {
         // if blockchains block count === 5 we will create a block with 6 blockchain blocks (which gets bonus)
         // if it's more, do not restart mining and start with new ones
         if (this._workerProcess && this._unfinishedBlock) {
-          this._logger.info(`Restarting mining with a new rovered block`)
-          return this.restartMining()
+          this._logger.info(`restarting mining with a new rovered block`)
+          return this.stopMining().then(() => {
+            this._logger.info('mining stopped')
+          })
+            .catch((e) => {
+              this._logger.error(e)
+            })
         }
 
         this._logger.info(`Starting miner process with work: "${work}", difficulty: ${newBlock.getDifficulty()}, ${JSON.stringify(this._collectedBlocks, null, 2)}`)
@@ -366,31 +371,34 @@ export class MiningOfficer {
 
     this._workerProcess = undefined
 
-    try {
-      return Promise.all(this._knownRovers.map((rv) => {
-        return this.persistence.get(rv + '.block.latest')
-          .then((latest) => {
-            return this.persistence.get(rv + '.block.' + (latest.getHeight() + 1))
-              .then((latestCandidate) => {
-                if (latest.getHash() === latestCandidate.getPreviousHash()) {
-                  return this.persistence.put(latest.getBlockchain() + '.block.latest', latestCandidate)
-                }
-                return Promise.resolve(true)
-              })
-              .catch((err) => {
-                this._logger.debug(err)
-                return Promise.resolve(false)
-              })
-          })
-          .catch((err) => {
-            this._logger.debug(err)
-            return Promise.resolve(false)
-          })
-      }))
-    } catch (err) {
-      this._logger.debug(err)
-      return Promise.resolve(false)
-    }
+    return Promise.resolve(true)
+
+    // ENABLED for AT
+    // try {
+    //  return Promise.all(this._knownRovers.map((rv) => {
+    //    return this.persistence.get(rv + '.block.latest')
+    //      .then((latest) => {
+    //        return this.persistence.get(rv + '.block.' + (latest.getHeight() + 1))
+    //          .then((latestCandidate) => {
+    //            if (latest.getHash() === latestCandidate.getPreviousHash()) {
+    //              return this.persistence.put(latest.getBlockchain() + '.block.latest', latestCandidate)
+    //            }
+    //            return Promise.resolve(true)
+    //          })
+    //          .catch((err) => {
+    //            this._logger.error(err)
+    //            return Promise.resolve(false)
+    //          })
+    //      })
+    //      .catch((err) => {
+    //        this._logger.error(err)
+    //        return Promise.resolve(false)
+    //      })
+    //  }))
+    // } catch (err) {
+    //  this._logger.error(err)
+    //  return Promise.resolve(false)
+    // }
   }
 
   /*
@@ -436,9 +444,18 @@ export class MiningOfficer {
       if (currentRoveredBlocks.length !== Object.keys(previousHeaders.toObject()).length) {
         return Promise.resolve(false)
       }
-      const uniqueBlocks = getUniqueBlocks(previousHeaders, currentRoveredBlocks)
+      const uniqueBlocks = getUniqueBlocks(previousHeaders, currentRoveredBlocks).sort((a, b) => {
+        if (a.getHeight() > b.getHeight()) {
+          return -1
+        }
+        if (a.getHeight() < b.getHeight()) {
+          return 1
+        }
+        return 0
+      })
       this._logger.info('stale branch blocks: ' + uniqueBlocks.length)
-      if (uniqueBlocks.length === 0) {
+      if (uniqueBlocks.length < 1) {
+        this._logger.info(uniqueBlocks.length + ' state changes ')
         return Promise.resolve(false)
       }
       return this.startMining(this._knownRovers, uniqueBlocks.shift())
@@ -485,7 +502,7 @@ export class MiningOfficer {
     }
 
     if (!isValidBlock(unfinishedBlock, 1)) {
-      this._logger.warn(`The mined block is not valid`)
+      this._logger.warn(`mined block is invalid`)
       this._cleanUnfinishedBlock()
       return
     }
@@ -496,10 +513,10 @@ export class MiningOfficer {
 
     this.stopTimer('w1')
     this._cleanUnfinishedBlock()
+    this.pubsub.publish('miner.block.new', { unfinishedBlock, solution })
     return this.stopMining().then(() => {
       const speed = this.getTimerResults()
       this._logger.info('hash rate: ' + new BN(speed).add(new BN(iterations)).toString())
-      this.pubsub.publish('miner.block.new', { unfinishedBlock, solution })
     })
       .catch((err) => {
         this._logger.error(err)
@@ -525,14 +542,21 @@ export class MiningOfficer {
   }
 
   _handleWorkerExit (code: number, signal: string) {
-    if (code === 0 || code === null) { // 0 means worker exited on it's own correctly, null that is was terminated from engine
-      this._logger.info(`Mining worker finished its work (code: ${code})`)
-    } else {
-      this._logger.warn(`Mining worker process exited with code ${code}, signal ${signal}`)
-      this._cleanUnfinishedBlock()
-    }
+    return this.stopMining().then(() => {
+      this._logger.info('miner pending new work')
 
-    this._workerProcess = undefined
+      if (code === 0 || code === null) { // 0 means worker exited on it's own correctly, null that is was terminated from engine
+        this._logger.info(`Mining worker finished its work (code: ${code})`)
+      } else {
+        this._logger.warn(`Mining worker process exited with code ${code}, signal ${signal}`)
+        this._cleanUnfinishedBlock()
+      }
+
+      this._workerProcess = undefined
+    })
+      .catch((e) => {
+        this._logger.erorr(e)
+      })
   }
 
   _cleanUnfinishedBlock () {

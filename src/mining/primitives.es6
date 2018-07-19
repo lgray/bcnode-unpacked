@@ -500,11 +500,12 @@ export function getUniqueBlocks (previousBlockHeaders: BlockchainHeaders, curren
   const currentHashes = headersToHashes(currentBlockHeaders)
   const diff = difference(currentHashes, previousHashes)
 
-  return currentBlockHeaders.filter((b) => {
+  const filterToDiff = currentBlockHeaders.filter((b) => {
     if (diff.indexOf(b.getHash()) > -1) {
       return b
     }
   })
+  return filterToDiff
 }
 
 /**
