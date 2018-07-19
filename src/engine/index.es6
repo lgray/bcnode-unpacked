@@ -781,7 +781,7 @@ export class Engine {
         // if we are not done re-request a sync
         } else {
           this._logger.info('new block ' + newBlock.getHeight() + ' is NOT next block, evaluating resync.')
-          this.multiverse.addResyncRequest(newBlock, this.miningOfficer._canMine)
+          return this.multiverse.addResyncRequest(newBlock, this.miningOfficer._canMine)
             .then(shouldResync => {
               if (shouldResync === true) {
                 this._logger.info(newBlock.getHash() + ' new block: ' + newBlock.getHeight() + ' should rsync request approved')
@@ -799,7 +799,7 @@ export class Engine {
                 // get the lowest of the current multiverse
                 const lowerBound = this.multiverse.getLowestBlock().getHeight()
                 this._logger.info(newBlock.getHash() + ' resync lower bound: ' + lowerBound)
-                this.miningOfficer.stopMining().then(() => {
+                return this.miningOfficer.stopMining().then(() => {
                   return conn.getPeerInfo((err, peerInfo) => {
                     if (err) {
                       this._logger.error(errToString(err))
@@ -814,7 +814,7 @@ export class Engine {
                       high: upperBound
                     }
                     this._logger.info(newBlock.getHash() + ' multiverse peer proof: ' + peerLockKey)
-                    this.node.manager.createPeer(peerInfo)
+                    return this.node.manager.createPeer(peerInfo)
                       .query(query)
                       .then(newBlocks => {
                         if (newBlocks === undefined) {
@@ -844,6 +844,7 @@ export class Engine {
                           }
                           return 0
                         })
+                        this._logger.info(11)
                         const highestBlock = this.multiverse.getHighestBlock()
                         const lowestBlock = this.multiverse.getLowestBlock()
                         this._logger.info(newBlock.getHash() + ' comparing with: ' + highestBlock.getHash() + ' height: ' + highestBlock.getHeight())
@@ -855,8 +856,10 @@ export class Engine {
                           conditional = true
                         }
 
+                        this._logger.info(22)
                         if (conditional === true) {
                           // overwrite current multiverse
+                          this._logger.info(33)
                           this._logger.info(newBlock.getHash() + ' approved --> assigning as current multiverse')
                           this.multiverse._chain.length = 0
                           this.multiverse._chain = sorted
@@ -865,13 +868,16 @@ export class Engine {
 
                           return this.persistence.put('bc.depth', this.multiverse.getHighestBlock().getHeight())
                             .then(() => {
+                              this._logger.info(44)
                               this.pubsub.publish('update.block.latest', { key: 'bc.block.latest', data: newBlock, force: true, multiverse: this.multiverse._chain })
                               // broadcast to other peers without sending back to the peer that sent it to us
                               this.node.broadcastNewBlock(newBlock, peerInfo.id.toB58String())
 
+                              this._logger.info(55)
                               return this.persistence.put('rsync', 'n')
                                 .then(() => {
                                   this._logger.debug('rsync unlocked')
+                                  this._logger.info(66)
                                   const targetHeight = this.mulitiverse.getLowestBlock().getHeight() - 1
                                   // dont have to sync
                                   if (targetHeight === 1) {
@@ -880,6 +886,7 @@ export class Engine {
 
                                   if (lowestBlock.getHash() === this.multiverse.getLowestBlock().getHash()) {
                                     this.persistence.get('bc.block.' + targetHeight).then((e) => {
+                                      this._logger.info(77)
                                       // already have this multiverse on disk
                                       return Promise.resolve(true)
                                     }).catch((err) => {
@@ -896,28 +903,35 @@ export class Engine {
                                   }
                                 })
                                 .catch((e) => {
+                                  this._logger.info(88)
                                   this._logger.debug(e)
                                 })
                               // assign where the last sync began
                             })
                             .catch(e => {
+                              this._logger.info(99)
                               this._logger.error(errToString(e))
                               return this.persistence.put('rsync', 'n')
                             })
+                        } else {
+                          this._logger.info(111)
                         }
                       })
                       .catch(e => {
                         this._rsync = false
                         this._logger.error(errToString(e))
+                        this._logger.info(222)
                         return this.persistence.put('rsync', 'n')
                       })
                   })
                 })
                   .catch((e) => {
+                    this._logger.info(333)
                     this._logger.error(e)
                   })
               } else {
                 this.persistence.get('rsync').then((r) => {
+                  this._logger.info(444)
                   if (r === 'n') {
                     return this.sendPeerLatestBlock(conn, newBlock)
                   }
@@ -927,6 +941,7 @@ export class Engine {
         }
       })
         .catch((multiverseError) => {
+          this._logger.info(555)
           this._logger.error(multiverseError)
         })
     }
