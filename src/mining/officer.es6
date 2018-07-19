@@ -498,7 +498,7 @@ export class MiningOfficer {
     this._cleanUnfinishedBlock()
     return this.stopMining().then(() => {
       const speed = this.getTimerResults()
-      this._logger.info('hash rate: ' + (iterations / speed))
+      this._logger.info('hash rate: ' + new BN(speed).add(new BN(iterations)).toString())
       this.pubsub.publish('miner.block.new', { unfinishedBlock, solution })
     })
       .catch((err) => {

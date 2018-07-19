@@ -251,7 +251,7 @@ export function blockchainHeadersAreChain (childHeaderList: BlockchainHeader[]|B
 
   if (!check) {
     logger.info(`chain: "${firstChildHeader.getBlockchain()}" First child header ${inspect(firstChildHeader.toObject())} is not a child of last parent header ${inspect(lastParentHeader.toObject())}`)
-    return check
+    // return check // Disabled until AT
   }
 
   // if more than one child header check if child headers form a chain
