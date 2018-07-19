@@ -797,7 +797,7 @@ export class Engine {
                 const upperBound = newBlock.getHeight()
                 this._logger.info(newBlock.getHash() + ' resync upper bound: ' + upperBound)
                 // get the lowest of the current multiverse
-                const lowerBound = this.multiverse.getLowestBlock()
+                const lowerBound = this.multiverse.getLowestBlock().getHeight()
                 this._logger.info(newBlock.getHash() + ' resync lower bound: ' + lowerBound)
                 this.miningOfficer.stopMining().then(() => {
                   return conn.getPeerInfo((err, peerInfo) => {
@@ -835,8 +835,6 @@ export class Engine {
                             }
                           }
                         })
-                        this._logger.info(comparableBlocks)
-                        this._logger.info(3)
                         const sorted = comparableBlocks.sort((a, b) => {
                           if (a.getHeight() > b.getHeight()) {
                             return -1
@@ -846,13 +844,9 @@ export class Engine {
                           }
                           return 0
                         })
-                        this._logger.info(4)
                         const highestBlock = this.multiverse.getHighestBlock()
                         const lowestBlock = this.multiverse.getLowestBlock()
-                        this._logger.info(5)
                         this._logger.info(newBlock.getHash() + ' comparing with: ' + highestBlock.getHash() + ' height: ' + highestBlock.getHeight())
-                        this._logger.info(6)
-
                         let conditional = false
                         if (highestBlock !== undefined && sorted !== undefined && sorted.length > 0) {
                           // conanaOut
@@ -863,7 +857,6 @@ export class Engine {
 
                         if (conditional === true) {
                           // overwrite current multiverse
-                          this._logger.info(7)
                           this._logger.info(newBlock.getHash() + ' approved --> assigning as current multiverse')
                           this.multiverse._chain.length = 0
                           this.multiverse._chain = sorted
@@ -872,7 +865,6 @@ export class Engine {
 
                           return this.persistence.put('bc.depth', this.multiverse.getHighestBlock().getHeight())
                             .then(() => {
-                              this._logger.info(8)
                               this.pubsub.publish('update.block.latest', { key: 'bc.block.latest', data: newBlock, force: true, multiverse: this.multiverse._chain })
                               // broadcast to other peers without sending back to the peer that sent it to us
                               this.node.broadcastNewBlock(newBlock, peerInfo.id.toB58String())
@@ -894,7 +886,6 @@ export class Engine {
                                       this._logger.debug(err)
                                       return this.proveTwo(conn, this.multiverse.getHighestBlock()())
                                         .then(synced => {
-                                          this._logger.info(9)
                                           this._logger.info(newBlock.getHash() + ' blockchain sync complete')
                                         })
                                         .catch(e => {
