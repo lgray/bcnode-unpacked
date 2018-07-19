@@ -1026,7 +1026,7 @@ export class Engine {
     // Prevent submitting mined block twice
     if (this._knownBlocksCache.has(newBlock.getHash())) {
       this._logger.warn('Received duplicate new block ' + newBlock.getHeight() + ' (' + newBlock.getHash() + ')')
-      return this.miningOfficer.rebaseMining().then((r) => {
+      return this.miningOfficer.rebaseMiner().then((r) => {
         this._logger.info('end mining')
       })
         .catch((e) => {
@@ -1053,16 +1053,14 @@ export class Engine {
         } else {
           this._logger.warn('local mined block ' + newBlock.getHeight() + ' does not stack on multiverse height ' + this.multiverse.getHighestBlock().getHeight())
           this._logger.warn('mined block ' + newBlock.getHeight() + ' cannot go on top of multiverse block ' + this.multiverse.getHighestBlock().getHash())
-          // this.miningOfficer.rebaseMining()
-          //  .then((res) => {
-          //    this._logger.info(res)
-          //  })
-          //  .catch((e) => {
-          //    this._logger.error(errToString(e))
-          //  })
+          return this.miningOfficer.stopMining()
+            .then((res) => {
+              this._logger.info(res)
+            })
+            .catch((e) => {
+              this._logger.error(errToString(e))
+            })
         }
-        return Promise.resolve(false)
-        // }
       })
       .catch((err) => {
         this._logger.error(err)

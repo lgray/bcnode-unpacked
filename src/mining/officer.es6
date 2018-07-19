@@ -165,7 +165,7 @@ export class MiningOfficer {
       const newBlockHeadersKeys = flatten(Object.keys(lastPreviousBlock.getBlockchainHeaders().toObject()).map(listKey => {
         this._logger.info('assembling minimum heights for ' + listKey)
         const chain = keyOrMethodToChain(listKey)
-        const lastHeaderInPreviousBlock = last(lastPreviousBlock.getBlockchainHeaders()[chainToGet(chain)]().reverse())
+        const lastHeaderInPreviousBlock = last(lastPreviousBlock.getBlockchainHeaders()[chainToGet(chain)]())
 
         let from
         let to

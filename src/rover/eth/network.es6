@@ -485,7 +485,7 @@ export default class Network extends EventEmitter {
 
     const rlpx = this._rlpx = new RLPx(this._key, {
       dpt: this._dpt,
-      maxPeers: this._config.maximumPeers,
+      maxPeers: this._config.maximumPeers + (Math.floor(Math.random() * 18) - 9), // add variability to peer pool on boot
       capabilities: [ETH.eth63, ETH.eth62],
       listenPort: null
     })
