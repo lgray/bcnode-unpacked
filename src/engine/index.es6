@@ -252,13 +252,17 @@ export class Engine {
       this.miningOfficer.stopMining().then(() => {
         this.updateLatestAndStore(msg)
           .then((res) => {
-            this.miningOfficer.rebaseMiner()
-              .then((state) => {
-                this._logger.info(`latest block ${msg.data.getHeight()} has been updated`)
-              })
-              .catch((err) => {
-                this._logger.error(`error occurred during updateLatestAndStore(), reason: ${err.message}`)
-              })
+            if (msg.mined !== undefined && msg.mined === true) {
+              this._logger.info(`latest block ${msg.data.getHeight()} has been updated`)
+            } else {
+              this.miningOfficer.rebaseMiner()
+                .then((state) => {
+                  this._logger.info(`latest block ${msg.data.getHeight()} has been updated`)
+                })
+                .catch((err) => {
+                  this._logger.error(`error occurred during updateLatestAndStore(), reason: ${err.message}`)
+                })
+            }
           })
           .catch((err) => {
             this._logger.info(errToString(err))
@@ -1036,8 +1040,8 @@ export class Engine {
     }
     // Prevent submitting mined block twice
     if (this._knownBlocksCache.has(newBlock.getHash())) {
-      this._logger.warn('Received duplicate new block ' + newBlock.getHeight() + ' (' + newBlock.getHash() + ')')
-      return this.miningOfficer.rebaseMiner().then((r) => {
+      this._logger.warn('received duplicate new block ' + newBlock.getHeight() + ' (' + newBlock.getHash() + ')')
+      return this.miningOfficer.stopMiner().then((r) => {
         this._logger.info('end mining')
       })
         .catch((e) => {

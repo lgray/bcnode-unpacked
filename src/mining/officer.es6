@@ -99,6 +99,7 @@ export class MiningOfficer {
   async newRoveredBlock (rovers: string[], block: Block): Promise<number|false> {
     this._collectedBlocks[block.getBlockchain()] += 1
 
+    this._logger.info(block.getBlockchain() + ' rover ' + ' discovered [] ' + block.getHeight() + ' ' + block.getHash())
     // TODO: Adjust minimum count of collected blocks needed to trigger mining
     if (!this._canMine && all((numCollected: number) => numCollected >= 1, values(this._collectedBlocks))) {
       this._canMine = true
@@ -518,7 +519,7 @@ export class MiningOfficer {
     this.pubsub.publish('miner.block.new', { unfinishedBlock, solution })
     return this.stopMining().then(() => {
       const speed = this.getTimerResults()
-      this._logger.info('hash rate: ' + new BN(speed).add(new BN(iterations)).toString())
+      this._logger.info('hash rate: ' + new BN(speed).add(new BN(iterations)).div(1000).toString() + ' kh/s')
     })
       .catch((err) => {
         this._logger.error(err)

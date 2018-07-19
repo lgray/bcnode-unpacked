@@ -294,7 +294,8 @@ export class Multiverse {
 
     if (validRovers === false) {
       this._logger.info('ERROR in multiverse resulting in wayward rovers')
-      return this.addBestBlock(newBlock)
+      // disabled until AT
+      // return this.addBestBlock(newBlock)
     }
 
     if (this._chain.length > 7) {
