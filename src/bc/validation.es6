@@ -158,7 +158,7 @@ function isChainRootCorrectlyCalculated (newBlock: BcBlock): bool {
 function isFieldLengthBounded (newBlock: BcBlock): bool {
   logger.info('isFieldLengthBounded validation running')
   return Object.keys(newBlock.toObject()).reduce((all, k) => {
-    if (all[k].length > 128) {
+    if (all[k] !== undefined && all[k].length > 128) {
       all = false
     }
     return all
