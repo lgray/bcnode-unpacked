@@ -212,7 +212,7 @@ export class MiningOfficer {
           to = latestBlockHeadersHeights[chain]
         }
 
-        this._logger.info(`newBlockHeadersKeys, heights nrg: ${lastPreviousBlock.getHeight()}, ${chain}, from: ${from}, to: ${to}`)
+        this._logger.info(`newBlockHeadersKeys, heights nrg: ${lastPreviousBlock.getHeight()}, ${chain} ln: ${from}, ${to}`)
 
         if (from === to) {
           return [`${chain}.block.${from}`]
@@ -340,6 +340,7 @@ export class MiningOfficer {
 
   stopMining (): Promise<bool> {
     debug('stop mining')
+    this._logger.info('stop mining request')
 
     const process = this._workerProcess
     if (!process) {
@@ -426,6 +427,7 @@ export class MiningOfficer {
   async rebaseMiner (): Promise<bool|number> {
     // if (this._canMine !== true) return Promise.resolve(false)
 
+    this._logger.info('rebase miner request')
     try {
       const stopped = await this.stopMining()
       this._logger.info(`miner rebased, result: ${inspect(stopped)}`)

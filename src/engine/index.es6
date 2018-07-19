@@ -249,20 +249,25 @@ export class Engine {
     })
 
     this.pubsub.subscribe('update.block.latest', '<engine>', (msg) => {
-      this.updateLatestAndStore(msg)
-        .then((res) => {
-          this.miningOfficer.rebaseMiner()
-            .then((state) => {
-              this._logger.info(`latest block ${msg.data.getHeight()} has been updated`)
-            })
-            .catch((err) => {
-              this._logger.error(`Error occurred during updateLatestAndStore(), reason: ${err.message}`)
-            })
-        })
+      this.miningOfficer.stopMining().then(() => {
+        this.updateLatestAndStore(msg)
+          .then((res) => {
+            this.miningOfficer.rebaseMiner()
+              .then((state) => {
+                this._logger.info(`latest block ${msg.data.getHeight()} has been updated`)
+              })
+              .catch((err) => {
+                this._logger.error(`error occurred during updateLatestAndStore(), reason: ${err.message}`)
+              })
+          })
+          .catch((err) => {
+            this._logger.info(errToString(err))
+            this._logger.error(`error occurred during updateLatestAndStore(), reason: ${err.message}`)
+            process.exit()
+          })
+      })
         .catch((err) => {
-          this._logger.info(errToString(err))
-          this._logger.error(`Error occurred during updateLatestAndStore(), reason: ${err.message}`)
-          process.exit()
+          this._logger.error(err)
         })
     })
 
@@ -271,10 +276,10 @@ export class Engine {
         if (res === true) {
           this._broadcastMinedBlock(unfinishedBlock, solution)
             .then((res) => {
-              this._logger.info('Broadcasted mined block', res)
+              this._logger.info('broadcasted mined block', res)
             })
             .catch((err) => {
-              this._logger.error(`Unable to broadcast mined block, reason: ${err.message}`)
+              this._logger.error(`mined block broadcast failed -> ${err.message}`)
             })
         }
       })
@@ -492,6 +497,7 @@ export class Engine {
       // FIXME: @schnorr, is this typo? Should not it be this._rawBlocks.push(block) ?
       // this._rawBlock.push(block)
 
+      // TEST IF THIS SHOULD BE DONE
       process.nextTick(() => {
         let promise = null
 
@@ -517,7 +523,7 @@ export class Engine {
               }
             })
             .catch(err => {
-              this._logger.error(`Could not send to mining worker, reason: ${errToString(err)}`)
+              this._logger.error(`could not send to mining worker, reason: ${errToString(err)}`)
               process.exit()
             })
         }).catch(_ => {
@@ -1057,7 +1063,7 @@ export class Engine {
         } else {
           this._logger.warn('local mined block ' + newBlock.getHeight() + ' does not stack on multiverse height ' + this.multiverse.getHighestBlock().getHeight())
           this._logger.warn('mined block ' + newBlock.getHeight() + ' cannot go on top of multiverse block ' + this.multiverse.getHighestBlock().getHash())
-          return this.miningOfficer.stopMining()
+          return this.miningOfficer.rebaseMiner()
             .then((res) => {
               this._logger.info(res)
             })

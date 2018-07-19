@@ -259,8 +259,8 @@ export function blockchainHeadersAreChain (childHeaderList: BlockchainHeader[]|B
     check = aperture(2, childHeaderList).reduce((result, [a, b]) => a.getHash() === b.getPreviousHash() && result, true)
 
     if (!check) {
-      logger.info(`Child headers do not form a chain`)
-      return check
+      logger.info(`child headers do not form a chain`)
+      // return check // Disabled until AT
     }
   }
 
@@ -269,7 +269,7 @@ export function blockchainHeadersAreChain (childHeaderList: BlockchainHeader[]|B
     check = aperture(2, parentHeaderList).reduce((result, [a, b]) => a.getHash() === b.getPreviousHash() && result, true)
 
     if (!check) {
-      logger.info(`Parent headers do not form a chain`)
+      logger.info(`parent headers do not form a chain`)
       return check
     }
   }
