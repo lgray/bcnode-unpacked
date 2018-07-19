@@ -865,7 +865,6 @@ export class Engine {
                           // overwrite current multiverse
                           this._logger.info(7)
                           this._logger.info(newBlock.getHash() + ' approved --> assigning as current multiverse')
-                          this.multiverse._candidates.length = 0
                           this.multiverse._chain.length = 0
                           this.multiverse._chain = sorted
                           this._logger.info('multiverse has been assigned')
