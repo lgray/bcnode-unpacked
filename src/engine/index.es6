@@ -576,11 +576,11 @@ export class Engine {
     }
     let tasks = []
     if (blockKey === undefined) {
-      tasks = blocks.map((item) => await this.persistence.put('bc.block.' + item.getHeight(), item))
+      tasks = blocks.map((item) => this.persistence.put('bc.block.' + item.getHeight(), item))
     } else {
-      tasks = blocks.map((item) => await this.persistence.put(blockKey + '.bc.block.' + item.getHeight(), item))
+      tasks = blocks.map((item) => this.persistence.put(blockKey + '.bc.block.' + item.getHeight(), item))
     }
-    return Promise.resolve(true)
+    await Promise.all(tasks)
   }
 
   /**
@@ -723,6 +723,9 @@ export class Engine {
         return this.syncSetBlocksInline(newBlocks)
           .then((blocksStoredResults) => {
             return this.stepSync(peerInfo, low)
+          })
+          .catch((err) => {
+            return this.Promise.reject(err)
           })
       })
       .catch((e) => {
