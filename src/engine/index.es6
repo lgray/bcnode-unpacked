@@ -838,8 +838,7 @@ export class Engine {
                         this._logger.info(2)
                         this._logger.info(newBlock.getHash() + ' new heights: ' + currentHeights)
 
-                        let comparableBlocks = newBlocks
-                        const sorted = comparableBlocks.sort((a, b) => {
+                        const sorted = newBlocks.sort((a, b) => {
                           if (a.getHeight() > b.getHeight()) {
                             return -1
                           }
@@ -848,13 +847,13 @@ export class Engine {
                           }
                           return 0
                         })
-                        this._logger.info('comparable blocks: ' + comparableBlocks.length)
+                        this._logger.info('comparable blocks: ' + newBlocks.length)
                         this._logger.info(11)
                         const highestBlock = this.multiverse.getHighestBlock()
                         const lowestBlock = this.multiverse.getLowestBlock()
-                        this._logger.info(newBlock.getHash() + ' comparing with: ' + highestBlock.getHash() + ' height: ' + highestBlock.getHeight())
+                        this._logger.info(newBlock.getHash() + ' height: ' + newBlock.getHeight() + ' comparing with ' + highestBlock.getHash() + ' height: ' + highestBlock.getHeight())
                         let conditional = false
-                        if (highestBlock !== undefined && sorted !== undefined && sorted.length > 0) {
+                        if (highestBlock !== undefined && sorted !== undefined && newBlocks.length > 0) {
                           // conanaOut
                           conditional = new BN(sorted[0].getTotalDistance()).gt(new BN(highestBlock.getTotalDistance()))
                         } else if (sorted.length < 6) {
