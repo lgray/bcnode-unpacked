@@ -574,10 +574,11 @@ export class Engine {
     if (valid === false) {
       // return Promise.reject(new Error('sequence of blocks is not working')) // Enabled after target
     }
+    let tasks = []
     if (blockKey === undefined) {
-      const tasks = blocks.map((item) => this.persistence.put('bc.block.' + item.getHeight(), item))
+      tasks = blocks.map((item) => this.persistence.put('bc.block.' + item.getHeight(), item))
     } else {
-      const tasks = blocks.map((item) => this.persistence.put(blockKey + '.bc.block.' + item.getHeight(), item))
+      tasks = blocks.map((item) => this.persistence.put(blockKey + '.bc.block.' + item.getHeight(), item))
     }
     return Promise.all(tasks)
   }
