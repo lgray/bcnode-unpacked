@@ -456,7 +456,6 @@ export default class PersistenceRocksDb {
    */
   putPending (blockchain: string = 'bc', opts: Object = { highWaterMark: 100000000, asBuffer: true }): Promise<?boolean> {
     return new Promise((resolve, reject) => {
-      let highest = false
       const iter = this.db.iterator(opts)
       const cycle = () => {
         return iter.next((err, key) => {
