@@ -152,7 +152,7 @@ const handlers = {
           return manager.engine.persistence.getBulk(ids)
             .then((res) => res.map((block) => block.serializeBinary()))
         } catch (err) {
-          debug('Query failed', errToString(e))
+          debug('Query failed', errToString(err))
           return []
         }
       })
