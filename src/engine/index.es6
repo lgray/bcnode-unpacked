@@ -850,7 +850,6 @@ export class Engine {
                         this._logger.info('comparable blocks: ' + newBlocks.length)
                         this._logger.info(11)
                         const highestBlock = this.multiverse.getHighestBlock()
-                        const lowestBlock = this.multiverse.getLowestBlock()
                         this._logger.info(newBlock.getHash() + ' height: ' + newBlock.getHeight() + ' comparing with ' + highestBlock.getHash() + ' height: ' + highestBlock.getHeight())
                         let conditional = false
                         if (highestBlock.getHash() === newBlock.getHash()) {
