@@ -638,7 +638,7 @@ export class Engine {
               // request a range from the peer
               await this.persistence.put(peerLockKey, 1)
               // lock the depth for if another block comes while running this
-              await this.persistence.put('bc.depth', lowBound)
+              await this.persistence.put('bc.depth', upperBound)
               const query = {
                 queryHash: newBlock.getHash(),
                 queryHeight: newBlock.getHeight(),
@@ -659,6 +659,7 @@ export class Engine {
                       */
                       // all done, no more depth clean up, unlock peer
                       if (lowBound === 2) {
+                        this._logger.info('lower bound is 2')
                         return this.persistence.put(peerLockKey, 0)
                           .then(() => {
                             return this.persistence.put('bc.depth', 2)
@@ -674,6 +675,7 @@ export class Engine {
                             return Promise.reject(e)
                           })
                       } else {
+                        this._logger.info('lower depth has not been set')
                         return this.persistence.put('bc.depth', lowBound)
                           .then(() => {
                             const sorted = blocks.sort((a, b) => {
@@ -693,6 +695,7 @@ export class Engine {
                       }
                     })
                     .catch(e => {
+                      this._logger.info('error has occured reading bounds')
                       this._logger.error(errToString(e))
                       // unlock the peer
                       return this.persistence.put(peerLockKey, 0)
