@@ -207,7 +207,7 @@ export class Engine {
       this._logger.warn(`Could not store rovers to persistence, reason ${e.message}`)
     }
 
-    await this.integrityCheck()
+    // await this.integrityCheck() enabled AT
 
     if (MONITOR_ENABLED) {
       this._monitor.start()
