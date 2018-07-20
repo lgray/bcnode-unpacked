@@ -888,7 +888,7 @@ export class Engine {
                                   if (targetHeight === 1) {
                                     return Promise.resolve(true)
                                   }
-                                  return this.proveTwo(conn, this.multiverse.getHighestBlock()())
+                                  return this.proveTwo(conn, this.multiverse.getHighestBlock())
                                     .then(synced => {
                                       this._logger.info(newBlock.getHash() + ' blockchain sync complete')
                                       return this.persistence.put('rsync', 'n').then(() => {
