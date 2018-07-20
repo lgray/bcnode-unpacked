@@ -720,7 +720,7 @@ export class Engine {
         this._logger.info('rsync reset')
       })
     }
-    const low = max(height - 5, 2)
+    const low = max(height - 5000, 2)
     const query = {
       queryHash: '0000',
       queryHeight: height,
@@ -736,7 +736,9 @@ export class Engine {
           })
       })
       .catch((e) => {
-        return Promise.reject(e)
+        this._logger.warn('sync process is cycling')
+        this._logger.error(e)
+        return this.stepSync(peerInfo, low)
       })
   }
 
