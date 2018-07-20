@@ -839,15 +839,6 @@ export class Engine {
                         this._logger.info(newBlock.getHash() + ' new heights: ' + currentHeights)
 
                         let comparableBlocks = newBlocks
-                        if (currentHeights.length < 6) {
-                          comparableBlocks = newBlocks.filter(a => {
-                            if (a !== undefined) {
-                              if (a.getHeight !== undefined && currentHeights.indexOf(a.getHeight()) > -1) {
-                                return a
-                              }
-                            }
-                          })
-                        }
                         const sorted = comparableBlocks.sort((a, b) => {
                           if (a.getHeight() > b.getHeight()) {
                             return -1
@@ -867,6 +858,8 @@ export class Engine {
                           // conanaOut
                           conditional = new BN(sorted[0].getTotalDistance()).gt(new BN(highestBlock.getTotalDistance()))
                         } else if (sorted.length < 6) {
+                          conditional = true
+                        } else if (highestBlock.getHash() === newBlock.getHash()) {
                           conditional = true
                         }
 
