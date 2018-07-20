@@ -863,6 +863,7 @@ export class Engine {
                         }
 
                         this._logger.info(22)
+                        this._logger.info('sorted highest block: ' + sorted[0].getHeight() + ' ' + sorted[0].getHash())
                         if (conditional === true) {
                           // overwrite current multiverse
                           this._logger.info(33)
