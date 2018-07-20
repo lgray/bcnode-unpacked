@@ -617,7 +617,7 @@ export class Engine {
         // return Promise.resolve(true)
       } else {
         const upperBound = max(depth, 2) + 1 // so we dont get the genesis block
-        const lowBound = max(depth - 1000, 2) // so we dont get the genesis block
+        // const lowBound = max(depth - 1000, 2) // Assigned during AT
         return conn.getPeerInfo((err, peerInfo) => {
           if (err) {
             return Promise.reject(err)
