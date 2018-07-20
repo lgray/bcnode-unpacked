@@ -7,7 +7,7 @@ module.exports = {
   "version": 1,
   "schemaVersion": 1,
   "height": 1,
-  "miner": "0x083cc41690bbd89d33f3b2e71b9012904426eb0c",
+  "miner": "0x028d3af888e08aa8380e5866b6ed068bd60e7b19",
   "difficulty": "290401962029366",
   "timestamp": 0,
   "merkleRoot": "b277537249649f9e7e56d549805ccfdec56fddd6153c6bf4ded85c3e072ccbdf",
@@ -19,7 +19,7 @@ module.exports = {
   "nrgGrant": 1600000000,
   "targetHash": "6f641871680978619176212f0000a40d8d0ae784ad35918ce677a5111a776cf9",
   "targetHeight": 1800066,
-  "targetMiner": "0x083cc41690bbd89d33f3b2e71b9012904426eb0c",
+  "targetMiner": "0x028d3af888e08aa8380e5866b6ed068bd60e7b19",
   "targetSignature": "",
 
   "twn": 0,

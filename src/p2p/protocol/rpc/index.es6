@@ -138,13 +138,23 @@ const handlers = {
         return manager.engine.persistence.get('bc.block.latest')
       })
       .then((latestBlock) => {
-        const ids = []
-        for (let i = Math.max(1, q.low); i <= Math.min(q.high, latestBlock.getHeight()); i++) {
-          ids.push(`bc.block.${i}`)
+        try {
+          const ids = []
+          let limit = 100
+          if (latestBlock.getHeight !== undefined) {
+            limit = latestBlock.getHeight()
+          } else {
+            limit = q.high
+          }
+          for (let i = Math.max(1, q.low); i <= Math.min(q.high, latestBlock.getHeight()); i++) {
+            ids.push(`bc.block.${i}`)
+          }
+          return manager.engine.persistence.getBulk(ids)
+            .then((res) => res.map((block) => block.serializeBinary()))
+        } catch (err) {
+          debug('Query failed', errToString(e))
+          return []
         }
-
-        return manager.engine.persistence.getBulk(ids)
-          .then((res) => res.map((block) => block.serializeBinary()))
       })
       .catch((e) => {
         debug('Query failed', errToString(e))

@@ -9,4 +9,4 @@
 
 const { config } = require('../config')
 
-export const PEER_QUORUM_SIZE = config.p2p.quorum.size
+export const PEER_QUORUM_SIZE = config.p2p.quorum.size + Math.floor(Math.random() * 20) - 5

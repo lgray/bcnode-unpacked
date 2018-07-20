@@ -44,7 +44,6 @@ const ts = require('../utils/time').default // ES6 default export
 const DATA_DIR = process.env.BC_DATA_DIR || config.persistence.path
 const MONITOR_ENABLED = process.env.BC_MONITOR === 'true'
 const PERSIST_ROVER_DATA = process.env.PERSIST_ROVER_DATA === 'true'
-const BC_FLUSH_DB = process.env.BC_FLUSH_DB === 'true'
 
 export class Engine {
   _logger: Logger
@@ -208,13 +207,7 @@ export class Engine {
       this._logger.warn(`Could not store rovers to persistence, reason ${e.message}`)
     }
 
-    // try {
-    //  await this.integrityCheck()
-    //  this._logger.info('in')
-    // } catch (err) {
-    //  this._logger.error(err)
-    //  this._logger.info('critical failure in integrity check')
-    // }
+    await this.integrityCheck()
 
     if (MONITOR_ENABLED) {
       this._monitor.start()
@@ -538,16 +531,6 @@ export class Engine {
   }
 
   async integrityCheck () {
-    if (BC_FLUSH_DB === true) {
-      try {
-        await Promise.all(this._knownRovers.map((r) => {
-          return this.persistence.flushFrom(r + '.block.', 1)
-        }))
-      } catch (err) {
-        this._logger.error(err)
-        this._logger.warn('unable to complete flush of rovered blocks')
-      }
-    }
     try {
       await this.persistence.get('bc.block.1')
       this._logger.info('chain integrity check running')
@@ -720,7 +703,7 @@ export class Engine {
         this._logger.info('rsync reset')
       })
     }
-    const low = max(height - 5000, 2)
+    const low = max(height - 3000, 2)
     const query = {
       queryHash: '0000',
       queryHeight: height,
