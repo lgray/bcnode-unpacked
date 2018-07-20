@@ -569,12 +569,16 @@ export class Engine {
    * TODO: Move this to a better location
    * @param blocks BcBlock[]
    */
-  async syncSetBlocksInline (blocks: BcBlock[]): Promise<Error|bool[]> {
+  async syncSetBlocksInline (blocks: BcBlock[], blockKey: ?string): Promise<Error|bool[]> {
     const valid = await this.multiverse.validateBlockSequenceInline(blocks)
     if (valid === false) {
       // return Promise.reject(new Error('sequence of blocks is not working')) // Enabled after target
     }
-    const tasks = blocks.map((item) => this.persistence.put(`pending.bc.block.${item.getHeight()}`, item))
+    if (blockKey === undefined) {
+      const tasks = blocks.map((item) => this.persistence.put('bc.block.' + item.getHeight(), item))
+    } else {
+      const tasks = blocks.map((item) => this.persistence.put(blockKey + '.bc.block.' + item.getHeight(), item))
+    }
     return Promise.all(tasks)
   }
 
@@ -631,7 +635,7 @@ export class Engine {
               return this.node.manager.createPeer(peerInfo)
                 .query(query)
                 .then(blocks => {
-                  return this.syncSetBlocksInline(blocks)
+                  return this.syncSetBlocksInline(blocks, 'pending')
                     .then((blocksStoredResults) => {
                       // if we didn't get the one block above the genesis block run again
 
