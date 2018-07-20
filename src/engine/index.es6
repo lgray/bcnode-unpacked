@@ -853,12 +853,12 @@ export class Engine {
                         const lowestBlock = this.multiverse.getLowestBlock()
                         this._logger.info(newBlock.getHash() + ' height: ' + newBlock.getHeight() + ' comparing with ' + highestBlock.getHash() + ' height: ' + highestBlock.getHeight())
                         let conditional = false
-                        if (highestBlock !== undefined && sorted !== undefined && newBlocks.length > 0) {
+                        if (highestBlock.getHash() === newBlock.getHash()) {
+                          conditional = true
+                        } else if (highestBlock !== undefined && sorted !== undefined && newBlocks.length > 0) {
                           // conanaOut
                           conditional = new BN(sorted[0].getTotalDistance()).gt(new BN(highestBlock.getTotalDistance()))
                         } else if (sorted.length < 6) {
-                          conditional = true
-                        } else if (highestBlock.getHash() === newBlock.getHash()) {
                           conditional = true
                         }
 
