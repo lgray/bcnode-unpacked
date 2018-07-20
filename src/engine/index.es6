@@ -576,11 +576,11 @@ export class Engine {
     }
     let tasks = []
     if (blockKey === undefined) {
-      tasks = blocks.map((item) => this.persistence.put('bc.block.' + item.getHeight(), item))
+      tasks = blocks.map((item) => await this.persistence.put('bc.block.' + item.getHeight(), item))
     } else {
-      tasks = blocks.map((item) => this.persistence.put(blockKey + '.bc.block.' + item.getHeight(), item))
+      tasks = blocks.map((item) => await this.persistence.put(blockKey + '.bc.block.' + item.getHeight(), item))
     }
-    return Promise.all(tasks)
+    return Promise.resolve(true)
   }
 
   /**
@@ -636,6 +636,7 @@ export class Engine {
               return this.node.manager.createPeer(peerInfo)
                 .query(query)
                 .then(blocks => {
+                  this._logger.info(blocks.length + ' recieved')
                   return this.syncSetBlocksInline(blocks, 'pending')
                     .then((blocksStoredResults) => {
                       // if we didn't get the one block above the genesis block run again
@@ -708,7 +709,7 @@ export class Engine {
         this._logger.info('rsync reset')
       })
     }
-    const low = max(height - 3000, 2)
+    const low = max(height - 5000, 2)
     const query = {
       queryHash: '0000',
       queryHeight: height,
@@ -718,6 +719,7 @@ export class Engine {
     return this.node.manager.createPeer(peerInfo)
       .query(query)
       .then(newBlocks => {
+        this._logger.info(newBlocks.length + ' recieved')
         return this.syncSetBlocksInline(newBlocks)
           .then((blocksStoredResults) => {
             return this.stepSync(peerInfo, low)
