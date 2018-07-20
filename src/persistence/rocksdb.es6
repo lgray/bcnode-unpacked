@@ -465,12 +465,8 @@ export default class PersistenceRocksDb {
           } else if (key !== undefined && key.indexOf('pending.' + blockchain) > -1) {
             return this.get(key)
               .then((res) => {
-                const stringKey = key.toString().replace('pending.', '')
-                if (highest === false) {
-                  highest = res
-                } else if (res.getHeight() > highest.getHeight()) {
-                  highest = res
-                }
+                const stringKey = key.replace('pending.', '')
+                this._logger.info(stringKey)
                 return this.put(stringKey, res).then(cycle)
                   .catch((err) => {
                     return reject(err)
@@ -480,17 +476,6 @@ export default class PersistenceRocksDb {
                 return reject(err)
               })
           }
-          // set the last complete sync height
-          if (highest !== false) {
-            return this.put(blockchain + '.block.checkpoint', highest)
-              .then(() => {
-                return resolve(true)
-              })
-              .catch((err) => {
-                return reject(err)
-              })
-          }
-          return resolve(true)
         })
       }
       return cycle()
