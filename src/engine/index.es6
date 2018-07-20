@@ -702,37 +702,44 @@ export class Engine {
     }
   }
 
-  stepSync (peerInfo: Object, height: Number): Promise<*> {
+  stepSync (conn: Object, height: Number): Promise<*> {
     this._logger.info('step sync from height: ' + height)
     if (height < 3) {
       return this.persistence.put('rsync', 'n').then(() => {
         this._logger.info('rsync reset')
       })
     }
-    const low = max(height - 5000, 2)
+    const low = max(height - 10000, 2)
     const query = {
       queryHash: '0000',
       queryHeight: height,
       low: low,
       high: height
     }
-    return this.node.manager.createPeer(peerInfo)
-      .query(query)
-      .then(newBlocks => {
-        this._logger.info(newBlocks.length + ' recieved')
-        return this.syncSetBlocksInline(newBlocks)
-          .then((blocksStoredResults) => {
-            return this.stepSync(peerInfo, low)
+    return conn.getPeerInfo((err, peerInfo) => {
+      if (err) {
+        this._logger.error(err)
+        return Promise.reject(err)
+      } else {
+        return this.node.manager.createPeer(peerInfo)
+          .query(query)
+          .then(newBlocks => {
+            this._logger.info(newBlocks.length + ' recieved')
+            return this.syncSetBlocksInline(newBlocks)
+              .then((blocksStoredResults) => {
+                return this.stepSync(conn, low)
+              })
+              .catch((err) => {
+                return this.Promise.reject(err)
+              })
           })
-          .catch((err) => {
-            return this.Promise.reject(err)
+          .catch((e) => {
+            this._logger.warn('sync process is cycling')
+            this._logger.error(e)
+            return this.stepSync(conn, low)
           })
-      })
-      .catch((e) => {
-        this._logger.warn('sync process is cycling')
-        this._logger.error(e)
-        return this.stepSync(peerInfo, low)
-      })
+      }
+    })
   }
 
   /**
@@ -889,7 +896,7 @@ export class Engine {
                                   if (targetHeight === 1) {
                                     return Promise.resolve(true)
                                   }
-                                  return this.stepSync(peerInfo, this.multiverse.getHighestBlock().getHeight())
+                                  return this.stepSync(conn, this.multiverse.getHighestBlock().getHeight())
                                 })
                                 .catch((e) => {
                                   this._logger.info(88)
