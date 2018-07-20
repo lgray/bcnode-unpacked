@@ -571,7 +571,7 @@ export class Engine {
    */
   async syncSetBlocksInline (blocks: BcBlock[], blockKey: ?string): Promise<Error|bool[]> {
     let valid = true
-    if (blocks.length < 10) {
+    if (blocks.length < 100) {
       valid = await this.multiverse.validateBlockSequenceInline(blocks)
     }
     if (valid === false) {
@@ -712,19 +712,19 @@ export class Engine {
         this._logger.info('rsync reset')
       })
     }
-    const low = max(height - 10000, 2)
-    const query = {
-      queryHash: '0000',
-      queryHeight: height - 1,
-      low: low,
-      high: height
-    }
 
     return conn.getPeerInfo((err, peerInfo) => {
       if (err) {
         this._logger.error(err)
         return Promise.reject(err)
       } else {
+        const low = max(height - 10000, 2)
+        const query = {
+          queryHash: '0000',
+          queryHeight: height - 1,
+          low: low,
+          high: height
+        }
         return this.node.manager.createPeer(peerInfo)
           .query(query)
           .then(newBlocks => {
@@ -900,7 +900,7 @@ export class Engine {
                                   if (targetHeight === 1) {
                                     return Promise.resolve(true)
                                   }
-                                  return this.stepSync(conn, this.multiverse.getHighestBlock().getHeight())
+                                  return this.stepSync(conn, this.multiverse.getHighestBlock().getHeight() - 1)
                                 })
                                 .catch((e) => {
                                   this._logger.info(88)
