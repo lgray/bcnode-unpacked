@@ -876,13 +876,12 @@ export class Engine {
                           return this.persistence.put('bc.depth', this.multiverse.getHighestBlock().getHeight())
                             .then(() => {
                               this._logger.info(44)
-                              this.pubsub.publish('update.block.latest', { key: 'bc.block.latest', data: newBlock, force: true, multiverse: this.multiverse._chain })
-                              // broadcast to other peers without sending back to the peer that sent it to us
-                              this.node.broadcastNewBlock(newBlock, peerInfo.id.toB58String())
 
                               this._logger.info(55)
-                              return this.persistence.put('rsync', 'n')
+                              return this.persistence.put('rsync', 'y')
                                 .then(() => {
+                                  this.pubsub.publish('update.block.latest', { key: 'bc.block.latest', data: newBlock, force: true, multiverse: this.multiverse._chain })
+                                  this.node.broadcastNewBlock(newBlock, peerInfo.id.toB58String())
                                   this._logger.debug('rsync unlocked')
                                   this._logger.info(66)
                                   const targetHeight = this.multiverse.getLowestBlock().getHeight() - 1
@@ -890,66 +889,26 @@ export class Engine {
                                   if (targetHeight === 1) {
                                     return Promise.resolve(true)
                                   }
-
-                                  if (lowestBlock.getHash() === this.multiverse.getLowestBlock().getHash()) {
-                                    this.persistence.get('bc.block.' + targetHeight).then((targetBlock) => {
-                                      this._logger.info(77)
-                                      // if (targetBlock.getHash() === this.multiverse.getLowestBlock().getPreviousHash()) {
-                                      /// / already have this multiverse on disk
-                                      //  return this.persistence.put('rsync', 'n').then(() => {
-                                      //    this._logger.info('rsync reset')
-                                      //    return Promise.resolve(true)
-                                      //  })
-                                      //    .catch((e) => {
-                                      //      this._logger.error(e)
-                                      //    })
-                                      // } else {
-                                      return this.proveTwo(conn, this.multiverse.getHighestBlock()())
-                                        .then(synced => {
-                                          this._logger.info(newBlock.getHash() + ' blockchain sync complete')
-                                          return this.persistence.put('rsync', 'n').then(() => {
-                                            this._logger.info('rsync reset')
-                                          })
-                                            .catch((e) => {
-                                              this._logger.error(e)
-                                            })
-                                        })
-                                        .catch(e => {
-                                          this._logger.info(newBlock.getHash() + ' blockchain sync failed')
-                                          this._logger.error(errToString(e))
-                                          return this.persistence.put('rsync', 'n').then(() => {
-                                            this._logger.info('rsync reset')
-                                          })
-                                            .catch((e) => {
-                                              this._logger.error(e)
-                                            })
-                                        })
-                                      // }
-                                    }).catch((err) => {
-                                      this._logger.debug(err)
-                                      this._logger.warn('sync does not have target height')
-                                      return this.proveTwo(conn, this.multiverse.getHighestBlock()())
-                                        .then(synced => {
-                                          this._logger.info(newBlock.getHash() + ' blockchain sync complete')
-                                          return this.persistence.put('rsync', 'n').then(() => {
-                                            this._logger.info('rsync reset')
-                                          })
-                                            .catch((e) => {
-                                              this._logger.error(e)
-                                            })
-                                        })
-                                        .catch(e => {
-                                          this._logger.info(newBlock.getHash() + ' blockchain sync failed')
-                                          this._logger.error(errToString(e))
-                                          return this.persistence.put('rsync', 'n').then(() => {
-                                            this._logger.info('rsync reset')
-                                          })
-                                            .catch((e) => {
-                                              this._logger.error(e)
-                                            })
+                                  return this.proveTwo(conn, this.multiverse.getHighestBlock()())
+                                    .then(synced => {
+                                      this._logger.info(newBlock.getHash() + ' blockchain sync complete')
+                                      return this.persistence.put('rsync', 'n').then(() => {
+                                        this._logger.info('rsync reset')
+                                      })
+                                        .catch((e) => {
+                                          this._logger.error(e)
                                         })
                                     })
-                                  }
+                                    .catch(e => {
+                                      this._logger.info(newBlock.getHash() + ' blockchain sync failed')
+                                      this._logger.error(errToString(e))
+                                      return this.persistence.put('rsync', 'n').then(() => {
+                                        this._logger.info('rsync reset')
+                                      })
+                                        .catch((e) => {
+                                          this._logger.error(e)
+                                        })
+                                    })
                                 })
                                 .catch((e) => {
                                   this._logger.info(88)
