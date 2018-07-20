@@ -570,9 +570,12 @@ export class Engine {
    * @param blocks BcBlock[]
    */
   async syncSetBlocksInline (blocks: BcBlock[], blockKey: ?string): Promise<Error|bool[]> {
-    const valid = await this.multiverse.validateBlockSequenceInline(blocks)
+    let valid = true
+    if (blocks.length < 10) {
+      valid = await this.multiverse.validateBlockSequenceInline(blocks)
+    }
     if (valid === false) {
-      // return Promise.reject(new Error('sequence of blocks is not working')) // Enabled after target
+      return Promise.reject(new Error('sequence of blocks is not working')) // Enabled after target
     }
     let tasks = []
     if (blockKey === undefined) {
@@ -634,7 +637,7 @@ export class Engine {
                 high: upperBound
               }
               return this.node.manager.createPeer(peerInfo)
-                .query(this.node.manager, query)
+                .query(query)
                 .then(blocks => {
                   this._logger.info(blocks.length + ' recieved')
                   return this.syncSetBlocksInline(blocks, 'pending')
@@ -716,13 +719,14 @@ export class Engine {
       low: low,
       high: height
     }
+
     return conn.getPeerInfo((err, peerInfo) => {
       if (err) {
         this._logger.error(err)
         return Promise.reject(err)
       } else {
         return this.node.manager.createPeer(peerInfo)
-          .query(this.node.manager, query)
+          .query(query)
           .then(newBlocks => {
             this._logger.info(newBlocks.length + ' recieved')
             return this.syncSetBlocksInline(newBlocks)
@@ -835,7 +839,7 @@ export class Engine {
                     this._logger.info(newBlock.getHash() + ' resync lower bound: ' + query.low)
                     this._logger.info(newBlock.getHash() + ' multiverse peer proof: ' + peerLockKey)
                     return this.node.manager.createPeer(peerInfo)
-                      .query(this.node.manager, query)
+                      .query(query)
                       .then(newBlocks => {
                         if (newBlocks === undefined) {
                           this._logger.warn(newBlock.getHash() + ' incomplete proof')
