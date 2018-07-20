@@ -642,7 +642,7 @@ export class Engine {
               const query = {
                 queryHash: newBlock.getHash(),
                 queryHeight: newBlock.getHeight(),
-                low: lowBound,
+                low: 2,
                 high: upperBound
               }
               return this.node.manager.createPeer(peerInfo)
@@ -658,41 +658,20 @@ export class Engine {
                       * and was now resyncing
                       */
                       // all done, no more depth clean up, unlock peer
-                      if (lowBound === 2) {
-                        this._logger.info('lower bound is 2')
-                        return this.persistence.put(peerLockKey, 0)
-                          .then(() => {
-                            return this.persistence.put('bc.depth', 2)
-                              .then(() => {
-                                return this.persistence.putPending('bc')
-                              })
-                              .catch((e) => {
-                                return Promise.reject(e)
-                              })
-                          })
-                          .catch(e => {
-                            this._logger.error(errToString(e))
-                            return Promise.reject(e)
-                          })
-                      } else {
-                        this._logger.info('lower depth has not been set')
-                        return this.persistence.put('bc.depth', lowBound)
-                          .then(() => {
-                            const sorted = blocks.sort((a, b) => {
-                              if (a.getHeight() > b.getHeight()) {
-                                return -1
-                              }
-                              if (a.getHeight() < b.getHeight()) {
-                                return 1
-                              }
-                              return 0
+                      return this.persistence.put(peerLockKey, 0)
+                        .then(() => {
+                          return this.persistence.put('bc.depth', 2)
+                            .then(() => {
+                              return this.persistence.putPending('bc')
                             })
-                            return this.proveTwo(conn, sorted.pop())
-                          })
-                          .catch((e) => {
-                            return Promise.reject(e)
-                          })
-                      }
+                            .catch((e) => {
+                              return Promise.reject(e)
+                            })
+                        })
+                        .catch(e => {
+                          this._logger.error(errToString(e))
+                          return Promise.reject(e)
+                        })
                     })
                     .catch(e => {
                       this._logger.info('error has occured reading bounds')
