@@ -820,7 +820,7 @@ export class Engine {
                     const query = {
                       queryHash: newBlock.getHash(),
                       queryHeight: upperBound,
-                      low: lowerBound,
+                      low: upperBound - 7,
                       high: upperBound
                     }
                     this._logger.info(newBlock.getHash() + ' multiverse peer proof: ' + peerLockKey)
@@ -854,6 +854,7 @@ export class Engine {
                           }
                           return 0
                         })
+                        this._logger.info('comparable blocks: ' + comparableBlocks.length)
                         this._logger.info(11)
                         const highestBlock = this.multiverse.getHighestBlock()
                         const lowestBlock = this.multiverse.getLowestBlock()
@@ -924,7 +925,7 @@ export class Engine {
                               return this.persistence.put('rsync', 'n')
                             })
                         } else {
-                          this._logger.info(111)
+                          this._logger.info('resync conditions failed')
                         }
                       })
                       .catch(e => {
