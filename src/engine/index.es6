@@ -617,7 +617,7 @@ export class Engine {
         // return Promise.resolve(true)
       } else {
         const upperBound = max(depth, 2) + 1 // so we dont get the genesis block
-        // const lowBound = max(depth - 1000, 2) // Assigned during AT
+        const lowBound = max(depth - 1000, 2) // Assigned during AT
         return conn.getPeerInfo((err, peerInfo) => {
           if (err) {
             return Promise.reject(err)
@@ -642,7 +642,7 @@ export class Engine {
               const query = {
                 queryHash: newBlock.getHash(),
                 queryHeight: newBlock.getHeight(),
-                low: 2,
+                low: lowBound,
                 high: upperBound
               }
               return this.node.manager.createPeer(peerInfo)
@@ -711,6 +711,32 @@ export class Engine {
       // no depth has been set
       return Promise.reject(err)
     }
+  }
+
+  stepSync (peerInfo: Object, height: Number): Promise<*> {
+    if (height < 3) {
+      return this.persistence.put('rsync', 'n').then(() => {
+        this._logger.info('rsync reset')
+      })
+    }
+    const low = max(height - 5, 2)
+    const query = {
+      queryHash: '0000',
+      queryHeight: height,
+      low: low,
+      high: height
+    }
+    return this.node.manager.createPeer(peerInfo)
+      .query(query)
+      .then(newBlocks => {
+        return this.syncSetBlocksInline(newBlocks)
+          .then((blocksStoredResults) => {
+            return this.stepSync(peerInfo, low)
+          })
+      })
+      .catch((e) => {
+        return Promise.reject(e)
+      })
   }
 
   /**
@@ -856,9 +882,6 @@ export class Engine {
 
                           return this.persistence.put('bc.depth', this.multiverse.getHighestBlock().getHeight())
                             .then(() => {
-                              this._logger.info(44)
-
-                              this._logger.info(55)
                               return this.persistence.put('rsync', 'y')
                                 .then(() => {
                                   this.pubsub.publish('update.block.latest', { key: 'bc.block.latest', data: newBlock, force: true, multiverse: this.multiverse._chain })
@@ -870,26 +893,7 @@ export class Engine {
                                   if (targetHeight === 1) {
                                     return Promise.resolve(true)
                                   }
-                                  return this.proveTwo(conn, this.multiverse.getHighestBlock())
-                                    .then(synced => {
-                                      this._logger.info(newBlock.getHash() + ' blockchain sync complete')
-                                      return this.persistence.put('rsync', 'n').then(() => {
-                                        this._logger.info('rsync reset')
-                                      })
-                                        .catch((e) => {
-                                          this._logger.error(e)
-                                        })
-                                    })
-                                    .catch(e => {
-                                      this._logger.info(newBlock.getHash() + ' blockchain sync failed')
-                                      this._logger.error(errToString(e))
-                                      return this.persistence.put('rsync', 'n').then(() => {
-                                        this._logger.info('rsync reset')
-                                      })
-                                        .catch((e) => {
-                                          this._logger.error(e)
-                                        })
-                                    })
+                                  return this.stepSync(peerInfo, this.multiverse.getHighestBlock().getHeight())
                                 })
                                 .catch((e) => {
                                   this._logger.info(88)
