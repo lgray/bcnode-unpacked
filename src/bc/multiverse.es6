@@ -317,6 +317,7 @@ export class Multiverse {
     const currentHighestBlock = await this.persistence.get('bc.block.latest')
 
     if (rsyncLock !== 'n') {
+      this._logger.warn('rsync lock is active')
       return Promise.resolve(false)
     }
 

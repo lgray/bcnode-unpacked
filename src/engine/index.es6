@@ -902,16 +902,35 @@ export class Engine {
                                     this.persistence.get('bc.block.' + targetHeight).then((e) => {
                                       this._logger.info(77)
                                       // already have this multiverse on disk
-                                      return Promise.resolve(true)
+                                      return this.persistence.put('rsync', 'n').then(() => {
+                                        this._logger.info('rsync reset')
+                                        return Promise.resolve(true)
+                                      })
+                                        .catch((e) => {
+                                          this._logger.error(e)
+                                        })
                                     }).catch((err) => {
                                       this._logger.debug(err)
+                                      this._logger.warn('sync does not have target height')
                                       return this.proveTwo(conn, this.multiverse.getHighestBlock()())
                                         .then(synced => {
                                           this._logger.info(newBlock.getHash() + ' blockchain sync complete')
+                                          return this.persistence.put('rsync', 'n').then(() => {
+                                            this._logger.info('rsync reset')
+                                          })
+                                            .catch((e) => {
+                                              this._logger.error(e)
+                                            })
                                         })
                                         .catch(e => {
                                           this._logger.info(newBlock.getHash() + ' blockchain sync failed')
                                           this._logger.error(errToString(e))
+                                          return this.persistence.put('rsync', 'n').then(() => {
+                                            this._logger.info('rsync reset')
+                                          })
+                                            .catch((e) => {
+                                              this._logger.error(e)
+                                            })
                                         })
                                     })
                                   }
@@ -919,29 +938,57 @@ export class Engine {
                                 .catch((e) => {
                                   this._logger.info(88)
                                   this._logger.debug(e)
+                                  return this.persistence.put('rsync', 'n').then(() => {
+                                    this._logger.info('rsync reset')
+                                  })
+                                    .catch((e) => {
+                                      this._logger.error(e)
+                                    })
                                 })
                               // assign where the last sync began
                             })
                             .catch(e => {
                               this._logger.info(99)
                               this._logger.error(errToString(e))
-                              return this.persistence.put('rsync', 'n')
+                              return this.persistence.put('rsync', 'n').then(() => {
+                                this._logger.info('rsync reset')
+                              })
+                                .catch((e) => {
+                                  this._logger.error(e)
+                                })
                             })
                         } else {
                           this._logger.info('resync conditions failed')
+                          return this.persistence.put('rsync', 'n').then(() => {
+                            this._logger.info('rsync reset')
+                          })
+                            .catch((e) => {
+                              this._logger.error(e)
+                            })
                         }
                       })
                       .catch(e => {
                         this._rsync = false
                         this._logger.error(errToString(e))
                         this._logger.info(222)
-                        return this.persistence.put('rsync', 'n')
+                        return this.persistence.put('rsync', 'n').then(() => {
+                          this._logger.info('rsync reset')
+                        })
+                          .catch((e) => {
+                            this._logger.error(e)
+                          })
                       })
                   })
                 })
                   .catch((e) => {
                     this._logger.info(333)
                     this._logger.error(e)
+                    return this.persistence.put('rsync', 'n').then(() => {
+                      this._logger.info('rsync reset')
+                    })
+                      .catch((e) => {
+                        this._logger.error(e)
+                      })
                   })
               } else {
                 this.persistence.get('rsync').then((r) => {
