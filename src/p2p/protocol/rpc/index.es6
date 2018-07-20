@@ -140,7 +140,7 @@ const handlers = {
       .then((latestBlock) => {
         try {
           const ids = []
-          let limit = 100
+          let limit = 10000
           if (latestBlock.getHeight !== undefined) {
             limit = latestBlock.getHeight()
           } else {

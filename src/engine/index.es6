@@ -634,7 +634,7 @@ export class Engine {
                 high: upperBound
               }
               return this.node.manager.createPeer(peerInfo)
-                .query(query)
+                .query(this.node.manager, query)
                 .then(blocks => {
                   this._logger.info(blocks.length + ' recieved')
                   return this.syncSetBlocksInline(blocks, 'pending')
@@ -712,7 +712,7 @@ export class Engine {
     const low = max(height - 10000, 2)
     const query = {
       queryHash: '0000',
-      queryHeight: height,
+      queryHeight: height - 1,
       low: low,
       high: height
     }
@@ -722,7 +722,7 @@ export class Engine {
         return Promise.reject(err)
       } else {
         return this.node.manager.createPeer(peerInfo)
-          .query(query)
+          .query(this.node.manager, query)
           .then(newBlocks => {
             this._logger.info(newBlocks.length + ' recieved')
             return this.syncSetBlocksInline(newBlocks)
@@ -835,7 +835,7 @@ export class Engine {
                     this._logger.info(newBlock.getHash() + ' resync lower bound: ' + query.low)
                     this._logger.info(newBlock.getHash() + ' multiverse peer proof: ' + peerLockKey)
                     return this.node.manager.createPeer(peerInfo)
-                      .query(query)
+                      .query(this.node.manager, query)
                       .then(newBlocks => {
                         if (newBlocks === undefined) {
                           this._logger.warn(newBlock.getHash() + ' incomplete proof')
