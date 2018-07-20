@@ -894,37 +894,37 @@ export class Engine {
                                   if (lowestBlock.getHash() === this.multiverse.getLowestBlock().getHash()) {
                                     this.persistence.get('bc.block.' + targetHeight).then((targetBlock) => {
                                       this._logger.info(77)
-                                      if (targetBlock.getHash() === this.multiverse.getLowestBlock().getPreviousHash()) {
-                                      // already have this multiverse on disk
-                                        return this.persistence.put('rsync', 'n').then(() => {
-                                          this._logger.info('rsync reset')
-                                          return Promise.resolve(true)
+                                      // if (targetBlock.getHash() === this.multiverse.getLowestBlock().getPreviousHash()) {
+                                      /// / already have this multiverse on disk
+                                      //  return this.persistence.put('rsync', 'n').then(() => {
+                                      //    this._logger.info('rsync reset')
+                                      //    return Promise.resolve(true)
+                                      //  })
+                                      //    .catch((e) => {
+                                      //      this._logger.error(e)
+                                      //    })
+                                      // } else {
+                                      return this.proveTwo(conn, this.multiverse.getHighestBlock()())
+                                        .then(synced => {
+                                          this._logger.info(newBlock.getHash() + ' blockchain sync complete')
+                                          return this.persistence.put('rsync', 'n').then(() => {
+                                            this._logger.info('rsync reset')
+                                          })
+                                            .catch((e) => {
+                                              this._logger.error(e)
+                                            })
                                         })
-                                          .catch((e) => {
-                                            this._logger.error(e)
+                                        .catch(e => {
+                                          this._logger.info(newBlock.getHash() + ' blockchain sync failed')
+                                          this._logger.error(errToString(e))
+                                          return this.persistence.put('rsync', 'n').then(() => {
+                                            this._logger.info('rsync reset')
                                           })
-                                      } else {
-                                        return this.proveTwo(conn, this.multiverse.getHighestBlock()())
-                                          .then(synced => {
-                                            this._logger.info(newBlock.getHash() + ' blockchain sync complete')
-                                            return this.persistence.put('rsync', 'n').then(() => {
-                                              this._logger.info('rsync reset')
+                                            .catch((e) => {
+                                              this._logger.error(e)
                                             })
-                                              .catch((e) => {
-                                                this._logger.error(e)
-                                              })
-                                          })
-                                          .catch(e => {
-                                            this._logger.info(newBlock.getHash() + ' blockchain sync failed')
-                                            this._logger.error(errToString(e))
-                                            return this.persistence.put('rsync', 'n').then(() => {
-                                              this._logger.info('rsync reset')
-                                            })
-                                              .catch((e) => {
-                                                this._logger.error(e)
-                                              })
-                                          })
-                                      }
+                                        })
+                                      // }
                                     }).catch((err) => {
                                       this._logger.debug(err)
                                       this._logger.warn('sync does not have target height')
