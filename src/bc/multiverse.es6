@@ -113,7 +113,7 @@ export class Multiverse {
       sorted.push(lowerBoundParent)
     }
     // finally check the entire sequence
-    if (!validateBlockSequence(sorted)) return Promise.reject(new Error('block sequence invalid'))
+    // if (!validateBlockSequence(sorted)) return Promise.reject(new Error('block sequence invalid'))
 
     return Promise.resolve(true)
   }
