@@ -714,6 +714,7 @@ export class Engine {
   }
 
   stepSync (peerInfo: Object, height: Number): Promise<*> {
+    this._logger.info('step sync from height: ' + height)
     if (height < 3) {
       return this.persistence.put('rsync', 'n').then(() => {
         this._logger.info('rsync reset')
