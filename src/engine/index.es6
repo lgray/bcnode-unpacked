@@ -805,10 +805,7 @@ export class Engine {
                 //
                 //
                 const upperBound = newBlock.getHeight()
-                this._logger.info(newBlock.getHash() + ' resync upper bound: ' + upperBound)
                 // get the lowest of the current multiverse
-                const lowerBound = this.multiverse.getLowestBlock().getHeight()
-                this._logger.info(newBlock.getHash() + ' resync lower bound: ' + lowerBound)
                 return this.miningOfficer.stopMining().then(() => {
                   return conn.getPeerInfo((err, peerInfo) => {
                     if (err) {
@@ -823,6 +820,8 @@ export class Engine {
                       low: upperBound - 7,
                       high: upperBound
                     }
+                    this._logger.info(newBlock.getHash() + ' resync upper bound: ' + query.high)
+                    this._logger.info(newBlock.getHash() + ' resync lower bound: ' + query.low)
                     this._logger.info(newBlock.getHash() + ' multiverse peer proof: ' + peerLockKey)
                     return this.node.manager.createPeer(peerInfo)
                       .query(query)
@@ -838,13 +837,17 @@ export class Engine {
                         })
                         this._logger.info(2)
                         this._logger.info(newBlock.getHash() + ' new heights: ' + currentHeights)
-                        const comparableBlocks = newBlocks.filter(a => {
-                          if (a !== undefined) {
-                            if (a.getHeight !== undefined && currentHeights.indexOf(a.getHeight()) > -1) {
-                              return a
+
+                        let comparableBlocks = newBlocks
+                        if (currentHeights.length < 6) {
+                          comparableBlocks = newBlocks.filter(a => {
+                            if (a !== undefined) {
+                              if (a.getHeight !== undefined && currentHeights.indexOf(a.getHeight()) > -1) {
+                                return a
+                              }
                             }
-                          }
-                        })
+                          })
+                        }
                         const sorted = comparableBlocks.sort((a, b) => {
                           if (a.getHeight() > b.getHeight()) {
                             return -1
