@@ -95,11 +95,16 @@ export class Multiverse {
     // check if the actually sequence itself is valid
     const upperBound = sorted[0]
     const lowerBound = sorted[sorted.length - 1]
-    const upperBoundChild = await this.persistence.get(`pending.bc.block.${sorted[0].getHeight()}`)
-    // current pending block does not match the purposed block at that height
-    if (upperBoundChild === undefined || upperBound.getHash() !== upperBoundChild.getPreviousHash()) return Promise.reject(new Error('pending block does not match purposed block'))
-    // add the child block of the sequence
-    sorted.unshift(upperBoundChild)
+
+    try {
+      const upperBoundChild = await this.persistence.get(`pending.bc.block.${sorted[0].getHeight()}`)
+      // current pending block does not match the purposed block at that height
+      if (upperBoundChild === undefined || upperBound.getHash() !== upperBoundChild.getPreviousHash()) return Promise.reject(new Error('pending block does not match purposed block'))
+      // add the child block of the sequence
+      sorted.unshift(upperBoundChild)
+    } catch (err) {
+      this._logger.warn('load warning')
+    }
     if (lowerBound === 1) {
       // if at final depth this will equal 1 or the genesis block
       const lowerBoundParent = await this.persistence.get('bc.block.1')
@@ -109,6 +114,7 @@ export class Multiverse {
     }
     // finally check the entire sequence
     if (!validateBlockSequence(sorted)) return Promise.reject(new Error('block sequence invalid'))
+
     return Promise.resolve(true)
   }
 
