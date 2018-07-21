@@ -326,10 +326,10 @@ export function validateBlockSequence (blocks: BcBlock[]): bool {
   // [[BC10, BC9], [BC9, BC8]]
   const pairs = aperture(2, sortedBlocks)
   const heights = pairs.map((a) => {
-    logger.info(a)
+    logger.debug(a)
     return [a[0].getHeight(), a[1].getHeight()]
   })
-  logger.info('pairs printed after this --> ' + JSON.stringify(heights, null, 2))
+  logger.debug('pairs printed after this --> ' + JSON.stringify(heights, null, 2))
   // now create:
   // [[btcOrdered, ethOrdered, lskOrdered, neoOrdered, wavOrdered], [btcOrderder, ethOrdered, lskOrdered, neoOrdered, wavOrdered]]
   //                                e.g. BC10, BC9

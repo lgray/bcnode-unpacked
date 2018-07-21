@@ -228,7 +228,7 @@ export class MiningOfficer {
         return [range(from, to + 1).map(height => `${chain}.block.${height}`)]
       }))
 
-      this._logger.info(`Loading ${inspect(newBlockHeadersKeys)}`)
+      this._logger.debug(`loading ${inspect(newBlockHeadersKeys)}`)
 
       const currentBlocks = await this.persistence.getBulk(newBlockHeadersKeys)
 
@@ -275,7 +275,7 @@ export class MiningOfficer {
             })
         }
 
-        this._logger.info(`Starting miner process with work: "${work}", difficulty: ${newBlock.getDifficulty()}, ${JSON.stringify(this._collectedBlocks, null, 2)}`)
+        this._logger.debug(`starting miner process with work: "${work}", difficulty: ${newBlock.getDifficulty()}, ${JSON.stringify(this._collectedBlocks, null, 2)}`)
         const proc: ChildProcess = fork(MINER_WORKER_PATH)
         this._workerProcess = proc
         if (this._workerProcess !== null) {
