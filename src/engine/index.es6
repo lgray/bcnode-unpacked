@@ -584,6 +584,7 @@ export class Engine {
       tasks = blocks.map((item) => this.persistence.put(blockKey + '.bc.block.' + item.getHeight(), item))
     }
     await Promise.all(tasks)
+    return Promise.resolvee(tasks.length)
   }
 
   /**
@@ -718,7 +719,7 @@ export class Engine {
         this._logger.error(err)
         return Promise.reject(err)
       } else {
-        const low = max(height - 10000, 2)
+        const low = max(height - 3000, 2)
         const query = {
           queryHash: '0000',
           queryHeight: height - 1,
@@ -734,13 +735,15 @@ export class Engine {
                 return this.stepSync(conn, low)
               })
               .catch((err) => {
-                return this.Promise.reject(err)
+                this._logger.warn('peer rsync failure')
+                this._logger.error(err)
+                return Promise.reject(err)
               })
           })
           .catch((e) => {
             this._logger.warn('sync process is cycling')
             this._logger.error(e)
-            return this.stepSync(conn, low)
+            return Promise.reject(e)
           })
       }
     })
