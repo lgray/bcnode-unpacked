@@ -127,26 +127,20 @@ const handlers = {
   },
 
   query: (manager: PeerManager, q: Object = {}) => {
-    const id = `bc.block.${q.queryHeight}`
-
-    return manager.engine.persistence.get(id)
-      .then((b) => {
-        if (b.getHash() !== q.queryHash) {
-          return []
-        }
-
-        return manager.engine.persistence.get('bc.block.latest')
-      })
+    return manager.engine.persistence.get('bc.block.latest')
       .then((latestBlock) => {
+        if (!latestBlock) {
+          return Promise.resolve([])
+        }
         try {
           const ids = []
-          let limit = 10000
+          let limit = 1000
           if (latestBlock.getHeight !== undefined) {
             limit = latestBlock.getHeight()
           } else {
             limit = q.high
           }
-          for (let i = Math.max(1, q.low); i <= Math.min(q.high, latestBlock.getHeight()); i++) {
+          for (let i = Math.max(1, q.low); i <= Math.min(q.high, limit); i++) {
             ids.push(`bc.block.${i}`)
           }
           return manager.engine.persistence.getBulk(ids)
@@ -156,8 +150,8 @@ const handlers = {
           return []
         }
       })
-      .catch((e) => {
-        debug('Query failed', errToString(e))
+      .catch((err) => {
+        debug('Query failed', errToString(err))
         return []
       })
   }
