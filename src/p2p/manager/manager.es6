@@ -189,9 +189,9 @@ export class PeerManager {
     // Check if QUORUM_SIZE is reached
     if (this.peerBookConnected.getPeersCount() > QUORUM_SIZE) {
       debug(`Peer '${peerId}', quorum already reached`)
-      disconnectPeer()
-
-      return Promise.resolve(false)
+      // TODO: Tomas this is a critical issue
+      /// DISABLED ->>disconnectPeer()
+      // return Promise.resolve(false)
     }
 
     debug(`Connected new peer '${peerId}', adding to connectedPeerBook, count: ${this.peerBookConnected.getPeersCount()}`)

@@ -724,7 +724,9 @@ export class Engine {
     return conn.getPeerInfo((err, peerInfo) => {
       if (err) {
         this._logger.error(err)
-        return Promise.reject(err)
+        return this.persistence.put('rsync', 'n').then(() => {
+          this._logger.info('rsync reset')
+        })
       } else {
         const low = max(height - 2500, 2)
         const query = {
@@ -750,7 +752,9 @@ export class Engine {
           .catch((e) => {
             this._logger.warn('sync process is cycling')
             this._logger.error(e)
-            return Promise.reject(e)
+            return this.persistence.put('rsync', 'n').then(() => {
+              this._logger.info('rsync reset')
+            })
           })
       }
     })
@@ -910,7 +914,7 @@ export class Engine {
                                   if (targetHeight === 1) {
                                     return Promise.resolve(true)
                                   }
-                                  // return this.stepSync(conn, this.multiverse.getHighestBlock().getHeight() - 1)
+                                  return this.stepSync(conn, this.multiverse.getHighestBlock().getHeight() - 1)
                                 })
                                 .catch((e) => {
                                   this._logger.info(88)
