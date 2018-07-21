@@ -719,10 +719,10 @@ export class Engine {
         this._logger.error(err)
         return Promise.reject(err)
       } else {
-        const low = max(height - 2000, 2)
+        const low = max(height - 2500, 2)
         const query = {
           queryHash: '0000',
-          queryHeight: height - 1,
+          queryHeight: height,
           low: low,
           high: height
         }
