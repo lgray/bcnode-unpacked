@@ -165,7 +165,7 @@ export class Engine {
       await this._persistence.open()
       try {
         let version = await this.persistence.get('appversion')
-        if (semver.lt(version.version, '0.7.0')) {
+        if (semver.lt(version.version, '0.7.4')) {
           this._logger.warn(DELETE_MESSAGE)
           process.exit(8)
         }
