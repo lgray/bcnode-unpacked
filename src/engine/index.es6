@@ -584,7 +584,7 @@ export class Engine {
       tasks = blocks.map((item) => this.persistence.put(blockKey + '.bc.block.' + item.getHeight(), item))
     }
     await Promise.all(tasks)
-    return Promise.resolvee(tasks.length)
+    return Promise.resolve(tasks.length)
   }
 
   /**
@@ -719,7 +719,7 @@ export class Engine {
         this._logger.error(err)
         return Promise.reject(err)
       } else {
-        const low = max(height - 3000, 2)
+        const low = max(height - 2000, 2)
         const query = {
           queryHash: '0000',
           queryHeight: height - 1,
