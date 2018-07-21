@@ -36,7 +36,7 @@
       "purgeInterval": 6000
     },
     "quorum": {
-      "size": 19
+      "size": 69
     },
     "rendezvous": {
       "webrtc": "/dns4/dns-r3.blockcollider.org/tcp/9090/ws/p2p-webrtc-star",
@@ -49,10 +49,10 @@
   },
   "rovers": {
     "btc": {
-      "maximumPeers": 40
+      "maximumPeers": 30
     },
     "eth": {
-      "maximumPeers": 63,
+      "maximumPeers": 43,
       "altBootNodes": [
         {
           "address": "52.16.188.185",

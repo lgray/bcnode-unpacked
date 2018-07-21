@@ -43,6 +43,7 @@ const ts = require('../utils/time').default // ES6 default export
 
 const DATA_DIR = process.env.BC_DATA_DIR || config.persistence.path
 const MONITOR_ENABLED = process.env.BC_MONITOR === 'true'
+const BC_CHECK = process.env.BC_CHECK === 'true'
 const PERSIST_ROVER_DATA = process.env.PERSIST_ROVER_DATA === 'true'
 
 export class Engine {
@@ -207,7 +208,9 @@ export class Engine {
       this._logger.warn(`Could not store rovers to persistence, reason ${e.message}`)
     }
 
-    // await this.integrityCheck() enabled AT
+    if (BC_CHECK === true) {
+      await this.integrityCheck()
+    }
 
     if (MONITOR_ENABLED) {
       this._monitor.start()
@@ -541,8 +544,12 @@ export class Engine {
     } catch (err) {
       this._logger.error(err)
       this._logger.warn('unable to use default for integrity check')
-      await this.persistence.set('bc.block.1', getGenesisBlock)
-      await this.persistence.flushFrom('bc.block', 1)
+      try {
+        await this.persistence.set('bc.block.1', getGenesisBlock)
+        await this.persistence.flushFrom('bc.block', 1)
+      } catch (err) {
+        this._logger.error(err)
+      }
       return Promise.resolve(1)
     }
   }
@@ -903,7 +910,7 @@ export class Engine {
                                   if (targetHeight === 1) {
                                     return Promise.resolve(true)
                                   }
-                                  return this.stepSync(conn, this.multiverse.getHighestBlock().getHeight() - 1)
+                                  // return this.stepSync(conn, this.multiverse.getHighestBlock().getHeight() - 1)
                                 })
                                 .catch((e) => {
                                   this._logger.info(88)
