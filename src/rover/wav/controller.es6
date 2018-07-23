@@ -238,7 +238,7 @@ export default class Controller {
               const currentTime = ts.nowSeconds()
               this._pendingFibers.push([formatTimestamp, unifiedBlock])
 
-              const maxPendingHeight = this._pendingRequests[this._pendingRequests.length - 1][1]
+              const maxPendingHeight = this._pendingRequests[this._pendingRequests.length - 1][0]
               if (currentTime + 5 < formatTimestamp + dfBound) {
                 this._pendingRequests.push([randRange(currentTime, formatTimestamp + dfBound), maxPendingHeight + 1])
               } else {
