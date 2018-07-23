@@ -39,8 +39,8 @@
       "size": 86 
     },
     "rendezvous": {
-      "webrtc": "/dns4/dns-r3.blockcollider.org/tcp/9090/ws/p2p-webrtc-star",
-      "websocket": "/dns4/dns-r3.blockcollider.org/tcp/9091/ws/p2p-websocket-star"
+      "webrtc": "/dns4/54.85.22.247/tcp/9090/ws/p2p-webrtc-star",
+      "websocket": "/dns4/54.85.22.247/tcp/9091/ws/p2p-websocket-star"
     },
     "stats": {
       "enabled": true,
@@ -49,7 +49,7 @@
   },
   "rovers": {
     "btc": {
-      "maximumPeers": 30
+      "maximumPeers": 50
     },
     "eth": {
       "maximumPeers": 43,

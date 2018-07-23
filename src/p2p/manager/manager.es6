@@ -15,7 +15,7 @@ const PeerInfo = require('peer-info')
 const pull = require('pull-stream')
 
 const { ManagedPeerBook } = require('../book/book')
-const { toObject } = require('../../helper/debug')
+// const { toObject } = require('../../helper/debug')
 const { Peer } = require('../peer')
 const { PeerNode } = require('../node')
 const { registerProtocols } = require('../protocol')
@@ -43,7 +43,6 @@ export class PeerManager {
 
   constructor (node: PeerNode) {
     debug('constructor()')
-    const self = this
     this._logger = logging.getLogger(__filename)
     this._peerNode = node
     this._peerBook = new ManagedPeerBook(this, 'main')
@@ -79,7 +78,7 @@ export class PeerManager {
           data
         })
       }
-    }, 10 * 1000)
+    }, 30 * 1000)
 
     // this.engine.pubsub.subscribe('update.block.latest', '<engine>', (block) => {
     //  self.engine.restartMiner(block)
@@ -189,9 +188,9 @@ export class PeerManager {
     // Check if QUORUM_SIZE is reached
     if (this.peerBookConnected.getPeersCount() > QUORUM_SIZE) {
       debug(`Peer '${peerId}', quorum already reached`)
-      // TODO: Tomas this is a critical issue
-      /// DISABLED ->>disconnectPeer()
-      // return Promise.resolve(false)
+
+      // disconnectPeer()
+      return Promise.resolve(false)
     }
 
     debug(`Connected new peer '${peerId}', adding to connectedPeerBook, count: ${this.peerBookConnected.getPeersCount()}`)

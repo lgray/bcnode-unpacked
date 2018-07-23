@@ -52,7 +52,6 @@ export class Engine {
   _knownBlocksCache: LRUCache<string, BcBlock>
   _rawBlocks: LRUCache<number, Block>
   _node: Node
-  _rsync: boolean
   _persistence: PersistenceRocksDb
   _pubsub: PubSub
   _rovers: RoverManager
@@ -99,7 +98,6 @@ export class Engine {
       max: config.engine.rawBlocksCache.max
     })
 
-    this._rsync = false
     this._peerIsSyncing = false
     this._peerIsResyncing = false
     this._miningOfficer = new MiningOfficer(this._pubsub, this._persistence, opts)
@@ -166,7 +164,7 @@ export class Engine {
       await this._persistence.open()
       try {
         let version = await this.persistence.get('appversion')
-        if (semver.lt(version.version, '0.8.0')) {
+        if (semver.lt(version.version, '0.9.0')) { // GENESIS BLOCK 0.9
           this._logger.warn(DELETE_MESSAGE)
           process.exit(8)
         }
@@ -184,14 +182,14 @@ export class Engine {
         this._logger.info('Stored appversion to persistence')
       }
       try {
-        await this.persistence.put('rsync', 'n')
+        await this.persistence.put('synclock', getGenesisBlock())
         await this.persistence.get('bc.block.1')
         const latestBlock = await this.persistence.get('bc.block.latest')
         await this.multiverse.addNextBlock(latestBlock)
         this._logger.info('highest block height on disk ' + latestBlock.getHeight())
       } catch (_) { // genesis block not found
         try {
-          await this.persistence.put('rsync', 'n')
+          await this.persistence.put('synclock', getGenesisBlock())
           await this.persistence.put('bc.block.1', newGenesisBlock)
           await this.persistence.put('bc.block.latest', newGenesisBlock)
           await this.persistence.put('bc.block.checkpoint', newGenesisBlock)
@@ -245,19 +243,19 @@ export class Engine {
     })
 
     this.pubsub.subscribe('update.block.latest', '<engine>', (msg) => {
-      this.miningOfficer.stopMining().then(() => {
-        this.updateLatestAndStore(msg)
+      return this.miningOfficer.stopMining().then(() => {
+        return this.updateLatestAndStore(msg)
           .then((res) => {
             if (msg.mined !== undefined && msg.mined === true) {
               this._logger.info(`latest block ${msg.data.getHeight()} has been updated`)
             } else {
-              this.miningOfficer.rebaseMiner()
-                .then((state) => {
-                  this._logger.info(`latest block ${msg.data.getHeight()} has been updated`)
-                })
-                .catch((err) => {
-                  this._logger.error(`error occurred during updateLatestAndStore(), reason: ${err.message}`)
-                })
+              // this.miningOfficer.rebaseMiner()
+              //  .then((state) => {
+              //    this._logger.info(`latest block ${msg.data.getHeight()} has been updated`)
+              //  })
+              //  .catch((err) => {
+              //    this._logger.error(`error occurred during updateLatestAndStore(), reason: ${err.message}`)
+              //  })
             }
           })
           .catch((err) => {
@@ -272,9 +270,9 @@ export class Engine {
     })
 
     this.pubsub.subscribe('miner.block.new', '<engine>', ({ unfinishedBlock, solution }) => {
-      this._processMinedBlock(unfinishedBlock, solution).then((res) => {
+      return this._processMinedBlock(unfinishedBlock, solution).then((res) => {
         if (res === true) {
-          this._broadcastMinedBlock(unfinishedBlock, solution)
+          return this._broadcastMinedBlock(unfinishedBlock, solution)
             .then((res) => {
               this._logger.info('broadcasted mined block', res)
             })
@@ -713,51 +711,72 @@ export class Engine {
     }
   }
 
-  stepSync (conn: Object, height: Number): Promise<*> {
+  stepSync (conn: Object, height: Number, syncBlockHash: string): Promise<*> {
     this._logger.info('step sync from height: ' + height)
-    if (height < 3) {
-      return this.persistence.put('rsync', 'n').then(() => {
-        this._logger.info('rsync reset')
-      })
-    }
-
-    return conn.getPeerInfo((err, peerInfo) => {
-      if (err) {
-        this._logger.error(err)
-        return this.persistence.put('rsync', 'n').then(() => {
-          this._logger.info('rsync reset')
-        })
-      } else {
-        const low = max(height - 2500, 2)
-        const query = {
-          queryHash: '0000',
-          queryHeight: height,
-          low: low,
-          high: height
+    return this.persistence.get('synclock')
+      .then((syncBlock) => {
+        if (syncBlock.getHash() !== syncBlockHash) {
+          // Another sync override --> break step
+          return Promise.resolve(false)
         }
-        return this.node.manager.createPeer(peerInfo)
-          .query(query)
-          .then(newBlocks => {
-            this._logger.info(newBlocks.length + ' recieved')
-            return this.syncSetBlocksInline(newBlocks)
-              .then((blocksStoredResults) => {
-                return this.stepSync(conn, low)
-              })
-              .catch((err) => {
-                this._logger.warn('peer rsync failure')
-                this._logger.error(err)
-                return Promise.reject(err)
-              })
+
+        if (height < 3) {
+          return this.persistence.put('synclock', getGenesisBlock()).then(() => {
+            this._logger.info('sync reset')
           })
-          .catch((e) => {
-            this._logger.warn('sync process is cycling')
-            this._logger.error(e)
-            return this.persistence.put('rsync', 'n').then(() => {
-              this._logger.info('rsync reset')
+        }
+
+        return conn.getPeerInfo((err, peerInfo) => {
+          if (err) {
+            this._logger.error(err)
+            return this.persistence.put('synclock', getGenesisBlock()).then(() => {
+              this._logger.info('sync reset')
             })
-          })
-      }
-    })
+          } else {
+            if (syncBlock.getHeight() !== 1 && syncBlock.getHash() === syncBlockHash) {
+              const low = max(height - 2500, 2)
+              const query = {
+                queryHash: '0000',
+                queryHeight: height,
+                low: low,
+                high: height
+              }
+              return this.node.manager.createPeer(peerInfo)
+                .query(query)
+                .then(newBlocks => {
+                  this._logger.info(newBlocks.length + ' recieved')
+                  return this.syncSetBlocksInline(newBlocks)
+                    .then((blocksStoredResults) => {
+                      return this.stepSync(conn, low, syncBlockHash)
+                    })
+                    .catch((err) => {
+                      this._logger.warn('sync failed')
+                      this._logger.error(err)
+                      return Promise.reject(err)
+                    })
+                })
+                .catch((e) => {
+                  this._logger.warn('sync failed')
+                  this._logger.error(e)
+                  return this.persistence.put('synclock', getGenesisBlock()).then(() => {
+                    this._logger.info('sync reset')
+                  })
+                })
+            } else {
+              this._logger.warn('sync canceled')
+              return Promise.resolve(true)
+            }
+          }
+        })
+      })
+
+      .catch((e) => {
+        this._logger.warn('sync failed')
+        this._logger.error(e)
+        return this.persistence.put('synclock', getGenesisBlock()).then(() => {
+          this._logger.info('sync reset')
+        })
+      })
   }
 
   /**
@@ -823,7 +842,7 @@ export class Engine {
           return this.multiverse.addResyncRequest(newBlock, this.miningOfficer._canMine)
             .then(shouldResync => {
               if (shouldResync === true) {
-                this._logger.info(newBlock.getHash() + ' new block: ' + newBlock.getHeight() + ' should rsync request approved')
+                this._logger.info(newBlock.getHash() + ' new block: ' + newBlock.getHeight() + ' should sync request approved')
                 // 1. request multiverse from peer, if fail ignore
                 // succeed in getting multiverse -->
                 // 2. Compare purposed multiverse sum of difficulty with current sum of diff
@@ -868,14 +887,15 @@ export class Engine {
                         this._logger.info(newBlock.getHash() + ' new heights: ' + currentHeights)
 
                         const sorted = newBlocks.sort((a, b) => {
-                          if (a.getHeight() > b.getHeight()) {
+                          if (new BN(a.getHeight()).gt(new BN(b.getHeight())) === true) {
                             return -1
                           }
-                          if (a.getHeight() < b.getHeight()) {
+                          if (new BN(a.getHeight()).lt(new BN(b.getHeight())) === true) {
                             return 1
                           }
                           return 0
                         })
+
                         this._logger.info('comparable blocks: ' + newBlocks.length)
                         this._logger.info(11)
                         const highestBlock = this.multiverse.getHighestBlock()
@@ -890,7 +910,8 @@ export class Engine {
                           conditional = true
                         }
 
-                        this._logger.info(22)
+                        this._logger.info('highest in sorted: ' + sorted[0].getHeight())
+                        this._logger.info('lowest in sorted: ' + sorted[sorted.length - 1].getHeight())
                         this._logger.info('sorted highest block: ' + sorted[0].getHeight() + ' ' + sorted[0].getHash())
                         if (conditional === true) {
                           // overwrite current multiverse
@@ -899,28 +920,29 @@ export class Engine {
                           this.multiverse._chain.length = 0
                           this.multiverse._chain = sorted
                           this._logger.info('multiverse has been assigned')
-                          this._rsync = false
 
                           return this.persistence.put('bc.depth', this.multiverse.getHighestBlock().getHeight())
                             .then(() => {
-                              return this.persistence.put('rsync', 'y')
+                              return this.persistence.put('synclock', this.multiverse.getHighestBlock())
                                 .then(() => {
                                   this.pubsub.publish('update.block.latest', { key: 'bc.block.latest', data: newBlock, force: true, multiverse: this.multiverse._chain })
                                   this.node.broadcastNewBlock(newBlock, peerInfo.id.toB58String())
-                                  this._logger.debug('rsync unlocked')
+                                  this._logger.debug('sync unlocked')
                                   this._logger.info(66)
                                   const targetHeight = this.multiverse.getLowestBlock().getHeight() - 1
                                   // dont have to sync
                                   if (targetHeight === 1) {
                                     return Promise.resolve(true)
                                   }
-                                  return this.stepSync(conn, this.multiverse.getHighestBlock().getHeight() - 1)
+                                  return this.stepSync(conn,
+                                    this.multiverse.getHighestBlock().getHeight() - 1,
+                                    this.multiverse.getHighestBlock().getHash())
                                 })
                                 .catch((e) => {
                                   this._logger.info(88)
                                   this._logger.debug(e)
-                                  return this.persistence.put('rsync', 'n').then(() => {
-                                    this._logger.info('rsync reset')
+                                  return this.persistence.put('synclock', getGenesisBlock()).then(() => {
+                                    this._logger.info('sync reset')
                                   })
                                     .catch((e) => {
                                       this._logger.error(e)
@@ -931,8 +953,8 @@ export class Engine {
                             .catch(e => {
                               this._logger.info(99)
                               this._logger.error(errToString(e))
-                              return this.persistence.put('rsync', 'n').then(() => {
-                                this._logger.info('rsync reset')
+                              return this.persistence.put('synclock', getGenesisBlock()).then(() => {
+                                this._logger.info('sync reset')
                               })
                                 .catch((e) => {
                                   this._logger.error(e)
@@ -940,8 +962,8 @@ export class Engine {
                             })
                         } else {
                           this._logger.info('resync conditions failed')
-                          return this.persistence.put('rsync', 'n').then(() => {
-                            this._logger.info('rsync reset')
+                          return this.persistence.put('synclock', getGenesisBlock()).then(() => {
+                            this._logger.info('sync reset')
                           })
                             .catch((e) => {
                               this._logger.error(e)
@@ -949,11 +971,10 @@ export class Engine {
                         }
                       })
                       .catch(e => {
-                        this._rsync = false
                         this._logger.error(errToString(e))
                         this._logger.info(222)
-                        return this.persistence.put('rsync', 'n').then(() => {
-                          this._logger.info('rsync reset')
+                        return this.persistence.put('synclock', getGenesisBlock()).then(() => {
+                          this._logger.info('sync reset')
                         })
                           .catch((e) => {
                             this._logger.error(e)
@@ -964,17 +985,17 @@ export class Engine {
                   .catch((e) => {
                     this._logger.info(333)
                     this._logger.error(e)
-                    return this.persistence.put('rsync', 'n').then(() => {
-                      this._logger.info('rsync reset')
+                    return this.persistence.put('synclock', getGenesisBlock()).then(() => {
+                      this._logger.info('sync reset')
                     })
                       .catch((e) => {
                         this._logger.error(e)
                       })
                   })
               } else {
-                this.persistence.get('rsync').then((r) => {
+                this.persistence.get('synclock').then((r) => {
                   this._logger.info(444)
-                  if (r === 'n') {
+                  if (r.getHeight() === 1) {
                     return this.sendPeerLatestBlock(conn, newBlock)
                   }
                 })
@@ -1099,13 +1120,13 @@ export class Engine {
         } else {
           this._logger.warn('local mined block ' + newBlock.getHeight() + ' does not stack on multiverse height ' + this.multiverse.getHighestBlock().getHeight())
           this._logger.warn('mined block ' + newBlock.getHeight() + ' cannot go on top of multiverse block ' + this.multiverse.getHighestBlock().getHash())
-          return this.miningOfficer.rebaseMiner()
-            .then((res) => {
-              this._logger.info(res)
-            })
-            .catch((e) => {
-              this._logger.error(errToString(e))
-            })
+          // return this.miningOfficer.rebaseMiner()
+          //  .then((res) => {
+          //    this._logger.info(res)
+          //  })
+          //  .catch((e) => {
+          //    this._logger.error(errToString(e))
+          //  })
         }
       })
       .catch((err) => {
