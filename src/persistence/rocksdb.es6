@@ -261,7 +261,7 @@ export default class PersistenceRocksDb {
       .concat(this.sortChildHeaders(headers.getBtcList())
         .map((b) => {
           if (opts.btc) {
-            return async () => {
+            return (async () => {
               return this.get('btc.block.latest')
                 .then((res) => {
                   if (b.getHeight() > res.getHeight()) {
@@ -276,14 +276,14 @@ export default class PersistenceRocksDb {
                   this._logger.debug(err)
                   return this.put('btc.block.' + b.getHeight(), b)
                 })
-            }
+            })()
           }
           return Promise.resolve(true)
         }))
       .concat(this.sortChildHeaders(headers.getEthList())
         .map((b) => {
           if (opts.eth) {
-            return async () => {
+            return (async () => {
               return this.get('eth.block.latest')
                 .then((res) => {
                   if (b.getHeight() > res.getHeight()) {
@@ -298,14 +298,14 @@ export default class PersistenceRocksDb {
                   this._logger.debug(err)
                   return this.put('eth.block.' + b.getHeight(), b)
                 })
-            }
+            })()
           }
           return Promise.resolve(true)
         }))
       .concat(this.sortChildHeaders(headers.getWavList())
         .map((b) => {
           if (opts.wav) {
-            return async () => {
+            return (async () => {
               return this.get('wav.block.latest')
                 .then((res) => {
                   if (b.getHeight() > res.getHeight()) {
@@ -320,14 +320,14 @@ export default class PersistenceRocksDb {
                   this._logger.debug(err)
                   return this.put('wav.block.' + b.getHeight(), b)
                 })
-            }
+            })()
           }
           return Promise.resolve(true)
         }))
       .concat(this.sortChildHeaders(headers.getLskList())
         .map((b) => {
           if (opts.lsk) {
-            return async () => {
+            return (async () => {
               return this.get('lsk.block.latest')
                 .then((res) => {
                   if (b.getHeight() > res.getHeight()) {
@@ -342,14 +342,14 @@ export default class PersistenceRocksDb {
                   this._logger.debug(err)
                   return this.put('lsk.block.' + b.getHeight(), b)
                 })
-            }
+            })()
           }
           return Promise.resolve(true)
         }))
       .concat(this.sortChildHeaders(headers.getNeoList())
         .map((b) => {
           if (opts.neo) {
-            return async () => {
+            return (async () => {
               return this.get('neo.block.latest')
                 .then((res) => {
                   if (b.getHeight() > res.getHeight()) {
@@ -364,12 +364,12 @@ export default class PersistenceRocksDb {
                   this._logger.debug(err)
                   return this.put('neo.block.' + b.getHeight(), b)
                 })
-            }
+            })()
           }
           return Promise.resolve(true)
         }))
     ).then(() => {
-      return async () => {
+      return (async () => {
         const currentLatest = await Promise.all(Object.keys(table).map((chain) => {
           return this.get(chain + '.block.latest')
         }))
@@ -380,7 +380,7 @@ export default class PersistenceRocksDb {
             return Promise.resolve(true)
           }
         }))
-      }
+      })()
     }).catch((err) => {
       return Promise.reject(err)
     })
