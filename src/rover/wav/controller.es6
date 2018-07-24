@@ -214,9 +214,9 @@ export default class Controller {
           getLastHeight().then(({ height, timestamp }) => {
             const ts = timestamp / 1000 << 0
             const requestTime = randRange(ts, ts + dfBound)
-            this._pendingRequests.push([requestTime, height - 5])
+            this._pendingRequests.push([requestTime, height - 4])
             // push second further to future
-            this._pendingRequests.push([requestTime + randRange(5, 15), height - 5])
+            this._pendingRequests.push([requestTime + randRange(5, 15), height - 3])
             cycle()
           }).catch(err => {
             this._logger.warn(`Unable to start roving, could not get block count, err: ${err.message}`)
@@ -238,7 +238,7 @@ export default class Controller {
               const currentTime = ts.nowSeconds()
               this._pendingFibers.push([formatTimestamp, unifiedBlock])
 
-              const maxPendingHeight = this._pendingRequests[this._pendingRequests.length - 1][0]
+              const maxPendingHeight = this._pendingRequests[this._pendingRequests.length - 1][1]
               if (currentTime + 5 < formatTimestamp + dfBound) {
                 this._pendingRequests.push([randRange(currentTime, formatTimestamp + dfBound), maxPendingHeight + 1])
               } else {

@@ -994,9 +994,9 @@ export class Engine {
                   })
               } else {
                 this.persistence.get('synclock').then((r) => {
-                  this._logger.info(444)
+                  // if local is not synching sent the highest block to the peer
                   if (r.getHeight() === 1) {
-                    return this.sendPeerLatestBlock(conn, newBlock)
+                    return this.sendPeerLatestBlock(conn, this.multiverse.getHighestBlock())
                   }
                 })
               }
