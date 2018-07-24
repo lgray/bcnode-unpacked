@@ -223,6 +223,10 @@ export class MiningOfficer {
           return []
         }
 
+        if (to === undefined) {
+          to = from - 1
+        }
+
         this._logger.info('chain: ' + chain + 'from: ' + from + ' to: ' + to)
 
         return [range(from, to + 1).map(height => `${chain}.block.${height}`)]
