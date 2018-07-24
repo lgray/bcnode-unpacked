@@ -37,12 +37,6 @@ export const register = (manager: PeerManager, bundle: Bundle) => {
           const raw = new Uint8Array(bytes)
           const block = BcBlock.deserializeBinary(raw)
           // determine if block is valid using the 1 type
-          if (!isValidBlock(block, 1)) {
-            debug('Received block was not valid')
-            // TODO this peer should make to the the blacklist
-            return
-          }
-
           // manager.engine._processMinedBlock(block)
           manager.engine.blockFromPeer(conn, block) // TODO check if following code still used, if so wrap whole into then
 
