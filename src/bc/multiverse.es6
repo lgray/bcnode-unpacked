@@ -17,6 +17,7 @@ const { all, flatten, zip } = require('ramda')
 const { validateRoveredSequences, validateBlockSequence, childrenHeightSum } = require('./validation')
 const { standardId } = require('./helper')
 const { getLogger } = require('../logger')
+const { getGenesisBlock } = require('./genesis')
 
 export class Multiverse {
   _chain: BcBlock[]
@@ -322,6 +323,14 @@ export class Multiverse {
     const currentParentHighestBlock = this.getParentHighestBlock()
     const syncLock = await this.persistence.get('synclock')
     const currentHighestBlock = await this.persistence.get('bc.block.latest')
+
+    if (syncLock.getHeight() !== 1 && (syncLock.getTimestamp() + 269) < Math.floor(Date.now() * 0.001)) {
+      this._logger.warn('sync lock is active')
+      return Promise.resolve(false)
+    } else {
+      this._logger.warn('sync lock is stale resetting')
+      await this.persistence.put('synclock', getGenesisBlock())
+    }
 
     if (syncLock.getHeight() !== 1) {
       this._logger.warn('sync lock is active')
