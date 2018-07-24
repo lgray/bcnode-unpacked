@@ -753,7 +753,7 @@ export class Engine {
                     .catch((err) => {
                       this._logger.warn('sync failed')
                       this._logger.error(err)
-                      return Promise.reject(err)
+                      return this.stepSync(conn, low, syncBlockHash)
                     })
                 })
                 .catch((e) => {
@@ -761,6 +761,7 @@ export class Engine {
                   this._logger.error(e)
                   return this.persistence.put('synclock', getGenesisBlock()).then(() => {
                     this._logger.info('sync reset')
+                    return Promise.resolve(true)
                   })
                 })
             } else {
@@ -922,32 +923,64 @@ export class Engine {
                         this._logger.info('sorted highest block: ' + sorted[0].getHeight() + ' ' + sorted[0].getHash())
                         if (conditional === true) {
                           // overwrite current multiverse
+                          const originalMultiverse = [].concat(this.multiverse._chain)
                           this._logger.info(33)
                           this._logger.info(newBlock.getHash() + ' approved --> assigning as current multiverse')
                           this.multiverse._chain.length = 0
                           this.multiverse._chain = sorted
                           this._logger.info('multiverse has been assigned')
 
-                          return this.persistence.put('bc.depth', this.multiverse.getHighestBlock().getHeight())
-                            .then(() => {
-                              return this.persistence.put('synclock', this.multiverse.getHighestBlock())
+                          return this.syncSetBlocksInline(newBlocks)
+                            .then((blocksStoredResults) => {
+                              return this.persistence.put('bc.depth', this.multiverse.getHighestBlock().getHeight())
                                 .then(() => {
-                                  this.pubsub.publish('update.block.latest', { key: 'bc.block.latest', data: newBlock, force: true, multiverse: this.multiverse._chain })
-                                  this.node.broadcastNewBlock(newBlock, peerInfo.id.toB58String())
-                                  this._logger.debug('sync unlocked')
-                                  this._logger.info(66)
-                                  const targetHeight = this.multiverse.getLowestBlock().getHeight() - 1
-                                  // dont have to sync
-                                  if (targetHeight === 1) {
-                                    return Promise.resolve(true)
-                                  }
-                                  return this.stepSync(conn,
-                                    this.multiverse.getHighestBlock().getHeight() - 1,
-                                    this.multiverse.getHighestBlock().getHash())
+                                  return this.persistence.put('synclock', this.multiverse.getHighestBlock())
+                                    .then(() => {
+                                      this.pubsub.publish('update.block.latest', { key: 'bc.block.latest', data: newBlock, force: true, multiverse: this.multiverse._chain })
+                                      this.node.broadcastNewBlock(newBlock, peerInfo.id.toB58String())
+                                      this._logger.debug('sync unlocked')
+                                      this._logger.info(66)
+                                      const targetHeight = this.multiverse.getLowestBlock().getHeight() - 1
+                                      // dont have to sync
+                                      if (targetHeight === 1) {
+                                        return Promise.resolve(true)
+                                      }
+
+                                      const lowest = this.multiverse.getLowestBlock()
+                                      const inMultiverse = originalMultiverse.reduce((state, a) => {
+                                        if (lowest.getHash() === a.getHash()) {
+                                          state = true
+                                        }
+                                        return state
+                                      }, false)
+
+                                      if (inMultiverse === false) {
+                                        return this.stepSync(conn,
+                                          this.multiverse.getHighestBlock().getHeight() - 1,
+                                          this.multiverse.getHighestBlock().getHash())
+                                      } else {
+                                        return this.persistence.put('synclock', getGenesisBlock()).then(() => {
+                                          this._logger.info('sync reset')
+                                        })
+                                          .catch((e) => {
+                                            this._logger.error(e)
+                                          })
+                                      }
+                                    })
+                                    .catch((e) => {
+                                      this._logger.debug(e)
+                                      return this.persistence.put('synclock', getGenesisBlock()).then(() => {
+                                        this._logger.info('sync reset')
+                                      })
+                                        .catch((e) => {
+                                          this._logger.error(e)
+                                        })
+                                    })
+                                  // assign where the last sync began
                                 })
-                                .catch((e) => {
-                                  this._logger.info(88)
-                                  this._logger.debug(e)
+                                .catch(e => {
+                                  this._logger.info(99)
+                                  this._logger.error(errToString(e))
                                   return this.persistence.put('synclock', getGenesisBlock()).then(() => {
                                     this._logger.info('sync reset')
                                   })
@@ -955,17 +988,10 @@ export class Engine {
                                       this._logger.error(e)
                                     })
                                 })
-                              // assign where the last sync began
                             })
-                            .catch(e => {
-                              this._logger.info(99)
-                              this._logger.error(errToString(e))
-                              return this.persistence.put('synclock', getGenesisBlock()).then(() => {
-                                this._logger.info('sync reset')
-                              })
-                                .catch((e) => {
-                                  this._logger.error(e)
-                                })
+                            .catch((e) => {
+                              this._logger.error(e)
+                              return Promise.resolve(true)
                             })
                         } else {
                           this._logger.info('resync conditions failed')

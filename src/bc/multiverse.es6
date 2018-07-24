@@ -329,7 +329,7 @@ export class Multiverse {
     }
 
     if (this._chain.length === 0) {
-      this._logger.info('passed resync req: currentHighestBlock is null')
+      this._logger.info('passed sync req: currentHighestBlock is null')
       return Promise.resolve(true)
     }
 
