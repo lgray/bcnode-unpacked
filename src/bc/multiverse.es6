@@ -320,11 +320,11 @@ export class Multiverse {
    */
   async addResyncRequest (newBlock: BcBlock, strict: boolean = true): Promise<boolean> {
     const currentParentHighestBlock = this.getParentHighestBlock()
-    const rsyncLock = await this.persistence.get('rsync')
+    const syncLock = await this.persistence.get('synclock')
     const currentHighestBlock = await this.persistence.get('bc.block.latest')
 
-    if (rsyncLock !== 'n') {
-      this._logger.warn('rsync lock is active')
+    if (syncLock.getHeight() !== 1) {
+      this._logger.warn('sync lock is active')
       return Promise.resolve(false)
     }
 
@@ -336,14 +336,14 @@ export class Multiverse {
     // pass if no highest block exists go with current
     if (currentHighestBlock === null) {
       this._logger.info('passed resync req: currentHighestBlock is null')
-      await this.persistence.put('rsync', 'y')
+      await this.persistence.put('synclock', newBlock)
       return Promise.resolve(true)
     }
 
     // only block is the genesis block
     if (currentHighestBlock.getHeight() === 1 && newBlock.getHeight() > 1) {
       this._logger.info('passed resync req: new block was above genesis')
-      await this.persistence.put('rsync', 'y')
+      await this.persistence.put('synclock', newBlock)
       return Promise.resolve(true)
     }
 
@@ -362,7 +362,7 @@ export class Multiverse {
     if (this._chain.length < 2) {
       this._logger.info('determining if chain current total distance is less than new block')
       if (new BN(currentHighestBlock.getTotalDistance()).lt(newBlock.getTotalDistance())) {
-        await this.persistence.put('rsync', 'y')
+        await this.persistence.put('synclock', newBlock)
         return Promise.resolve(true)
       }
     }
@@ -370,7 +370,7 @@ export class Multiverse {
     if (currentParentHighestBlock === null && currentHighestBlock !== null) {
       if (new BN(newBlock.getTotalDistance()).gt(new BN(currentHighestBlock.getTotalDistance()))) {
         this._logger.info('passed resync: total distance of new block is greater than current highest')
-        await this.persistence.put('rsync', 'y')
+        await this.persistence.put('synclock', newBlock)
         return Promise.resolve(true)
       }
     }

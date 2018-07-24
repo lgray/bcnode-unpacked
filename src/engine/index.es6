@@ -517,7 +517,7 @@ export class Engine {
           this.miningOfficer.newRoveredBlock(rovers, block)
             .then((pid: number|false) => {
               if (pid !== false) {
-                this._logger.info(`collectBlock handler: successfuly send to mining worker (PID: ${pid})`)
+                this._logger.info(`collectBlock handler: sent to miner: ${pid}`)
               }
             })
             .catch(err => {
