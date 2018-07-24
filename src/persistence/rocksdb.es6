@@ -262,20 +262,22 @@ export default class PersistenceRocksDb {
         .map((b) => {
           if (opts.btc) {
             return (async () => {
-              return this.get('btc.block.latest')
-                .then((res) => {
-                  if (b.getHeight() > res.getHeight()) {
-                    return Promise.all([
-                      this.put('btc.block.latest', b),
-                      this.put('btc.block.' + b.getHeight(), b)
-                    ])
-                  }
+              try {
+                const latest = await this.get('btc.block.latest')
+                if (b.getHeight() > latest.getHeight()) {
+                  return Promise.all([
+                    this.put('btc.block.latest', b),
+                    this.put('btc.block.' + b.getHeight(), b)
+                  ])
+                } else {
                   return this.put('btc.block.' + b.getHeight(), b)
-                })
-                .catch((err) => {
-                  this._logger.debug(err)
-                  return this.put('btc.block.' + b.getHeight(), b)
-                })
+                }
+              } catch (e) {
+                return Promise.all([
+                  this.put('btc.block.latest', b),
+                  this.put('btc.block.' + b.getHeight(), b)
+                ])
+              }
             })()
           }
           return Promise.resolve(true)
@@ -284,20 +286,22 @@ export default class PersistenceRocksDb {
         .map((b) => {
           if (opts.eth) {
             return (async () => {
-              return this.get('eth.block.latest')
-                .then((res) => {
-                  if (b.getHeight() > res.getHeight()) {
-                    return Promise.all([
-                      this.put('eth.block.latest', b),
-                      this.put('eth.block.' + b.getHeight(), b)
-                    ])
-                  }
+              try {
+                const latest = await this.get('eth.block.latest')
+                if (b.getHeight() > latest.getHeight()) {
+                  return Promise.all([
+                    this.put('eth.block.latest', b),
+                    this.put('eth.block.' + b.getHeight(), b)
+                  ])
+                } else {
                   return this.put('eth.block.' + b.getHeight(), b)
-                })
-                .catch((err) => {
-                  this._logger.debug(err)
-                  return this.put('eth.block.' + b.getHeight(), b)
-                })
+                }
+              } catch (e) {
+                return Promise.all([
+                  this.put('eth.block.latest', b),
+                  this.put('eth.block.' + b.getHeight(), b)
+                ])
+              }
             })()
           }
           return Promise.resolve(true)
@@ -306,20 +310,22 @@ export default class PersistenceRocksDb {
         .map((b) => {
           if (opts.wav) {
             return (async () => {
-              return this.get('wav.block.latest')
-                .then((res) => {
-                  if (b.getHeight() > res.getHeight()) {
-                    return Promise.all([
-                      this.put('wav.block.latest', b),
-                      this.put('wav.block.' + b.getHeight(), b)
-                    ])
-                  }
+              try {
+                const latest = await this.get('wav.block.latest')
+                if (b.getHeight() > latest.getHeight()) {
+                  return Promise.all([
+                    this.put('wav.block.latest', b),
+                    this.put('wav.block.' + b.getHeight(), b)
+                  ])
+                } else {
                   return this.put('wav.block.' + b.getHeight(), b)
-                })
-                .catch((err) => {
-                  this._logger.debug(err)
-                  return this.put('wav.block.' + b.getHeight(), b)
-                })
+                }
+              } catch (e) {
+                return Promise.all([
+                  this.put('wav.block.latest', b),
+                  this.put('wav.block.' + b.getHeight(), b)
+                ])
+              }
             })()
           }
           return Promise.resolve(true)
@@ -328,20 +334,22 @@ export default class PersistenceRocksDb {
         .map((b) => {
           if (opts.lsk) {
             return (async () => {
-              return this.get('lsk.block.latest')
-                .then((res) => {
-                  if (b.getHeight() > res.getHeight()) {
-                    return Promise.all([
-                      this.put('lsk.block.latest', b),
-                      this.put('lsk.block.' + b.getHeight(), b)
-                    ])
-                  }
+              try {
+                const latest = await this.get('lsk.block.latest')
+                if (b.getHeight() > latest.getHeight()) {
+                  return Promise.all([
+                    this.put('lsk.block.latest', b),
+                    this.put('lsk.block.' + b.getHeight(), b)
+                  ])
+                } else {
                   return this.put('lsk.block.' + b.getHeight(), b)
-                })
-                .catch((err) => {
-                  this._logger.debug(err)
-                  return this.put('lsk.block.' + b.getHeight(), b)
-                })
+                }
+              } catch (e) {
+                return Promise.all([
+                  this.put('lsk.block.latest', b),
+                  this.put('lsk.block.' + b.getHeight(), b)
+                ])
+              }
             })()
           }
           return Promise.resolve(true)
@@ -350,20 +358,22 @@ export default class PersistenceRocksDb {
         .map((b) => {
           if (opts.neo) {
             return (async () => {
-              return this.get('neo.block.latest')
-                .then((res) => {
-                  if (b.getHeight() > res.getHeight()) {
-                    return Promise.all([
-                      this.put('neo.block.latest', b),
-                      this.put('neo.block.' + b.getHeight(), b)
-                    ])
-                  }
+              try {
+                const latest = await this.get('neo.block.latest')
+                if (b.getHeight() > latest.getHeight()) {
+                  return Promise.all([
+                    this.put('neo.block.latest', b),
+                    this.put('neo.block.' + b.getHeight(), b)
+                  ])
+                } else {
                   return this.put('neo.block.' + b.getHeight(), b)
-                })
-                .catch((err) => {
-                  this._logger.debug(err)
-                  return this.put('neo.block.' + b.getHeight(), b)
-                })
+                }
+              } catch (e) {
+                return Promise.all([
+                  this.put('neo.block.latest', b),
+                  this.put('neo.block.' + b.getHeight(), b)
+                ])
+              }
             })()
           }
           return Promise.resolve(true)
