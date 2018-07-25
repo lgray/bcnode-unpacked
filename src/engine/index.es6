@@ -785,6 +785,7 @@ export class Engine {
                 .catch((e) => {
                   this._logger.warn('sync failed')
                   this._logger.error(e)
+                  this.node.manager.putPeerEvent(peerInfo.id.toB58String(), 2)
                   return this.persistence.put('synclock', getGenesisBlock()).then(() => {
                     this._logger.info('sync reset')
                     return Promise.resolve(true)

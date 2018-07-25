@@ -116,13 +116,13 @@ export class PeerManager {
     return this._peerBookConnected.getPeersCount() >= QUORUM_SIZE
   }
 
+  putPeerEvent (peerId: string, eventId: Number): void {
   // logs peer event
-  // @param peerId string
-  // @param eventId number // the event type which occured
+  // peerId string
+  // eventId number // the event type which occured
   // 1 - peer disconnected
   // 2 - peer slow
   // 3 - peer sent invalid data
-  putPeerEvent (peerId: string, eventId: Number): void {
     if (peerId === undefined) { return false }
     if (this._peerNotes[peerId] === undefined) {
       this._peerNotes[peerId] = {}
