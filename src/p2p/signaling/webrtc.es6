@@ -23,5 +23,11 @@ export default {
 
   getAddress: (peerInfo: PeerInfo) => {
     return `${config.p2p.rendezvous.webrtc}/ipfs/${peerInfo.id.toB58String()}`
+  },
+
+  getBootstraps: (peerInfo: PeerInfo) => {
+    return config.p2p.bootstrap.map((a) => {
+      return a.webrtc + '/ipfs/' + peerInfo.id.toB58String()
+    })
   }
 }

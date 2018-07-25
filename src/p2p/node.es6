@@ -107,6 +107,9 @@ export class PeerNode {
         const peerId = peerInfo.id.toB58String()
         this._logger.info(`Registering addresses for ${peerId}`)
 
+        Signaling.getBootstraps.map((bootstrap) => {
+          peerInfo.multiaddrs.add(bootstrap)
+        })
         peerInfo.multiaddrs.add(Signaling.getAddress(peerInfo))
         peerInfo.multiaddrs.add(`/ip4/0.0.0.0/tcp/0/ipfs/${peerId}`)
         peerInfo.multiaddrs.add(`/ip6/::1/tcp/0/ipfs/${peerId}`)
