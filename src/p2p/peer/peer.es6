@@ -203,6 +203,10 @@ export class Peer {
     debug(`query(${inspect(params)})`, this.peerId.id.toB58String())
 
     return new Promise((resolve, reject) => {
+      const expireRequest = setTimeout(() => {
+        return reject(new Error('peer query expired'))
+      }, 30 * 1000)
+
       this.bundle.dialProtocol(this.peerId, `${PROTOCOL_PREFIX}/rpc`, (err, conn) => {
         if (err) {
           return reject(err)
@@ -226,6 +230,7 @@ export class Peer {
 
             try {
               const result = wireData.map(b => BcBlock.deserializeBinary(Uint8Array.from(b).buffer))
+              clearTimeout(expireRequest)
               resolve(result)
             } catch (e) {
               return reject(e)

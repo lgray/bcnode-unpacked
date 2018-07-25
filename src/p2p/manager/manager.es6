@@ -35,6 +35,7 @@ export class PeerManager {
   _logger: Object // eslint-disable-line no-undef
   _statsInterval: IntervalID // eslint-disable-line no-undef
   _peerBook: ManagedPeerBook // eslint-disable-line no-undef
+  _peerNotes: Object // eslint-disable-line no-undef
   _peerBookConnected: ManagedPeerBook // eslint-disable-line no-undef
   _peerBookDiscovered: ManagedPeerBook // eslint-disable-line no-undef
   _peerNode: PeerNode // eslint-disable-line no-undef
@@ -45,6 +46,7 @@ export class PeerManager {
     debug('constructor()')
     this._logger = logging.getLogger(__filename)
     this._peerNode = node
+    this._peerNotes = {}
     this._peerBook = new ManagedPeerBook(this, 'main')
     this._peerBookConnected = new ManagedPeerBook(this, 'connected')
     this._peerBookDiscovered = new ManagedPeerBook(this, 'discovered')
@@ -112,6 +114,35 @@ export class PeerManager {
 
   get hasQuorum (): bool {
     return this._peerBookConnected.getPeersCount() >= QUORUM_SIZE
+  }
+
+  // logs peer event
+  // @param peerId string
+  // @param eventId number // the event type which occured
+  // 1 - peer disconnected
+  // 2 - peer slow
+  // 3 - peer sent invalid data
+  putPeerEvent (peerId: string, eventId: Number): void {
+    if (peerId === undefined) { return false }
+    if (this._peerNotes[peerId] === undefined) {
+      this._peerNotes[peerId] = {}
+    }
+    if (this._peerNotes[peerId][eventId] === undefined) {
+      this._peerNotes[peerId][eventId] = 1
+    } else {
+      this._peerNotes[peerId][eventId]++
+    }
+  }
+
+  getPeerEvent (peerId: string, eventId: Number): Number {
+    if (peerId === undefined) { return false }
+    if (this._peerNotes[peerId] === undefined) {
+      this._peerNotes[peerId] = {}
+    }
+    if (this._peerNotes[peerId][eventId] === undefined) {
+      this._peerNotes[peerId][eventId] = 0
+    }
+    return this._peerNotes[peerId][eventId]
   }
 
   createPeer (peerId: PeerInfo): Peer {

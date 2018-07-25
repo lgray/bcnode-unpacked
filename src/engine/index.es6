@@ -720,6 +720,8 @@ export class Engine {
 
   stepSync (conn: Object, height: Number, syncBlockHash: string): Promise<*> {
     this._logger.info('step sync from height: ' + height)
+    // return new Promise(resolve, reject) {
+    // check if peer is known to be slow
     return this.persistence.get('synclock')
       .then((syncBlock) => {
         if (syncBlock.getHash() !== syncBlockHash) {
@@ -740,6 +742,19 @@ export class Engine {
               this._logger.info('sync reset')
             })
           } else {
+            // check if peer is known to have been slow with event type 2
+            if (this.node.manager.getPeerEvent(peerInfo.id.toB58String(),
+              2) > 0) {
+              return this.persistence.put('synclock', getGenesisBlock()).then(() => {
+                this._logger.info('sync reset')
+                return Promise.resolve(true)
+              })
+                .catch((e) => {
+                  this._logger.error(e)
+                  return Promise.resolve(false)
+                })
+            }
+
             if (syncBlock.getHeight() !== 1 && syncBlock.getHash() === syncBlockHash) {
               const low = max(height - 2500, 2)
               const query = {
@@ -763,7 +778,8 @@ export class Engine {
                     .catch((err) => {
                       this._logger.warn('sync failed')
                       this._logger.error(err)
-                      return this.stepSync(conn, low, syncBlockHash)
+                      this.node.manager.putPeerEvent(peerInfo.id.toB58String(), 2)
+                      return Promise.resolve(false)
                     })
                 })
                 .catch((e) => {
