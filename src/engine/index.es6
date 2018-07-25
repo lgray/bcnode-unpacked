@@ -352,16 +352,16 @@ export class Engine {
         this._logger.error('failed to set block ' + block.getHeight() + ' ' + block.getHash() + ' as latest block, wrong previous hash')
       }
 
-      // if (this.miningOfficer._canMine === false) {
-      //  this._logger.info('determining if rovered headers include new child blocks')
-      //  const latestRoveredHeadersKeys: string[] = this.miningOfficer._knownRovers.map(chain => `${chain}.block.latest`)
-      //  const latestBlockHeaders = await this.persistence.getBulk(latestRoveredHeadersKeys)
-      //  latestBlockHeaders.map((r) => {
-      //    if (this.miningOfficer._collectedBlocks[r.getBlockchain()] < 1) {
-      //      this.miningOfficer._collectedBlocks[r.getBlockchain()]++
-      //    }
-      //  })
-      // }
+      if (this.miningOfficer._canMine === false) {
+        this._logger.info('determining if rovered headers include new child blocks')
+        const latestRoveredHeadersKeys: string[] = this.miningOfficer._knownRovers.map(chain => `${chain}.block.latest`)
+        const latestBlockHeaders = await this.persistence.getBulk(latestRoveredHeadersKeys)
+        latestBlockHeaders.map((r) => {
+          if (this.miningOfficer._collectedBlocks[r.getBlockchain()] < 1) {
+            this.miningOfficer._collectedBlocks[r.getBlockchain()]++
+          }
+        })
+      }
 
       if (msg.multiverse !== undefined) {
         while (msg.multiverse.length > 0) {
