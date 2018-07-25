@@ -444,6 +444,7 @@ export class MiningOfficer {
       const currentRoveredBlocks = await this.persistence.getBulk(latestRoveredHeadersKeys)
       const lastPreviousBlock = await this.persistence.get('bc.block.latest')
       const previousHeaders = lastPreviousBlock.getBlockchainHeaders()
+      this._logger.info(currentRoveredBlocks)
       if (lastPreviousBlock === undefined) {
         return Promise.resolve(false)
       }

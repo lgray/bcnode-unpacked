@@ -324,12 +324,34 @@ export class Multiverse {
     const syncLock = await this.persistence.get('synclock')
     const currentHighestBlock = await this.persistence.get('bc.block.latest')
 
+    this._logger.info(syncLock.getTimestamp(), syncLock.getHeight())
+    this._logger.info(syncLock.getTimestamp(), syncLock.getHeight())
+    this._logger.info(syncLock.getTimestamp(), syncLock.getHeight())
+    this._logger.info(syncLock.getTimestamp(), syncLock.getHeight())
+    this._logger.info(syncLock.getTimestamp(), syncLock.getHeight())
+    this._logger.info(syncLock.getTimestamp(), syncLock.getHeight())
+    this._logger.info(syncLock.getTimestamp(), syncLock.getHeight())
+    this._logger.info(syncLock.getTimestamp(), syncLock.getHeight())
+    this._logger.info(syncLock.getTimestamp(), syncLock.getHeight())
+    this._logger.info(syncLock.getTimestamp(), syncLock.getHeight())
+    this._logger.info(syncLock.getTimestamp(), syncLock.getHeight())
+    this._logger.info(syncLock.getTimestamp(), syncLock.getHeight())
+    this._logger.info(syncLock.getTimestamp(), syncLock.getHeight())
+    this._logger.info(syncLock.getTimestamp(), syncLock.getHeight())
+    this._logger.info(syncLock.getTimestamp(), syncLock.getHeight())
+    this._logger.info(syncLock.getTimestamp(), syncLock.getHeight())
+    this._logger.info(syncLock.getTimestamp(), syncLock.getHeight())
+    this._logger.info(syncLock.getTimestamp(), syncLock.getHeight())
+    this._logger.info(syncLock.getTimestamp(), syncLock.getHeight())
+
     if (syncLock.getHeight() !== 1 && (syncLock.getTimestamp() + 269) < Math.floor(Date.now() * 0.001)) {
+      this._logger.warn('sync lock is stale resetting')
+      await this.persistence.put('synclock', getGenesisBlock())
+    } else if (syncLock.getHeight() !== 1) {
       this._logger.warn('sync lock is active')
       return Promise.resolve(false)
     } else {
-      this._logger.warn('sync lock is stale resetting')
-      await this.persistence.put('synclock', getGenesisBlock())
+      this._logger.warn('sync lock is not active')
     }
 
     if (syncLock.getHeight() !== 1) {
@@ -363,8 +385,8 @@ export class Multiverse {
     }
 
     // FAIL if new block not within 16 seconds of local time
-    if (newBlock.getTimestamp() + 33 < Math.floor(Date.now() * 0.001)) {
-      this._logger.info('failed resync req: time below 16 seconds')
+    if (newBlock.getTimestamp() + 61 < Math.floor(Date.now() * 0.001)) {
+      this._logger.info('failed resync req: time below 61 seconds')
       return Promise.resolve(false)
     }
 

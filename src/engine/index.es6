@@ -165,7 +165,7 @@ export class Engine {
       await this._persistence.open()
       try {
         let version = await this.persistence.get('appversion')
-        if (semver.lt(version.version, '0.9.0')) { // GENESIS BLOCK 0.9
+        if (semver.lt(version.version, '0.7.0')) { // GENESIS BLOCK 0.9
           this._logger.warn(DELETE_MESSAGE)
           process.exit(8)
         }
@@ -184,6 +184,7 @@ export class Engine {
       }
       try {
         await this.persistence.put('synclock', getGenesisBlock())
+        await this.persistence.put('bc.block.oldest', getGenesisBlock())
         await this.persistence.get('bc.block.1')
         const latestBlock = await this.persistence.get('bc.block.latest')
         await this.multiverse.addNextBlock(latestBlock)
@@ -193,6 +194,7 @@ export class Engine {
           await this.persistence.put('synclock', getGenesisBlock())
           await this.persistence.put('bc.block.1', newGenesisBlock)
           await this.persistence.put('bc.block.latest', newGenesisBlock)
+          await this.persistence.put('bc.block.oldest', getGenesisBlock())
           await this.persistence.put('bc.block.checkpoint', newGenesisBlock)
           await this.persistence.put('bc.depth', 2)
           await this.multiverse.addNextBlock(newGenesisBlock)
@@ -336,13 +338,6 @@ export class Engine {
     const block = msg.data
     this._logger.info('store block: ' + block.getHeight() + ' ' + block.getHash())
     try {
-      await this.persistence.get('bc.block.checkpoint')
-    } catch (err) {
-      this._logger.error(errToString(err))
-      this._logger.info('setting checkpoint at height: ' + block.getHeight())
-      await this.persistence.put('bc.block.checkpoint', block)
-    }
-    try {
       const previousLatest = await this.persistence.get('bc.block.latest')
 
       if (previousLatest.getHash() === block.getPreviousHash()) {
@@ -357,12 +352,23 @@ export class Engine {
         this._logger.error('failed to set block ' + block.getHeight() + ' ' + block.getHash() + ' as latest block, wrong previous hash')
       }
 
+      // if (this.miningOfficer._canMine === false) {
+      //  this._logger.info('determining if rovered headers include new child blocks')
+      //  const latestRoveredHeadersKeys: string[] = this.miningOfficer._knownRovers.map(chain => `${chain}.block.latest`)
+      //  const latestBlockHeaders = await this.persistence.getBulk(latestRoveredHeadersKeys)
+      //  latestBlockHeaders.map((r) => {
+      //    if (this.miningOfficer._collectedBlocks[r.getBlockchain()] < 1) {
+      //      this.miningOfficer._collectedBlocks[r.getBlockchain()]++
+      //    }
+      //  })
+      // }
+
       if (msg.multiverse !== undefined) {
         while (msg.multiverse.length > 0) {
           const b = msg.multiverse.pop()
           if (b.getHeight() > 1) {
             await this.persistence.put('bc.block.' + b.getHeight(), b)
-            await this.persistence.forcePutChildHeaders(b)
+            await this.persistence.putChildHeaders(b)
           }
         }
         return Promise.resolve(true)
@@ -581,7 +587,7 @@ export class Engine {
       valid = await this.multiverse.validateBlockSequenceInline(blocks)
     }
     if (valid === false) {
-      return Promise.reject(new Error('sequence of blocks is not working')) // Enabled after target
+      return Promise.reject(new Error('invalid sequence of blocks')) // Enabled after target
     }
     let tasks = []
     if (blockKey === undefined) {
@@ -748,7 +754,11 @@ export class Engine {
                   this._logger.info(newBlocks.length + ' recieved')
                   return this.syncSetBlocksInline(newBlocks)
                     .then((blocksStoredResults) => {
-                      return this.stepSync(conn, low, syncBlockHash)
+                      const lowest = newBlocks[0]
+                      return this.persistence.put('bc.block.oldest', lowest)
+                        .then(() => {
+                          return this.stepSync(conn, low, syncBlockHash)
+                        })
                     })
                     .catch((err) => {
                       this._logger.warn('sync failed')
@@ -791,7 +801,7 @@ export class Engine {
     if (newBlock && !this._knownBlocksCache.get(newBlock.getHash())) {
       // Add block to LRU cache to avoid processing the same block twice
       debug(`Adding received block into cache of known blocks - ${newBlock.getHash()}`)
-      this._knownBlocksCache.set(newBlock.getHash(), newBlock)
+      this._knownBlocksCache.set(newBlock.getHash(), 1)
       this._logger.info('Received new block from peer', newBlock.getHeight())
 
       if (!isValidBlock(newBlock, 1)) {
@@ -846,7 +856,7 @@ export class Engine {
         // if we are done unlock the peer
         // if we are not done re-request a sync
         } else {
-          this._logger.info('new block ' + newBlock.getHeight() + ' is NOT next block, evaluating resync.')
+          this._logger.info('block from peer ' + newBlock.getHeight() + ' is NOT next in multiverse block -> evaluating as sync candidate.')
           return this.multiverse.addResyncRequest(newBlock, this.miningOfficer._canMine)
             .then(shouldResync => {
               if (shouldResync === true) {
@@ -923,59 +933,48 @@ export class Engine {
                         this._logger.info('sorted highest block: ' + sorted[0].getHeight() + ' ' + sorted[0].getHash())
                         if (conditional === true) {
                           // overwrite current multiverse
-                          const originalMultiverse = [].concat(this.multiverse._chain)
-                          this._logger.info(33)
+                          const hasBlock = this.multiverse.hasBlock(sorted[0])
                           this._logger.info(newBlock.getHash() + ' approved --> assigning as current multiverse')
                           this.multiverse._chain.length = 0
-                          this.multiverse._chain = sorted
+                          this.multiverse._chain = this.multiverse._chain.concat(sorted)
                           this._logger.info('multiverse has been assigned')
 
                           return this.syncSetBlocksInline(newBlocks)
                             .then((blocksStoredResults) => {
                               return this.persistence.put('bc.depth', this.multiverse.getHighestBlock().getHeight())
                                 .then(() => {
-                                  return this.persistence.put('synclock', this.multiverse.getHighestBlock())
-                                    .then(() => {
-                                      this.pubsub.publish('update.block.latest', { key: 'bc.block.latest', data: newBlock, force: true, multiverse: this.multiverse._chain })
-                                      this.node.broadcastNewBlock(newBlock, peerInfo.id.toB58String())
-                                      this._logger.debug('sync unlocked')
-                                      this._logger.info(66)
-                                      const targetHeight = this.multiverse.getLowestBlock().getHeight() - 1
-                                      // dont have to sync
-                                      if (targetHeight === 1) {
-                                        return Promise.resolve(true)
-                                      }
-
-                                      const lowest = this.multiverse.getLowestBlock()
-                                      const inMultiverse = originalMultiverse.reduce((state, a) => {
-                                        if (lowest.getHash() === a.getHash()) {
-                                          state = true
+                                  // if the block is already in the multiverse dont conduct a full sync
+                                  if (hasBlock === false) {
+                                    this._logger.info('legacy multiverse did not include current block')
+                                    return this.persistence.put('synclock', this.multiverse.getHighestBlock())
+                                      .then(() => {
+                                        this.pubsub.publish('update.block.latest', { key: 'bc.block.latest', data: newBlock, force: true, multiverse: this.multiverse._chain })
+                                        this.node.broadcastNewBlock(newBlock, peerInfo.id.toB58String())
+                                        this._logger.debug('sync unlocked')
+                                        const targetHeight = this.multiverse.getLowestBlock().getHeight() - 1
+                                        // dont have to sync
+                                        if (targetHeight === 1) {
+                                          return Promise.resolve(true)
                                         }
-                                        return state
-                                      }, false)
 
-                                      if (inMultiverse === false) {
                                         return this.stepSync(conn,
-                                          this.multiverse.getHighestBlock().getHeight() - 1,
+                                          this.multiverse.getHighestBlock().getHeight(),
                                           this.multiverse.getHighestBlock().getHash())
-                                      } else {
+                                      })
+                                      .catch((e) => {
+                                        this._logger.error(e)
                                         return this.persistence.put('synclock', getGenesisBlock()).then(() => {
                                           this._logger.info('sync reset')
                                         })
                                           .catch((e) => {
                                             this._logger.error(e)
                                           })
-                                      }
-                                    })
-                                    .catch((e) => {
-                                      this._logger.debug(e)
-                                      return this.persistence.put('synclock', getGenesisBlock()).then(() => {
-                                        this._logger.info('sync reset')
                                       })
-                                        .catch((e) => {
-                                          this._logger.error(e)
-                                        })
+                                  } else {
+                                    return this.persistence.put('synclock', getGenesisBlock()).then(() => {
+                                      this._logger.info('sync reset')
                                     })
+                                  }
                                   // assign where the last sync began
                                 })
                                 .catch(e => {
@@ -989,6 +988,7 @@ export class Engine {
                                     })
                                 })
                             })
+
                             .catch((e) => {
                               this._logger.error(e)
                               return Promise.resolve(true)
@@ -1136,7 +1136,7 @@ export class Engine {
         })
     }
     // Add to multiverse and call persist
-    this._knownBlocksCache.set(newBlock.getHash(), newBlock)
+    this._knownBlocksCache.set(newBlock.getHash(), 1)
     this._logger.info('submitting mined block to current multiverse')
     return this.multiverse.addNextBlock(newBlock)
       .then((isNextBlock) => {
@@ -1153,13 +1153,13 @@ export class Engine {
         } else {
           this._logger.warn('local mined block ' + newBlock.getHeight() + ' does not stack on multiverse height ' + this.multiverse.getHighestBlock().getHeight())
           this._logger.warn('mined block ' + newBlock.getHeight() + ' cannot go on top of multiverse block ' + this.multiverse.getHighestBlock().getHash())
-          // return this.miningOfficer.rebaseMiner()
-          //  .then((res) => {
-          //    this._logger.info(res)
-          //  })
-          //  .catch((e) => {
-          //    this._logger.error(errToString(e))
-          //  })
+          return this.miningOfficer.rebaseMiner()
+            .then((res) => {
+              this._logger.info(res)
+            })
+            .catch((e) => {
+              this._logger.error(errToString(e))
+            })
         }
       })
       .catch((err) => {
