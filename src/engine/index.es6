@@ -1049,6 +1049,7 @@ export class Engine {
                     return Promise.resolve(true)
                   })
                   .catch((e) => {
+                    this._logger.warn('unable to warn peer of weaker branch')
                     this._logger.error(e)
                     return Promise.resolve(true)
                   })
