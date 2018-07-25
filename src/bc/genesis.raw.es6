@@ -1,14 +1,15 @@
 /* eslint-disable */
 // this file is intentionaly named es6 to be copied to the resulting lib folder
 // if named .json babel will not pick it up during transpilation
+// hash is created from blake2bl(miner+merkleRoot+fingerprintsroot+emblemchainFingerpritnroot+difficulty)
 module.exports = {
-  "hash": "5105a4cffbe8b107d61b4e58d897e707be7c0578b7e7db6a811fb39cf2a2bd57",
+  "hash": "63ada97fa5c58d5b481c1a55cab7434fb228b4dc947f9dc5f6ff4363214c590f",
   "previousHash": "b6615809ca3ff24562ce2724ef010e369a976cb9068570074f88919eaddcd08f",
   "version": 1,
   "schemaVersion": 1,
   "height": 1,
   "miner": "0x028d3af888e08aa8380e5866b6ed068bd60e7b19",
-  "difficulty": "290401962029366",
+  "difficulty": "296401962029366",
   "timestamp": 0,
   "merkleRoot": "b277537249649f9e7e56d549805ccfdec56fddd6153c6bf4ded85c3e072ccbdf",
   "chainRoot": "b4816d65eabac8f1a143805ffc6f4ca148c4548e020de3db21207a4849ea9abe",
@@ -38,5 +39,5 @@ module.exports = {
   "childBlockchainCount": 5, // not used in genesis module now
   "blockchainHeadersMap": {},
 
-  "blockchainFingerprintsRoot": "a456c8cf02772903ff5e01f94ba34e8f586dee282a1dc06d37bf52899670ad4d"
+  "blockchainFingerprintsRoot": "d65ffda8a561b53c09377ef7d3ee9ebbf18a618c603faf2631c1bbb7d66a03ac"
 }

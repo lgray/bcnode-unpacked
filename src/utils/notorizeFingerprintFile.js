@@ -23,7 +23,16 @@ const CHILD_KEYS = {
 	"8": "dfDenominator",
 	"9": "dfVoid",
 	"10": "dfBound",
-	"11": "fingerprint"
+	"11": "fingerprint",
+	"12": "markedCount",
+	"13": "marked"
+}
+
+const MARKED_CHILD_KEYS = {
+	"0": "hash",
+	"1": "data",
+	"2": "name",
+	"3": "height"
 }
 
 const CHILD_BLOCK_KEYS = {
@@ -79,6 +88,15 @@ function getXor (list) {
 
 function getFingerprintFile(data) {
 	const headerHashes = data.blockchainHeaders.reduce(function(blockchainHeaders, header){
+		const markedHashes = header.marked.reduce(function(addrs, block){
+			const vals = _.values(MARKED_CHILD_KEYS).map(function(key) {
+				return String(block[key])
+			})
+			addrs.push(createMerkleRoot(vals))
+	    return addrs
+    }, [])
+		const marked = createMerkleRoot(markedHashes)
+
 		const fingerprintHashes = header.fingerprint.reduce(function(blocks, block){
 			const vals = _.values(CHILD_BLOCK_KEYS).map(function(key) {
 				return String(block[key])
@@ -88,6 +106,7 @@ function getFingerprintFile(data) {
     }, [])
 		const fingerprint = createMerkleRoot(fingerprintHashes)
     header.fingerprint = fingerprint
+    header.marked = marked
 		const childVals = _.values(CHILD_KEYS).map(function(key) {
 			return String(header[key])
 		})

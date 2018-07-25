@@ -1043,12 +1043,15 @@ export class Engine {
                       })
                   })
               } else {
-                this.persistence.get('synclock').then((r) => {
-                  // if local is not synching sent the highest block to the peer
-                  if (r.getHeight() === 1) {
-                    return this.sendPeerLatestBlock(conn, this.multiverse.getHighestBlock())
-                  }
-                })
+                return this.sendPeerLatestBlock(conn, this.multiverse.getHighestBlock())
+                  .then(() => {
+                    this._logger.info('peer sent for highest block to peer latest block')
+                    return Promise.resolve(true)
+                  })
+                  .catch((e) => {
+                    this._logger.error(e)
+                    return Promise.resolve(true)
+                  })
               }
             })
         }
