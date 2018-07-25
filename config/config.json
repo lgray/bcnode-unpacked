@@ -39,15 +39,10 @@
       "size": 49 
     },
     "rendezvous": {
-      "webrtc": "/dns4/34.207.212.243/tcp/9090/ws/p2p-webrtc-star",
-      "websocket": "/dns4/34.207.212.243/tcp/9090/ws/p2p-websocket-star"
+      "webrtc": "/dns4/52.87.254.182/tcp/9090/ws/p2p-webrtc-star",
+      "websocket": "/dns4/52.87.254.182/tcp/9090/ws/p2p-websocket-star"
     },
-    "bootstrap": [
-      { 
-        "webrtc": "/dns4/52.87.254.182/tcp/9090/ws/p2p-webrtc-star",
-        "websocket": "/dns4/52.87.254.182/tcp/9090/ws/p2p-websocket-star"
-      }
-    ],
+    "bootstrap": [],
     "stats": {
       "enabled": true,
       "interval": 30
