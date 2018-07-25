@@ -235,7 +235,7 @@ export class Multiverse {
 
     // FAIL
     // case fails over into the resync
-    if (newBlock.getHeight() - 10 > currentHighestBlock.getHeight()) {
+    if (newBlock.getHeight() - 12 > currentHighestBlock.getHeight()) {
       return Promise.resolve(false)
     }
 
@@ -307,7 +307,7 @@ export class Multiverse {
       // return this.addBestBlock(newBlock)
     }
 
-    if (this._chain.length > 7) {
+    if (this._chain.length > 12) {
       this._chain.pop()
     }
     return Promise.resolve(true)

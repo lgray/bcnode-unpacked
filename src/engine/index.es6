@@ -900,7 +900,7 @@ export class Engine {
                     const query = {
                       queryHash: newBlock.getHash(),
                       queryHeight: upperBound,
-                      low: upperBound - 6,
+                      low: upperBound - 11,
                       high: upperBound
                     }
                     this._logger.info(newBlock.getHash() + ' resync upper bound: ' + query.high)
