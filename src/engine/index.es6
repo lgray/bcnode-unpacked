@@ -45,6 +45,7 @@ const ts = require('../utils/time').default // ES6 default export
 const DATA_DIR = process.env.BC_DATA_DIR || config.persistence.path
 const MONITOR_ENABLED = process.env.BC_MONITOR === 'true'
 const BC_CHECK = process.env.BC_CHECK === 'true'
+const BC_LIMIT_MINING = process.env.BC_LIMIT_MINING === 'true'
 const PERSIST_ROVER_DATA = process.env.PERSIST_ROVER_DATA === 'true'
 
 export class Engine {
@@ -287,6 +288,10 @@ export class Engine {
         .catch((err) => {
           this._logger.warn(err)
         })
+    })
+
+    this.node.bundle.channels.on('newblock', (msg) => {
+      this._logger.info(msg.toString())
     })
   }
 
@@ -1113,6 +1118,7 @@ export class Engine {
 
     try {
       this.node.broadcastNewBlock(newBlock)
+      this.node.bundle.channels.publish('newblock', Buffer.from(JSON.stringify(newBlock.toObject())), () => {})
 
       // NOTE: Do we really need nested try-catch ?
       try {
@@ -1147,6 +1153,7 @@ export class Engine {
       this._logger.warn('Failed to process work provided by miner')
       return Promise.resolve(false)
     }
+
     // Prevent submitting mined block twice
     if (this._knownBlocksCache.has(newBlock.getHash())) {
       this._logger.warn('received duplicate new block ' + newBlock.getHeight() + ' (' + newBlock.getHash() + ')')
@@ -1158,7 +1165,20 @@ export class Engine {
           this._logger.error(e)
         })
     }
-    // Add to multiverse and call persist
+
+    // miners must have peers to mine
+    if (this.node.manager.peerBookConnected.getPeersCount() < 6 &&
+        BC_LIMIT_MINING === false) {
+      this._logger.warn('mined blocks pending peer connections')
+      return this.miningOfficer.stopMiner().then((r) => {
+        this._logger.info('end mining')
+      })
+        .catch((e) => {
+          this._logger.warn('unable to stop miner')
+          this._logger.error(e)
+        })
+    }
+
     this._knownBlocksCache.set(newBlock.getHash(), 1)
     this._logger.info('submitting mined block to current multiverse')
     return this.multiverse.addNextBlock(newBlock)

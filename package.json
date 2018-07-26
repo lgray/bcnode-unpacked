@@ -163,6 +163,7 @@
     "levelup": "^2.0.2",
     "libp2p": "^0.20.4",
     "libp2p-connection-manager": "^0.0.2",
+    "libp2p-floodsub": "^0.15.0",
     "libp2p-kad-dht": "^0.10.0",
     "libp2p-mdns": "^0.11.0",
     "libp2p-mplex": "^0.7.0",

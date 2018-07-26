@@ -288,13 +288,16 @@ export class PeerManager {
 
     debug('Dialing /status protocol', peerId)
     return new Promise((resolve, reject) => {
+      const expireRequest = setTimeout(() => {
+        return reject(new Error('peer failed health check'))
+      }, 5000)
       this.bundle.dialProtocol(peer, `${PROTOCOL_PREFIX}/status`, (err, conn) => {
         const peerId = peer.id.toB58String()
+        clearTimeout(expireRequest)
 
         if (err) {
           debug('Error dialing /status protocol', peerId, err)
           this._logger.error('Error dialing /status protocol', peerId)
-
           // FIXME: Propagate corectly
           // throw err
 

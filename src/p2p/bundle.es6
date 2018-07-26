@@ -16,6 +16,7 @@ const Mplex = require('libp2p-mplex')
 const MDNS = require('libp2p-mdns')
 const SECIO = require('libp2p-secio')
 const SPDY = require('libp2p-spdy')
+const FloodSub = require('libp2p-floodsub')
 const PeerInfo = require('peer-info')
 const TCP = require('libp2p-tcp')
 const WebSockets = require('libp2p-websockets')
@@ -24,6 +25,7 @@ export class Bundle extends libp2p {
   peerInfo: ManagedPeerBook
   peerBook: ?ManagedPeerBook
   options: Object
+  _channels: Object
   _discoveryEnabled: bool
 
   constructor (peerInfo: PeerInfo, peerBook: ManagedPeerBook, opts: Object) {
@@ -50,6 +52,15 @@ export class Bundle extends libp2p {
 
     super(modules, peerInfo, peerBook, opts)
     this._discoveryEnabled = true
+    this._channels = new FloodSub(libp2p)
+    this._channels.start((err) => {
+      if (err) throw new Error(err)
+      this._channels.subscribe('newblock')
+    })
+  }
+
+  get channels (): Object {
+    return this._channels
   }
 
   get discoveryEnabled (): bool {

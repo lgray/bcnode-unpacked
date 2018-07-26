@@ -334,6 +334,7 @@ export class PeerNode {
   broadcastNewBlock (block: BcBlock, withoutPeerId: ?string) {
     this._logger.debug(`Broadcasting msg to peers, ${inspect(block.toObject())}`)
 
+    // this.bundle.pubsub.publish('newBlock', Buffer.from(JSON.stringify(block.toObject())), () => {})
     const url = `${PROTOCOL_PREFIX}/newblock`
     this.manager.peerBookConnected.getAllArray().map(peer => {
       this._logger.debug(`Sending to peer ${peer}`)
