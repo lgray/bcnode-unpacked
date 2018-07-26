@@ -2802,7 +2802,7 @@ circular-json@^0.3.1:
   version "0.3.3"
   resolved "https://registry.yarnpkg.com/circular-json/-/circular-json-0.3.3.tgz#815c99ea84f6809529d2f45791bdf82711352d66"
 
-class-is@^1.0.0, class-is@^1.1.0:
+class-is@^1.1.0:
   version "1.1.0"
   resolved "https://registry.yarnpkg.com/class-is/-/class-is-1.1.0.tgz#9d3c0fba0440d211d843cec3dedfa48055005825"
 
@@ -7822,12 +7822,12 @@ libp2p-tcp@^0.12.0, libp2p-tcp@~0.12.0:
     once "^1.4.0"
     stream-to-pull-stream "^1.7.2"
 
-libp2p-webrtc-star@^0.14.0:
-  version "0.14.0"
-  resolved "https://registry.yarnpkg.com/libp2p-webrtc-star/-/libp2p-webrtc-star-0.14.0.tgz#6709e0f3f59ad96cb3029f7776e9d0520e274c65"
+libp2p-webrtc-star@^0.15.1:
+  version "0.15.3"
+  resolved "https://registry.yarnpkg.com/libp2p-webrtc-star/-/libp2p-webrtc-star-0.15.3.tgz#370b09c2871a12dadc44ed66dfd31060af671b52"
   dependencies:
-    async "^2.6.0"
-    class-is "^1.0.0"
+    async "^2.6.1"
+    class-is "^1.1.0"
     debug "^3.1.0"
     detect-node "^2.0.3"
     epimetheus "^1.0.55"
@@ -7836,20 +7836,20 @@ libp2p-webrtc-star@^0.14.0:
     interface-connection "~0.3.2"
     mafmt "^6.0.0"
     minimist "^1.2.0"
-    multiaddr "^4.0.0"
+    multiaddr "^5.0.0"
     once "^1.4.0"
     peer-id "~0.10.7"
-    peer-info "~0.14.0"
-    pull-stream "^3.6.7"
-    simple-peer "^9.0.0"
-    socket.io "^2.1.0"
-    socket.io-client "^2.1.0"
+    peer-info "~0.14.1"
+    pull-stream "^3.6.8"
+    simple-peer "^9.1.2"
+    socket.io "^2.1.1"
+    socket.io-client "^2.1.1"
     stream-to-pull-stream "^1.7.2"
     webrtcsupport "github:ipfs/webrtcsupport"
 
-"libp2p-websocket-star@https://github.com/libp2p/js-libp2p-websocket-star#latest":
+libp2p-websocket-star@^0.8.1:
   version "0.8.1"
-  resolved "https://github.com/libp2p/js-libp2p-websocket-star#7e2b8942a0d408dfff2cbf7083560534708d3d1f"
+  resolved "https://registry.yarnpkg.com/libp2p-websocket-star/-/libp2p-websocket-star-0.8.1.tgz#45203a0384c3cc95c3754ef960c92a708ab076e3"
   dependencies:
     async "^2.6.1"
     class-is "^1.1.0"
@@ -11531,7 +11531,7 @@ simple-peer@^6.0.1:
     randombytes "^2.0.3"
     readable-stream "^2.0.5"
 
-simple-peer@^9.0.0:
+simple-peer@^9.1.2:
   version "9.1.2"
   resolved "https://registry.yarnpkg.com/simple-peer/-/simple-peer-9.1.2.tgz#f8afa5eb83f8a17d66e437e5ac54c1221eca4b39"
   dependencies:
@@ -11712,7 +11712,7 @@ socket.io@2.0.3:
     socket.io-client "~2.0.2"
     socket.io-parser "~3.1.1"
 
-socket.io@^2.1.0:
+socket.io@^2.1.0, socket.io@^2.1.1:
   version "2.1.1"
   resolved "https://registry.yarnpkg.com/socket.io/-/socket.io-2.1.1.tgz#a069c5feabee3e6b214a75b40ce0652e1cfb9980"
   dependencies:

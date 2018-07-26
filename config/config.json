@@ -40,7 +40,7 @@
     },
     "rendezvous": {
       "webrtc": "/dns4/34.232.77.162/tcp/9090/wss/p2p-webrtc-star/",
-      "websocket": "/dns4/34.232.77.162/tcp/9090/wss/p2p-websocket-star/"
+      "websocket": "/dns4/34.232.77.162/tcp/9091/wss/p2p-websocket-star/"
     },
     "stats": {
       "enabled": true,

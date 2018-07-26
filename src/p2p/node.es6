@@ -146,6 +146,9 @@ export class PeerNode {
         this._logger.info('Starting P2P node')
 
         bundle.start((err) => {
+          if (err) {
+            this._logger.error(err)
+          }
           cb(err, bundle)
         })
       },
