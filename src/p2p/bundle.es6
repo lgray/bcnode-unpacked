@@ -25,7 +25,6 @@ export class Bundle extends libp2p {
   peerInfo: ManagedPeerBook
   peerBook: ?ManagedPeerBook
   options: Object
-  _channels: Object
   _discoveryEnabled: bool
 
   constructor (peerInfo: PeerInfo, peerBook: ManagedPeerBook, opts: Object) {
@@ -52,11 +51,6 @@ export class Bundle extends libp2p {
 
     super(modules, peerInfo, peerBook, opts)
     this._discoveryEnabled = true
-    this._channels = new FloodSub(libp2p)
-    this._channels.start((err) => {
-      if (err) throw new Error(err)
-      this._channels.subscribe('newblock')
-    })
   }
 
   get channels (): Object {

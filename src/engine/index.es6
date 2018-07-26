@@ -1114,7 +1114,6 @@ export class Engine {
 
     try {
       this.node.broadcastNewBlock(newBlock)
-      this.node.bundle.channels.publish('newblock', Buffer.from(JSON.stringify(newBlock.toObject())), () => {})
 
       // NOTE: Do we really need nested try-catch ?
       try {

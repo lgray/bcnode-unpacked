@@ -149,9 +149,6 @@ export class PeerNode {
           if (err) {
             this._logger.error(err)
           }
-          bundle.channels.on('newblock', (msg) => {
-            this._logger.info(msg.toString())
-          })
           cb(err, bundle)
         })
       },
