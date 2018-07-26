@@ -45,7 +45,7 @@ const ts = require('../utils/time').default // ES6 default export
 const DATA_DIR = process.env.BC_DATA_DIR || config.persistence.path
 const MONITOR_ENABLED = process.env.BC_MONITOR === 'true'
 const BC_CHECK = process.env.BC_CHECK === 'true'
-const BC_LIMIT_MINING = process.env.BC_LIMIT_MINING === 'true'
+const BC_LIMIT_MINER = process.env.BC_LIMIT_MINER === 'true'
 const PERSIST_ROVER_DATA = process.env.PERSIST_ROVER_DATA === 'true'
 
 export class Engine {
@@ -1163,7 +1163,7 @@ export class Engine {
 
     // miners must have peers to mine
     if (this.node.manager.peerBookConnected.getPeersCount() < 4 &&
-        BC_LIMIT_MINING === false) {
+        BC_LIMIT_MINER === false) {
       this._logger.warn('mined blocks pending peer connections')
       return this.miningOfficer.stopMiner().then((r) => {
         this._logger.info('end mining')
