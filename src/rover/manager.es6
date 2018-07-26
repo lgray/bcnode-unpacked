@@ -67,7 +67,8 @@ export class RoverManager {
       return false
     }
 
-    this._logger.info(`Starting rover '${roverName}'`)
+    this._logger.info(`Starting rover '${roverName}' using '${roverPath}'`)
+
     const rover = fork(
       roverPath,
       [],
@@ -75,6 +76,7 @@ export class RoverManager {
         execArgv: []
       }
     )
+    this._logger.info(`Rover started '${roverName}'`)
     this._rovers[roverName] = rover
     this._timeouts[roverName] = setTimeout(() => {
       this._logger.info('kill rover: ' + roverName)

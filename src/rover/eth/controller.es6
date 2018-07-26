@@ -92,6 +92,7 @@ export default class Controller {
   }
 
   init (config: { maximumPeers: number }) {
+    this._logger.info('ethethethethethethethethethethethethetheth')
     this.start(config)
 
     process.on('disconnect', () => {
