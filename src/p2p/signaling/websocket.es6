@@ -19,9 +19,23 @@ class BcWSStar extends WSStarMulti {
 
 export default {
   initialize: (peerInfo: PeerInfo) => {
+    // pick any random two servers
+    function randPick (items, prev) {
+      if (prev === undefined) {
+        return randPick(items, items[Math.floor(Math.random() * items.length)])
+      }
+
+      const candidate = items[Math.floor(Math.random() * items.length)]
+      if (candidate === prev) {
+        return randPick(items, prev)
+      }
+
+      return [candidate, prev]
+    }
+
     const wsstar = new BcWSStar({
       id: peerInfo.id,
-      servers: config.p2p.bootstrap
+      servers: randPick(config.p2p.bootstrap)
     })
 
     return wsstar
