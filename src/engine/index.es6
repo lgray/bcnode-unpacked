@@ -289,10 +289,6 @@ export class Engine {
           this._logger.warn(err)
         })
     })
-
-    this.node.bundle.channels.on('newblock', (msg) => {
-      this._logger.info(msg.toString())
-    })
   }
 
   /**
