@@ -11,14 +11,14 @@ import { ManagedPeerBook } from './book'
 const debug = require('debug')('bcnode:bundle')
 
 const libp2p = require('libp2p')
-// const KadDHT = require('libp2p-kad-dht')
-// const Mplex = require('libp2p-mplex')
-// const MDNS = require('libp2p-mdns')
-// const SECIO = require('libp2p-secio')
-// const SPDY = require('libp2p-spdy')
-const WSStar = require('libp2p-websocket-star')
+const KadDHT = require('libp2p-kad-dht')
+const Mplex = require('libp2p-mplex')
+const MDNS = require('libp2p-mdns')
+const SECIO = require('libp2p-secio')
+const SPDY = require('libp2p-spdy')
+// const WSStar = require('libp2p-websocket-star')
 const PeerInfo = require('peer-info')
-// const TCP = require('libp2p-tcp')
+const TCP = require('libp2p-tcp')
 // const WebSockets = require('libp2p-websockets')
 
 export class Bundle extends libp2p {
@@ -35,13 +35,13 @@ export class Bundle extends libp2p {
         signaling
         // new WebSockets()
       ],
-      // connection: {
-      //  muxer: [
-      //    Mplex,
-      //    SPDY
-      //  ],
-      //  crypto: [ SECIO ]
-      // },
+      connection: {
+        muxer: [
+          Mplex,
+          SPDY
+        ],
+        crypto: [ SECIO ]
+      },
       discovery: [
         new MDNS(peerInfo, { interval: 9000, broadcast: true }),
         signaling.discovery
