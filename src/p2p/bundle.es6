@@ -32,7 +32,7 @@ export class Bundle extends libp2p {
     // const signaling = opts.signaling
     const modules = {
       transport: [
-        // new TCP(),
+        new TCP(),
         ws
         // new WebSockets()
       ],
@@ -44,7 +44,7 @@ export class Bundle extends libp2p {
       //  crypto: [ SECIO ]
       // },
       discovery: [
-        // new MDNS(peerInfo, { interval: 3000, broadcast: true }),
+        new MDNS(peerInfo, { interval: 9000, broadcast: true }),
         ws
         // signaling.discovery
       ]
