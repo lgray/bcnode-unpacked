@@ -16,6 +16,7 @@ const Mplex = require('libp2p-mplex')
 // const MDNS = require('libp2p-mdns')
 const SECIO = require('libp2p-secio')
 const SPDY = require('libp2p-spdy')
+const WSStar = require('libp2p-websocket-star')
 const PeerInfo = require('peer-info')
 // const TCP = require('libp2p-tcp')
 // const WebSockets = require('libp2p-websockets')
@@ -27,11 +28,12 @@ export class Bundle extends libp2p {
   _discoveryEnabled: bool
 
   constructor (peerInfo: PeerInfo, peerBook: ManagedPeerBook, opts: Object) {
+    const ws = new WSStar()
     const signaling = opts.signaling
     const modules = {
       transport: [
         // new TCP(),
-        signaling
+        ws
         // new WebSockets()
       ],
       connection: {
@@ -43,7 +45,8 @@ export class Bundle extends libp2p {
       },
       discovery: [
         // new MDNS(peerInfo, { interval: 3000, broadcast: true }),
-        signaling.discovery
+        ws
+        // signaling.discovery
       ],
       DHT: KadDHT
     }
