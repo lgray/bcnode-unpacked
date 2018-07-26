@@ -29,7 +29,7 @@ export class Bundle extends libp2p {
 
   constructor (peerInfo: PeerInfo, peerBook: ManagedPeerBook, opts: Object) {
     const ws = new WSStar()
-    const signaling = opts.signaling
+    // const signaling = opts.signaling
     const modules = {
       transport: [
         // new TCP(),
