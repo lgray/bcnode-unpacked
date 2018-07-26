@@ -16,10 +16,9 @@ const Mplex = require('libp2p-mplex')
 const MDNS = require('libp2p-mdns')
 const SECIO = require('libp2p-secio')
 const SPDY = require('libp2p-spdy')
-const WSStar = require('libp2p-websocket-star')
 const PeerInfo = require('peer-info')
 const TCP = require('libp2p-tcp')
-// const WebSockets = require('libp2p-websockets')
+const WebSockets = require('libp2p-websockets')
 
 export class Bundle extends libp2p {
   peerInfo: ManagedPeerBook
@@ -33,7 +32,7 @@ export class Bundle extends libp2p {
       transport: [
         new TCP(),
         signaling,
-        new WSStar()
+        new WebSockets()
       ],
       connection: {
         muxer: [
