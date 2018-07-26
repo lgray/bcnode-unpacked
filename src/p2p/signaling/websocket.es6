@@ -8,18 +8,20 @@
  */
 
 // $FlowFixMe
-const WSStar = require('libp2p-websocket-star')
+// const WSStar = require('libp2p-websocket-star')
+const WSStarMulti = require('libp2p-websocket-star-multi')
 const PeerInfo = require('peer-info')
 
 const { config } = require('../../config')
 
-class BcWSStar extends WSStar {
+class BcWSStar extends WSStarMulti {
 }
 
 export default {
   initialize: (peerInfo: PeerInfo) => {
     const wsstar = new BcWSStar({
-      id: peerInfo.id
+      id: peerInfo.id,
+      servers: config.p2p.bootstrap
     })
 
     return wsstar

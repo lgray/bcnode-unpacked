@@ -1162,7 +1162,7 @@ export class Engine {
     }
 
     // miners must have peers to mine
-    if (this.node.manager.peerBookConnected.getPeersCount() < 6 &&
+    if (this.node.manager.peerBookConnected.getPeersCount() < 4 &&
         BC_LIMIT_MINING === false) {
       this._logger.warn('mined blocks pending peer connections')
       return this.miningOfficer.stopMiner().then((r) => {

@@ -42,6 +42,9 @@
       "webrtc": "/dns4/34.232.77.162/tcp/9090/ws/p2p-webrtc-star/",
       "websocket": "/dns4/34.232.77.162/tcp/9090/ws/p2p-websocket-star/"
     },
+    "bootstrap": [
+      "/dns4/34.232.77.162/tcp/9090/ws/p2p-websocket-star/"
+    ],
     "stats": {
       "enabled": true,
       "interval": 30
