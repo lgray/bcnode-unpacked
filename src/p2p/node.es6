@@ -318,6 +318,7 @@ export class PeerNode {
         this.bundle.dialProtocol(peer, url, (err, conn) => {
           if (err) {
             this._logger.error('Error sending message to peer', peer.id.toB58String(), err)
+            this._logger.error(err)
             return err
           }
           // TODO JSON.stringify?
@@ -338,6 +339,7 @@ export class PeerNode {
         this.bundle.dialProtocol(peer, url, (err, conn) => {
           if (err) {
             this._logger.error('Error sending message to peer', peer.id.toB58String(), err)
+            this._logger.error(err)
             return err
           }
 

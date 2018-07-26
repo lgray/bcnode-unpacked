@@ -941,6 +941,9 @@ export class Engine {
                         } else if (highestBlock !== undefined && sorted !== undefined && newBlocks.length > 0) {
                           // conanaOut
                           conditional = new BN(sorted[0].getTotalDistance()).gt(new BN(highestBlock.getTotalDistance()))
+                          if (conditional === false) {
+                            this._logger.info('purposed new block has lower total difficulty than current multiverse height')
+                          }
                         } else if (sorted.length < 6) {
                           conditional = true
                         }
