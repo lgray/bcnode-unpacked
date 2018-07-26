@@ -177,11 +177,11 @@ export class PeerManager {
             this._logger.debug(errMsg)
 
             // Throwing error is not needed, peer will be dialed once circuit is enabled
-            if (this.peerBookDiscovered.has(peer)) {
-              this.peerBookDiscovered.remove(peer)
-            }
+            // if (this.peerBookDiscovered.has(peer)) {
+            //  this.peerBookDiscovered.remove(peer)
+            // }
 
-            reject(err)
+            return reject(err)
           }
 
           this._logger.info(`Discovered peer successfully dialed ${peerId}`)

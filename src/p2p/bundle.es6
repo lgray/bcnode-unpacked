@@ -14,9 +14,9 @@ const libp2p = require('libp2p')
 const KadDHT = require('libp2p-kad-dht')
 const Mplex = require('libp2p-mplex')
 const MDNS = require('libp2p-mdns')
-const SECIO = require('libp2p-secio')
+// const SECIO = require('libp2p-secio')
 const SPDY = require('libp2p-spdy')
-// const WSStar = require('libp2p-websocket-star')
+const WSStar = require('libp2p-websocket-star')
 const PeerInfo = require('peer-info')
 const TCP = require('libp2p-tcp')
 // const WebSockets = require('libp2p-websockets')
@@ -32,15 +32,15 @@ export class Bundle extends libp2p {
     const modules = {
       transport: [
         new TCP(),
-        signaling
-        // new WebSockets()
+        signaling,
+        new WSStar()
       ],
       connection: {
         muxer: [
           Mplex,
           SPDY
-        ],
-        crypto: [ SECIO ]
+        ]
+        // crypto: [ SECIO ]
       },
       discovery: [
         new MDNS(peerInfo, { interval: 9000, broadcast: true }),
