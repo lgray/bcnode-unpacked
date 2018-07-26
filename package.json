@@ -172,7 +172,7 @@
     "libp2p-spdy": "^0.12.1",
     "libp2p-tcp": "^0.12.0",
     "libp2p-webrtc-star": "^0.14.0",
-    "libp2p-websocket-star": "https://github.com/korczis/js-libp2p-websocket-star.git",
+    "libp2p-websocket-star": "https://github.com/libp2p/js-libp2p-websocket-star.git#rewrite",
     "libp2p-websockets": "^0.12.0",
     "linvodb3": "^3.25.1",
     "lisk-js": "^0.5.1",
