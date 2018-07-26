@@ -28,12 +28,11 @@ export class Bundle extends libp2p {
   _discoveryEnabled: bool
 
   constructor (peerInfo: PeerInfo, peerBook: ManagedPeerBook, opts: Object) {
-    const ws = new WSStar()
-    // const signaling = opts.signaling
+    const signaling = opts.signaling
     const modules = {
       transport: [
         new TCP(),
-        ws
+        signaling
         // new WebSockets()
       ],
       // connection: {
@@ -45,10 +44,9 @@ export class Bundle extends libp2p {
       // },
       discovery: [
         new MDNS(peerInfo, { interval: 9000, broadcast: true }),
-        ws
-        // signaling.discovery
-      ]
-      // DHT: KadDHT
+        signaling.discovery
+      ],
+      DHT: KadDHT
     }
 
     super(modules, peerInfo, peerBook, opts)
