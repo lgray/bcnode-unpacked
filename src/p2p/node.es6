@@ -13,7 +13,7 @@ const { inspect } = require('util')
 
 const PeerInfo = require('peer-info')
 const waterfall = require('async/waterfall')
-// const multiaddr = require('multiaddr')
+const multiaddr = require('multiaddr')
 const pull = require('pull-stream')
 // const { uniqBy } = require('ramda')
 
@@ -108,7 +108,7 @@ export class PeerNode {
         const peerId = peerInfo.id.toB58String()
         this._logger.info(`Registering addresses for ${peerId}`)
 
-        // peerInfo.multiaddrs.add(multiaddr('/p2p-websocket-star'))
+        peerInfo.multiaddrs.add(multiaddr('/ip4/0.0.0.0/tcp/p2p-websocket-star'))
 
         // peerInfo.multiaddrs.add(Signaling.getAddress(peerInfo))
         peerInfo.multiaddrs.add(`/ip4/0.0.0.0/tcp/0/ipfs/${peerId}`)
