@@ -184,7 +184,7 @@ export class PeerManager {
             return reject(err)
           }
 
-          this._logger.info(`Discovered peer successfully dialed ${peerId}`)
+          this._logger.debug(`Discovered peer successfully dialed ${peerId}`)
           resolve(true)
         })
       })
@@ -280,6 +280,20 @@ export class PeerManager {
     const peerId = peer.id.toB58String()
     debug('Checking peer status', peerId)
 
+    const disconnectPeer = () => {
+      if (this.peerBookConnected.has(peer)) {
+        this.peerBookConnected.remove(peer)
+      }
+
+      if (this.peerBookDiscovered.has(peer)) {
+        this.peerBookDiscovered.remove(peer)
+      }
+
+      if (peer.isConnected()) {
+        peer.disconnect()
+      }
+    }
+
     const meta = {
       ts: {
         connectedAt: Date.now()
@@ -300,7 +314,7 @@ export class PeerManager {
           this._logger.error('Error dialing /status protocol', peerId)
           // FIXME: Propagate corectly
           // throw err
-
+          disconnectPeer()
           return reject(err)
         }
 
