@@ -202,9 +202,9 @@ export class PeerManager {
         this.peerBookConnected.remove(peer)
       }
 
-      if (this.peerBookDiscovered.has(peer)) {
-        this.peerBookDiscovered.remove(peer)
-      }
+      // if (this.peerBookDiscovered.has(peer)) {
+      //  this.peerBookDiscovered.remove(peer)
+      // }
 
       if (peer.isConnected()) {
         peer.disconnect()
@@ -220,7 +220,7 @@ export class PeerManager {
     if (this.peerBookConnected.getPeersCount() > QUORUM_SIZE) {
       debug(`Peer '${peerId}', quorum already reached`)
 
-      // disconnectPeer()
+      disconnectPeer()
       return Promise.resolve(false)
     }
 
