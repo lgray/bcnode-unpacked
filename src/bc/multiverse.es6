@@ -17,7 +17,6 @@ const { all, flatten, zip } = require('ramda')
 const { validateRoveredSequences, validateBlockSequence, childrenHeightSum } = require('./validation')
 const { standardId } = require('./helper')
 const { getLogger } = require('../logger')
-const { getGenesisBlock } = require('./genesis')
 
 export class Multiverse {
   _chain: BcBlock[]
@@ -307,10 +306,27 @@ export class Multiverse {
       // return this.addBestBlock(newBlock)
     }
 
-    if (this._chain.length > 12) {
+    if (this._chain.length > 7) {
       this._chain.pop()
     }
     return Promise.resolve(true)
+  }
+
+  async isSyncLockActive (): Promise<boolean> {
+    try {
+      const synclock = await this.persistence.get('synclock')
+
+      if (synclock.getHeight() !== 1 && (synclock.getTimestamp() + 369) < Math.floor(Date.now() * 0.001)) {
+        this._logger.warn('sync lock is stale resetting')
+        return Promise.resolve(false)
+      } else if (synclock.getHeight() === 1) {
+        return Promise.resolve(false)
+      }
+      return Promise.resolve(true)
+    } catch (err) {
+      this._logger.error(err)
+      return Promise.resolve(false)
+    }
   }
 
   /**
@@ -321,43 +337,25 @@ export class Multiverse {
    */
   async addResyncRequest (newBlock: BcBlock, strict: boolean = true): Promise<boolean> {
     const currentParentHighestBlock = this.getParentHighestBlock()
-    const syncLock = await this.persistence.get('synclock')
+
     const currentHighestBlock = await this.persistence.get('bc.block.latest')
 
-    this._logger.info(syncLock.getTimestamp(), syncLock.getHeight())
-    this._logger.info(syncLock.getTimestamp(), syncLock.getHeight())
-    this._logger.info(syncLock.getTimestamp(), syncLock.getHeight())
-    this._logger.info(syncLock.getTimestamp(), syncLock.getHeight())
-    this._logger.info(syncLock.getTimestamp(), syncLock.getHeight())
-    this._logger.info(syncLock.getTimestamp(), syncLock.getHeight())
-    this._logger.info(syncLock.getTimestamp(), syncLock.getHeight())
-    this._logger.info(syncLock.getTimestamp(), syncLock.getHeight())
-    this._logger.info(syncLock.getTimestamp(), syncLock.getHeight())
-    this._logger.info(syncLock.getTimestamp(), syncLock.getHeight())
-    this._logger.info(syncLock.getTimestamp(), syncLock.getHeight())
-    this._logger.info(syncLock.getTimestamp(), syncLock.getHeight())
-    this._logger.info(syncLock.getTimestamp(), syncLock.getHeight())
-    this._logger.info(syncLock.getTimestamp(), syncLock.getHeight())
-    this._logger.info(syncLock.getTimestamp(), syncLock.getHeight())
-    this._logger.info(syncLock.getTimestamp(), syncLock.getHeight())
-    this._logger.info(syncLock.getTimestamp(), syncLock.getHeight())
-    this._logger.info(syncLock.getTimestamp(), syncLock.getHeight())
-    this._logger.info(syncLock.getTimestamp(), syncLock.getHeight())
+    // this._logger.debug(syncLock.getTimestamp(), syncLock.getHeight())
 
-    if (syncLock.getHeight() !== 1 && (syncLock.getTimestamp() + 269) < Math.floor(Date.now() * 0.001)) {
-      this._logger.warn('sync lock is stale resetting')
-      await this.persistence.put('synclock', getGenesisBlock())
-    } else if (syncLock.getHeight() !== 1) {
-      this._logger.warn('sync lock is active')
-      return Promise.resolve(false)
-    } else {
-      this._logger.warn('sync lock is not active')
-    }
+    // if (syncLock.getHeight() !== 1 && (syncLock.getTimestamp() + 369) < Math.floor(Date.now() * 0.001)) {
+    //  this._logger.warn('sync lock is stale resetting')
+    //  await this.persistence.put('synclock', getGenesisBlock())
+    // } else if (syncLock.getHeight() !== 1) {
+    //  this._logger.warn('sync lock is active')
+    //  return Promise.resolve(false)
+    // } else {
+    //  this._logger.warn('sync lock is not active')
+    // }
 
-    if (syncLock.getHeight() !== 1) {
-      this._logger.warn('sync lock is active')
-      return Promise.resolve(false)
-    }
+    // if (syncLock.getHeight() !== 1) {
+    //  this._logger.warn('sync lock is active')
+    //  return Promise.resolve(false)
+    // }
 
     if (this._chain.length === 0) {
       this._logger.info('passed sync req: currentHighestBlock is null')
@@ -367,14 +365,12 @@ export class Multiverse {
     // pass if no highest block exists go with current
     if (currentHighestBlock === null) {
       this._logger.info('passed resync req: currentHighestBlock is null')
-      await this.persistence.put('synclock', newBlock)
       return Promise.resolve(true)
     }
 
     // only block is the genesis block
     if (currentHighestBlock.getHeight() === 1 && newBlock.getHeight() > 1) {
       this._logger.info('passed resync req: new block was above genesis')
-      await this.persistence.put('synclock', newBlock)
       return Promise.resolve(true)
     }
 
@@ -393,7 +389,6 @@ export class Multiverse {
     if (this._chain.length < 2) {
       this._logger.info('determining if chain current total distance is less than new block')
       if (new BN(currentHighestBlock.getTotalDistance()).lt(newBlock.getTotalDistance())) {
-        await this.persistence.put('synclock', newBlock)
         return Promise.resolve(true)
       }
     }
@@ -401,7 +396,6 @@ export class Multiverse {
     if (currentParentHighestBlock === null && currentHighestBlock !== null) {
       if (new BN(newBlock.getTotalDistance()).gt(new BN(currentHighestBlock.getTotalDistance()))) {
         this._logger.info('passed resync: total distance of new block is greater than current highest')
-        await this.persistence.put('synclock', newBlock)
         return Promise.resolve(true)
       }
     }

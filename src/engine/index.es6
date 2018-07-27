@@ -901,7 +901,7 @@ export class Engine {
                     const query = {
                       queryHash: newBlock.getHash(),
                       queryHeight: upperBound,
-                      low: upperBound - 11,
+                      low: upperBound - 7,
                       high: upperBound
                     }
                     this._logger.info(newBlock.getHash() + ' resync upper bound: ' + query.high)
@@ -967,29 +967,43 @@ export class Engine {
                                   // if the block is already in the multiverse dont conduct a full sync
                                   if (hasBlock === false) {
                                     this._logger.info('legacy multiverse did not include current block')
-                                    return this.persistence.put('synclock', this.multiverse.getHighestBlock())
-                                      .then(() => {
-                                        this.pubsub.publish('update.block.latest', { key: 'bc.block.latest', data: newBlock, force: true, multiverse: this.multiverse._chain })
-                                        this.node.broadcastNewBlock(newBlock, peerInfo.id.toB58String())
-                                        this._logger.debug('sync unlocked')
-                                        const targetHeight = this.multiverse.getLowestBlock().getHeight() - 1
-                                        // dont have to sync
-                                        if (targetHeight === 1) {
-                                          return Promise.resolve(true)
-                                        }
 
-                                        return this.stepSync(conn,
-                                          this.multiverse.getHighestBlock().getHeight(),
-                                          this.multiverse.getHighestBlock().getHash())
-                                      })
-                                      .catch((e) => {
-                                        this._logger.error(e)
-                                        return this.persistence.put('synclock', getGenesisBlock()).then(() => {
-                                          this._logger.info('sync reset')
-                                        })
+                                    // determine if a sync is already in progress
+                                    return this.multiverse.issSyncLockActive().then((lock) => {
+                                      if (lock === false) {
+                                        return this.persistence.put('synclock', this.multiverse.getHighestBlock())
+                                          .then(() => {
+                                            this.pubsub.publish('update.block.latest', { key: 'bc.block.latest', data: newBlock, force: true, multiverse: this.multiverse._chain })
+                                            this.node.broadcastNewBlock(newBlock, peerInfo.id.toB58String())
+                                            this._logger.debug('sync unlocked')
+                                            const targetHeight = this.multiverse.getLowestBlock().getHeight() - 1
+                                            // dont have to sync
+                                            if (targetHeight === 1) {
+                                              return Promise.resolve(true)
+                                            }
+
+                                            return this.stepSync(conn,
+                                              this.multiverse.getHighestBlock().getHeight() - 1,
+                                              this.multiverse.getHighestBlock().getHash())
+                                          })
                                           .catch((e) => {
                                             this._logger.error(e)
+                                            return this.persistence.put('synclock', getGenesisBlock()).then(() => {
+                                              this._logger.info('sync reset')
+                                            })
+                                              .catch((e) => {
+                                                this._logger.error(e)
+                                              })
                                           })
+                                      } else {
+                                        this.pubsub.publish('update.block.latest', { key: 'bc.block.latest', data: newBlock, force: true, multiverse: this.multiverse._chain })
+                                        this.node.broadcastNewBlock(newBlock, peerInfo.id.toB58String())
+                                        return Promise.resolve(true)
+                                      }
+                                    })
+                                      .catch((e) => {
+                                        this._logger.error(e)
+                                        return Promise.reject(e)
                                       })
                                   } else {
                                     return this.persistence.put('synclock', getGenesisBlock()).then(() => {

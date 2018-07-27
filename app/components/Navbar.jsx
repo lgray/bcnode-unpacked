@@ -48,11 +48,11 @@ export class Navbar extends Component<*, State> {
         </NavItem>
 
         <NavItem>
-          <NavLink href='/#/miner' style={STYLE}>Miner Feed</NavLink>
+          <NavLink href='/#/miner' style={STYLE}>Miner</NavLink>
         </NavItem>
 
         <NavItem>
-          <NavLink href='/#/rover' style={STYLE}>Rover Feed</NavLink>
+          <NavLink href='/#/rover' style={STYLE}>Rover</NavLink>
         </NavItem>
 
         <NavItem>

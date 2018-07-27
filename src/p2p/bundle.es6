@@ -29,7 +29,7 @@ export class Bundle extends libp2p {
     /* eslint-disable */
     /* eslint-enable */
     const signaling = opts.signaling
-    const broadcastInterval = (60 + Math.floor(Math.random() * 45) - 30) * 1000
+    const broadcastInterval = (270 + Math.floor(Math.random() * 45) - 30) * 1000
     const modules = {
       transport: [
         new TCP(),

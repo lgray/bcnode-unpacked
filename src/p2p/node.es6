@@ -164,8 +164,8 @@ export class PeerNode {
           return this.manager.onPeerDiscovery(peer).then(() => {
             if (this._shouldStopDiscovery()) {
               debug(`peer:discovery - Quorum of ${QUORUM_SIZE} reached, if testnet stopping discovery`)
-              return Promise.resolve(true)
-              // return this.stopDiscovery()
+              // return Promise.resolve(true)
+              return this.stopDiscovery()
             }
           })
         })
