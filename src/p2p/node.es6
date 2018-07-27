@@ -108,7 +108,7 @@ export class PeerNode {
         const peerId = peerInfo.id.toB58String()
         this._logger.info(`Registering addresses for ${peerId}`)
 
-        peerInfo.multiaddrs.add(multiaddr('/p2p-websocket-star/ipfs/' + peerId))
+        peerInfo.multiaddrs.add(multiaddr('/p2p-websocket-star'))
 
         // peerInfo.multiaddrs.add(Signaling.getAddress(peerInfo))
         peerInfo.multiaddrs.add(`/ip4/0.0.0.0/tcp/0/ipfs/${peerId}`)

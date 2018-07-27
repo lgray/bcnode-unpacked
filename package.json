@@ -173,7 +173,7 @@
     "libp2p-tcp": "^0.12.0",
     "libp2p-webrtc-star": "^0.14.0",
     "libp2p-websocket-star": "https://github.com/mmpmm/js-libp2p-websocket-star.git",
-    "libp2p-websocket-star-multi": "^0.3.2",
+    "libp2p-websocket-star-multi": "https://github.com/mmpmm/js-libp2p-websocket-star-multi.git",
     "libp2p-websockets": "^0.12.0",
     "linvodb3": "^3.25.1",
     "lisk-js": "^0.5.1",

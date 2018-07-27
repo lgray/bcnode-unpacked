@@ -7820,7 +7820,7 @@ libp2p-crypto-secp256k1@~0.2.2:
     safe-buffer "^5.1.1"
     secp256k1 "^3.3.0"
 
-libp2p-crypto@^0.12.1, libp2p-crypto@~0.12.1:
+libp2p-crypto@~0.12.1:
   version "0.12.1"
   resolved "https://registry.yarnpkg.com/libp2p-crypto/-/libp2p-crypto-0.12.1.tgz#4a870d269ba3150dfe014e4f9aea1e55076015c8"
   dependencies:
@@ -8075,38 +8075,18 @@ libp2p-webrtc-star@^0.14.0:
     stream-to-pull-stream "^1.7.2"
     webrtcsupport "github:ipfs/webrtcsupport"
 
-libp2p-websocket-star-multi@^0.3.2:
+"libp2p-websocket-star-multi@https://github.com/mmpmm/js-libp2p-websocket-star-multi.git":
   version "0.3.2"
-  resolved "https://registry.yarnpkg.com/libp2p-websocket-star-multi/-/libp2p-websocket-star-multi-0.3.2.tgz#62dead242ec356b31d251cd27010f87228229caf"
+  resolved "https://github.com/mmpmm/js-libp2p-websocket-star-multi.git#968152ea68727cc08d31715b7983b2c3499a4087"
   dependencies:
     async "^2.6.0"
     debug "^3.1.0"
-    libp2p-websocket-star "^0.7.6"
+    libp2p-websocket-star "^0.8.1"
     mafmt "^4.0.0"
-    multiaddr "^3.0.2"
+    multiaddr "^5.0.0"
     once "^1.4.0"
 
-libp2p-websocket-star@^0.7.6:
-  version "0.7.7"
-  resolved "https://registry.yarnpkg.com/libp2p-websocket-star/-/libp2p-websocket-star-0.7.7.tgz#db04fd85a4057f646aed1bb12b142546976e6aa2"
-  dependencies:
-    async "^2.6.0"
-    data-queue "0.0.3"
-    debug "^3.1.0"
-    interface-connection "^0.3.2"
-    libp2p-crypto "^0.12.1"
-    mafmt "^4.0.0"
-    merge-recursive "0.0.3"
-    multiaddr "^3.0.2"
-    once "^1.4.0"
-    peer-id "^0.10.6"
-    peer-info "^0.11.6"
-    pull-stream "^3.6.2"
-    socket.io-client "^2.0.4"
-    socket.io-pull-stream "^0.1.4"
-    uuid "^3.2.1"
-
-"libp2p-websocket-star@https://github.com/mmpmm/js-libp2p-websocket-star.git":
+libp2p-websocket-star@^0.8.1, "libp2p-websocket-star@https://github.com/mmpmm/js-libp2p-websocket-star.git":
   version "0.8.1"
   resolved "https://github.com/mmpmm/js-libp2p-websocket-star.git#b27adfd1b4099cbafa96383054f23155aadc31ab"
   dependencies:
@@ -10079,7 +10059,7 @@ peer-exchange@^2.0.0:
     through2 "^2.0.1"
     websocket-stream "^3.1.0"
 
-peer-id@0.10.7, peer-id@^0.10.6, peer-id@^0.10.7, peer-id@~0.10.0, peer-id@~0.10.5, peer-id@~0.10.7:
+peer-id@0.10.7, peer-id@^0.10.7, peer-id@~0.10.0, peer-id@~0.10.7:
   version "0.10.7"
   resolved "https://registry.yarnpkg.com/peer-id/-/peer-id-0.10.7.tgz#6c12634636fc90a0e7bc76360c95f73564461fdd"
   dependencies:
@@ -10096,14 +10076,6 @@ peer-id@~0.11.0:
     libp2p-crypto "~0.13.0"
     lodash "^4.17.10"
     multihashes "~0.4.13"
-
-peer-info@^0.11.6:
-  version "0.11.6"
-  resolved "https://registry.yarnpkg.com/peer-info/-/peer-info-0.11.6.tgz#0480b0030d2df8fd4f09879b269a715b2bd2ba12"
-  dependencies:
-    lodash.uniqby "^4.7.0"
-    multiaddr "^3.0.2"
-    peer-id "~0.10.5"
 
 peer-info@^0.14.0, peer-info@^0.14.1, peer-info@~0.14.0, peer-info@~0.14.1:
   version "0.14.1"
@@ -11936,7 +11908,7 @@ socket.io-adapter@~1.1.0:
   version "1.1.1"
   resolved "https://registry.yarnpkg.com/socket.io-adapter/-/socket.io-adapter-1.1.1.tgz#2a805e8a14d6372124dd9159ad4502f8cb07f06b"
 
-socket.io-client@2.1.1, socket.io-client@^2.0.4, socket.io-client@^2.1.0, socket.io-client@^2.1.1:
+socket.io-client@2.1.1, socket.io-client@^2.1.0, socket.io-client@^2.1.1:
   version "2.1.1"
   resolved "https://registry.yarnpkg.com/socket.io-client/-/socket.io-client-2.1.1.tgz#dcb38103436ab4578ddb026638ae2f21b623671f"
   dependencies:
@@ -11963,7 +11935,7 @@ socket.io-parser@~3.2.0:
     debug "~3.1.0"
     isarray "2.0.1"
 
-socket.io-pull-stream@^0.1.4, socket.io-pull-stream@~0.1.5:
+socket.io-pull-stream@~0.1.5:
   version "0.1.5"
   resolved "https://registry.yarnpkg.com/socket.io-pull-stream/-/socket.io-pull-stream-0.1.5.tgz#4e5d282b93635d8bf7780da405d82fc149346710"
   dependencies:

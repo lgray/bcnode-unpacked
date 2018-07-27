@@ -47,7 +47,7 @@ const main = () => {
       return function (timestamp: number) {
         const newBlockCount = getNewBlockCount(lastPreviousBlockProto.getBlockchainHeaders(), newBlockHeadersProto)
 
-        globalLog.info(`stale states: ${JSON.stringify(newBlockCount, null, 2)}`)
+        // globalLog.info(`stale states: ${JSON.stringify(newBlockCount, null, 2)}`)
 
         const preExpDiff = getNewPreExpDifficulty(
           timestamp,
