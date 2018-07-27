@@ -9,7 +9,6 @@
 import { ManagedPeerBook } from './book'
 
 const debug = require('debug')('bcnode:bundle')
-const GossipDiscovery = require('libp2p-gossip-discovery')
 const libp2p = require('libp2p')
 const KadDHT = require('libp2p-kad-dht')
 const Mplex = require('libp2p-mplex')
@@ -28,9 +27,9 @@ export class Bundle extends libp2p {
 
   constructor (peerInfo: PeerInfo, peerBook: ManagedPeerBook, opts: Object) {
     /* eslint-disable */
-    const discovery = new GossipDiscovery(this, 12)
     /* eslint-enable */
     const signaling = opts.signaling
+    const broadcastInterval = (60 + Math.floor(Math.random() * 45) - 30) * 1000
     const modules = {
       transport: [
         new TCP(),
@@ -45,20 +44,14 @@ export class Bundle extends libp2p {
         crypto: [ SECIO ]
       },
       discovery: [
-        new MDNS(peerInfo, { interval: 60000, broadcast: true }),
-        signaling.discovery,
-        discovery
+        new MDNS(peerInfo, { interval: broadcastInterval, broadcast: true, serviceTag: 'bcbt.local' }),
+        signaling.discovery
       ],
       DHT: KadDHT
     }
 
     super(modules, peerInfo, peerBook, opts)
     this._discoveryEnabled = true
-    discovery.attach(this)
-  }
-
-  get channels (): Object {
-    return this._channels
   }
 
   get discoveryEnabled (): bool {
