@@ -1,6 +1,9 @@
 # Link to ~/.bc
 .bc/
 
+# Temporary data 
+_tmp/
+
 # Helper run scripts
 /.run*.sh
 

@@ -7,16 +7,16 @@
  * @flow
  */
 
+/* eslint-disable */
 const { Engine } = require('../engine/index')
 const { BcBlock, BlockchainHeader, BlockchainHeaders } = require('../protos/core_pb')
 const GENESIS_DATA = require('../bc/genesis.raw')
+const BLOCKS_TO_CREATE=100000
 
 module.exports = {
   main: async (engine: Engine) => {
-    console.log('main()', engine)
 
     let i = 2
-
     const rndString = () => Number(Math.random().toString().slice(2)).toString(36)
     const createMockBlockchainHeader = (height) => new BlockchainHeader([
       rndString(), // string blockchain = 1;
@@ -83,7 +83,8 @@ module.exports = {
       GENESIS_DATA.blockchainFingerprintsRoot
     ])
 
-    for (i = 2; i < 1000; i++) {
+    while (i < BLOCKS_TO_CREATE) {
+      i++
       const newBlock = createMockBlock([[2], [i], [2], [2], [2]])
       newBlock.setHeight(i)
       newBlock.setHash(`${i}`)
@@ -99,7 +100,7 @@ module.exports = {
       newBlock.getBlockchainHeaders().getWavList()[0].setHash('wav_a')
       newBlock.getBlockchainHeaders().getWavList()[0].setPreviousHash('wav_1')
 
-      console.log('Generating block', i, JSON.stringify(newBlock.toObject(), null, 2))
+      console.log('Generating block', i)
 
       await engine.persistence.put('bc.block.' + newBlock.getHeight(), newBlock)
 

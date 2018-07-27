@@ -283,7 +283,8 @@ export class Engine {
         const plugin = require(pluginPath)
         await plugin.main(this)
       } catch (err) {
-        console.log('PLUGIN ERROR', err)
+        this._logger.error('PLUGIN ERROR', err)
+        this._logger.error(err)
       }
     }
 
