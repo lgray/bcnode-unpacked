@@ -34,13 +34,13 @@ export class Navbar extends Component<*, State> {
 
   render () {
     return (
-      <Nav className='navbar navbar-expand-sm navbar-light bg-light' style={{borderLeft: 0, borderRight: 0}}>
+      <Nav className='navbar navbar-expand-sm navbar-light bg-light' style={{borderLeft: 0, borderRight: 0, borderBottom: '3px solid white'}}>
         <Brand>
           <ConnectionState style={{marginLeft: '10px', marginRight: '30px', fontSize: '12pt' }} connected={this.props.connected} type='dot' />
         </Brand>
 
         <NavItem>
-          <NavLink href='https://multiverse.blockcollider.org' target='_blank' style={STYLE}>Multiverse</NavLink>
+          <NavLink href='http://multiverse.blockcollider.org' target='_blank' style={STYLE}>Multiverse</NavLink>
         </NavItem>
 
         <NavItem>
