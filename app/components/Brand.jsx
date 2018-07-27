@@ -33,7 +33,7 @@ export class Brand extends Component<*> {
           <img src='/img/bc-black.png' style={STYLE} />
         </a>
         <a href='/#/' style={FIELD_STYLE}>
-          Block Collider
+          BLOCK COLLIDER 
         </a>
         <a style={FIELD_STYLE} href={linkGithub}>
           ({VERSION.npm}/{VERSION.git.short})

@@ -21,9 +21,8 @@ export class App extends Component<*> {
 
     return (
       <div>
-        <Helmet titleTemplate='Block Colider: %s'>
+        <Helmet titleTemplate='BLOCK COLLIDER: %s'>
           <title>App</title>
-          <link rel='stylesheet' href='https://use.fontawesome.com/releases/v5.0.10/css/all.css' />
         </Helmet>
 
         <Navbar />

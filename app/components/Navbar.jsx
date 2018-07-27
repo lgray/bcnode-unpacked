@@ -36,19 +36,23 @@ export class Navbar extends Component<*, State> {
     return (
       <Nav className='navbar navbar-expand-sm navbar-light bg-light' style={{borderLeft: 0, borderRight: 0}}>
         <Brand>
-          <ConnectionState style={{marginLeft: '10px'}} connected={this.props.connected} type='dot' />
+          <ConnectionState style={{marginLeft: '10px', marginRight: '30px', fontSize: '12pt' }} connected={this.props.connected} type='dot' />
         </Brand>
+
+        <NavItem>
+          <NavLink href='https://multiverse.blockcollider.org' target='_blank' style={STYLE}>Multiverse</NavLink>
+        </NavItem>
 
         <NavItem>
           <NavLink href='/#/blocks/latest' style={STYLE}>Multichain</NavLink>
         </NavItem>
 
         <NavItem>
-          <NavLink href='/#/miner' style={STYLE}>Miner</NavLink>
+          <NavLink href='/#/miner' style={STYLE}>Miner Feed</NavLink>
         </NavItem>
 
         <NavItem>
-          <NavLink href='/#/rover' style={STYLE}>Rover</NavLink>
+          <NavLink href='/#/rover' style={STYLE}>Rover Feed</NavLink>
         </NavItem>
 
         <NavItem>
@@ -71,7 +75,7 @@ export class Navbar extends Component<*, State> {
             <DropdownItem href='/#/logs'>Logs</DropdownItem>
             <DropdownItem divider />
             { false && <DropdownItem href='/#/blockpool'>Block Pool</DropdownItem> }
-            <DropdownItem href='/#/multiverse'>Multiverse</DropdownItem>
+            <DropdownItem href='/#/multiverse'>Multiverse Sandbox</DropdownItem>
           </DropdownMenu>
         </Dropdown>
       </Nav>
