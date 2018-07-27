@@ -1164,13 +1164,16 @@ export class Engine {
     // miners must have peers to mine
     if (this.node.manager.peerBookConnected.getPeersCount() < 4 &&
         BC_LIMIT_MINER === false) {
-      this._logger.warn('mined blocks pending peer connections')
+      this._logger.error(new Error('local node has lost minimum network connections, exiting...'))
+      this._logger.warn('use "--restart always" if running with Docker to auto restart')
       return this.miningOfficer.stopMiner().then((r) => {
         this._logger.info('end mining')
+        process.exit(3)
       })
         .catch((e) => {
           this._logger.warn('unable to stop miner')
           this._logger.error(e)
+          process.exit(3)
         })
     }
 
