@@ -202,9 +202,9 @@ export class PeerManager {
         this.peerBookConnected.remove(peer)
       }
 
-      // if (this.peerBookDiscovered.has(peer)) {
-      //  this.peerBookDiscovered.remove(peer)
-      // }
+      if (this.peerBookDiscovered.has(peer)) {
+        this.peerBookDiscovered.remove(peer)
+      }
 
       if (peer.isConnected()) {
         peer.disconnect()
