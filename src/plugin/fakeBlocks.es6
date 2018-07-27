@@ -85,7 +85,7 @@ module.exports = {
 
     while (i < BLOCKS_TO_CREATE) {
       i++
-      const newBlock = createMockBlock([[6000000 + i], [i], [6000000 + i], [6000000 + i], [6000000 + i]])
+      const newBlock = createMockBlock([[6000000 + i], [6000000 + i], [6000000 + i], [6000000 + i], [6000000 + i]])
       newBlock.setHeight(i)
       newBlock.setHash(`${i}`)
       newBlock.setPreviousHash(block.getHash())

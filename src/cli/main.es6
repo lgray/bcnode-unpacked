@@ -256,6 +256,8 @@ const initErrorHandlers = (logger: Logger, errorHandlers: Object = {}) => {
     })
 
     process.on(errorName, (err) => {
+      // eslint-disable-next-line no-console
+      console.trace(err)
       handlers.forEach((handler) => handler(errorName, err))
     })
   })

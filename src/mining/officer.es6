@@ -195,7 +195,7 @@ export class MiningOfficer {
 
       // prepare a list of keys of headers to pull from persistence
       const newBlockHeadersKeys = flatten(Object.keys(lastPreviousBlock.getBlockchainHeaders().toObject()).map(listKey => {
-        this._logger.info('assembling minimum heights for ' + listKey)
+        this._logger.debug('assembling minimum heights for ' + listKey)
         const chain = keyOrMethodToChain(listKey)
         const lastHeaderInPreviousBlock = last(lastPreviousBlock.getBlockchainHeaders()[chainToGet(chain)]())
 
