@@ -13,7 +13,7 @@ import type { BcBlock } from '../protos/core_pb'
 const debug = require('debug')('bcnode:engine')
 const { EventEmitter } = require('events')
 const { queue } = require('async')
-const { resolve } = require('path')
+const { join, resolve } = require('path')
 const { writeFileSync } = require('fs')
 const { max } = require('ramda')
 const LRUCache = require('lru-cache')
@@ -271,6 +271,20 @@ export class Engine {
           this._logger.error(err)
         })
     })
+
+    // GENERATE BLOCKS - BEGIN
+
+    const BC_PLUGIN = process.env.BC_PLUGIN
+    if (BC_PLUGIN) {
+      const pluginPath = resolve(join(__dirname, '..', '..', BC_PLUGIN))
+
+      try {
+        const plugin = require(pluginPath)
+        await plugin.main(this)
+      } catch (err) {
+        console.log('PLUGIN ERROR', err)
+      }
+    }
 
     this.pubsub.subscribe('miner.block.new', '<engine>', ({ unfinishedBlock, solution }) => {
       return this._processMinedBlock(unfinishedBlock, solution).then((res) => {
