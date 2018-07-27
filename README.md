@@ -1,6 +1,6 @@
 Block Collider Node
 ===================
-#### Release Candidate 1 - "Boson Hunter"
+#### Release Candidate 2 - "Boson Friend"
 
 Mining node with built-in block rover, DHT, and peer discovery.
 
