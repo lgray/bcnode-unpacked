@@ -11,7 +11,7 @@
 const { Engine } = require('../engine/index')
 const { BcBlock, BlockchainHeader, BlockchainHeaders } = require('../protos/core_pb')
 const GENESIS_DATA = require('../bc/genesis.raw')
-const BLOCKS_TO_CREATE=100000
+const BLOCKS_TO_CREATE = 100000
 
 module.exports = {
   main: async (engine: Engine) => {
@@ -85,7 +85,7 @@ module.exports = {
 
     while (i < BLOCKS_TO_CREATE) {
       i++
-      const newBlock = createMockBlock([[2], [i], [2], [2], [2]])
+      const newBlock = createMockBlock([[6000000 + i], [i], [6000000 + i], [6000000 + i], [6000000 + i]])
       newBlock.setHeight(i)
       newBlock.setHash(`${i}`)
       newBlock.setPreviousHash(block.getHash())
