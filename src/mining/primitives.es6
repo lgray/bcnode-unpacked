@@ -111,17 +111,17 @@ export function getDiff (currentBlockTime: number, previousBlockTime: number, pr
 
   let bigMinimalDifficulty = new BN(minimalDifficulty, 16)
 
-  const bigPreviousBlockTime = new BN(previousBlockTime, 16)
+  const bigPreviousBlockTime = new BN(previousBlockTime)
   const bigPreviousDistance = new BN(previousDistance)
-  const bigCurentBlockTime = new BN(currentBlockTime, 16)
-  const bigMinus99 = new BN(-99, 16)
-  const big1 = new BN(1, 16)
-  const big0 = new BN(0, 16)
-  const bigTargetTimeWindow = new BN(6, 16)
+  const bigCurentBlockTime = new BN(currentBlockTime)
+  const bigMinus99 = new BN(-99)
+  const big1 = new BN(1)
+  const big0 = new BN(0)
+  const bigTargetTimeWindow = new BN(6)
   let elapsedTime = bigCurentBlockTime.sub(bigPreviousBlockTime)
 
   // elapsedTime + ((elapsedTime - 4) * newBlocks)
-  const elapsedTimeBonus = elapsedTime.add(elapsedTime.sub(new BN(4, 16)).mul(new BN(newBlockCount, 16)))
+  const elapsedTimeBonus = elapsedTime.add(elapsedTime.sub(new BN(4)).mul(new BN(newBlockCount)))
 
   if (elapsedTimeBonus.gt(big0)) {
     elapsedTime = elapsedTimeBonus
