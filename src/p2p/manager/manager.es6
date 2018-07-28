@@ -41,6 +41,7 @@ export class PeerManager {
   _peerNode: PeerNode // eslint-disable-line no-undef
   _lastQuorumSync: ?Date
   _quorumSyncing: boolean
+  _peerBookStale: Object
 
   constructor (node: PeerNode) {
     debug('constructor()')
@@ -50,6 +51,7 @@ export class PeerManager {
     this._peerBook = new ManagedPeerBook(this, 'main')
     this._peerBookConnected = new ManagedPeerBook(this, 'connected')
     this._peerBookDiscovered = new ManagedPeerBook(this, 'discovered')
+    this._peerBookStale = {}
     this._lastQuorumSync = null
     this._quorumSyncing = false
 
@@ -177,9 +179,9 @@ export class PeerManager {
             this._logger.debug(errMsg)
 
             // Throwing error is not needed, peer will be dialed once circuit is enabled
-            // if (this.peerBookDiscovered.has(peer)) {
-            //  this.peerBookDiscovered.remove(peer)
-            // }
+            if (this.peerBookDiscovered.has(peer)) {
+              this.peerBookDiscovered.remove(peer)
+            }
 
             return reject(err)
           }
@@ -198,17 +200,21 @@ export class PeerManager {
     debug('Event - peer:connect', peerId)
 
     const disconnectPeer = () => {
-      if (this.peerBookConnected.has(peer)) {
-        this.peerBookConnected.remove(peer)
-      }
+      this.bundle.hangup(peer, (err) => {
+        if (err) { this._logger.error(err) }
 
-      if (this.peerBookDiscovered.has(peer)) {
-        this.peerBookDiscovered.remove(peer)
-      }
+        if (this.peerBookConnected.has(peer)) {
+          this.peerBookConnected.remove(peer)
+        }
 
-      if (peer.isConnected()) {
-        peer.disconnect()
-      }
+        if (this.peerBookDiscovered.has(peer)) {
+          this.peerBookDiscovered.remove(peer)
+        }
+
+        if (peer.isConnected()) {
+          peer.disconnect()
+        }
+      })
     }
 
     if (this.peerBookConnected.has(peer)) {
@@ -281,17 +287,21 @@ export class PeerManager {
     debug('Checking peer status', peerId)
 
     const disconnectPeer = () => {
-      if (this.peerBookConnected.has(peer)) {
-        this.peerBookConnected.remove(peer)
-      }
+      this.bundle.hangup(peer, (err) => {
+        if (err) { this._logger.error(err) }
 
-      if (this.peerBookDiscovered.has(peer)) {
-        this.peerBookDiscovered.remove(peer)
-      }
+        if (this.peerBookConnected.has(peer)) {
+          this.peerBookConnected.remove(peer)
+        }
 
-      if (peer.isConnected()) {
-        peer.disconnect()
-      }
+        if (this.peerBookDiscovered.has(peer)) {
+          this.peerBookDiscovered.remove(peer)
+        }
+
+        if (peer.isConnected()) {
+          peer.disconnect()
+        }
+      })
     }
 
     const meta = {

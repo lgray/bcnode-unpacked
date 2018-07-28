@@ -36,21 +36,41 @@ export class Bundle extends libp2p {
         signaling,
         new WebSockets()
       ],
-      connection: {
-        muxer: [
-          Mplex,
-          SPDY
-        ],
-        crypto: [ SECIO ]
-      },
-      discovery: [
+      streamMuxer: [
+        Mplex,
+        SPDY
+      ],
+      connEncryption: [ SECIO ],
+      peerDiscovery: [
         new MDNS(peerInfo, { interval: broadcastInterval, broadcast: true, serviceTag: 'bcbt.local' }),
         signaling.discovery
       ],
-      DHT: KadDHT
+      dht: KadDHT
     }
 
-    super(modules, peerInfo, peerBook, opts)
+    const obj = {
+      peerInfo: peerInfo,
+      peerBook: peerBook,
+      modules: modules
+      // config: {
+      //  mdns: {
+      //    interval: broadcastInterval,
+      //    enabled: true
+      //  }
+      // },
+      // relay: {
+      //  enabled: false,
+      //  hop: {
+      //    enabled: false,
+      //    active: false
+      //  }
+      // },
+      // dhs: {
+      //  kBucketSize: 20
+      // }
+    }
+
+    super(obj, peerInfo, peerBook, opts)
     this._discoveryEnabled = true
   }
 
