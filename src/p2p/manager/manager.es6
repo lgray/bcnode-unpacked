@@ -245,9 +245,7 @@ export class PeerManager {
   onPeerConnect (peer: PeerInfo): Promise<bool> {
     const peerId = peer.id.toB58String()
     debug('Event - peer:connect', peerId)
-
     const count = this.peerBookConnected.getPeersCount()
-
     const disconnectPeer = () => {
       if (this.peerBookConnected.has(peer)) {
         this.peerBookConnected.remove(peer)
@@ -263,7 +261,7 @@ export class PeerManager {
     }
 
     if (this.peerBookConnected.has(peer)) {
-      debug(`Peer '${peerId}', already in connectedPeerBook`)
+      debug(`peer '${peerId}', already in connectedPeerBook`)
       return Promise.resolve(false)
     }
 
