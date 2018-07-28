@@ -13,7 +13,7 @@ const libp2p = require('libp2p')
 const KadDHT = require('libp2p-kad-dht')
 const Mplex = require('libp2p-mplex')
 const MDNS = require('libp2p-mdns')
-// const SECIO = require('libp2p-secio')
+const SECIO = require('libp2p-secio')
 const SPDY = require('libp2p-spdy')
 const PeerInfo = require('peer-info')
 const TCP = require('libp2p-tcp')
@@ -36,39 +36,19 @@ export class Bundle extends libp2p {
         signaling,
         new WebSockets()
       ],
-      streamMuxer: [
-        Mplex,
-        SPDY
-      ],
-      // connEncryption: [ SECIO ],
-      peerDiscovery: [
+      connection: {
+        muxer: [
+          Mplex,
+          SPDY
+        ],
+        crypto: [ SECIO ]
+      },
+      discovery: [
         new MDNS(peerInfo, { interval: broadcastInterval, broadcast: true, serviceTag: 'bcbt.local' }),
         signaling.discovery
       ],
-      dht: KadDHT
+      DHT: KadDHT
     }
-
-    // const obj = {
-    //  peerInfo: peerInfo,
-    //  peerBook: peerBook,
-    //  modules: modules
-    //  // config: {
-    //  //  mdns: {
-    //  //    interval: broadcastInterval,
-    //  //    enabled: true
-    //  //  }
-    //  // },
-    //  // relay: {
-    //  //  enabled: false,
-    //  //  hop: {
-    //  //    enabled: false,
-    //  //    active: false
-    //  //  }
-    //  // },
-    //  // dhs: {
-    //  //  kBucketSize: 20
-    //  // }
-    // }
 
     super(modules, peerInfo, peerBook, opts)
     this._discoveryEnabled = true
