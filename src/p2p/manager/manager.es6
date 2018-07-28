@@ -150,24 +150,17 @@ export class PeerManager {
   }
 
   removePeer (peer: Object): void {
-    this.bundle.hangup(peer, (err) => {
-      if (err) {
-        this._logger.warn('unable to hangup  with peer')
-        this._logger.error(err)
-      }
+    if (this.peerBookConnected.has(peer)) {
+      this.peerBookConnected.remove(peer)
+    }
 
-      if (this.peerBookConnected.has(peer)) {
-        this.peerBookConnected.remove(peer)
-      }
+    if (this.peerBookDiscovered.has(peer)) {
+      this.peerBookDiscovered.remove(peer)
+    }
 
-      if (this.peerBookDiscovered.has(peer)) {
-        this.peerBookDiscovered.remove(peer)
-      }
-
-      if (peer.isConnected()) {
-        peer.disconnect()
-      }
-    })
+    if (peer.isConnected()) {
+      peer.disconnect()
+    }
   }
 
   checkPeerSchedule (): void {
