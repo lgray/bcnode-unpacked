@@ -44,7 +44,7 @@ export class Bundle extends libp2p {
         crypto: [ SECIO ]
       },
       discovery: [
-        new MDNS(peerInfo, { interval: broadcastInterval, broadcast: true, serviceTag: 'bcbt.local' }),
+        new MDNS(peerInfo, { interval: broadcastInterval, broadcast: true }),
         signaling.discovery
       ],
       DHT: KadDHT
