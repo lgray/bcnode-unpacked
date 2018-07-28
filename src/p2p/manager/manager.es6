@@ -241,7 +241,7 @@ export class PeerManager {
 
     this.peerBookConnected.put(peer)
 
-    this._checkPeerStatus(peer)
+    return this._checkPeerStatus(peer)
       .then((peer) => {
         return this.createPeer(peer)
           .getLatestHeader()
