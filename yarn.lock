@@ -720,7 +720,7 @@ async-eventemitter@^0.2.2:
   dependencies:
     async "^2.4.0"
 
-async-eventemitter@ahultgren/async-eventemitter#fa06e39e56786ba541c180061dbf2c0a5bbf951c:
+"async-eventemitter@github:ahultgren/async-eventemitter#fa06e39e56786ba541c180061dbf2c0a5bbf951c":
   version "0.2.3"
   resolved "https://codeload.github.com/ahultgren/async-eventemitter/tar.gz/fa06e39e56786ba541c180061dbf2c0a5bbf951c"
   dependencies:
@@ -1615,7 +1615,7 @@ backo@1.1.0:
   version "1.1.0"
   resolved "https://registry.yarnpkg.com/backo/-/backo-1.1.0.tgz#a36c4468923f2d265c9e8a709ea56ecdaff807e6"
 
-bagpipe@Ivshti/bagpipe#ae11730ef59364b20868287fb3ce0970a87dc8c8:
+"bagpipe@github:Ivshti/bagpipe#ae11730ef59364b20868287fb3ce0970a87dc8c8":
   version "0.3.7"
   resolved "https://codeload.github.com/Ivshti/bagpipe/tar.gz/ae11730ef59364b20868287fb3ce0970a87dc8c8"
   dependencies:
@@ -2595,7 +2595,7 @@ buffer@^5.0.5:
     base64-js "^1.0.2"
     ieee754 "^1.1.4"
 
-buffers@bitpay/node-buffers#v0.1.2-bitpay, buffers@~0.1.1:
+"buffers@github:bitpay/node-buffers#v0.1.2-bitpay", buffers@~0.1.1:
   version "0.1.1"
   resolved "https://codeload.github.com/bitpay/node-buffers/tar.gz/04f4c4264e0d105db2b99b786843ed64f23230d8"
 
@@ -7249,9 +7249,9 @@ js-beautify@^1.5.4:
     mkdirp "~0.5.0"
     nopt "~3.0.1"
 
-js-nacl@LiskHQ/js-nacl#6dc1417:
+"js-nacl@github:liskhq/js-nacl#6dc1417":
   version "1.2.1"
-  resolved "https://codeload.github.com/LiskHQ/js-nacl/tar.gz/6dc1417057cd81381d332b370e82ceab1f2416af"
+  resolved "https://codeload.github.com/liskhq/js-nacl/tar.gz/6dc1417057cd81381d332b370e82ceab1f2416af"
 
 js-scrypt@^0.2.0:
   version "0.2.0"
@@ -8013,7 +8013,7 @@ libp2p-spdy@^0.12.1:
     spdy-transport "^2.1.0"
     stream-to-pull-stream "^1.7.2"
 
-libp2p-switch@^0.40.7, libp2p-switch@~0.40.7:
+libp2p-switch@^0.40.7, libp2p-switch@~0.40.4:
   version "0.40.7"
   resolved "https://registry.yarnpkg.com/libp2p-switch/-/libp2p-switch-0.40.7.tgz#415d486718c1d3fa2c3fa6e7157cfa644d494ca2"
   dependencies:
@@ -8116,9 +8116,9 @@ libp2p-websockets@^0.12.0, libp2p-websockets@~0.12.0:
     mafmt "^6.0.0"
     pull-ws "^3.3.1"
 
-libp2p@^0.23.0:
-  version "0.23.0"
-  resolved "https://registry.yarnpkg.com/libp2p/-/libp2p-0.23.0.tgz#779dc3694ae153d301d5fb693c131439e46b94e6"
+libp2p@^0.22.0:
+  version "0.22.0"
+  resolved "https://registry.yarnpkg.com/libp2p/-/libp2p-0.22.0.tgz#a67ac6748b05d760c3b87d3d9c6920e8704c78ce"
   dependencies:
     async "^2.6.1"
     joi "^13.4.0"
@@ -8126,12 +8126,12 @@ libp2p@^0.23.0:
     libp2p-connection-manager "~0.0.2"
     libp2p-floodsub "~0.15.0"
     libp2p-ping "~0.8.0"
-    libp2p-switch "~0.40.7"
+    libp2p-switch "~0.40.4"
     libp2p-websockets "~0.12.0"
     mafmt "^6.0.0"
     multiaddr "^5.0.0"
     peer-book "~0.8.0"
-    peer-id "~0.11.0"
+    peer-id "~0.10.7"
     peer-info "~0.14.1"
 
 linvodb3@^3.25.1:
@@ -13117,17 +13117,17 @@ util@0.10.3:
   dependencies:
     inherits "2.0.1"
 
-util@Ivshti/node-util:
-  version "0.10.3"
-  resolved "https://codeload.github.com/Ivshti/node-util/tar.gz/97b6beed8e0e478cd4184965ac94bf316f94e5f5"
-  dependencies:
-    inherits Ivshti/inherits
-
 util@^0.10.3:
   version "0.10.4"
   resolved "https://registry.yarnpkg.com/util/-/util-0.10.4.tgz#3aa0125bfe668a4672de58857d3ace27ecb76901"
   dependencies:
     inherits "2.0.3"
+
+"util@github:Ivshti/node-util":
+  version "0.10.3"
+  resolved "https://codeload.github.com/Ivshti/node-util/tar.gz/97b6beed8e0e478cd4184965ac94bf316f94e5f5"
+  dependencies:
+    inherits Ivshti/inherits
 
 utile@0.3.x:
   version "0.3.0"

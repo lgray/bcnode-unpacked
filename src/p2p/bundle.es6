@@ -48,29 +48,29 @@ export class Bundle extends libp2p {
       dht: KadDHT
     }
 
-    const obj = {
-      peerInfo: peerInfo,
-      peerBook: peerBook,
-      modules: modules
-      // config: {
-      //  mdns: {
-      //    interval: broadcastInterval,
-      //    enabled: true
-      //  }
-      // },
-      // relay: {
-      //  enabled: false,
-      //  hop: {
-      //    enabled: false,
-      //    active: false
-      //  }
-      // },
-      // dhs: {
-      //  kBucketSize: 20
-      // }
-    }
+    // const obj = {
+    //  peerInfo: peerInfo,
+    //  peerBook: peerBook,
+    //  modules: modules
+    //  // config: {
+    //  //  mdns: {
+    //  //    interval: broadcastInterval,
+    //  //    enabled: true
+    //  //  }
+    //  // },
+    //  // relay: {
+    //  //  enabled: false,
+    //  //  hop: {
+    //  //    enabled: false,
+    //  //    active: false
+    //  //  }
+    //  // },
+    //  // dhs: {
+    //  //  kBucketSize: 20
+    //  // }
+    // }
 
-    super(obj, peerInfo, peerBook, opts)
+    super(modules, peerInfo, peerBook, opts)
     this._discoveryEnabled = true
   }
 
