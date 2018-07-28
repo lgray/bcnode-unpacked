@@ -984,7 +984,7 @@ export class Engine {
                                     this._logger.info('legacy multiverse did not include current block')
 
                                     // determine if a sync is already in progress
-                                    return this.multiverse.issSyncLockActive().then((lock) => {
+                                    return this.multiverse.isSyncLockActive().then((lock) => {
                                       if (lock === false) {
                                         return this.persistence.put('synclock', this.multiverse.getHighestBlock())
                                           .then(() => {
