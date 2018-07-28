@@ -380,10 +380,16 @@ export class Multiverse {
       return Promise.resolve(false)
     }
 
-    // FAIL if new block not within 16 seconds of local time
+    // FAIL if new block not within 61 seconds of local time
     if (newBlock.getTimestamp() + 61 < Math.floor(Date.now() * 0.001)) {
       this._logger.info('failed resync req: time below 61 seconds')
       return Promise.resolve(false)
+    }
+
+    // PASS if current highest block is older than 300 seconds from local time
+    if (currentHighestBlock.getTimestamp() + 300 < Math.floor(Date.now() * 0.001)) {
+      this._logger.info('current on a stale chain')
+      return Promise.resolve(true)
     }
 
     if (this._chain.length < 2) {
