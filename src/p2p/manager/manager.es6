@@ -149,37 +149,35 @@ export class PeerManager {
     return this._peerNotes[peerId][eventId]
   }
 
-  removePeer(peer: Object): void {
+  removePeer (peer: Object): void {
+    this.bundle.hangup(peer, (err) => {
+      if (err) {
+        this._logger.warn('unable to hangup  with peer')
+        this._logger.error(err)
+      }
 
-      this.bundle.hangup(peer, (err) => {
-        if (err) {
-          this._logger.warn('unable to hangup  with peer')
-          this._logger.error(err)
-        }
+      if (this.peerBookConnected.has(peer)) {
+        this.peerBookConnected.remove(peer)
+      }
 
-        if (this.peerBookConnected.has(peer)) {
-          this.peerBookConnected.remove(peer)
-        }
+      if (this.peerBookDiscovered.has(peer)) {
+        this.peerBookDiscovered.remove(peer)
+      }
 
-        if (this.peerBookDiscovered.has(peer)) {
-          this.peerBookDiscovered.remove(peer)
-        }
-
-        if (peer.isConnected()) {
-          peer.disconnect()
-        }
-      })
-
+      if (peer.isConnected()) {
+        peer.disconnect()
+      }
+    })
   }
 
   checkPeerSchedule (): void {
     const now = Math.floor(Date.now() * 0.001)
     const keys = Object.keys(this._peerBookSchedule)
-    if(keys.length < 1) {
+    if (keys.length < 1) {
       return false
     }
     const expiredPeers = keys.filter((k) => {
-      if(now >= k){
+      if (now >= k) {
         return k
       }
     })
@@ -250,26 +248,18 @@ export class PeerManager {
 
     const count = this.peerBookConnected.getPeersCount()
 
-
     const disconnectPeer = () => {
-      this.bundle.hangup(peer, (err) => {
-        if (err) {
-          this._logger.warn('unable to hangup  with peer')
-          this._logger.error(err)
-        }
+      if (this.peerBookConnected.has(peer)) {
+        this.peerBookConnected.remove(peer)
+      }
 
-        if (this.peerBookConnected.has(peer)) {
-          this.peerBookConnected.remove(peer)
-        }
+      if (this.peerBookDiscovered.has(peer)) {
+        this.peerBookDiscovered.remove(peer)
+      }
 
-        if (this.peerBookDiscovered.has(peer)) {
-          this.peerBookDiscovered.remove(peer)
-        }
-
-        if (peer.isConnected()) {
-          peer.disconnect()
-        }
-      })
+      if (peer.isConnected()) {
+        peer.disconnect()
+      }
     }
 
     if (this.peerBookConnected.has(peer)) {
@@ -294,17 +284,15 @@ export class PeerManager {
       // this.peerNode.triggerBlockSync()
     }
 
-    if(count > 0 && count > Math.floor(QUORUM_SIZE / 2)){
+    if (count > 0 && count > Math.floor(QUORUM_SIZE / 2)) {
+      const now = Math.floor(Date.now() * 0.001)
+      const bound = Math.floor(Math.random() * 600) - 180
+      const l = now + bound
 
-       const now = Math.floor(Date.now() * 0.001)
-       const bound = Math.floor(Math.random() * 600) - 180
-       const l = now + bound
-
-       if(this._peerBookSchedule[l] === undefined){
+      if (this._peerBookSchedule[l] === undefined) {
         this._peerBookSchedule[l] = []
-       }
-       this._peerBookSchedule[l].push(peer)
-
+      }
+      this._peerBookSchedule[l].push(peer)
     }
 
     this.peerBookConnected.put(peer)
@@ -355,24 +343,17 @@ export class PeerManager {
     debug('Checking peer status', peerId)
 
     const disconnectPeer = () => {
-      this.bundle.hangup(peer, (err) => {
-        if (err) {
-          this._logger.warn('unable to hangup  with peer')
-          this._logger.error(err)
-        }
+      if (this.peerBookConnected.has(peer)) {
+        this.peerBookConnected.remove(peer)
+      }
 
-        if (this.peerBookConnected.has(peer)) {
-          this.peerBookConnected.remove(peer)
-        }
+      if (this.peerBookDiscovered.has(peer)) {
+        this.peerBookDiscovered.remove(peer)
+      }
 
-        if (this.peerBookDiscovered.has(peer)) {
-          this.peerBookDiscovered.remove(peer)
-        }
-
-        if (peer.isConnected()) {
-          peer.disconnect()
-        }
-      })
+      if (peer.isConnected()) {
+        peer.disconnect()
+      }
     }
 
     const meta = {
