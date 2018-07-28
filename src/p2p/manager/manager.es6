@@ -38,6 +38,7 @@ export class PeerManager {
   _peerNotes: Object // eslint-disable-line no-undef
   _peerBookConnected: ManagedPeerBook // eslint-disable-line no-undef
   _peerBookDiscovered: ManagedPeerBook // eslint-disable-line no-undef
+  _peerBookSchedule: Object // eslint-disable-line no-undef
   _peerNode: PeerNode // eslint-disable-line no-undef
   _lastQuorumSync: ?Date
   _quorumSyncing: boolean
@@ -48,6 +49,7 @@ export class PeerManager {
     this._logger = logging.getLogger(__filename)
     this._peerNode = node
     this._peerNotes = {}
+    this._peerBookSchedule = {}
     this._peerBook = new ManagedPeerBook(this, 'main')
     this._peerBookConnected = new ManagedPeerBook(this, 'connected')
     this._peerBookDiscovered = new ManagedPeerBook(this, 'discovered')
@@ -147,6 +149,53 @@ export class PeerManager {
     return this._peerNotes[peerId][eventId]
   }
 
+  removePeer(peer: Object): void {
+
+      this.bundle.hangup(peer, (err) => {
+        if (err) {
+          this._logger.warn('unable to hangup  with peer')
+          this._logger.error(err)
+        }
+
+        if (this.peerBookConnected.has(peer)) {
+          this.peerBookConnected.remove(peer)
+        }
+
+        if (this.peerBookDiscovered.has(peer)) {
+          this.peerBookDiscovered.remove(peer)
+        }
+
+        if (peer.isConnected()) {
+          peer.disconnect()
+        }
+      })
+
+  }
+
+  checkPeerSchedule (): void {
+    const now = Math.floor(Date.now() * 0.001)
+    const keys = Object.keys(this._peerBookSchedule)
+    if(keys.length < 1) {
+      return false
+    }
+    const expiredPeers = keys.filter((k) => {
+      if(now >= k){
+        return k
+      }
+    })
+
+    const expiredCount = expiredPeers.reduce((all, key) => {
+      this._peerBookSchedule[key].map((peer, i) => {
+        this.removePeer(peer)
+        all++
+      })
+      delete this._peerBookSchedule[key]
+      return all
+    }, 0)
+    this._logger.info('expired peers: ' + expiredCount)
+    return true
+  }
+
   createPeer (peerId: PeerInfo): Peer {
     return new Peer(this.bundle, peerId)
   }
@@ -199,9 +248,15 @@ export class PeerManager {
     const peerId = peer.id.toB58String()
     debug('Event - peer:connect', peerId)
 
+    const count = this.peerBookConnected.getPeersCount()
+
+
     const disconnectPeer = () => {
       this.bundle.hangup(peer, (err) => {
-        if (err) { this._logger.error(err) }
+        if (err) {
+          this._logger.warn('unable to hangup  with peer')
+          this._logger.error(err)
+        }
 
         if (this.peerBookConnected.has(peer)) {
           this.peerBookConnected.remove(peer)
@@ -237,6 +292,19 @@ export class PeerManager {
       this._lastQuorumSync = new Date()
 
       // this.peerNode.triggerBlockSync()
+    }
+
+    if(count > 0 && count > Math.floor(QUORUM_SIZE / 2)){
+
+       const now = Math.floor(Date.now() * 0.001)
+       const bound = Math.floor(Math.random() * 600) - 180
+       const l = now + bound
+
+       if(this._peerBookSchedule[l] === undefined){
+        this._peerBookSchedule[l] = []
+       }
+       this._peerBookSchedule[l].push(peer)
+
     }
 
     this.peerBookConnected.put(peer)
@@ -288,7 +356,10 @@ export class PeerManager {
 
     const disconnectPeer = () => {
       this.bundle.hangup(peer, (err) => {
-        if (err) { this._logger.error(err) }
+        if (err) {
+          this._logger.warn('unable to hangup  with peer')
+          this._logger.error(err)
+        }
 
         if (this.peerBookConnected.has(peer)) {
           this.peerBookConnected.remove(peer)
