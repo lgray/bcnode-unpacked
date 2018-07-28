@@ -166,7 +166,7 @@
     "libp2p-connection-manager": "^0.0.2",
     "libp2p-kad-dht": "^0.10.0",
     "libp2p-circuit": "^0.2.0",
-    "libp2p-crypto": "^0.13.0",
+    "libp2p-crypto": "^0.12.1",
     "libp2p-floodsub": "^0.15.0",
     "libp2p-mdns": "^0.11.0",
     "libp2p-mplex": "^0.8.0",
