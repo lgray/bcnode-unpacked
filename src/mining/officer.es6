@@ -295,7 +295,7 @@ export class MiningOfficer {
           // $FlowFixMe - Flow can't find out that ChildProcess is extended form EventEmitter
           this._workerProcess.on('exit', this._handleWorkerExit.bind(this))
 
-          this._logger.info('sending difficulty threshold to worker: ' + newBlock.getDifficulty())
+          this._logger.info('worker <- calculated difficulty threshold ' + newBlock.getDifficulty())
           // $FlowFixMe - Flow can't find out that ChildProcess is extended form EventEmitter
           this.startTimer('w1')
           this._workerProcess.send({

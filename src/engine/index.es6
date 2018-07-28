@@ -893,7 +893,7 @@ export class Engine {
           return this.multiverse.addResyncRequest(newBlock, this.miningOfficer._canMine)
             .then(shouldResync => {
               if (shouldResync === true) {
-                this._logger.info(newBlock.getHash() + ' new block: ' + newBlock.getHeight() + ' should sync request approved')
+                this._logger.info(newBlock.getHash() + ' <- new block: ' + newBlock.getHeight() + ' should sync request approved')
                 // 1. request multiverse from peer, if fail ignore
                 // succeed in getting multiverse -->
                 // 2. Compare purposed multiverse sum of difficulty with current sum of diff
@@ -1142,6 +1142,7 @@ export class Engine {
     }
 
     try {
+      this._logger.info('broadcasting block challenge ' + newBlock.getHash() + ' -> considered next block in current multiverse')
       this.node.broadcastNewBlock(newBlock)
 
       // NOTE: Do we really need nested try-catch ?
