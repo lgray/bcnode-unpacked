@@ -161,7 +161,7 @@
     "level-js": "^2.2.4",
     "leveldown": "^3.0.1",
     "levelup": "^2.0.2",
-    "libp2p": "^0.22.0",
+    "libp2p": "^0.21.0",
     "libp2p-switch": "^0.40.7",
     "libp2p-connection-manager": "^0.0.2",
     "libp2p-kad-dht": "^0.10.0",
