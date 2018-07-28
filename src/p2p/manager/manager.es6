@@ -150,16 +150,20 @@ export class PeerManager {
   }
 
   removePeer (peer: Object): void {
-    if (this.peerBookConnected.has(peer)) {
-      this.peerBookConnected.remove(peer)
-    }
+    try {
+      if (this.peerBookConnected.has(peer)) {
+        this.peerBookConnected.remove(peer)
+      }
 
-    if (this.peerBookDiscovered.has(peer)) {
-      this.peerBookDiscovered.remove(peer)
-    }
+      if (this.peerBookDiscovered.has(peer)) {
+        this.peerBookDiscovered.remove(peer)
+      }
 
-    if (peer.isConnected()) {
-      peer.disconnect()
+      if (peer.isConnected()) {
+        peer.disconnect()
+      }
+    } catch (err) {
+      this._logger.error(err)
     }
   }
 
@@ -169,11 +173,18 @@ export class PeerManager {
     if (keys.length < 1) {
       return false
     }
+
     const expiredPeers = keys.filter((k) => {
       if (now >= k) {
         return k
       }
     })
+
+    if (expiredPeers.length < 1) {
+      return false
+    }
+
+    this._logger.info(expiredPeers.length + ' peers -> schedule accepted')
 
     const expiredCount = expiredPeers.reduce((all, key) => {
       this._peerBookSchedule[key].map((peer, i) => {
@@ -183,7 +194,7 @@ export class PeerManager {
       delete this._peerBookSchedule[key]
       return all
     }, 0)
-    this._logger.info('expired peers: ' + expiredCount)
+    this._logger.info('peers cycled: ' + expiredCount)
     return true
   }
 
@@ -201,37 +212,70 @@ export class PeerManager {
     const peerId = peer.id.toB58String()
     debug('Event - peer:discovery', peerId)
 
-    if (!this.peerBookDiscovered.has(peer)) {
-      // TODO: Meta info ???
+    this.checkPeerSchedule()
+
+    if (!this.peerBookDiscovered.has(peer) && this.peerBookConnected.getPeersCount() >= QUORUM_SIZE) {
       this.peerBookDiscovered.put(peer)
-      debug(`Adding newly discovered peer '${peerId}' to discoveredPeerBook, count: ${this.peerBookDiscovered.getPeersCount()}`)
-    } else {
-      debug(`Discovered peer ${peerId} already in discoveredPeerBook`)
+      debug(`adding newly discovered peer '${peerId}' to discoveredPeerBook, count: ${this.peerBookDiscovered.getPeersCount()}`)
+      debug(`discovered peer ${peerId} already in discoveredPeerBook`)
+      const now = Math.floor(Date.now() * 0.001)
+      const bound = Math.floor(Math.random() * 500)
+      const l = now + bound
+      this._logger.info('peer scheduled bound ' + bound)
+
+      if (this._peerBookSchedule[l] === undefined) {
+        this._peerBookSchedule[l] = []
+      }
+      this._peerBookSchedule[l].push(peer)
+      return Promise.resolve(false)
+    } else if (this.peerBookConnected.getPeersCount() >= QUORUM_SIZE) {
+      return Promise.resolve(false)
     }
 
     if (!BC_P2P_PASSIVE && !this.peerBookConnected.has(peer) && (this.peerBookConnected.getPeersCount() < QUORUM_SIZE)) {
-      debug(`Dialing newly discovered peer ${peerId}`)
+      debug(`dialing newly discovered peer ${peerId}`)
       return new Promise((resolve, reject) => {
-        this.bundle.dial(peer, (err) => {
-          if (err) {
-            const errMsg = `Dialing discovered peer '${peerId}' failed, reason: '${err.message}' - peer will be redialed`
-            debug(errMsg)
-            this._logger.debug(errMsg)
+        try {
+          this.bundle.dial(peer, (err) => {
+            if (err) {
+              const errMsg = `dialing discovered peer '${peerId}' failed, reason: '${err.message}' - peer will be redialed`
+              debug(errMsg)
+              this._logger.debug(errMsg)
 
-            // Throwing error is not needed, peer will be dialed once circuit is enabled
-            if (this.peerBookDiscovered.has(peer)) {
-              this.peerBookDiscovered.remove(peer)
+              // Throwing error is not needed, peer will be dialed once circuit is enabled
+              if (this.peerBookDiscovered.has(peer)) {
+                this.peerBookDiscovered.remove(peer)
+              }
+
+              return reject(err)
             }
 
-            return reject(err)
+            this._logger.debug(`discovered peer successfully dialed ${peerId}`)
+            resolve(true)
+          })
+        } catch (err) {
+          const errMsg = `dialing discovered peer '${peerId}' failed, reason: '${err.message}' - peer will be redialed`
+          debug(errMsg)
+          this._logger.debug(errMsg)
+
+          // Throwing error is not needed, peer will be dialed once circuit is enabled
+          if (this.peerBookDiscovered.has(peer)) {
+            this.peerBookDiscovered.remove(peer)
           }
 
-          this._logger.debug(`Discovered peer successfully dialed ${peerId}`)
-          resolve(true)
-        })
+          return reject(err)
+        }
       })
     }
+    const now = Math.floor(Date.now() * 0.001)
+    const bound = Math.floor(Math.random() * 400)
+    const l = now + bound
+    this._logger.info('peer scheduled bound ' + bound)
 
+    if (this._peerBookSchedule[l] === undefined) {
+      this._peerBookSchedule[l] = []
+    }
+    this._peerBookSchedule[l].push(peer)
     return Promise.resolve(false)
   }
 
@@ -240,16 +284,20 @@ export class PeerManager {
     debug('Event - peer:connect', peerId)
     const count = this.peerBookConnected.getPeersCount()
     const disconnectPeer = () => {
-      if (this.peerBookConnected.has(peer)) {
-        this.peerBookConnected.remove(peer)
-      }
+      try {
+        if (this.peerBookConnected.has(peer)) {
+          this.peerBookConnected.remove(peer)
+        }
 
-      if (this.peerBookDiscovered.has(peer)) {
-        this.peerBookDiscovered.remove(peer)
-      }
+        if (this.peerBookDiscovered.has(peer)) {
+          this.peerBookDiscovered.remove(peer)
+        }
 
-      if (peer.isConnected()) {
-        peer.disconnect()
+        if (peer.isConnected()) {
+          peer.disconnect()
+        }
+      } catch (err) {
+        this._logger.error(err)
       }
     }
 
@@ -277,8 +325,9 @@ export class PeerManager {
 
     if (count > 0 && count > Math.floor(QUORUM_SIZE / 2)) {
       const now = Math.floor(Date.now() * 0.001)
-      const bound = Math.floor(Math.random() * 600) - 180
+      const bound = Math.floor(Math.random() * 700)
       const l = now + bound
+      this._logger.info('peer scheduled bound ' + bound)
 
       if (this._peerBookSchedule[l] === undefined) {
         this._peerBookSchedule[l] = []
@@ -334,16 +383,20 @@ export class PeerManager {
     debug('Checking peer status', peerId)
 
     const disconnectPeer = () => {
-      if (this.peerBookConnected.has(peer)) {
-        this.peerBookConnected.remove(peer)
-      }
+      try {
+        if (this.peerBookConnected.has(peer)) {
+          this.peerBookConnected.remove(peer)
+        }
 
-      if (this.peerBookDiscovered.has(peer)) {
-        this.peerBookDiscovered.remove(peer)
-      }
+        if (this.peerBookDiscovered.has(peer)) {
+          this.peerBookDiscovered.remove(peer)
+        }
 
-      if (peer.isConnected()) {
-        peer.disconnect()
+        if (peer.isConnected()) {
+          peer.disconnect()
+        }
+      } catch (err) {
+        this._logger.error(err)
       }
     }
 

@@ -76,7 +76,7 @@ export class PeersTable extends Component<*> {
       //   })
 
       const address = (
-        <div>{peer.addr.substring(0, 34)}</div>
+          <div>{peerId}</div>
       )
 
       const protocolVersion = (

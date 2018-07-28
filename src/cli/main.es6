@@ -11,6 +11,8 @@
 
 import type { Logger } from 'winston'
 
+// eslint-disable-next-line no-console
+console.warn = () => {}
 const colors = require('colors')
 const debug = require('debug')('bcnode:cli:main')
 const fs = require('fs')

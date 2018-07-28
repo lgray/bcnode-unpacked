@@ -205,7 +205,7 @@ export class Peer {
     return new Promise((resolve, reject) => {
       const expireRequest = setTimeout(() => {
         return reject(new Error('peer query expired'))
-      }, 30 * 1000)
+      }, 60 * 1000)
 
       this.bundle.dialProtocol(this.peerId, `${PROTOCOL_PREFIX}/rpc`, (err, conn) => {
         if (err) {

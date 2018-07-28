@@ -136,8 +136,8 @@ export function getDiff (currentBlockTime: number, previousBlockTime: number, pr
     x = bigMinus99
   }
 
-  // y = previousDifficulty / 1515520 // 1515520 = 74 * 20 * 1024 or the maximum absolute distance of two characters converted from ASCII code.
-  y = bigPreviousDistance.div(new BN(1660000))
+  // y = bigPreviousDifficulty -> SPECTRUM: 10062600 // AT: 1615520 // BT: (1024 * 160) + 20 = 163860
+  y = bigPreviousDistance.div(new BN(163860))
   // x = x * y
   x = x.mul(y)
   // x = x + previousDistance

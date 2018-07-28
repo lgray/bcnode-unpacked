@@ -10,6 +10,10 @@
 import type { Logger } from 'winston'
 import type { BcBlock } from '../protos/core_pb'
 
+/* eslint-disable */
+console.warn = () => {}
+/* eslint-enable */
+
 const debug = require('debug')('bcnode:engine')
 const { EventEmitter } = require('events')
 const { queue } = require('async')
@@ -742,6 +746,7 @@ export class Engine {
       .then((syncBlock) => {
         if (syncBlock.getHash() !== syncBlockHash) {
           // Another sync override --> break step
+          this._logger.warn('previous step sync canceled <- mismatched sync lock hash')
           return Promise.resolve(false)
         }
 
@@ -814,7 +819,6 @@ export class Engine {
           }
         })
       })
-
       .catch((e) => {
         this._logger.warn('sync failed')
         this._logger.error(e)
@@ -929,12 +933,10 @@ export class Engine {
                           this._logger.warn(newBlock.getHash() + ' incomplete proof')
                           return Promise.resolve(true)
                         }
-                        this._logger.info(1)
                         this._logger.info(newBlock.getHash() + ' recieved ' + newBlocks.length + ' blocks for multiverse proof')
                         const currentHeights = this.multiverse._chain.map(b => {
                           return b.getHeight()
                         })
-                        this._logger.info(2)
                         this._logger.info(newBlock.getHash() + ' new heights: ' + currentHeights)
 
                         const sorted = newBlocks.sort((a, b) => {
@@ -948,7 +950,6 @@ export class Engine {
                         })
 
                         this._logger.info('comparable blocks: ' + newBlocks.length)
-                        this._logger.info(11)
                         const highestBlock = this.multiverse.getHighestBlock()
                         this._logger.info(newBlock.getHash() + ' height: ' + newBlock.getHeight() + ' comparing with ' + highestBlock.getHash() + ' height: ' + highestBlock.getHeight())
                         let conditional = false
@@ -1135,8 +1136,6 @@ export class Engine {
    * @private
    */
   _broadcastMinedBlock (newBlock: BcBlock, solution: Object): Promise<boolean> {
-    this._logger.info('Broadcasting mined block')
-
     if (newBlock === undefined) {
       return Promise.reject(new Error('cannot broadcast empty block'))
     }

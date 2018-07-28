@@ -270,7 +270,7 @@ export class MiningOfficer {
         // if blockchains block count === 5 we will create a block with 6 blockchain blocks (which gets bonus)
         // if it's more, do not restart mining and start with new ones
         if (this._workerProcess && this._unfinishedBlock) {
-          this._logger.info(`new rovered block -> rebase miner`)
+          this._logger.info(`new rovered block -> accepted`)
           // TODO: Determine if this is needed
           return this.stopMining().then(() => {
             this._logger.info('mining stopped')
@@ -348,7 +348,7 @@ export class MiningOfficer {
 
   stopMining (): Promise<bool> {
     debug('stop mining')
-    this._logger.info('stop mining request')
+    this._logger.info('mining rebase pending')
 
     const process = this._workerProcess
     if (!process) {
@@ -359,14 +359,14 @@ export class MiningOfficer {
       try {
         process.disconnect()
       } catch (err) {
-        this._logger.info(`Unable to disconnect workerProcess, reason: ${err.message}`)
+        this._logger.info(`unable to disconnect workerProcess, reason: ${err.message}`)
       }
     }
 
     try {
       process.removeAllListeners()
     } catch (err) {
-      this._logger.info(`Unable to remove workerProcess listeners, reason: ${err.message}`)
+      this._logger.info(`unable to remove workerProcess listeners, reason: ${err.message}`)
     }
 
     // $FlowFixMe

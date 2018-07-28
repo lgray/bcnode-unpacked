@@ -3,7 +3,7 @@
 // if named .json babel will not pick it up during transpilation
 // hash is created from blake2bl(miner+merkleRoot+fingerprintsroot+emblemchainFingerpritnroot+difficulty)
 module.exports = {
-  "hash": "63ada97fa5c58d5b481c1a55cab7434fb228b4dc947f9dc5f6ff4363214c590f",
+  "hash": "a8212d5a65f579c2018b19172be34e4422a93c8437f8e7c19ddc8cad15353862",
   "previousHash": "b6615809ca3ff24562ce2724ef010e369a976cb9068570074f88919eaddcd08f",
   "version": 1,
   "schemaVersion": 1,
