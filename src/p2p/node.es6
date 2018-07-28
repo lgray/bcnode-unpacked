@@ -174,7 +174,7 @@ export class PeerNode {
           return this.manager.onPeerConnect(peer)
             .then((header) => {
               if (header !== undefined && header.getHeight !== undefined) {
-                const highestBlock = this.engine.multiverse.getHighestBlock()
+                const highestBlock = this._engine.multiverse.getHighestBlock()
                 if (highestBlock !== undefined) {
                   if (header.getHeight() + 2 < highestBlock.getHeight()) {
                     this.sendBlockToPeer(highestBlock, peer.id.toB58String())
