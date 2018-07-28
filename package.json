@@ -162,7 +162,7 @@
     "leveldown": "^3.0.1",
     "levelup": "^2.0.2",
     "libp2p": "^0.20.4",
-    "libp2p-switch": "^0.40.7",
+    "libp2p-switch": "^0.39.0",
     "libp2p-connection-manager": "^0.0.2",
     "libp2p-kad-dht": "^0.10.0",
     "libp2p-circuit": "^0.2.0",
