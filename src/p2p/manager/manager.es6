@@ -151,16 +151,8 @@ export class PeerManager {
 
   removePeer (peer: Object): void {
     try {
-      if (this.peerBookConnected.has(peer)) {
-        this.peerBookConnected.remove(peer)
-      }
-
       if (this.peerBookDiscovered.has(peer)) {
         this.peerBookDiscovered.remove(peer)
-      }
-
-      if (peer.isConnected()) {
-        peer.disconnect()
       }
     } catch (err) {
       this._logger.error(err)
@@ -213,6 +205,18 @@ export class PeerManager {
     debug('Event - peer:discovery', peerId)
 
     this.checkPeerSchedule()
+    const disconnectPeer = () => {
+      try {
+        if (this.peerBookConnected.has(peer)) {
+          this.peerBookConnected.remove(peer)
+        }
+        if (peer.isConnected()) {
+          peer.disconnect()
+        }
+      } catch (err) {
+        this._logger.error(err)
+      }
+    }
 
     if (!this.peerBookDiscovered.has(peer) && this.peerBookConnected.getPeersCount() >= QUORUM_SIZE) {
       this.peerBookDiscovered.put(peer)
@@ -227,8 +231,11 @@ export class PeerManager {
         this._peerBookSchedule[l] = []
       }
       this._peerBookSchedule[l].push(peer)
+
+      disconnectPeer()
       return Promise.resolve(false)
     } else if (this.peerBookConnected.getPeersCount() >= QUORUM_SIZE) {
+      disconnectPeer()
       return Promise.resolve(false)
     }
 
@@ -242,10 +249,7 @@ export class PeerManager {
               debug(errMsg)
               this._logger.debug(errMsg)
 
-              // Throwing error is not needed, peer will be dialed once circuit is enabled
-              if (this.peerBookDiscovered.has(peer)) {
-                this.peerBookDiscovered.remove(peer)
-              }
+              disconnectPeer()
 
               return reject(err)
             }
@@ -288,11 +292,6 @@ export class PeerManager {
         if (this.peerBookConnected.has(peer)) {
           this.peerBookConnected.remove(peer)
         }
-
-        if (this.peerBookDiscovered.has(peer)) {
-          this.peerBookDiscovered.remove(peer)
-        }
-
         if (peer.isConnected()) {
           peer.disconnect()
         }
@@ -387,11 +386,6 @@ export class PeerManager {
         if (this.peerBookConnected.has(peer)) {
           this.peerBookConnected.remove(peer)
         }
-
-        if (this.peerBookDiscovered.has(peer)) {
-          this.peerBookDiscovered.remove(peer)
-        }
-
         if (peer.isConnected()) {
           peer.disconnect()
         }
