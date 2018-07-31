@@ -100,6 +100,7 @@ export class PeerNode {
       this._scan.on('connection-closed', (connection, info) => {
 
       })
+
       return Promise.resolve(true)
     } catch (err) {
       return Promise.reject(err)
