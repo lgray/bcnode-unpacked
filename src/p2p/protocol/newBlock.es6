@@ -15,8 +15,8 @@ const debug = require('debug')('bcnode:protocol:newblock')
 const pull = require('pull-stream')
 
 const { BcBlock } = require('../../protos/core_pb')
-const { shouldBlockBeAddedToMultiverse } = require('../../engine/helper')
-const { isValidBlock } = require('../../bc/validation')
+// const { shouldBlockBeAddedToMultiverse } = require('../../engine/helper')
+// const { isValidBlock } = require('../../bc/validation')
 
 const { PROTOCOL_PREFIX } = require('./version')
 
@@ -27,6 +27,14 @@ const blake2bl = (input) => {
 export const register = (manager: PeerManager, bundle: Bundle) => {
   const uri = `${PROTOCOL_PREFIX}/newblock`
   debug(`Registering protocol - ${uri}`)
+
+  manager.engine.node.quasarSubcribe('newBlock', (data) => {
+    const raw = new Uint8Array(data)
+    const block = BcBlock.deserializeBinary(raw)
+
+    manager.engine._logger.info('---------------------------')
+    manager.engine._logger.info(block)
+  })
 
   bundle.handle(uri, (protocol, conn) => {
     pull(

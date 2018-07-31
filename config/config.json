@@ -1,5 +1,6 @@
 {
   "_version": 2,
+  "blockchainFingerprintsHash": "d65ffda8a561b53c09377ef7d3ee9ebbf18a618c603faf2631c1bbb7d66a03ac",
   "app": {
     "version": {
       "strictCheck": true
