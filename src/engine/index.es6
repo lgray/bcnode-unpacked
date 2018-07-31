@@ -32,7 +32,7 @@ const { Multiverse } = require('../bc/multiverse')
 const { getLogger } = require('../logger')
 const { Monitor } = require('../monitor')
 const { Node } = require('../p2p')
-const { NodeP2P2 } = require('../p2p2')
+// const { NodeP2P2 } = require('../p2p2')
 const { RoverManager } = require('../rover/manager')
 const rovers = require('../rover/manager').rovers
 const { Server } = require('../server/index')
@@ -60,7 +60,7 @@ export class Engine {
   _knownBlocksCache: LRUCache<string, BcBlock>
   _rawBlocks: LRUCache<number, Block>
   _node: Node
-  _nodep2p2: NodeP2P2
+  // _nodep2p2: NodeP2P2
   _persistence: PersistenceRocksDb
   _pubsub: PubSub
   _rovers: RoverManager
@@ -86,7 +86,7 @@ export class Engine {
     this._persistence = new PersistenceRocksDb(DATA_DIR)
     this._pubsub = new PubSub()
     this._node = new Node(this)
-    this._nodep2p2 = new NodeP2P2(this)
+    // this._nodep2p2 = new NodeP2P2(this)
     this._rovers = new RoverManager()
     this._emitter = new EventEmitter()
     this._rpc = new RpcServer(this)
@@ -490,8 +490,6 @@ export class Engine {
   startNode () {
     this._logger.info('Starting P2P node')
     this.node.start()
-    this.nodep2p2.start()
-
     this._emitter.on('peerConnected', ({ peer }) => {
       if (this._server) {
         this._server._wsBroadcastPeerConnected(peer)

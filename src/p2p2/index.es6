@@ -8,3 +8,4 @@
  */
 
 export { default as Node } from './node'
+export { default as Dialer } from './dialer'

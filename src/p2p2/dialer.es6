@@ -66,7 +66,7 @@ export class Dialer {
 
   async createDiscoveryScan (): Promise<Object> {
     try {
-      return Promise.resolve(this._discovery.start())
+      return this._discovery.start()
     } catch (err) {
       return Promise.reject(err)
     }

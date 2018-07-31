@@ -42,64 +42,68 @@ export class PeerNode {
   }
 
   async start () {
-    this._node = await this.bundle.createNode()
-    this._scan = await this.bundle.createDiscoveryScan()
+    try {
+      this._node = await this._dialer.createNode()
+      this._scan = await this._dialer.createDiscoveryScan()
+      this._events.on('peerData', (msg) => {
+        const peer = msg.peer
+        const peerId = peer.id.toString('hex')
+        const data = this._parser.readStr(msg.data)
+        const type = data[0]
 
-    this._events.on('peerData', (msg) => {
-      const peer = msg.peer
-      const peerId = peer.id.toString('hex')
-      const data = this._parser.readStr(msg.data)
-      const type = data[0]
+        // i -> peer introduction
+        // r -> request (future)
+        // b -> delivery of blocks
 
-      // i -> peer introduction
-      // r -> request (future)
-      // b -> delivery of blocks
+        if (type === 'i') { // peer introduction
+          const parts = data.split('*')
+          const host = parts[1]
+          const port = parts[2]
+          const remoteNodeId = parts[3]
 
-      if (type === 'i') { // peer introduction
-        const parts = data.split('*')
-        const host = parts[1]
-        const port = parts[2]
-        const remoteNodeId = parts[3]
+          if (this._node.remoteNodeToPeerId[remoteNodeId] !== undefined) {
+            return
+          }
 
-        if (this._node.remoteNodeToPeerId[remoteNodeId] !== undefined) {
+          this._node.remoteNodeToPeerId[remoteNodeId] = peerId
+          this._node.peerToRemoteNodeId[peerId] = remoteNodeId
+
+          const req = [remoteNodeId, {
+            hostname: host,
+            port: port
+          }]
+
+          this._node.join(req, () => {
+            this._events.emit('newNode', req)
+          })
+        } else if (type === 'r') { // request
+
+        } else if (type === 'b') { // bulk block delivery
+
+        } else {
+          this._logger.warn('unable to parse peer message type: ' + type)
+        }
+      })
+
+      this._scan.on('connection', (peer, info, type) => {
+        const peerId = peer.id.toString('hex')
+
+        if (this._node.peerToRemoteNodeId[peerId] !== undefined) {
           return
         }
 
-        this._node.remoteNodeToPeerId[remoteNodeId] = peerId
-        this._node.peerToRemoteNodeId[peerId] = remoteNodeId
-
-        const req = [remoteNodeId, {
-          hostname: host,
-          port: port
-        }]
-
-        this._node.join(req, () => {
-          this._events.emit('newNode', req)
+        peer.on('data', (data) => {
+          this._events.emit('peerData', { peer: peer, data: data })
         })
-      } else if (type === 'r') { // request
-
-      } else if (type === 'b') { // bulk block delivery
-
-      } else {
-        this._logger.warn('unable to parse peer message type: ' + type)
-      }
-    })
-
-    this._scan.on('connection', (peer, info, type) => {
-      const peerId = peer.id.toString('hex')
-
-      if (this._node.peerToRemoteNodeId[peerId] !== undefined) {
-        return
-      }
-
-      peer.on('data', (data) => {
-        this._events.emit('peerData', { peer: peer, data: data })
       })
-    })
 
-    this._scan.on('connection-closed', (connection, info) => {
+      this._scan.on('connection-closed', (connection, info) => {
 
-    })
+      })
+      return Promise.resolve(true)
+    } catch (err) {
+      return Promise.reject(err)
+    }
   }
 
   get multiverse (): Multiverse {
