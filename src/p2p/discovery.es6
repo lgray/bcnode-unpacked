@@ -14,6 +14,7 @@ export class Discovery {
 
   constructor (opts: ?Object) {
     this.port = 16600 + Math.floor(Math.random() * 20)
+    this.hash = blake2bl('bt01_' + config.blockchainFingerprintsHash) // peers that do not update for one year
     this.swarm = swarm({
       tcp: false,
       dht: false,
@@ -22,8 +23,6 @@ export class Discovery {
   }
 
   start () {
-    this.hash = blake2bl('bt01_' + config.blockchainFingerprintsHash) // peers that do not update for one year
-
     this.swarm.listen(this.port)
 
     this.swarm.join(this.hash)
