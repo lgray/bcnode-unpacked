@@ -17,7 +17,7 @@ const globalLog = logging.getLogger(__filename)
 // setup logging of unhandled rejections
 process.on('unhandledRejection', (err) => {
   // $FlowFixMe
-  globalLog.error(`Rejected promise, trace:\n${err.stack}`)
+  globalLog.debug(`rejected promise, trace:\n${err.stack}`)
 })
 
 const Controller = require('./controller').default

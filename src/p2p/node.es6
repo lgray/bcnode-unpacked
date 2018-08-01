@@ -33,7 +33,7 @@ const { PeerManager, DATETIME_STARTED_AT, QUORUM_SIZE } = require('./manager/man
 // const { validateBlockSequence } = require('../bc/validation')
 const { Multiverse } = require('../bc/multiverse')
 const { BlockPool } = require('../bc/blockpool')
-const { stringToHex, hexToString, anyDns } = require('../engine/helper')
+const { anyDns } = require('../engine/helper')
 // const { blockByTotalDistanceSorter } = require('../engine/helper')
 
 const { PROTOCOL_PREFIX, NETWORK_ID } = require('./protocol/version')
@@ -132,10 +132,6 @@ export class PeerNode {
       (cb: Function) => {
         this._logger.info('Generating peer info')
         PeerInfo.create(cb)
-      },
-
-      // Initialize quasar messaging
-      (_quasar: Object, cb: Function) => {
       },
 
       // Join p2p network
@@ -531,7 +527,7 @@ export class PeerNode {
 
     // this.bundle.pubsub.publish('newBlock', Buffer.from(JSON.stringify(block.toObject())), () => {})
     // const raw = block.serializeBinary()
-    this._quasar.publishQuasar('newblock', block.toObject())
+    this.quasar.publishQuasar('newblock', block.toObject())
 
     const url = `${PROTOCOL_PREFIX}/newblock`
     this.manager.peerBookConnected.getAllArray().map(peer => {

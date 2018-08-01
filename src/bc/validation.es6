@@ -238,9 +238,9 @@ export function blockchainHeadersAreChain (childHeaderList: BlockchainHeader[]|B
   if (!firstChildHeader || !lastParentHeader) {
     const nonEmpty = firstChildHeader || lastParentHeader
     if (nonEmpty) {
-      logger.warn(`First child header or last parent header were empty for chain ${nonEmpty.getBlockchain()}`)
+      logger.warn(`first child header or last parent header were empty for chain ${nonEmpty.getBlockchain()}`)
     } else {
-      logger.warn(`Both first child header and last parent header were missing`)
+      logger.warn(`both first child header and last parent header were missing`)
     }
     return false
   }
@@ -250,7 +250,7 @@ export function blockchainHeadersAreChain (childHeaderList: BlockchainHeader[]|B
     firstChildHeader.getHash() === lastParentHeader.getHash()
 
   if (!check) {
-    logger.info(`chain: "${firstChildHeader.getBlockchain()}" First child header ${inspect(firstChildHeader.toObject())} is not a child of last parent header ${inspect(lastParentHeader.toObject())}`)
+    logger.debug(`chain: "${firstChildHeader.getBlockchain()}" first child header ${inspect(firstChildHeader.toObject())} is not a child of last parent header ${inspect(lastParentHeader.toObject())}`)
     // return check // Disabled until AT
   }
 

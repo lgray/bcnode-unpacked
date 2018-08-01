@@ -13,7 +13,6 @@ function Discovery () {
   this.port = 16600 + Math.floor(Math.random() * 20)
   this._logger = logging.getLogger(__filename)
   this.hash = hash
-  this._logger.info('hash: ' + hash)
   this.swarm = swarm({
     tcp: false,
     dht: false,

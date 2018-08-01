@@ -99,7 +99,7 @@ export class MiningOfficer {
   async newRoveredBlock (rovers: string[], block: Block): Promise<number|false> {
     this._collectedBlocks[block.getBlockchain()] += 1
 
-    this._logger.info('[+1] ' + block.getBlockchain() + ' rover ' + ' discovered block ' + block.getHeight() + ' ' + block.getHash())
+    this._logger.info('[' + block.getBlockchain() + ' rover]' + ' transmitted block ' + block.getHeight() + ' ' + block.getHash())
     // TODO: Adjust minimum count of collected blocks needed to trigger mining
     if (!this._canMine && all((numCollected: number) => numCollected >= 1, values(this._collectedBlocks))) {
       this._canMine = true
@@ -108,7 +108,7 @@ export class MiningOfficer {
     // Check if _canMine
     if (!this._canMine) {
       const keys = Object.keys(this._collectedBlocks)
-      const values = '|' + keys.reduce((all, a, i) => {
+      const values = '[' + keys.reduce((all, a, i) => {
         const val = this._collectedBlocks[a]
         if (i === (keys.length - 1)) {
           all = all + a + ':' + val
@@ -116,7 +116,7 @@ export class MiningOfficer {
           all = all + a + ':' + val + ' '
         }
         return all
-      }, '') + '|'
+      }, '') + ']'
 
       const totalBlocks = keys.reduce((all, key) => {
         return all + this._collectedBlocks[key]
