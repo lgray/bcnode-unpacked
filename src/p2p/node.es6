@@ -301,6 +301,7 @@ export class PeerNode {
       // initialize quasar p2p messaging
       (cb) => {
         this._logger.info('initialize p2p messaging...')
+
         return dns.getIPv4().then((ip) => {
           this._externalIP = ip
           this._logger.info(ip)
