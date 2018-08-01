@@ -7,6 +7,7 @@
  * @flow
  */
 
+/* eslint-disable */
 import type { Engine } from '../engine'
 
 const { inspect } = require('util')
