@@ -27,7 +27,7 @@ const logging = require('../logger')
 const { BcBlock } = require('../protos/core_pb')
 const { ManagedPeerBook } = require('./book')
 const Bundle = require('./bundle').default
-const { Discovery } = require('./discovery')
+const Discovery = require('./discovery')
 const Signaling = require('./signaling').websocket
 const { PeerManager, DATETIME_STARTED_AT, QUORUM_SIZE } = require('./manager/manager')
 // const { validateBlockSequence } = require('../bc/validation')
@@ -59,7 +59,7 @@ export class PeerNode {
   _quasarDbDirectory: string // eslint-disable-line no-undef
   _quasarDbPath: string // eslint-disable-line no-undef
   _quasar: Object // eslint-disable-line no-undef
-  _discovery: Object // eslint-disable-line no-undef
+  _scanner: Object // eslint-disable-line no-undef
   _externalIP: string // eslint-disable-line no-undef
 
   constructor (engine: Engine) {
@@ -324,41 +324,30 @@ export class PeerNode {
         this._logger.info('p2p messaging failed')
         this._logger.error(err)
       }
-      //  },
-      // begin peer discovery scannning
-      //  (cb) => {
       this._logger.info('start far reaching discovery...')
       try {
         const discovery = new Discovery()
+        const scan = discovery.start()
         this._logger.info('discovery edge seed: ' + discovery.hash)
-        this._discovery = discovery.start()
+        this._scanner = scan
         this._logger.info('successful discovery start')
+        // TODO: Likely hard exit here
+        // TODO: Adjust difficulty bound to 8-9 seconds
+        this._logger.info('p2p services online')
+        scan.on('connection', (peer, info, type) => {
+          this._logger.info('peer connected ' + peer.id.toString('hex'))
+          this.peerNewConnectionHandler(peer, info, type)
+        })
+        scan.on('connection-closed', (peer, info) => {
+          this._logger.info('peer connection closed ' + peer.id.toString('hex'))
+          this.peerClosedConnectionHandler(peer, info)
+        })
+
+        this._logger.info('p2p events registered')
       } catch (err) {
         this._logger.info('far reaching discovery failed to start')
         this._logger.error(err)
       }
-      //  }
-      // ], (err) => {
-      //  if (err) {
-      // this._logger.warn('p2p services failed to start')
-      // this._logger.error(err)
-      // TODO: Likely hard exit here
-      // TODO: Adjust difficulty bound to 8-9 seconds
-      //  } else {
-      this._logger.info('p2p services online')
-      // register event listeners
-      this._discovery.on('connection', (peer, info, type) => {
-        this._logger.info('peer connected ' + peer.id.toString('hex'))
-        this.peerNewConnectionHandler(peer, info, type)
-      })
-      this._discovery.on('connection-closed', (peer, info) => {
-        this._logger.info('peer connection closed ' + peer.id.toString('hex'))
-        this.peerClosedConnectionHandler(peer, info)
-      })
-      // this._discovery.on('redundant-connection', (peer, info) => {
-      //  this.peerClosedConnectionHandler(peer, info, type)
-      // })
-      this._logger.info('p2p events registered')
     })
       .catch((err) => {
         this._logger.error(err)
@@ -367,8 +356,6 @@ export class PeerNode {
       })
     //  }
     // })
-
-    return true
   }
 
   registerPeerEventsHandler (peer: Object) {
