@@ -291,7 +291,8 @@ export class PeerNode {
           identity: this._identity,
           transport: new kad.UDPTransport(),
           storage: levelup(leveldown(this._quasarDbPath)),
-          contact: contact
+          contact: contact,
+          logger: this._logger
         })
 
         this._quasar.plugin(require('kad-quasar'))
@@ -507,7 +508,7 @@ export class PeerNode {
 
     // this.bundle.pubsub.publish('newBlock', Buffer.from(JSON.stringify(block.toObject())), () => {})
     // const raw = block.serializeBinary()
-    this._quasar.publishQuasar('newblock', block.toObject())
+    this._quasar.quasarPublish('newblock', block.toObject())
 
     const url = `${PROTOCOL_PREFIX}/newblock`
     this.manager.peerBookConnected.getAllArray().map(peer => {
