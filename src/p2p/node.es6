@@ -357,8 +357,18 @@ export class PeerNode {
       } else {
         this._logger.info('p2p services online')
         // register event listeners
-        this._discovery.on('connection', this.peerNewConnectionHandler)
-        this._discovery.on('connection-closed', this.peerClosedConnectionHandler)
+        this._discovery.on('connection', (peer, info, type) => {
+          this._logger.info('peer connected ' + peer.id.toString('hex'))
+          this.peerNewConnectionHandler(peer, info, type)
+        })
+        this._discovery.on('connection-closed', (peer, info) => {
+          this._logger.info('peer connection closed ' + peer.id.toString('hex'))
+          this.peerClosedConnectionHandler(peer, info)
+        })
+        // this._discovery.on('redundant-connection', (peer, info) => {
+        //  this.peerClosedConnectionHandler(peer, info, type)
+        // })
+        this._logger.info('p2p events registered')
       }
     })
 
@@ -377,12 +387,13 @@ export class PeerNode {
     const connectionId = peer.id.toString('hex')
     this._logger.info('peer connected ' + connectionId)
     // TODO: Check if this connection is unique
+    this._logger.info('peer of connectionId joined: ' + connectionId)
     this.registerPeerEventsHandler(peer)
   }
 
   peerClosedConnectionHandler (peer: Object, info: Object) {
     const connectionId = peer.id.toString('hex')
-    this._logger.info('peer disconnection ' + connectionId)
+    this._logger.info('peer disconnect ' + connectionId)
     // TODO: Update current connected peers remove or otherwise
   }
 
