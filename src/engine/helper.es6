@@ -12,6 +12,7 @@ import type BcBlock from '../protos/core_pb'
 
 const BN = require('bn.js')
 const bitPony = require('bitpony')
+const dns = require('bdns')
 
 /**
  * High-level functions
@@ -55,6 +56,14 @@ export const doesNewBlockPreviousHashReferenceBlockInMultiverse = (newBlock: BcB
 
 export const stringToHex = (str) => {
   return bitPony.string.write(str).toString('hex')
+}
+
+export const anyDns = async () => {
+  try {
+    return await dns.getIPv4()
+  } catch (err) {
+    return new Error('unable to determine exteral IP address')
+  }
 }
 
 export const utf8ArrayToString = (array): string => {

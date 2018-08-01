@@ -33,7 +33,7 @@ const { PeerManager, DATETIME_STARTED_AT, QUORUM_SIZE } = require('./manager/man
 // const { validateBlockSequence } = require('../bc/validation')
 const { Multiverse } = require('../bc/multiverse')
 const { BlockPool } = require('../bc/blockpool')
-const { utf8ArrayToString } = require('../engine/helper')
+const { utf8ArrayToString, stringToHex } = require('../engine/helper')
 // const { blockByTotalDistanceSorter } = require('../engine/helper')
 
 const { PROTOCOL_PREFIX, NETWORK_ID } = require('./protocol/version')
@@ -61,6 +61,7 @@ export class PeerNode {
   _quasarDbPath: string // eslint-disable-line no-undef
   _quasar: Object // eslint-disable-line no-undef
   _discovery: Object // eslint-disable-line no-undef
+  _externalIP: string // eslint-disable-line no-undef
 
   constructor (engine: Engine) {
     const manualDirectory = process.env.BC_DATA_DIR || config.persistence.path
@@ -301,6 +302,7 @@ export class PeerNode {
       (cb) => {
         this._logger.info('initialize p2p messaging...')
         return dns.getIPv4().then((ip) => {
+          this._externalIP = ip
           this._logger.info(ip)
           try {
             const contact = {
@@ -362,16 +364,18 @@ export class PeerNode {
     return true
   }
 
+  registerPeerEventsHandler (peer: Object) {
+    // send peer greating
+    peer.write(stringToHex('i*' + this._externalIP + '*' + this._quasarPort + '*' + this._identity))
+    peer.on('data', (data) => {
+      this.peerDataHandler(peer, data)
+    })
+  }
+
   peerNewConnectionHandler (peer: Object, info: Object, type: string) {
     const connectionId = peer.id.toString('hex')
     this._logger.info('peer connected ' + connectionId)
     // TODO: Check if this connection is unique
-
-    peer.write(parser.writeStr('i*' + ip + '*' + qport + '*' + remoteNodeIdentity))
-
-    peer.on('data', (data) => {
-      this.peerDataHandler(peer, data)
-    })
   }
 
   peerClosedConnectionHandler (peer: Object, info: Object) {
