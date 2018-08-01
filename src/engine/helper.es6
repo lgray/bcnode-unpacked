@@ -11,6 +11,7 @@ import type Multiverse from '../bc/multiverse'
 import type BcBlock from '../protos/core_pb'
 
 const BN = require('bn.js')
+const bitPony = require('bitpony')
 
 /**
  * High-level functions
@@ -50,6 +51,43 @@ export const timestampIsSignificantSecondsBelowLocalTime = (newBlock: BcBlock): 
 
 export const doesNewBlockPreviousHashReferenceBlockInMultiverse = (newBlock: BcBlock, multiverse: Multiverse): boolean => {
   return multiverse.addNextBlock(newBlock)
+}
+
+export const stringToHex = (str) => {
+  return bitPony.string.write(str).toString('hex')
+}
+
+export const utf8ArrayToString = (array): string => {
+  var out, i, len, c
+  var char2, char3
+
+  out = ''
+  len = array.length
+  i = 0
+  while (i < len) {
+    c = array[i++]
+    switch (c >> 4) {
+      case 0: case 1: case 2: case 3: case 4: case 5: case 6: case 7:
+        // 0xxxxxxx
+        out += String.fromCharCode(c)
+        break
+      case 12: case 13:
+        // 110x xxxx   10xx xxxx
+        char2 = array[i++]
+        out += String.fromCharCode(((c & 0x1F) << 6) | (char2 & 0x3F))
+        break
+      case 14:
+        // 1110 xxxx  10xx xxxx  10xx xxxx
+        char2 = array[i++]
+        char3 = array[i++]
+        out += String.fromCharCode(((c & 0x0F) << 12) |
+                       ((char2 & 0x3F) << 6) |
+                       ((char3 & 0x3F) << 0))
+        break
+    }
+  }
+
+  return out
 }
 
 export const isNewBlockHeightLowerThanLowestInMultiverse = (newBlock: BcBlock, multiverse: Multiverse): boolean => {

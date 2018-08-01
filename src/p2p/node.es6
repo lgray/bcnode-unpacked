@@ -13,6 +13,7 @@ const { inspect } = require('util')
 
 const PeerInfo = require('peer-info')
 const waterfall = require('async/waterfall')
+const parallel = require('async/parallel')
 const multiaddr = require('multiaddr')
 const pull = require('pull-stream')
 // const { uniqBy } = require('ramda')
@@ -26,14 +27,22 @@ const logging = require('../logger')
 const { BcBlock } = require('../protos/core_pb')
 const { ManagedPeerBook } = require('./book')
 const Bundle = require('./bundle').default
+const Discovery = require('./discovery').default
 const Signaling = require('./signaling').websocket
 const { PeerManager, DATETIME_STARTED_AT, QUORUM_SIZE } = require('./manager/manager')
 // const { validateBlockSequence } = require('../bc/validation')
 const { Multiverse } = require('../bc/multiverse')
 const { BlockPool } = require('../bc/blockpool')
+const { utf8ArrayToString } = require('../engine/helper')
 // const { blockByTotalDistanceSorter } = require('../engine/helper')
 
 const { PROTOCOL_PREFIX, NETWORK_ID } = require('./protocol/version')
+//
+const kad = require('kad')
+const dns = require('bdns')
+const levelup = require('levelup')
+const leveldown = require('leveldown')
+const fs = require('fs-extra')
 
 // const { PEER_QUORUM_SIZE } = require('./quorum')
 
@@ -44,15 +53,29 @@ export class PeerNode {
   _bundle: Bundle // eslint-disable-line no-undef
   _manager: PeerManager // eslint-disable-line no-undef
   _peer: PeerInfo // eslint-disable-line no-undef
-  _multiverse: Multiverse
-  _blockPool: BlockPool
+  _multiverse: Multiverse // eslint-disable-line no-undef
+  _blockPool: BlockPool // eslint-disable-line no-undef
+  _identity: string // eslint-disable-line no-undef
+  _quasarPort: number // eslint-disable-line no-undef
+  _quasarDbDirectory: string // eslint-disable-line no-undef
+  _quasarDbPath: string // eslint-disable-line no-undef
+  _quasar: Object // eslint-disable-line no-undef
+  _discovery: Object // eslint-disable-line no-undef
 
   constructor (engine: Engine) {
+    const manualDirectory = process.env.BC_DATA_DIR || config.persistence.path
+
     this._engine = engine
     this._multiverse = new Multiverse(engine.persistence) /// !important this is a (nonselective) multiverse
     this._blockPool = new BlockPool(engine.persistence, engine._pubsub)
     this._logger = logging.getLogger(__filename)
     this._manager = new PeerManager(this)
+    this._identity = kad.utils.getRandomKeyString()
+    this._quasarPort = 10006 + Math.floor(Math.random() * 10000)
+    this._quasarDbDirectory = manualDirectory + '/quasar'
+    this._quasarDbPath = manualDirectory + '/quasar/dht.db'
+
+    fs.ensureDirSync(manualDirectory + '/quasar')
 
     if (config.p2p.stats.enabled) {
       this._interval = setInterval(() => {
@@ -103,6 +126,10 @@ export class PeerNode {
         PeerInfo.create(cb)
       },
 
+      // Initialize quasar messaging
+      (_quasar: Object, cb: Function) => {
+      },
+
       // Join p2p network
       (peerInfo: PeerInfo, cb: Function) => {
         const peerId = peerInfo.id.toB58String()
@@ -134,7 +161,8 @@ export class PeerNode {
 
       // Create node
       (peerInfo: PeerInfo, cb: Function) => {
-        this._logger.info('Creating P2P node')
+        this._logger.info('creating P2P node')
+
         const opts = {
           signaling: Signaling.initialize(peerInfo),
           relay: false
@@ -144,9 +172,36 @@ export class PeerNode {
         cb(null, this._bundle)
       },
 
+      // Start
+      // (quasar: Object, cb: Function) => {
+      //  this._logger.info('starting Quasar P2P node')
+      //  dns.getIPv4().then((ip) => {
+      //    const contact = {
+      //      hostname: ip,
+      //      port: this._quasarPort
+      //    }
+
+      //    const network = kad({
+      //      identity: this._identity,
+      //      transport: new kad.UDPTransport(),
+      //      storage: levelup(leveldown(this._quasarDbPath)),
+      //      contact: contact
+      //    })
+
+      //    network.plugin(require('kad-quasar'))
+      //    network.listen(this._quasarPort)
+      //    cb(null, network)
+      //  })
+      //    .catch((err) => {
+      //      this._logger.error(err)
+      //      this._logger.error(new Error('unable to start p2p node'))
+      //      cb(err)
+      //    })
+      // },
+
       // Start node
       (bundle: Object, cb: Function) => {
-        this._logger.info('Starting P2P node')
+        this._logger.info('starting P2P node')
 
         bundle.start((err) => {
           if (err) {
@@ -205,11 +260,28 @@ export class PeerNode {
         cb(null)
       },
 
+      // Start discovery
+      // (_discovery: Object, cb: Function) => {
+      //  this._logger.info('starting far reaching discovery')
+      //  try {
+      //    const discovery = new Discovery()
+      //    const scan = discovery.start()
+      //    cb(null, scan)
+      //  } catch (err) {
+      //    this._logger.error(err)
+      //    cb(err)
+      //  }
+      // },
+
       // Register protocols
       (cb: Function) => {
         this._logger.info('Registering protocols')
-        this.manager.registerProtocols(this.bundle)
-        cb(null)
+        try {
+          this.manager.registerProtocols(this.bundle)
+          cb(null)
+        } catch (err) {
+          cb(err)
+        }
       }
     ]
   }
@@ -224,7 +296,136 @@ export class PeerNode {
       this._logger.info('P2P node started')
     })
 
+    parallel([
+      // initialize quasar p2p messaging
+      (cb) => {
+        this._logger.info('initialize p2p messaging...')
+        return dns.getIPv4().then((ip) => {
+          this._logger.info(ip)
+          try {
+            const contact = {
+              hostname: ip,
+              port: this._quasarPort
+            }
+
+            this._quasar = kad({
+              identity: this._identity,
+              transport: new kad.UDPTransport(),
+              storage: levelup(leveldown(this._quasarDbPath)),
+              contact: contact
+            })
+
+            this._quasar.plugin(require('kad-quasar'))
+            this._quasar.listen(this._quasarPort)
+            this._logger.info('p2p messaging initialized')
+            cb(null)
+          } catch (err) {
+            this._logger.info('p2p messaging failed')
+            this._logger.error(err)
+            cb(err)
+          }
+        })
+          .catch((err) => {
+            this._logger.error(err)
+            this._logger.error(new Error('unable to start quasar node'))
+            cb(err)
+          })
+      },
+      // begin peer discovery scannning
+      (cb) => {
+        this._logger.info('start far reaching discovery...')
+        try {
+          const discovery = new Discovery()
+          this._discovery = discovery.start()
+          this._logger.info('successful discovery start')
+          cb(null)
+        } catch (err) {
+          this._logger.info('far reaching discovery failed to start')
+          this._logger.error(err)
+          cb(err)
+        }
+      }
+    ], (err) => {
+      if (err) {
+        this._logger.warn('p2p services failed to start')
+        this._logger.error(err)
+        // TODO: Likely hard exit here
+        // TODO: Adjust difficulty bound to 8-9 seconds
+      } else {
+        this._logger.info('p2p services online')
+        // register event listeners
+        this._discovery.on('connection', this.peerNewConnectionHandler)
+        this._discovery.on('connection-closed', this.peerClosedConnectionHandler)
+      }
+    })
+
     return true
+  }
+
+  peerNewConnectionHandler (peer: Object, info: Object, type: string) {
+    const connectionId = peer.id.toString('hex')
+    this._logger.info('peer connected ' + connectionId)
+    // TODO: Check if this connection is unique
+
+    peer.write(parser.writeStr('i*' + ip + '*' + qport + '*' + remoteNodeIdentity))
+
+    peer.on('data', (data) => {
+      this.peerDataHandler(peer, data)
+    })
+  }
+
+  peerClosedConnectionHandler (peer: Object, info: Object) {
+    const connectionId = peer.id.toString('hex')
+    this._logger.info('peer disconnection ' + connectionId)
+    // TODO: Update current connected peers remove or otherwise
+  }
+
+  peerDataHandler (peer: Object, data: ?Object) {
+    if (data === undefined) { return }
+
+    const raw = new Uint8Array(data)
+
+    if (raw === undefined || raw.length > 99000) { return }
+
+    // TODO: add lz4 compression for things larger than 1000 characters
+    const str = utf8ArrayToString(raw)
+
+    const type = str[0]
+
+    // TYPES
+    // i - peer identity
+    // b - bulk block delivery
+    // r - request (future use)
+    // const block = BcBlock.deserializeBinary(raw)
+
+    if (type === 'i') {
+      const parts = str.split('*')
+      const host = parts[1]
+      const port = parts[2]
+      const remoteIdentity = parts[3]
+
+      const req = [remoteIdentity, {
+        hostname: host,
+        port: port
+      }]
+
+      this.addNodeHandler(peer, req)
+    } else if (type === 'b') {
+      this._logger.info('bulk block type')
+    } else if (type === 'r') {
+      this._logger.info('request type')
+    } else {
+      this._logger.error('unable to parse incoming message')
+      // TODO: downweight peer
+    }
+  }
+
+  addNodeHandler (peer: Object, req: Array) {
+    const nodeId = req[0]
+
+    this._logger.info('node added: ' + nodeId)
+    // TODO: check if nodeId has been seen before
+    // if it has not continue with it and set the expire timeout
   }
 
   /**

@@ -28,14 +28,6 @@ export const register = (manager: PeerManager, bundle: Bundle) => {
   const uri = `${PROTOCOL_PREFIX}/newblock`
   debug(`Registering protocol - ${uri}`)
 
-  manager.engine.node.quasarSubcribe('newBlock', (data) => {
-    const raw = new Uint8Array(data)
-    const block = BcBlock.deserializeBinary(raw)
-
-    manager.engine._logger.info('---------------------------')
-    manager.engine._logger.info(block)
-  })
-
   bundle.handle(uri, (protocol, conn) => {
     pull(
       conn,

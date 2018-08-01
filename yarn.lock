@@ -720,7 +720,7 @@ async-eventemitter@^0.2.2:
   dependencies:
     async "^2.4.0"
 
-async-eventemitter@ahultgren/async-eventemitter#fa06e39e56786ba541c180061dbf2c0a5bbf951c:
+"async-eventemitter@github:ahultgren/async-eventemitter#fa06e39e56786ba541c180061dbf2c0a5bbf951c":
   version "0.2.3"
   resolved "https://codeload.github.com/ahultgren/async-eventemitter/tar.gz/fa06e39e56786ba541c180061dbf2c0a5bbf951c"
   dependencies:
@@ -730,7 +730,7 @@ async-limiter@~1.0.0:
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/async-limiter/-/async-limiter-1.0.0.tgz#78faed8c3d074ab81f22b4e985d79e8738f720f8"
 
-async@, async@2.x.x, async@^2.0.1, async@^2.1.2, async@^2.1.4, async@^2.1.5, async@^2.3.0, async@^2.4.0, async@^2.5.0, async@^2.6.0, async@^2.6.1:
+async@, async@2.x.x, async@^2.0.1, async@^2.1.2, async@^2.1.4, async@^2.4.0, async@^2.5.0, async@^2.6.0, async@^2.6.1:
   version "2.6.1"
   resolved "https://registry.yarnpkg.com/async/-/async-2.6.1.tgz#b245a23ca71930044ec53fa46aa00a3e87c6a610"
   dependencies:
@@ -1615,7 +1615,7 @@ backo@1.1.0:
   version "1.1.0"
   resolved "https://registry.yarnpkg.com/backo/-/backo-1.1.0.tgz#a36c4468923f2d265c9e8a709ea56ecdaff807e6"
 
-bagpipe@Ivshti/bagpipe#ae11730ef59364b20868287fb3ce0970a87dc8c8:
+"bagpipe@github:Ivshti/bagpipe#ae11730ef59364b20868287fb3ce0970a87dc8c8":
   version "0.3.7"
   resolved "https://codeload.github.com/Ivshti/bagpipe/tar.gz/ae11730ef59364b20868287fb3ce0970a87dc8c8"
   dependencies:
@@ -2595,7 +2595,7 @@ buffer@^5.0.5:
     base64-js "^1.0.2"
     ieee754 "^1.1.4"
 
-buffers@bitpay/node-buffers#v0.1.2-bitpay, buffers@~0.1.1:
+"buffers@github:bitpay/node-buffers#v0.1.2-bitpay", buffers@~0.1.1:
   version "0.1.1"
   resolved "https://codeload.github.com/bitpay/node-buffers/tar.gz/04f4c4264e0d105db2b99b786843ed64f23230d8"
 
@@ -3688,10 +3688,6 @@ debug@^3.1.0, debug@~3.1.0:
   dependencies:
     ms "2.0.0"
 
-debug@~0.7.0:
-  version "0.7.4"
-  resolved "https://registry.yarnpkg.com/debug/-/debug-0.7.4.tgz#06e1ea8082c2cb14e39806e22e2f6f757f92af39"
-
 decamelize@^1.0.0, decamelize@^1.1.1:
   version "1.2.0"
   resolved "https://registry.yarnpkg.com/decamelize/-/decamelize-1.2.0.tgz#f6534d15148269b20352e7bee26f501f9a191290"
@@ -3938,19 +3934,6 @@ diffie-hellman@^5.0.0:
     miller-rabin "^4.0.0"
     randombytes "^2.0.0"
 
-diglet@^1.0.6:
-  version "1.0.6"
-  resolved "https://registry.yarnpkg.com/diglet/-/diglet-1.0.6.tgz#9ac66c391cd7dc02c40f4a54fed56a9437ef51dd"
-  dependencies:
-    bunyan "^1.8.5"
-    colors "^1.1.2"
-    commander "^2.9.0"
-    portastic "^1.0.1"
-    rc "^1.1.6"
-    serve-static "^1.11.1"
-    through "^2.3.8"
-    tldjs "^1.7.0"
-
 dir-glob@^2.0.0:
   version "2.0.0"
   resolved "https://registry.yarnpkg.com/dir-glob/-/dir-glob-2.0.0.tgz#0b205d2b6aef98238ca286598a8204d29d0a0034"
@@ -3969,7 +3952,7 @@ discovery-channel@^5.5.1:
     pretty-hash "^1.0.1"
     thunky "^0.1.0"
 
-discovery-swarm@^5.1.1:
+discovery-swarm@^5.1.2:
   version "5.1.2"
   resolved "https://registry.yarnpkg.com/discovery-swarm/-/discovery-swarm-5.1.2.tgz#91be73ab07836741a1151d0a872464465830b1cc"
   dependencies:
@@ -6471,7 +6454,7 @@ ip-address@^5.8.9:
     lodash.repeat "^4.1.0"
     sprintf-js "1.1.0"
 
-ip@^1.1.0, ip@^1.1.3, ip@^1.1.4, ip@^1.1.5:
+ip@^1.1.0, ip@^1.1.3, ip@^1.1.5:
   version "1.1.5"
   resolved "https://registry.yarnpkg.com/ip/-/ip-1.1.5.tgz#bdded70114290828c0a039e72ef25f5aaec4354a"
 
@@ -7266,9 +7249,9 @@ js-beautify@^1.5.4:
     mkdirp "~0.5.0"
     nopt "~3.0.1"
 
-js-nacl@LiskHQ/js-nacl#6dc1417:
+"js-nacl@github:liskhq/js-nacl#6dc1417":
   version "1.2.1"
-  resolved "https://codeload.github.com/LiskHQ/js-nacl/tar.gz/6dc1417057cd81381d332b370e82ceab1f2416af"
+  resolved "https://codeload.github.com/liskhq/js-nacl/tar.gz/6dc1417057cd81381d332b370e82ceab1f2416af"
 
 js-scrypt@^0.2.0:
   version "0.2.0"
@@ -7567,19 +7550,6 @@ kad-quasar@^2.1.0:
     lru-cache "^4.0.1"
     merge "^1.2.0"
     uuid "^3.0.0"
-
-kad-traverse@^1.1.1:
-  version "1.1.1"
-  resolved "https://registry.yarnpkg.com/kad-traverse/-/kad-traverse-1.1.1.tgz#5db11833e4ec713f6639b73239eed7e17fafbcd8"
-  dependencies:
-    async "^2.3.0"
-    concat-stream "^1.6.0"
-    diglet "^1.0.6"
-    ip "^1.1.5"
-    merge "^1.2.0"
-    nat-pmp "^1.0.0"
-    nat-upnp "^1.1.0"
-    network "^0.3.2"
 
 kad@^2.3.0, kad@^2.5.1:
   version "2.5.1"
@@ -9180,21 +9150,6 @@ nanomatch@^1.2.9:
     snapdragon "^0.8.1"
     to-regex "^3.0.1"
 
-nat-pmp@^1.0.0:
-  version "1.0.0"
-  resolved "https://registry.yarnpkg.com/nat-pmp/-/nat-pmp-1.0.0.tgz#d5f3fb1dff52d9e20d16ad2aa1c41a54296a8c4a"
-  dependencies:
-    debug "~0.7.0"
-
-nat-upnp@^1.1.0:
-  version "1.1.1"
-  resolved "https://registry.yarnpkg.com/nat-upnp/-/nat-upnp-1.1.1.tgz#b18365e4faf44652549bb593c69e6b690df22043"
-  dependencies:
-    async "^2.1.5"
-    ip "^1.1.4"
-    request "^2.79.0"
-    xml2js "~0.1.14"
-
 natural-compare@^1.4.0:
   version "1.4.0"
   resolved "https://registry.yarnpkg.com/natural-compare/-/natural-compare-1.4.0.tgz#4abebfeed7541f2c27acfb29bdbbd15c8d5ba4f7"
@@ -9267,14 +9222,6 @@ network-address@^1.1.2:
 network-byte-order@~0.2.0:
   version "0.2.0"
   resolved "https://registry.yarnpkg.com/network-byte-order/-/network-byte-order-0.2.0.tgz#6ac11bf44bf610daeddbe90a09a5c817c6e0d2b3"
-
-network@^0.3.2:
-  version "0.3.2"
-  resolved "https://registry.yarnpkg.com/network/-/network-0.3.2.tgz#7d985b32acf09f8e44140a7d54fcc1b7e138b053"
-  dependencies:
-    async "^1.5.2"
-    needle "1.1.2"
-    wmic "^0.1.0"
 
 network@^0.4.1:
   version "0.4.1"
@@ -10237,14 +10184,6 @@ popsicle@=9.1.0:
     form-data "^2.0.0"
     make-error-cause "^1.2.1"
     tough-cookie "^2.0.0"
-
-portastic@^1.0.1:
-  version "1.0.1"
-  resolved "https://registry.yarnpkg.com/portastic/-/portastic-1.0.1.tgz#1c9805d43fae8f6a40cf0dbc7794091a2e9d0d2a"
-  dependencies:
-    bluebird "^2.9.34"
-    commander "^2.8.1"
-    debug "^2.2.0"
 
 portscanner@^2.2.0:
   version "2.2.0"
@@ -11583,7 +11522,7 @@ sane@^2.0.0:
   optionalDependencies:
     fsevents "^1.2.3"
 
-sax@>=0.1.1, sax@^1.1.4, sax@^1.2.4:
+sax@^1.1.4, sax@^1.2.4:
   version "1.2.4"
   resolved "https://registry.yarnpkg.com/sax/-/sax-1.2.4.tgz#2816234e2378bddc4e5354fab5caa895df7100d9"
 
@@ -11712,7 +11651,7 @@ serve-index@^1.9.1:
     mime-types "~2.1.17"
     parseurl "~1.3.2"
 
-serve-static@1.13.2, serve-static@^1.11.1:
+serve-static@1.13.2:
   version "1.13.2"
   resolved "https://registry.yarnpkg.com/serve-static/-/serve-static-1.13.2.tgz#095e8472fd5b46237db50ce486a43f4b86c6cec1"
   dependencies:
@@ -12655,7 +12594,7 @@ through2@^2.0.0, through2@^2.0.1, through2@^2.0.2, through2@^2.0.3:
     readable-stream "^2.1.5"
     xtend "~4.0.1"
 
-through@2, through@^2.3.6, through@^2.3.8, through@~2.3, through@~2.3.1, through@~2.3.4, through@~2.3.8:
+through@2, through@^2.3.6, through@~2.3, through@~2.3.1, through@~2.3.4, through@~2.3.8:
   version "2.3.8"
   resolved "https://registry.yarnpkg.com/through/-/through-2.3.8.tgz#0dd4c9ffaabc357960b1b724115d7e0e86a2e1f5"
 
@@ -12690,12 +12629,6 @@ timers-browserify@^2.0.4:
 tiny-emitter@2.0.2:
   version "2.0.2"
   resolved "https://registry.yarnpkg.com/tiny-emitter/-/tiny-emitter-2.0.2.tgz#82d27468aca5ade8e5fd1e6d22b57dd43ebdfb7c"
-
-tldjs@^1.7.0:
-  version "1.8.0"
-  resolved "https://registry.yarnpkg.com/tldjs/-/tldjs-1.8.0.tgz#b9c16bd6de357b55ffcbe7d5be41f6b3ca76e3fa"
-  dependencies:
-    punycode "^1.4.1"
 
 tmp@^0.0.33:
   version "0.0.33"
@@ -13165,17 +13098,17 @@ util@0.10.3:
   dependencies:
     inherits "2.0.1"
 
-util@Ivshti/node-util:
-  version "0.10.3"
-  resolved "https://codeload.github.com/Ivshti/node-util/tar.gz/97b6beed8e0e478cd4184965ac94bf316f94e5f5"
-  dependencies:
-    inherits Ivshti/inherits
-
 util@^0.10.3:
   version "0.10.4"
   resolved "https://registry.yarnpkg.com/util/-/util-0.10.4.tgz#3aa0125bfe668a4672de58857d3ace27ecb76901"
   dependencies:
     inherits "2.0.3"
+
+"util@github:Ivshti/node-util":
+  version "0.10.3"
+  resolved "https://codeload.github.com/Ivshti/node-util/tar.gz/97b6beed8e0e478cd4184965ac94bf316f94e5f5"
+  dependencies:
+    inherits Ivshti/inherits
 
 utile@0.3.x:
   version "0.3.0"
@@ -14000,12 +13933,6 @@ xhr@^2.0.4, xhr@^2.3.3:
 xml-name-validator@^3.0.0:
   version "3.0.0"
   resolved "https://registry.yarnpkg.com/xml-name-validator/-/xml-name-validator-3.0.0.tgz#6ae73e06de4d8c6e47f9fb181f78d648ad457c6a"
-
-xml2js@~0.1.14:
-  version "0.1.14"
-  resolved "https://registry.yarnpkg.com/xml2js/-/xml2js-0.1.14.tgz#5274e67f5a64c5f92974cd85139e0332adc6b90c"
-  dependencies:
-    sax ">=0.1.1"
 
 xmlhttprequest-ssl@~1.5.4:
   version "1.5.5"
