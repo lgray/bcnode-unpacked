@@ -324,6 +324,8 @@ export class PeerNode {
         this._quasar.plugin(require('kad-quasar'))
         this._quasar.listen(this._quasarPort)
         this._logger.info('p2p messaging initialized')
+        // add quasar to manager
+        this.manager.quasar = this._quasar
       } catch (err) {
         this._logger.info('p2p messaging failed')
         this._logger.error(err)
