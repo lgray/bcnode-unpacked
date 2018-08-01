@@ -334,10 +334,12 @@ export class PeerNode {
       // TODO: Adjust difficulty bound to 8-9 seconds
       this._logger.info('p2p services online')
       scan.on('connection', (peer, info, type) => {
+        console.log(peer)
         this._logger.info('peer connected ' + peer.id.toString('hex'))
         this.peerNewConnectionHandler(peer, info, type)
       })
       scan.on('connection-closed', (peer, info) => {
+        console.log(peer)
         this._logger.info('peer connection closed ' + peer.id.toString('hex'))
         this.peerClosedConnectionHandler(peer, info)
       })
