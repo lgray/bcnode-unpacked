@@ -185,11 +185,11 @@ export class Engine {
       }
       let res = await this.persistence.put('rovers', roverNames)
       if (res) {
-        this._logger.info('Stored rovers to persistence')
+        this._logger.info('stored rovers to persistence')
       }
       res = await this.persistence.put('appversion', versionData)
       if (res) {
-        this._logger.info('Stored appversion to persistence')
+        this._logger.info('stored appversion to persistence')
       }
       try {
         await this.persistence.put('synclock', getGenesisBlock())
@@ -207,15 +207,15 @@ export class Engine {
           await this.persistence.put('bc.block.checkpoint', newGenesisBlock)
           await this.persistence.put('bc.depth', 2)
           await this.multiverse.addNextBlock(newGenesisBlock)
-          this._logger.info('Genesis block saved to disk ' + newGenesisBlock.getHash())
+          this._logger.info('genesis block saved to disk ' + newGenesisBlock.getHash())
         } catch (e) {
-          this._logger.error(`Error while creating genesis block ${e.message}`)
+          this._logger.error(`error while creating genesis block ${e.message}`)
           this.requestExit()
           process.exit(1)
         }
       }
     } catch (e) {
-      this._logger.warn(`Could not store rovers to persistence, reason ${e.message}`)
+      this._logger.warn(`could not store rovers to persistence, reason ${e.message}`)
     }
 
     if (BC_CHECK === true) {
@@ -488,7 +488,7 @@ export class Engine {
    * Start Server
    */
   startNode () {
-    this._logger.info('Starting P2P node')
+    this._logger.info('starting P2P node')
     this.node.start()
     this._emitter.on('peerConnected', ({ peer }) => {
       if (this._server) {
@@ -508,7 +508,7 @@ export class Engine {
    * @param rovers - list (string; comma-delimited) of rover names to start
    */
   startRovers (rovers: string[]) {
-    this._logger.info(`Starting rovers '${rovers.join(',')}'`)
+    this._logger.info(`starting rovers '${rovers.join(',')}'`)
 
     rovers.forEach(name => {
       if (name) {
