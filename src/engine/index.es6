@@ -54,6 +54,13 @@ const BC_CHECK = process.env.BC_CHECK === 'true'
 const BC_LIMIT_MINER = process.env.BC_LIMIT_MINER === 'true'
 const PERSIST_ROVER_DATA = process.env.PERSIST_ROVER_DATA === 'true'
 
+process.on('uncaughtError', (err) => {
+  /* eslint-disable */
+   console.trace(err)
+   /* eslint-enable */
+  process.exit(3)
+})
+
 export class Engine {
   _logger: Logger
   _monitor: Monitor
