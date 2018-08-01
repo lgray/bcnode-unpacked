@@ -377,6 +377,7 @@ export class PeerNode {
     const connectionId = peer.id.toString('hex')
     this._logger.info('peer connected ' + connectionId)
     // TODO: Check if this connection is unique
+    registerPeerEventsHandler(peer)
   }
 
   peerClosedConnectionHandler (peer: Object, info: Object) {
