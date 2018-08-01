@@ -12,7 +12,7 @@ export class Discovery {
   hash: string
   port: number
 
-  constructor (opts: ?Object) {
+  constructor () {
     this.port = 16600 + Math.floor(Math.random() * 20)
     this.hash = blake2bl('bt01_' + config.blockchainFingerprintsHash) // peers that do not update for one year
     this.swarm = swarm({
@@ -34,5 +34,3 @@ export class Discovery {
     this.swarm.leave(this.hash)
   }
 }
-
-export default Discovery
