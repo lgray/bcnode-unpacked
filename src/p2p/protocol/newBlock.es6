@@ -32,6 +32,12 @@ export const register = (manager: PeerManager, bundle: Bundle) => {
 
   if (manager.engine._quasar !== undefined) {
     manager.engine._quasar.quasarSubscribe('newblock', (data) => {
+      globalLog.info('-----------------------------')
+      globalLog.info('-----------------------------')
+      globalLog.info('-----------------------------')
+      globalLog.info('-----------------------------')
+      globalLog.info('-----------------------------')
+      globalLog.info('-----------------------------')
       globalLog.info(data)
     })
   }

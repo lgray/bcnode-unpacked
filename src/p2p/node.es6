@@ -336,11 +336,19 @@ export class PeerNode {
     // create quasar link
     // TODO: move this to pull conn
     const idMessage = 'i*' + this._externalIP + '*' + this._quasarPort + '*' + this._identity
-    this._logger.info('idMessage: ' + idMessage)
-    conn.on('data', (data) => {
-      this.peerDataHandler(conn, data)
-    })
-    conn.write(idMessage)
+    pull(
+      conn,
+      pull.collect((err, data) => {
+        if (err) {
+          return
+        }
+        this.peerDataHandler(conn, data)
+      }))
+    // conn.on('data', (data) => {
+    //  this.peerDataHandler(conn, data)
+    // })
+    // conn.write(idMessage)
+    pull(pull.values([idMessage]), conn)
   }
 
   peerClosedConnectionHandler (conn: Object, info: Object) {
@@ -351,6 +359,7 @@ export class PeerNode {
   peerDataHandler (conn: Object, data: ?Object) {
     if (data === undefined) { return }
 
+    this._logger.info(data)
     // TODO: add lz4 compression for things larger than 1000 characters
     //
     const str = data.toString()
@@ -373,7 +382,7 @@ export class PeerNode {
         port: port
       }]
 
-      this._logger.info(req)
+      this._logger.info(JSON.stringify(req))
       this._quasar.join(req, () => {
         this._logger.info('entered gravity well for seed ' + remoteIdentity)
       })
