@@ -8,12 +8,14 @@
  */
 
 import type { Bundle } from '../bundle'
+import type { Logger } from 'winston'
 import type { PeerManager } from '../manager/manager'
 
 const avon = require('avon')
 const debug = require('debug')('bcnode:protocol:newblock')
 const pull = require('pull-stream')
-
+const logging = require('../../logger')
+const globalLog: Logger = logging.getLogger(__filename)
 const { BcBlock } = require('../../protos/core_pb')
 // const { shouldBlockBeAddedToMultiverse } = require('../../engine/helper')
 // const { isValidBlock } = require('../../bc/validation')
@@ -27,6 +29,10 @@ const blake2bl = (input) => {
 export const register = (manager: PeerManager, bundle: Bundle) => {
   const uri = `${PROTOCOL_PREFIX}/newblock`
   debug(`Registering protocol - ${uri}`)
+
+  manager.engine.quasarSubscribe('newblock', (data) => {
+    globalLog.info(data)
+  })
 
   bundle.handle(uri, (protocol, conn) => {
     pull(

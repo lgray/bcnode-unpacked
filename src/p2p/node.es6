@@ -117,6 +117,14 @@ export class PeerNode {
     this._multiverse = multiverse
   }
 
+  get quasar (): Object {
+    return this._quasar
+  }
+
+  set quasar (quasar: Object) {
+    this._quasar = quasar
+  }
+
   _pipelineStartNode () {
     debug('_pipelineStartNode')
 
@@ -540,6 +548,8 @@ export class PeerNode {
     this._logger.debug(`Broadcasting msg to peers, ${inspect(block.toObject())}`)
 
     // this.bundle.pubsub.publish('newBlock', Buffer.from(JSON.stringify(block.toObject())), () => {})
+    this._quasar.publishQuasar('newblock', block.toObject())
+
     const url = `${PROTOCOL_PREFIX}/newblock`
     this.manager.peerBookConnected.getAllArray().map(peer => {
       this._logger.debug(`Sending to peer ${peer}`)
