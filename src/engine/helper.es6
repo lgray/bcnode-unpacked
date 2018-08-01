@@ -59,6 +59,10 @@ export const stringToHex = (str) => {
   return bitPony.string.write(str).toString('hex')
 }
 
+export const hexToString = (str) => {
+  return bitPony.string.read(str).toString()
+}
+
 export const anyDns = async () => {
   try {
     const ip = await dns.getIPv4()

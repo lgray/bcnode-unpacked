@@ -7,7 +7,6 @@
  * @flow
  */
 
-/* eslint-disable */
 import type { Engine } from '../engine'
 
 const { inspect } = require('util')
@@ -34,7 +33,7 @@ const { PeerManager, DATETIME_STARTED_AT, QUORUM_SIZE } = require('./manager/man
 // const { validateBlockSequence } = require('../bc/validation')
 const { Multiverse } = require('../bc/multiverse')
 const { BlockPool } = require('../bc/blockpool')
-const { utf8ArrayToString, stringToHex, anyDns } = require('../engine/helper')
+const { stringToHex, hexToString, anyDns } = require('../engine/helper')
 // const { blockByTotalDistanceSorter } = require('../engine/helper')
 
 const { PROTOCOL_PREFIX, NETWORK_ID } = require('./protocol/version')
@@ -310,7 +309,6 @@ export class PeerNode {
     //  (cb) => {
     this._logger.info('initialize p2p messaging...')
 
-    /* es-lint disable */
     anyDns().then((ip) => {
       this._externalIP = ip
       this._logger.info('external ip address <- ' + ip)
@@ -346,24 +344,23 @@ export class PeerNode {
       })
 
       this._logger.info('p2p services ready')
-
     })
       .catch((err) => {
         this._logger.error(err)
         this._logger.error(new Error('unable to start quasar node'))
         // cb(err)
       })
-    /* es-lint enable */
     //  }
     // })
   }
 
   peerNewConnectionHandler (conn: Object, info: ?Object, type: ?string) {
-
     // TODO: Check if this connection is unique
 
     // create quasar link
-    conn.write(stringToHex('i*' + this._externalIP + '*' + this._quasarPort + '*' + this._identity))
+    // TODO: move this to pull conn
+    const idMessage = 'i*' + this._externalIP + '*' + this._quasarPort + '*' + this._identity
+    conn.write(stringToHex(idMessage))
     conn.on('data', (data) => {
       this.peerDataHandler(conn, data)
     })
@@ -375,13 +372,11 @@ export class PeerNode {
   }
 
   peerDataHandler (conn: Object, data: ?Object) {
-
     if (data === undefined) { return }
-    const raw = new Uint8Array(data)
-    if (raw === undefined || raw.length > 99000) { return }
 
     // TODO: add lz4 compression for things larger than 1000 characters
-    const str = utf8ArrayToString(raw)
+
+    const str = hexToString(data)
     this._logger.info(str)
     const type = str[0]
 
@@ -405,7 +400,6 @@ export class PeerNode {
       this._quasar.join(req, () => {
         this._logger.info('entered gravity well for seed ' + remoteIdentity)
       })
-
     } else if (type === 'b') {
       this._logger.info('bulk block type')
     } else if (type === 'r') {
@@ -536,7 +530,7 @@ export class PeerNode {
     this._logger.debug(`Broadcasting msg to peers, ${inspect(block.toObject())}`)
 
     // this.bundle.pubsub.publish('newBlock', Buffer.from(JSON.stringify(block.toObject())), () => {})
-    const raw = block.serializeBinary()
+    // const raw = block.serializeBinary()
     this._quasar.publishQuasar('newblock', block.toObject())
 
     const url = `${PROTOCOL_PREFIX}/newblock`
