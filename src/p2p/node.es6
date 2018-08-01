@@ -336,25 +336,17 @@ export class PeerNode {
       }
       this._logger.info('start far reaching discovery...')
       const discovery = new Discovery()
-      const scan = discovery.start()
-      this._logger.info('discovery edge seed: ' + discovery.hash)
-      this._logger.info('successful discovery start')
-      // TODO: Likely hard exit here
-      // TODO: Adjust difficulty bound to 8-9 seconds
-      this._logger.info('p2p services online')
-      scan.on('connection', (peer, info, type) => {
-        console.log(peer)
-        this._logger.info('peer connected ' + peer.id.toString('hex'))
-        this.peerNewConnectionHandler(peer, info, type)
+      this._scanner = discovery.start()
+      this._logger.info('successful discovery start <- edge seed ' + discovery.hash)
+      this._scanner.on('connection', (conn, info, type) => {
+        this.peerNewConnectionHandler(conn, info, type)
       })
-      scan.on('connection-closed', (peer, info) => {
-        console.log(peer)
-        this._logger.info('peer connection closed ' + peer.id.toString('hex'))
-        this.peerClosedConnectionHandler(peer, info)
+      this._scanner.on('connection-closed', (conn, info) => {
+        this.peerClosedConnectionHandler(conn, info)
       })
 
-      this._scanner = scan
-      this._logger.info('p2p events registered')
+      this._logger.info('p2p services ready')
+
     })
       .catch((err) => {
         this._logger.error(err)
@@ -366,38 +358,31 @@ export class PeerNode {
     // })
   }
 
-  registerPeerEventsHandler (peer: Object) {
-    // send peer greating
-    peer.write(stringToHex('i*' + this._externalIP + '*' + this._quasarPort + '*' + this._identity))
-    peer.on('data', (data) => {
-      this.peerDataHandler(peer, data)
+  peerNewConnectionHandler (conn: Object, info: ?Object, type: ?string) {
+
+    // TODO: Check if this connection is unique
+
+    // create quasar link
+    conn.write(stringToHex('i*' + this._externalIP + '*' + this._quasarPort + '*' + this._identity))
+    conn.on('data', (data) => {
+      this.peerDataHandler(conn, data)
     })
   }
 
-  peerNewConnectionHandler (peer: Object, info: Object, type: string) {
-    const connectionId = peer.id.toString('hex')
-    this._logger.info('peer connected ' + connectionId)
-    // TODO: Check if this connection is unique
-    this._logger.info('peer of connectionId joined: ' + connectionId)
-    this.registerPeerEventsHandler(peer)
-  }
-
-  peerClosedConnectionHandler (peer: Object, info: Object) {
-    const connectionId = peer.id.toString('hex')
-    this._logger.info('peer disconnect ' + connectionId)
+  peerClosedConnectionHandler (conn: Object, info: Object) {
+    this._logger.info('peer disconnect ')
     // TODO: Update current connected peers remove or otherwise
   }
 
-  peerDataHandler (peer: Object, data: ?Object) {
+  peerDataHandler (conn: Object, data: ?Object) {
+
     if (data === undefined) { return }
-
     const raw = new Uint8Array(data)
-
     if (raw === undefined || raw.length > 99000) { return }
 
     // TODO: add lz4 compression for things larger than 1000 characters
     const str = utf8ArrayToString(raw)
-
+    this._logger.info(str)
     const type = str[0]
 
     // TYPES
@@ -417,7 +402,10 @@ export class PeerNode {
         port: port
       }]
 
-      this.addNodeHandler(peer, req)
+      this._quasar.join(req, () => {
+        this._logger.info('entered gravity well for seed ' + remoteIdentity)
+      })
+
     } else if (type === 'b') {
       this._logger.info('bulk block type')
     } else if (type === 'r') {
@@ -548,6 +536,7 @@ export class PeerNode {
     this._logger.debug(`Broadcasting msg to peers, ${inspect(block.toObject())}`)
 
     // this.bundle.pubsub.publish('newBlock', Buffer.from(JSON.stringify(block.toObject())), () => {})
+    const raw = block.serializeBinary()
     this._quasar.publishQuasar('newblock', block.toObject())
 
     const url = `${PROTOCOL_PREFIX}/newblock`
