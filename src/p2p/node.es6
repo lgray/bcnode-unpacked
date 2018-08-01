@@ -130,14 +130,14 @@ export class PeerNode {
     return [
       // Create PeerInfo for local node
       (cb: Function) => {
-        this._logger.info('Generating peer info')
+        this._logger.info('generating peer info')
         PeerInfo.create(cb)
       },
 
       // Join p2p network
       (peerInfo: PeerInfo, cb: Function) => {
         const peerId = peerInfo.id.toB58String()
-        this._logger.info(`Registering addresses for ${peerId}`)
+        this._logger.info(`registering addresses for ${peerId}`)
 
         peerInfo.multiaddrs.add(multiaddr('/p2p-websocket-star'))
 
@@ -372,6 +372,7 @@ export class PeerNode {
         port: port
       }]
 
+      this._logger.info(req)
       this._quasar.join(req, () => {
         this._logger.info('entered gravity well for seed ' + remoteIdentity)
       })
@@ -502,7 +503,7 @@ export class PeerNode {
   }
 
   broadcastNewBlock (block: BcBlock, withoutPeerId: ?string) {
-    this._logger.debug(`Broadcasting msg to peers, ${inspect(block.toObject())}`)
+    this._logger.debug(`broadcasting msg to peers, ${inspect(block.toObject())}`)
 
     // this.bundle.pubsub.publish('newBlock', Buffer.from(JSON.stringify(block.toObject())), () => {})
     // const raw = block.serializeBinary()
@@ -515,7 +516,7 @@ export class PeerNode {
       if (withoutPeerId === undefined || peerId !== withoutPeerId) {
         this.bundle.dialProtocol(peer, url, (err, conn) => {
           if (err) {
-            this._logger.error('Error sending message to peer', peer.id.toB58String(), err)
+            this._logger.error('error sending message to peer', peer.id.toB58String(), err)
             this._logger.error(err)
             return err
           }

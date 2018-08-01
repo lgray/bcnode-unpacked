@@ -23,9 +23,7 @@ Discovery.prototype = {
 
   start: function () {
     this.swarm.listen(this.port)
-
     this.swarm.join(this.hash)
-
     return this.swarm
   },
 
