@@ -331,6 +331,7 @@ export class PeerNode {
       this._logger.info('start far reaching discovery...')
       try {
         const discovery = new Discovery()
+        this._logger.info('discovery edge seed: ' + discovery.hash)
         this._discovery = discovery.start()
         this._logger.info('successful discovery start')
       } catch (err) {
