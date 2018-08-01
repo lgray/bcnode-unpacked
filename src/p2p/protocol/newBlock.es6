@@ -30,7 +30,7 @@ export const register = (manager: PeerManager, bundle: Bundle) => {
   const uri = `${PROTOCOL_PREFIX}/newblock`
   debug(`Registering protocol - ${uri}`)
 
-  manager.engine.quasarSubscribe('newblock', (data) => {
+  manager.engine.quasar.quasarSubscribe('newblock', (data) => {
     globalLog.info(data)
   })
 
