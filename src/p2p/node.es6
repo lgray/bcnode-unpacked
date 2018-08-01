@@ -304,7 +304,7 @@ export class PeerNode {
 
         return dns.getIPv4().then((ip) => {
           this._externalIP = ip
-          this._logger.info(ip)
+          this._logger.info('external ip address <- ' + ip)
           try {
             const contact = {
               hostname: ip,
