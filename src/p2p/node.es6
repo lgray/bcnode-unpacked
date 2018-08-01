@@ -377,11 +377,7 @@ export class PeerNode {
 
     // TODO: add lz4 compression for things larger than 1000 characters
     //
-    console.log(data.toString())
-
-    const str = hexToString(data)
-    console.log(str)
-    this._logger.info(str)
+    const str = data.toString()
     const type = str[0]
 
     // TYPES
