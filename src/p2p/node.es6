@@ -13,7 +13,7 @@ const { inspect } = require('util')
 
 const PeerInfo = require('peer-info')
 const waterfall = require('async/waterfall')
-const parallel = require('async/parallel')
+// const parallel = require('async/parallel')
 const multiaddr = require('multiaddr')
 const pull = require('pull-stream')
 // const { uniqBy } = require('ramda')
@@ -297,80 +297,76 @@ export class PeerNode {
       this._logger.info('P2P node started')
     })
 
-    parallel([
-      // initialize quasar p2p messaging
-      (cb) => {
-        this._logger.info('initialize p2p messaging...')
+    // parallel([
+    //  // initialize quasar p2p messaging
+    //  (cb) => {
+    this._logger.info('initialize p2p messaging...')
 
-        return dns.getIPv4().then((ip) => {
-          this._externalIP = ip
-          this._logger.info('external ip address <- ' + ip)
-          try {
-            const contact = {
-              hostname: ip,
-              port: this._quasarPort
-            }
-
-            this._quasar = kad({
-              identity: this._identity,
-              transport: new kad.UDPTransport(),
-              storage: levelup(leveldown(this._quasarDbPath)),
-              contact: contact
-            })
-
-            this._quasar.plugin(require('kad-quasar'))
-            this._quasar.listen(this._quasarPort)
-            this._logger.info('p2p messaging initialized')
-            cb(null)
-          } catch (err) {
-            this._logger.info('p2p messaging failed')
-            this._logger.error(err)
-            cb(err)
-          }
-        })
-          .catch((err) => {
-            this._logger.error(err)
-            this._logger.error(new Error('unable to start quasar node'))
-            cb(err)
-          })
-      },
-      // begin peer discovery scannning
-      (cb) => {
-        this._logger.info('start far reaching discovery...')
-        try {
-          const discovery = new Discovery()
-          this._discovery = discovery.start()
-          this._logger.info('successful discovery start')
-          cb(null)
-        } catch (err) {
-          this._logger.info('far reaching discovery failed to start')
-          this._logger.error(err)
-          cb(err)
+    dns.getIPv4().then((ip) => {
+      this._externalIP = ip
+      this._logger.info('external ip address <- ' + ip)
+      try {
+        const contact = {
+          hostname: ip,
+          port: this._quasarPort
         }
-      }
-    ], (err) => {
-      if (err) {
-        this._logger.warn('p2p services failed to start')
+
+        this._quasar = kad({
+          identity: this._identity,
+          transport: new kad.UDPTransport(),
+          storage: levelup(leveldown(this._quasarDbPath)),
+          contact: contact
+        })
+
+        this._quasar.plugin(require('kad-quasar'))
+        this._quasar.listen(this._quasarPort)
+        this._logger.info('p2p messaging initialized')
+      } catch (err) {
+        this._logger.info('p2p messaging failed')
         this._logger.error(err)
-        // TODO: Likely hard exit here
-        // TODO: Adjust difficulty bound to 8-9 seconds
-      } else {
-        this._logger.info('p2p services online')
-        // register event listeners
-        this._discovery.on('connection', (peer, info, type) => {
-          this._logger.info('peer connected ' + peer.id.toString('hex'))
-          this.peerNewConnectionHandler(peer, info, type)
-        })
-        this._discovery.on('connection-closed', (peer, info) => {
-          this._logger.info('peer connection closed ' + peer.id.toString('hex'))
-          this.peerClosedConnectionHandler(peer, info)
-        })
-        // this._discovery.on('redundant-connection', (peer, info) => {
-        //  this.peerClosedConnectionHandler(peer, info, type)
-        // })
-        this._logger.info('p2p events registered')
       }
+      //  },
+      // begin peer discovery scannning
+      //  (cb) => {
+      this._logger.info('start far reaching discovery...')
+      try {
+        const discovery = new Discovery()
+        this._discovery = discovery.start()
+        this._logger.info('successful discovery start')
+      } catch (err) {
+        this._logger.info('far reaching discovery failed to start')
+        this._logger.error(err)
+      }
+      //  }
+      // ], (err) => {
+      //  if (err) {
+      // this._logger.warn('p2p services failed to start')
+      // this._logger.error(err)
+      // TODO: Likely hard exit here
+      // TODO: Adjust difficulty bound to 8-9 seconds
+      //  } else {
+      this._logger.info('p2p services online')
+      // register event listeners
+      this._discovery.on('connection', (peer, info, type) => {
+        this._logger.info('peer connected ' + peer.id.toString('hex'))
+        this.peerNewConnectionHandler(peer, info, type)
+      })
+      this._discovery.on('connection-closed', (peer, info) => {
+        this._logger.info('peer connection closed ' + peer.id.toString('hex'))
+        this.peerClosedConnectionHandler(peer, info)
+      })
+      // this._discovery.on('redundant-connection', (peer, info) => {
+      //  this.peerClosedConnectionHandler(peer, info, type)
+      // })
+      this._logger.info('p2p events registered')
     })
+      .catch((err) => {
+        this._logger.error(err)
+        this._logger.error(new Error('unable to start quasar node'))
+        // cb(err)
+      })
+    //  }
+    // })
 
     return true
   }
