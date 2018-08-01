@@ -33,13 +33,12 @@ const { PeerManager, DATETIME_STARTED_AT, QUORUM_SIZE } = require('./manager/man
 // const { validateBlockSequence } = require('../bc/validation')
 const { Multiverse } = require('../bc/multiverse')
 const { BlockPool } = require('../bc/blockpool')
-const { utf8ArrayToString, stringToHex } = require('../engine/helper')
+const { utf8ArrayToString, stringToHex, anyDns } = require('../engine/helper')
 // const { blockByTotalDistanceSorter } = require('../engine/helper')
 
 const { PROTOCOL_PREFIX, NETWORK_ID } = require('./protocol/version')
 //
 const kad = require('kad')
-const dns = require('bdns')
 const levelup = require('levelup')
 const leveldown = require('leveldown')
 const fs = require('fs-extra')
@@ -302,7 +301,7 @@ export class PeerNode {
     //  (cb) => {
     this._logger.info('initialize p2p messaging...')
 
-    dns.getIPv4().then((ip) => {
+    anyDns().then((ip) => {
       this._externalIP = ip
       this._logger.info('external ip address <- ' + ip)
       try {

@@ -13,6 +13,7 @@ import type BcBlock from '../protos/core_pb'
 const BN = require('bn.js')
 const bitPony = require('bitpony')
 const dns = require('bdns')
+const getIP = require('external-ip')()
 
 /**
  * High-level functions
@@ -60,9 +61,15 @@ export const stringToHex = (str) => {
 
 export const anyDns = async () => {
   try {
-    return await dns.getIPv4()
+    await dns.getIPv4()
   } catch (err) {
-    return new Error('unable to determine exteral IP address')
+    await new Promise((resolve, reject) => {
+      getIP((err, ip) => {
+        if (err) { reject(err) } else {
+          resolve(ip)
+        }
+      })
+    })
   }
 }
 
