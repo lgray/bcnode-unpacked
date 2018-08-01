@@ -61,9 +61,10 @@ export const stringToHex = (str) => {
 
 export const anyDns = async () => {
   try {
-    await dns.getIPv4()
+    const ip = await dns.getIPv4()
+    return Promise.resolve(ip)
   } catch (err) {
-    await new Promise((resolve, reject) => {
+    return new Promise((resolve, reject) => {
       getIP((err, ip) => {
         if (err) { reject(err) } else {
           resolve(ip)
