@@ -360,10 +360,11 @@ export class PeerNode {
     // create quasar link
     // TODO: move this to pull conn
     const idMessage = 'i*' + this._externalIP + '*' + this._quasarPort + '*' + this._identity
-    conn.write(stringToHex(idMessage))
+    this._logger.info('idMessage: ' + idMessage)
     conn.on('data', (data) => {
       this.peerDataHandler(conn, data)
     })
+    conn.write(idMessage)
   }
 
   peerClosedConnectionHandler (conn: Object, info: Object) {
@@ -375,8 +376,11 @@ export class PeerNode {
     if (data === undefined) { return }
 
     // TODO: add lz4 compression for things larger than 1000 characters
+    //
+    console.log(data.toString())
 
     const str = hexToString(data)
+    console.log(str)
     this._logger.info(str)
     const type = str[0]
 
