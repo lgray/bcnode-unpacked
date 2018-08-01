@@ -176,33 +176,6 @@ export class PeerNode {
         cb(null, this._bundle)
       },
 
-      // Start
-      // (quasar: Object, cb: Function) => {
-      //  this._logger.info('starting Quasar P2P node')
-      //  dns.getIPv4().then((ip) => {
-      //    const contact = {
-      //      hostname: ip,
-      //      port: this._quasarPort
-      //    }
-
-      //    const network = kad({
-      //      identity: this._identity,
-      //      transport: new kad.UDPTransport(),
-      //      storage: levelup(leveldown(this._quasarDbPath)),
-      //      contact: contact
-      //    })
-
-      //    network.plugin(require('kad-quasar'))
-      //    network.listen(this._quasarPort)
-      //    cb(null, network)
-      //  })
-      //    .catch((err) => {
-      //      this._logger.error(err)
-      //      this._logger.error(new Error('unable to start p2p node'))
-      //      cb(err)
-      //    })
-      // },
-
       // Start node
       (bundle: Object, cb: Function) => {
         this._logger.info('starting P2P node')
@@ -325,7 +298,7 @@ export class PeerNode {
         this._quasar.listen(this._quasarPort)
         this._logger.info('p2p messaging initialized')
         // add quasar to manager
-        this.manager.quasar = this._quasar
+        this.manager.engine.quasar = this._quasar
       } catch (err) {
         this._logger.info('p2p messaging failed')
         this._logger.error(err)
@@ -333,7 +306,9 @@ export class PeerNode {
       this._logger.info('start far reaching discovery...')
       const discovery = new Discovery()
       this._scanner = discovery.start()
-      this._logger.info('successful discovery start <- edge seed ' + discovery.hash)
+      this._logger.info('successful discovery start <- edge ' + discovery.hash)
+
+      // register discovery scanner handlers
       this._scanner.on('connection', (conn, info, type) => {
         this.peerNewConnectionHandler(conn, info, type)
       })
@@ -529,7 +504,7 @@ export class PeerNode {
 
     // this.bundle.pubsub.publish('newBlock', Buffer.from(JSON.stringify(block.toObject())), () => {})
     // const raw = block.serializeBinary()
-    this.quasar.publishQuasar('newblock', block.toObject())
+    this._quasar.publishQuasar('newblock', block.toObject())
 
     const url = `${PROTOCOL_PREFIX}/newblock`
     this.manager.peerBookConnected.getAllArray().map(peer => {

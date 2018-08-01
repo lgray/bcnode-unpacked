@@ -36,7 +36,7 @@ const blockchainHeaderToRoveredBlock = (header: BlockchainHeader): Block => {
   ])
 }
 
-describe('Multiverse', () => {
+describe.skip('Multiverse', () => {
   beforeEach(() => {
     // $FlowFixMe - flow is unable to properly type mocked module
     PersistenceRocksDb.mockClear()
