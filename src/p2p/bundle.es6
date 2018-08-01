@@ -10,7 +10,6 @@ import { ManagedPeerBook } from './book'
 
 const debug = require('debug')('bcnode:bundle')
 const libp2p = require('libp2p')
-const KadDHT = require('libp2p-kad-dht')
 const Mplex = require('libp2p-mplex')
 const MDNS = require('libp2p-mdns')
 // const SECIO = require('libp2p-secio')
@@ -46,8 +45,7 @@ export class Bundle extends libp2p {
       discovery: [
         new MDNS(peerInfo, { interval: broadcastInterval, broadcast: true }),
         signaling.discovery
-      ],
-      DHT: KadDHT
+      ]
     }
 
     super(modules, peerInfo, peerBook, opts)
