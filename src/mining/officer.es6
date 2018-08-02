@@ -517,15 +517,7 @@ export class MiningOfficer {
     this.stopTimer('w1')
     this._cleanUnfinishedBlock()
     this.pubsub.publish('miner.block.new', { unfinishedBlock, solution })
-    return this.stopMining().then(() => {
-      const speed = this.getTimerResults()
-      if (speed > 0 && iterations > 0) {
-        this._logger.info('hash rate: ' + new BN(speed).add(new BN(iterations)).div(1000).toString() + ' kh/s')
-      }
-    })
-      .catch((err) => {
-        this._logger.error(err)
-      })
+    return this.stopMining()
   }
 
   _handleWorkerError (error: Error): Promise<boolean> {
@@ -538,12 +530,7 @@ export class MiningOfficer {
       return Promise.resolve(false)
     }
 
-    return this.stopMining().then(() => {
-      this._logger.info('miner pending new work')
-    })
-      .catch((e) => {
-        this._logger.erorr(e)
-      })
+    return this.stopMining()
   }
 
   _handleWorkerExit (code: number, signal: string) {

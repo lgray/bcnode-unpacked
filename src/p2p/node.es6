@@ -197,12 +197,12 @@ export class PeerNode {
 
       // Register event handlers
       (bundle: Object, cb: Function) => {
-        this._logger.info('Registering event handlers')
+        this._logger.info('registering event handlers')
 
         this.bundle.on('peer:discovery', (peer) => {
           return this.manager.onPeerDiscovery(peer).then(() => {
             if (this._shouldStopDiscovery()) {
-              debug(`peer:discovery - Quorum of ${QUORUM_SIZE} reached, if testnet stopping discovery`)
+              debug(`peer:discovery - quorum of ${QUORUM_SIZE} reached, if testnet stopping discovery`)
               // return Promise.resolve(true)
               return this.stopDiscovery()
             }
@@ -300,6 +300,7 @@ export class PeerNode {
       logger: this._logger
     })
 
+    /* eslint-disable */
     const QuasarPlugin = require('kad-quasar')
     this._quasar.plugin(QuasarPlugin)
     this._quasar.listen(this._quasarPort)
@@ -310,63 +311,90 @@ export class PeerNode {
     // add quasar to manager
     // register discovery scanner handlers
     this._scanner.on('connection', (conn, info, type) => {
+      this._logger.info('connection made to discovery interface')
+      console.log(conn)
+      console.log(info)
+      console.log(type)
       this.peerNewConnectionHandler(conn, info, type)
     })
     this._scanner.on('connection-closed', (conn, info) => {
-      this.peerClosedConnectionHandler(conn, info)
+      //this.peerClosedConnectionHandler(conn, info)
+      this._logger.info('------- CONNECTION CLOSED ------')
+      console.log(conn)
+      console.log(info)
+      console.log(type)
     })
     this._scanner.on('error', (err) => {
-      this._logger.error(new Error('peer error!!!!!'))
-      this._logger.error(err)
+      console.trace(err)
     })
     this._scanner.on('redundant-connection', (conn, info) => {
-      this._logger.warn('THERE IS A REDUNDANT CONNECTION')
+      this._logger.info('------- REDUNDANT CONNECTION ------')
+      console.log(conn)
+      console.log(info)
       this.peerClosedConnectionHandler(conn, info)
     })
     this._scanner.on('peer', (peer) => {
-      this._logger.info('new peer ' + peer.id.toString('hex'))
+      this._logger.info('------- PEER JOINED ------')
+      console.log(peer)
     })
-    this._scanner.on('drop', (peer) => {
-      this._logger.warn('peer dropped ' + peer.id.toString('hex'))
+    this._scanner.on('drop', (peer, type) => {
+      this._logger.info('------- PEER DROPPED ------')
+      console.log(peer)
+      console.log(type)
     })
     this._scanner.on('peer-banned', (peer, type) => {
-      this._logger.warn('peer banned ' + peer.id.toString('hex'))
-      this._logger.warn(type)
+      this._logger.info('------- PEER BANNED ------')
+      console.log(peer)
+      console.log(type)
     })
     this._scanner.on('connect-failed', (next, timeout) => {
-      this._logger.warn(next)
-      this._logger.warn('connect failed ')
-      this._logger.warn(timeout)
+      this._logger.info('------- CONNECT FAILED ------')
+      console.log(next)
+      console.log(timeout)
     })
     this._scanner.on('handshake-timeout', (conn, timeout) => {
-      this._logger.warn(conn)
-      this._logger.warn('handshake timeout ')
-      this._logger.warn(timeout)
+      this._logger.info('------- CONNECT FAILED ------')
+      console.log(conn)
+      console.log(timeout)
     })
 
     this._scanner.on('peer-rejected', (peer, type) => {
-      this._logger.warn('peer banned ' + peer.id.toString('hex'))
-      this._logger.warn(type)
+      this._logger.warn('peer rejected ')
+      console.log(peer)
+      console.log(type)
     })
     this._quasar.quasarSubscribe('newblock', (data) => {
-      this._logger.info('------- 352 ------')
+      this._logger.info('------- NEW BLOCK QUASAR ------')
       this._logger.info(data)
+      console.trace(data)
     })
     this._logger.info('p2p services ready')
     this._engine._quasar = this._quasar
     this._manager._quasar = this._quasar
+    setInterval(() => {
+
+      console.log('PEERS STATS')
+      console.log(this._scanner.connected)
+    }, 5000)
+    setInterval(() => {
+      this._quasar.quasarPublish('newblock', {
+        some: 'data'
+      })
+    }, 15000)
+
+    /* eslint-disable */
   }
 
   peerNewConnectionHandler (conn: Object, info: ?Object, type: ?string) {
     // TODO: Check if this connection is unique
-
-    // create quasar link
-    // TODO: move this to pull conn
     const idMessage = 'i*' + this._externalIP + '*' + this._quasarPort + '*' + this._identity
+    this._logger.info(idMessage)
     conn.write(idMessage)
     conn.on('data', (data) => {
       this.peerDataHandler(conn, data)
     })
+    // create quasar link
+    // TODO: move this to pull conn
   }
 
   peerClosedConnectionHandler (conn: Object, info: Object) {
@@ -386,6 +414,8 @@ export class PeerNode {
     const str = data.toString()
     const type = str[0]
     this._logger.info(str)
+
+    this._logger.info('peerDataHandler -> ' + str)
 
     // TYPES
     // i - peer identity
@@ -407,6 +437,7 @@ export class PeerNode {
       this._logger.info('writing to remote peer ' + host + ':' + port + ' [' + remoteIdentity + ']')
       this._quasar.join(req, (err) => {
         if (err) {
+          this._logger.warn('XXXX failed to join quasar of peer')
           this._logger.error(err)
         } else {
           this._logger.info('entered gravity well for seed ' + remoteIdentity)
