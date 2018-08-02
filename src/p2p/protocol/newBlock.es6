@@ -31,6 +31,7 @@ export const register = (manager: PeerManager, bundle: Bundle) => {
   debug(`Registering protocol - ${uri}`)
 
   if (manager.engine._quasar !== undefined) {
+    globalLog.info('subscribed to newblock:quasar')
     manager.engine._quasar.quasarSubscribe('newblock', (data) => {
       globalLog.info('-----------------------------')
       globalLog.info('-----------------------------')
