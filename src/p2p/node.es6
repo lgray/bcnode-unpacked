@@ -74,6 +74,7 @@ export class PeerNode {
     this._quasarPort = 10006 + Math.floor(Math.random() * 10000)
     this._quasarDbDirectory = manualDirectory + '/quasar'
     this._quasarDbPath = manualDirectory + '/quasar/dht.db'
+    this._logger.info('quasar db path: ' + manualDirectory + '/quasar/dht.db')
 
     fs.ensureDirSync(manualDirectory + '/quasar')
 
@@ -263,7 +264,7 @@ export class PeerNode {
     ]
   }
 
-  start () {
+  async start () {
     waterfall(this._pipelineStartNode(), (err) => {
       if (err) {
         this._logger.error(err)
@@ -271,48 +272,45 @@ export class PeerNode {
       }
     })
     this._logger.info('initialize p2p messaging...')
-    const p2pServiceBoot = async () => {
-      const ip = await anyDns()
-      this._externalIP = ip
-      this._logger.info('external ip address <- ' + ip)
+    const ip = await anyDns()
+    this._externalIP = ip
+    this._logger.info('external ip address <- ' + ip)
 
-      this._logger.info('start far reaching discovery...')
-      const discovery = new Discovery()
-      this._scanner = discovery.start()
-      this._logger.info('successful discovery start <- edge ' + discovery.hash)
+    this._logger.info('start far reaching discovery...')
+    const discovery = new Discovery()
+    this._scanner = discovery.start()
+    this._logger.info('successful discovery start <- edge ' + discovery.hash)
 
-      const contact = {
-        hostname: ip,
-        port: this._quasarPort
-      }
-
-      this._quasar = kad({
-        identity: this._identity,
-        transport: new kad.UDPTransport(),
-        storage: levelup(leveldown(this._quasarDbPath)),
-        contact: contact,
-        logger: this._logger
-      })
-
-      this._quasar.plugin(require('kad-quasar'))
-      this._quasar.listen(this._quasarPort)
-      this._logger.info('p2p messaging initialized')
-      // add quasar to manager
-      this.manager.engine._quasar = this._quasar
-      this._engine._quasar = this._quasar
-      this.manager._quasar = this._quasar
-
-      // register discovery scanner handlers
-      this._scanner.on('connection', (conn, info, type) => {
-        this.peerNewConnectionHandler(conn, info, type)
-      })
-      this._scanner.on('connection-closed', (conn, info) => {
-        this.peerClosedConnectionHandler(conn, info)
-      })
-
-      this._logger.info('p2p services ready')
+    const contact = {
+      hostname: ip,
+      port: this._quasarPort
     }
-    p2pServiceBoot()
+
+    this._quasar = kad({
+      identity: this._identity,
+      transport: new kad.UDPTransport(),
+      storage: levelup(leveldown(this._quasarDbPath)),
+      contact: contact,
+      logger: this._logger
+    })
+
+    const QuasarPlugin = require('kad-quasar')
+    this._quasar.plugin(QuasarPlugin)
+    this._quasar.listen(this._quasarPort)
+    this._logger.info('p2p messaging initialized')
+    this._logger.info('quasarPort: ' + this._quasarPort)
+    this._logger.info('quasarDbDirectory: ' + this._quasarDbDirectory)
+    this._logger.info('quasarDbPath: ' + this._quasarDbPath)
+    // add quasar to manager
+    // register discovery scanner handlers
+    this._scanner.on('connection', (conn, info, type) => {
+      this.peerNewConnectionHandler(conn, info, type)
+    })
+    this._scanner.on('connection-closed', (conn, info) => {
+      this.peerClosedConnectionHandler(conn, info)
+    })
+
+    this._logger.info('p2p services ready')
   }
 
   peerNewConnectionHandler (conn: Object, info: ?Object, type: ?string) {

@@ -23,7 +23,7 @@ const tag = file.npm + '-' + file.git.short
 const formatTemplate = options => {
   const ts = (options.timestamp) ? `${options.timestamp()} ` : ''
   const level = options.level.toUpperCase()
-  const msg = undefined !== options.message ? '[' + tag + '] ' + options.message : '[' + tag + ']'
+  const msg = undefined !== options.message ? tag + ' ' + options.message : tag
   const meta =
     options.meta && Object.keys(options.meta).length
       ? '\n\t' + JSON.stringify(options.meta, null, 2)

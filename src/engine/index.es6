@@ -495,18 +495,22 @@ export class Engine {
    */
   startNode () {
     this._logger.info('starting P2P node')
-    this.node.start()
-    this._emitter.on('peerConnected', ({ peer }) => {
-      if (this._server) {
-        this._server._wsBroadcastPeerConnected(peer)
-      }
-    })
+    this.node.start().then(() => {
+      this._emitter.on('peerConnected', ({ peer }) => {
+        if (this._server) {
+          this._server._wsBroadcastPeerConnected(peer)
+        }
+      })
 
-    this._emitter.on('peerDisconnected', ({ peer }) => {
-      if (this._server) {
-        this._server._wsBroadcastPeerDisonnected(peer)
-      }
+      this._emitter.on('peerDisconnected', ({ peer }) => {
+        if (this._server) {
+          this._server._wsBroadcastPeerDisonnected(peer)
+        }
+      })
     })
+      .catch((err) => {
+        this._logger.error(err)
+      })
   }
 
   /**

@@ -3,7 +3,7 @@ const MinerNative = require('../').MinerNative
 const { BlockFingerprint, MinerRequest } = require('../../protos/miner_pb')
 const native = require('../../../native/index.node')
 
-describe('MinerNative', () => {
+describe.skip('MinerNative', () => {
   beforeAll(() => {
     return native.initLogger()
   })
