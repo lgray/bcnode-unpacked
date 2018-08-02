@@ -894,8 +894,6 @@ export class Engine {
               this._logger.error(err)
             } else {
             // broadcast to other peers without sending back to the peer that sent it to us
-              this._logger.info('444444444444444444444444')
-              this.node._quasar.quasarPublish('newblock', { data: JSON.stringify(newBlock.toObject()) })
               this.node.broadcastNewBlock(newBlock, peerInfo.id.toB58String())
             }
           })
@@ -1007,8 +1005,6 @@ export class Engine {
                                           .then(() => {
                                             this.pubsub.publish('update.block.latest', { key: 'bc.block.latest', data: newBlock, force: true, multiverse: this.multiverse._chain })
                                             this.node.broadcastNewBlock(newBlock, peerInfo.id.toB58String())
-                                            this._logger.info('5555555555555555555555555555')
-                                            this.node._quasar.quasarPublish('newblock', { data: JSON.stringify(newBlock.toObject()) })
                                             this._logger.debug('sync unlocked')
                                             const targetHeight = this.multiverse.getLowestBlock().getHeight() - 1
                                             // dont have to sync
@@ -1159,8 +1155,6 @@ export class Engine {
 
     try {
       this._logger.info('broadcasting block challenge ' + newBlock.getHash() + ' -> considered next block in current multiverse')
-      this._logger.info('666666666666666666666666')
-      this.node._quasar.quasarPublish('newblock', { data: JSON.stringify(newBlock.toObject()) })
       this.node.broadcastNewBlock(newBlock)
 
       // NOTE: Do we really need nested try-catch ?

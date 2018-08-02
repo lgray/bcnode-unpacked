@@ -315,8 +315,42 @@ export class PeerNode {
     this._scanner.on('connection-closed', (conn, info) => {
       this.peerClosedConnectionHandler(conn, info)
     })
+    this._scanner.on('error', (err) => {
+      this._logger.error(new Error('peer error!!!!!'))
+      this._logger.error(err)
+    })
+    this._scanner.on('redundant-connection', (conn, info) => {
+      this._logger.warn('THERE IS A REDUNDANT CONNECTION')
+      this.peerClosedConnectionHandler(conn, info)
+    })
+    this._scanner.on('peer', (peer) => {
+      this._logger.info('new peer ' + peer.id.toString('hex'))
+    })
+    this._scanner.on('drop', (peer) => {
+      this._logger.warn('peer dropped ' + peer.id.toString('hex'))
+    })
+    this._scanner.on('peer-banned', (peer, type) => {
+      this._logger.warn('peer banned ' + peer.id.toString('hex'))
+      this._logger.warn(type)
+    })
+    this._scanner.on('connect-failed', (next, timeout) => {
+      this._logger.warn(next)
+      this._logger.warn('connect failed ')
+      this._logger.warn(timeout)
+    })
+    this._scanner.on('handshake-timeout', (conn, timeout) => {
+      this._logger.warn(conn)
+      this._logger.warn('handshake timeout ')
+      this._logger.warn(timeout)
+    })
 
+    this._scanner.on('peer-rejected', (peer, type) => {
+      this._logger.warn('peer banned ' + peer.id.toString('hex'))
+      this._logger.warn(type)
+    })
     this._logger.info('p2p services ready')
+    this._engine._quasar = this._quasar
+    this._manager._quasar = this._quasar
   }
 
   peerNewConnectionHandler (conn: Object, info: ?Object, type: ?string) {
@@ -334,6 +368,7 @@ export class PeerNode {
   peerClosedConnectionHandler (conn: Object, info: Object) {
     /* eslint-disable */
     console.trace(info)
+    console.trace(conn)
     this._logger.warn('peer disconnect ')
     /* eslint-enable */
     // TODO: Update current connected peers remove or otherwise
@@ -365,7 +400,7 @@ export class PeerNode {
         port: port
       }]
 
-      this._logger.info(JSON.stringify(req))
+      this._logger.info('writing to remote peer ' + host + ':' + port + ' [' + remoteIdentity + ']')
       this._quasar.join(req, (err) => {
         if (err) {
           this._logger.error(err)
