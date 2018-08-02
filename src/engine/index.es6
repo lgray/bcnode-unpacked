@@ -51,7 +51,6 @@ const ts = require('../utils/time').default // ES6 default export
 const DATA_DIR = process.env.BC_DATA_DIR || config.persistence.path
 const MONITOR_ENABLED = process.env.BC_MONITOR === 'true'
 const BC_CHECK = process.env.BC_CHECK === 'true'
-const BC_LIMIT_MINER = process.env.BC_LIMIT_MINER === 'true'
 const PERSIST_ROVER_DATA = process.env.PERSIST_ROVER_DATA === 'true'
 
 process.on('uncaughtError', (err) => {
@@ -508,6 +507,10 @@ export class Engine {
         this._server._wsBroadcastPeerDisonnected(peer)
       }
     })
+    this.node._quasar.quasarSubscribe('newblock', (newBlock) => {
+      this._logger.info('----------------- >>>>>>>>>>>>>>> new block from subscribe ')
+      this._logger.info(newBlock)
+    })
   }
 
   /**
@@ -891,6 +894,8 @@ export class Engine {
               this._logger.error(err)
             } else {
             // broadcast to other peers without sending back to the peer that sent it to us
+              this._logger.info('444444444444444444444444')
+              this.node._quasar.quasarPublish('newblock', { data: JSON.stringify(newBlock.toObject()) })
               this.node.broadcastNewBlock(newBlock, peerInfo.id.toB58String())
             }
           })
@@ -1001,6 +1006,8 @@ export class Engine {
                                           .then(() => {
                                             this.pubsub.publish('update.block.latest', { key: 'bc.block.latest', data: newBlock, force: true, multiverse: this.multiverse._chain })
                                             this.node.broadcastNewBlock(newBlock, peerInfo.id.toB58String())
+                                            this._logger.info('5555555555555555555555555555')
+                                            this.node._quasar.quasarPublish('newblock', { data: JSON.stringify(newBlock.toObject()) })
                                             this._logger.debug('sync unlocked')
                                             const targetHeight = this.multiverse.getLowestBlock().getHeight() - 1
                                             // dont have to sync
@@ -1152,6 +1159,8 @@ export class Engine {
 
     try {
       this._logger.info('broadcasting block challenge ' + newBlock.getHash() + ' -> considered next block in current multiverse')
+      this._logger.info('666666666666666666666666')
+      this.node._quasar.quasarPublish('newblock', { data: JSON.stringify(newBlock.toObject()) })
       this.node.broadcastNewBlock(newBlock)
 
       // NOTE: Do we really need nested try-catch ?
@@ -1197,22 +1206,6 @@ export class Engine {
         .catch((e) => {
           this._logger.warn('unable to stop miner')
           this._logger.error(e)
-        })
-    }
-
-    // miners must have peers to mine
-    if (this.node.manager.peerBookConnected.getPeersCount() < 4 &&
-        BC_LIMIT_MINER === false) {
-      this._logger.error(new Error('local node has lost minimum network connections, exiting...'))
-      this._logger.warn('use "--restart always" if running with Docker to auto restart')
-      return this.miningOfficer.stopMiner().then((r) => {
-        this._logger.info('end mining')
-        process.exit(3)
-      })
-        .catch((e) => {
-          this._logger.warn('unable to stop miner')
-          this._logger.error(e)
-          process.exit(3)
         })
     }
 

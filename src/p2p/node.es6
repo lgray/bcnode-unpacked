@@ -82,6 +82,53 @@ export class PeerNode {
         debug(`Peers count ${this.manager.peerBookConnected.getPeersCount()}`)
       }, config.p2p.stats.interval * 1000)
     }
+    this._logger.info('initialize p2p messaging...')
+
+    anyDns().then((ip) => {
+      this._externalIP = ip
+      this._logger.info('external ip address <- ' + ip)
+
+      this._logger.info('start far reaching discovery...')
+      const discovery = new Discovery()
+      this._scanner = discovery.start()
+      this._logger.info('successful discovery start <- edge ' + discovery.hash)
+
+      const contact = {
+        hostname: ip,
+        port: this._quasarPort
+      }
+
+      this._quasar = kad({
+        identity: this._identity,
+        transport: new kad.UDPTransport(),
+        storage: levelup(leveldown(this._quasarDbPath)),
+        contact: contact,
+        logger: this._logger
+      })
+
+      this._quasar.plugin(require('kad-quasar'))
+      this._quasar.listen(this._quasarPort)
+      this._logger.info('p2p messaging initialized')
+      // add quasar to manager
+      this.manager.engine._quasar = this._quasar
+      this._engine._quasar = this._quasar
+      this.manager._quasar = this._quasar
+
+      // register discovery scanner handlers
+      this._scanner.on('connection', (conn, info, type) => {
+        this.peerNewConnectionHandler(conn, info, type)
+      })
+      this._scanner.on('connection-closed', (conn, info) => {
+        this.peerClosedConnectionHandler(conn, info)
+      })
+
+      this._logger.info('p2p services ready')
+    })
+      .catch((err) => {
+        this._logger.error(err)
+        this._logger.error(new Error('unable to start quasar node'))
+        // cb(err)
+      })
   }
 
   get bundle (): Bundle {
@@ -272,62 +319,6 @@ export class PeerNode {
 
       this._logger.info('P2P node started')
     })
-
-    // parallel([
-    //  // initialize quasar p2p messaging
-    //  (cb) => {
-    this._logger.info('initialize p2p messaging...')
-
-    anyDns().then((ip) => {
-      this._externalIP = ip
-      this._logger.info('external ip address <- ' + ip)
-      try {
-        const contact = {
-          hostname: ip,
-          port: this._quasarPort
-        }
-
-        this._quasar = kad({
-          identity: this._identity,
-          transport: new kad.UDPTransport(),
-          storage: levelup(leveldown(this._quasarDbPath)),
-          contact: contact,
-          logger: this._logger
-        })
-
-        this._quasar.plugin(require('kad-quasar'))
-        this._quasar.listen(this._quasarPort)
-        this._logger.info('p2p messaging initialized')
-        // add quasar to manager
-        this.manager.engine._quasar = this._quasar
-        this._engine._quasar = this._quasar
-        this.manager._quasar = this._quasar
-      } catch (err) {
-        this._logger.info('p2p messaging failed')
-        this._logger.error(err)
-      }
-      this._logger.info('start far reaching discovery...')
-      const discovery = new Discovery()
-      this._scanner = discovery.start()
-      this._logger.info('successful discovery start <- edge ' + discovery.hash)
-
-      // register discovery scanner handlers
-      this._scanner.on('connection', (conn, info, type) => {
-        this.peerNewConnectionHandler(conn, info, type)
-      })
-      this._scanner.on('connection-closed', (conn, info) => {
-        this.peerClosedConnectionHandler(conn, info)
-      })
-
-      this._logger.info('p2p services ready')
-    })
-      .catch((err) => {
-        this._logger.error(err)
-        this._logger.error(new Error('unable to start quasar node'))
-        // cb(err)
-      })
-    //  }
-    // })
   }
 
   peerNewConnectionHandler (conn: Object, info: ?Object, type: ?string) {
@@ -336,19 +327,10 @@ export class PeerNode {
     // create quasar link
     // TODO: move this to pull conn
     const idMessage = 'i*' + this._externalIP + '*' + this._quasarPort + '*' + this._identity
-    pull(
-      conn,
-      pull.collect((err, data) => {
-        if (err) {
-          return
-        }
-        this.peerDataHandler(conn, data)
-      }))
-    // conn.on('data', (data) => {
-    //  this.peerDataHandler(conn, data)
-    // })
-    // conn.write(idMessage)
-    pull(pull.values([idMessage]), conn)
+    conn.write(idMessage)
+    conn.on('data', (data) => {
+      this.peerDataHandler(conn, data)
+    })
   }
 
   peerClosedConnectionHandler (conn: Object, info: Object) {
@@ -517,7 +499,12 @@ export class PeerNode {
 
     // this.bundle.pubsub.publish('newBlock', Buffer.from(JSON.stringify(block.toObject())), () => {})
     // const raw = block.serializeBinary()
-    this._quasar.quasarPublish('newblock', block.toObject())
+    if (this._quasar !== undefined) {
+      this._logger.info('============================')
+      this._quasar.quasarPublish('newblock', { data: JSON.stringify(block.toObject()) })
+    } else {
+      this._logger.info('---------------------------')
+    }
 
     const url = `${PROTOCOL_PREFIX}/newblock`
     this.manager.peerBookConnected.getAllArray().map(peer => {
