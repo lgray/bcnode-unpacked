@@ -269,17 +269,9 @@ export class MiningOfficer {
 
         // if blockchains block count === 5 we will create a block with 6 blockchain blocks (which gets bonus)
         // if it's more, do not restart mining and start with new ones
-        if (this._workerProcess && this._unfinishedBlock) {
+        if (this._workerProcess) {
           this._logger.info(`new rovered block -> accepted`)
-          // TODO: Determine if this is needed
-          return this.stopMining().then(() => {
-            this._logger.info('mining stopped')
-            return Promise.resolve(true)
-          })
-            .catch((e) => {
-              this._logger.error(e)
-              return Promise.resolve(false)
-            })
+          this.stopMining()
         }
 
         this._logger.debug(`starting miner process with work: "${work}", difficulty: ${newBlock.getDifficulty()}, ${JSON.stringify(this._collectedBlocks, null, 2)}`)
