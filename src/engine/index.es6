@@ -1189,7 +1189,7 @@ export class Engine {
    * @returns {Promise<boolean>} Promise indicating if the block was successfully processed
    * @private
    */
-  _processMinedBlock (newBlock: BcBlock, solution: Object): Promise<boolean> {
+  _processMinedBlock (newBlock: BcBlock, solution: Object): Promise<bool> {
     // TODO: reenable this._logger.info(`Mined new block: ${JSON.stringify(newBlockObj, null, 2)}`)
     // Trying to process null/undefined block
     if (newBlock === null || newBlock === undefined) {
@@ -1215,6 +1215,7 @@ export class Engine {
     this._logger.info('submitting mined block to current multiverse')
     return this.multiverse.addNextBlock(newBlock)
       .then((isNextBlock) => {
+        // $FlowFixMe
         this._logger.info('accepted multiverse addition: ' + isNextBlock)
         // if (isNextBlock) {
         // TODO: this will break now that _blocks is not used in multiverse
@@ -1228,6 +1229,7 @@ export class Engine {
         } else {
           this._logger.warn('local mined block ' + newBlock.getHeight() + ' does not stack on multiverse height ' + this.multiverse.getHighestBlock().getHeight())
           this._logger.warn('mined block ' + newBlock.getHeight() + ' cannot go on top of multiverse block ' + this.multiverse.getHighestBlock().getHash())
+          return Promise.resolve(true)
           // return this.miningOfficer.rebaseMiner()
           //  .then((res) => {
           //    this._logger.info(res)
@@ -1239,6 +1241,7 @@ export class Engine {
       })
       .catch((err) => {
         this._logger.error(err)
+        return Promise.resolve(false)
       })
   }
 }
