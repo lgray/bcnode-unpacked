@@ -101,18 +101,18 @@ export function getExpFactorDiff (calculatedDifficulty: BN, parentBlockHeight: n
  *
  * @param currentBlockTime
  * @param previousBlockTime
- * @param previousDistance
+ * @param previousDifficulty
  * @param minimalDifficulty
  * @param newBlockCount
  * @returns
  */
-export function getDiff (currentBlockTime: number, previousBlockTime: number, previousDistance: string, minimalDifficulty: number, newBlockCount: number): BN {
+export function getDiff (currentBlockTime: number, previousBlockTime: number, previousDifficulty: string, minimalDifficulty: number, newBlockCount: number): BN {
   // https://github.com/ethereum/EIPs/blob/master/EIPS/eip-2.md
 
   let bigMinimalDifficulty = new BN(minimalDifficulty, 16)
 
   const bigPreviousBlockTime = new BN(previousBlockTime)
-  const bigPreviousDistance = new BN(previousDistance)
+  const bigPreviousDifficulty = new BN(previousDifficulty)
   const bigCurentBlockTime = new BN(currentBlockTime)
   const bigMinus99 = new BN(-99)
   const big1 = new BN(1)
@@ -121,7 +121,7 @@ export function getDiff (currentBlockTime: number, previousBlockTime: number, pr
   let elapsedTime = bigCurentBlockTime.sub(bigPreviousBlockTime)
 
   // elapsedTime + ((elapsedTime - 4) * newBlocks)
-  const elapsedTimeBonus = elapsedTime.add(elapsedTime.sub(new BN(4)).mul(new BN(newBlockCount)))
+  const elapsedTimeBonus = elapsedTime.add(elapsedTime.sub(new BN(5)).mul(new BN(newBlockCount)))
 
   if (elapsedTimeBonus.gt(big0)) {
     elapsedTime = elapsedTimeBonus
@@ -137,11 +137,11 @@ export function getDiff (currentBlockTime: number, previousBlockTime: number, pr
   }
 
   // y = bigPreviousDifficulty -> SPECTRUM: 10062600 // AT: 1615520 // BT: (1024 * 160) + 20 = 163860
-  y = bigPreviousDistance.div(new BN(163860))
+  y = bigPreviousDifficulty.div(new BN(163860))
   // x = x * y
   x = x.mul(y)
-  // x = x + previousDistance
-  x = x.add(bigPreviousDistance)
+  // x = x + previousDifficulty
+  x = x.add(bigPreviousDifficulty)
 
   // x < minimalDifficulty
   if (x.lt(bigMinimalDifficulty)) {
