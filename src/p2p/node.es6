@@ -43,6 +43,12 @@ const levelup = require('levelup')
 const leveldown = require('leveldown')
 const fs = require('fs-extra')
 
+process.on('uncaughtError', (err) => {
+  /* eslint-disable */
+  console.trace(err)
+  /* eslint-enable */
+})
+
 // const { PEER_QUORUM_SIZE } = require('./quorum')
 
 export class PeerNode {
