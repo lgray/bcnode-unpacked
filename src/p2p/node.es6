@@ -348,6 +348,10 @@ export class PeerNode {
       this._logger.warn('peer banned ' + peer.id.toString('hex'))
       this._logger.warn(type)
     })
+    this._quasar.quasarSubscribe('newblock', (data) => {
+      this._logger.info('------- 352 ------')
+      this._logger.info(data)
+    })
     this._logger.info('p2p services ready')
     this._engine._quasar = this._quasar
     this._manager._quasar = this._quasar
