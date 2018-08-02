@@ -332,7 +332,11 @@ export class PeerNode {
   }
 
   peerClosedConnectionHandler (conn: Object, info: Object) {
-    this._logger.info('peer disconnect ')
+    /* eslint-disable */
+    this._logger.error(info.message)
+    console.trace(info)
+    this._logger.warn('peer disconnect ')
+    /* eslint-enable */
     // TODO: Update current connected peers remove or otherwise
   }
 
