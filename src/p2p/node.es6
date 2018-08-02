@@ -333,7 +333,6 @@ export class PeerNode {
 
   peerClosedConnectionHandler (conn: Object, info: Object) {
     /* eslint-disable */
-    this._logger.error(info.message)
     console.trace(info)
     this._logger.warn('peer disconnect ')
     /* eslint-enable */
@@ -343,11 +342,11 @@ export class PeerNode {
   peerDataHandler (conn: Object, data: ?Object) {
     if (data === undefined) { return }
 
-    this._logger.info(data)
     // TODO: add lz4 compression for things larger than 1000 characters
     //
     const str = data.toString()
     const type = str[0]
+    this._logger.info(str)
 
     // TYPES
     // i - peer identity
@@ -367,8 +366,12 @@ export class PeerNode {
       }]
 
       this._logger.info(JSON.stringify(req))
-      this._quasar.join(req, () => {
-        this._logger.info('entered gravity well for seed ' + remoteIdentity)
+      this._quasar.join(req, (err) => {
+        if (err) {
+          this._logger.error(err)
+        } else {
+          this._logger.info('entered gravity well for seed ' + remoteIdentity)
+        }
       })
     } else if (type === 'b') {
       this._logger.info('bulk block type')
