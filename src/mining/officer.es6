@@ -269,17 +269,9 @@ export class MiningOfficer {
 
         // if blockchains block count === 5 we will create a block with 6 blockchain blocks (which gets bonus)
         // if it's more, do not restart mining and start with new ones
-        if (this._workerProcess && this._unfinishedBlock) {
+        if (this._workerProcess) {
           this._logger.info(`new rovered block -> accepted`)
-          // TODO: Determine if this is needed
-          return this.stopMining().then(() => {
-            this._logger.info('mining stopped')
-            return Promise.resolve(true)
-          })
-            .catch((e) => {
-              this._logger.error(e)
-              return Promise.resolve(false)
-            })
+          this.stopMining()
         }
 
         this._logger.debug(`starting miner process with work: "${work}", difficulty: ${newBlock.getDifficulty()}, ${JSON.stringify(this._collectedBlocks, null, 2)}`)
@@ -296,8 +288,8 @@ export class MiningOfficer {
           this._workerProcess.on('exit', this._handleWorkerExit.bind(this))
 
           this._logger.info('worker <- calculated difficulty threshold ' + newBlock.getDifficulty())
-          // $FlowFixMe - Flow can't find out that ChildProcess is extended form EventEmitter
           this.startTimer('w1')
+          // $FlowFixMe - Flow can't find out that ChildProcess is extended form EventEmitter
           this._workerProcess.send({
             currentTimestamp,
             offset: ts.offset,
@@ -346,13 +338,13 @@ export class MiningOfficer {
     return this._blockTemplates[0]
   }
 
-  stopMining (): Promise<bool> {
+  stopMining (): bool {
     debug('stop mining')
     this._logger.info('mining rebase pending')
 
     const process = this._workerProcess
     if (!process) {
-      return Promise.resolve(true)
+      return true
     }
 
     if (process.connected) {
@@ -380,7 +372,7 @@ export class MiningOfficer {
 
     this._workerProcess = undefined
 
-    return Promise.resolve(true)
+    return true
 
     // ENABLED for AT
     // try {

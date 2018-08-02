@@ -261,8 +261,9 @@ export class Engine {
     })
 
     this.pubsub.subscribe('update.block.latest', '<engine>', (msg) => {
-      return this.miningOfficer.stopMining().then(() => {
-        return this.updateLatestAndStore(msg)
+      try {
+        this.miningOfficer.stopMining()
+        this.updateLatestAndStore(msg)
           .then((res) => {
             if (msg.mined !== undefined && msg.mined === true) {
               this._logger.info(`latest block ${msg.data.getHeight()} has been updated`)
@@ -281,10 +282,9 @@ export class Engine {
             this._logger.error(`error occurred during updateLatestAndStore(), reason: ${err.message}`)
             process.exit()
           })
-      })
-        .catch((err) => {
-          this._logger.error(err)
-        })
+      } catch (err) {
+        this._logger.error(err)
+      }
     })
 
     // GENERATE BLOCKS - BEGIN
@@ -924,7 +924,8 @@ export class Engine {
                 //
                 const upperBound = newBlock.getHeight()
                 // get the lowest of the current multiverse
-                return this.miningOfficer.stopMining().then(() => {
+                try {
+                  this.miningOfficer.stopMining()
                   return conn.getPeerInfo((err, peerInfo) => {
                     if (err) {
                       this._logger.error(errToString(err))
@@ -1082,17 +1083,16 @@ export class Engine {
                           })
                       })
                   })
-                })
-                  .catch((e) => {
-                    this._logger.info(333)
-                    this._logger.error(e)
-                    return this.persistence.put('synclock', getGenesisBlock()).then(() => {
-                      this._logger.info('sync reset')
-                    })
-                      .catch((e) => {
-                        this._logger.error(e)
-                      })
+                } catch (e) {
+                  this._logger.info(333)
+                  this._logger.error(e)
+                  return this.persistence.put('synclock', getGenesisBlock()).then(() => {
+                    this._logger.info('sync reset')
                   })
+                    .catch((e) => {
+                      this._logger.error(e)
+                    })
+                }
               } else {
                 return this.sendPeerLatestBlock(conn, this.multiverse.getHighestBlock())
                   .then(() => {
@@ -1189,7 +1189,7 @@ export class Engine {
    * @returns {Promise<boolean>} Promise indicating if the block was successfully processed
    * @private
    */
-  _processMinedBlock (newBlock: BcBlock, solution: Object): Promise<boolean> {
+  _processMinedBlock (newBlock: BcBlock, solution: Object): Promise<bool> {
     // TODO: reenable this._logger.info(`Mined new block: ${JSON.stringify(newBlockObj, null, 2)}`)
     // Trying to process null/undefined block
     if (newBlock === null || newBlock === undefined) {
@@ -1200,19 +1200,22 @@ export class Engine {
     // Prevent submitting mined block twice
     if (this._knownBlocksCache.has(newBlock.getHash())) {
       this._logger.warn('received duplicate new block ' + newBlock.getHeight() + ' (' + newBlock.getHash() + ')')
-      return this.miningOfficer.stopMiner().then((r) => {
+      try {
+        this.miningOfficer.stopMining()
         this._logger.info('end mining')
-      })
-        .catch((e) => {
-          this._logger.warn('unable to stop miner')
-          this._logger.error(e)
-        })
+        return Promise.resolve(true)
+      } catch (e) {
+        this._logger.warn('unable to stop miner')
+        this._logger.error(e)
+        return Promise.resolve(false)
+      }
     }
 
     this._knownBlocksCache.set(newBlock.getHash(), 1)
     this._logger.info('submitting mined block to current multiverse')
     return this.multiverse.addNextBlock(newBlock)
       .then((isNextBlock) => {
+        // $FlowFixMe
         this._logger.info('accepted multiverse addition: ' + isNextBlock)
         // if (isNextBlock) {
         // TODO: this will break now that _blocks is not used in multiverse
@@ -1226,6 +1229,7 @@ export class Engine {
         } else {
           this._logger.warn('local mined block ' + newBlock.getHeight() + ' does not stack on multiverse height ' + this.multiverse.getHighestBlock().getHeight())
           this._logger.warn('mined block ' + newBlock.getHeight() + ' cannot go on top of multiverse block ' + this.multiverse.getHighestBlock().getHash())
+          return Promise.resolve(true)
           // return this.miningOfficer.rebaseMiner()
           //  .then((res) => {
           //    this._logger.info(res)
@@ -1237,6 +1241,7 @@ export class Engine {
       })
       .catch((err) => {
         this._logger.error(err)
+        return Promise.resolve(false)
       })
   }
 }
