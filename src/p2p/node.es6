@@ -269,55 +269,50 @@ export class PeerNode {
         this._logger.error(err)
         throw err
       }
-
-      this._logger.info('initialize p2p messaging...')
-
-      anyDns().then((ip) => {
-        this._externalIP = ip
-        this._logger.info('external ip address <- ' + ip)
-
-        this._logger.info('start far reaching discovery...')
-        const discovery = new Discovery()
-        this._scanner = discovery.start()
-        this._logger.info('successful discovery start <- edge ' + discovery.hash)
-
-        const contact = {
-          hostname: ip,
-          port: this._quasarPort
-        }
-
-        this._quasar = kad({
-          identity: this._identity,
-          transport: new kad.UDPTransport(),
-          storage: levelup(leveldown(this._quasarDbPath)),
-          contact: contact,
-          logger: this._logger
-        })
-
-        this._quasar.plugin(require('kad-quasar'))
-        this._quasar.listen(this._quasarPort)
-        this._logger.info('p2p messaging initialized')
-        // add quasar to manager
-        this.manager.engine._quasar = this._quasar
-        this._engine._quasar = this._quasar
-        this.manager._quasar = this._quasar
-
-        // register discovery scanner handlers
-        this._scanner.on('connection', (conn, info, type) => {
-          this.peerNewConnectionHandler(conn, info, type)
-        })
-        this._scanner.on('connection-closed', (conn, info) => {
-          this.peerClosedConnectionHandler(conn, info)
-        })
-
-        this._logger.info('p2p services ready')
-      })
-        .catch((err) => {
-          this._logger.error(err)
-          this._logger.error(new Error('unable to start quasar node'))
-        // cb(err)
-        })
     })
+    this._logger.info('initialize p2p messaging...')
+    const p2pServiceBoot = async () => {
+      const ip = await anyDns()
+      this._externalIP = ip
+      this._logger.info('external ip address <- ' + ip)
+
+      this._logger.info('start far reaching discovery...')
+      const discovery = new Discovery()
+      this._scanner = discovery.start()
+      this._logger.info('successful discovery start <- edge ' + discovery.hash)
+
+      const contact = {
+        hostname: ip,
+        port: this._quasarPort
+      }
+
+      this._quasar = kad({
+        identity: this._identity,
+        transport: new kad.UDPTransport(),
+        storage: levelup(leveldown(this._quasarDbPath)),
+        contact: contact,
+        logger: this._logger
+      })
+
+      this._quasar.plugin(require('kad-quasar'))
+      this._quasar.listen(this._quasarPort)
+      this._logger.info('p2p messaging initialized')
+      // add quasar to manager
+      this.manager.engine._quasar = this._quasar
+      this._engine._quasar = this._quasar
+      this.manager._quasar = this._quasar
+
+      // register discovery scanner handlers
+      this._scanner.on('connection', (conn, info, type) => {
+        this.peerNewConnectionHandler(conn, info, type)
+      })
+      this._scanner.on('connection-closed', (conn, info) => {
+        this.peerClosedConnectionHandler(conn, info)
+      })
+
+      this._logger.info('p2p services ready')
+    }
+    p2pServiceBoot()
   }
 
   peerNewConnectionHandler (conn: Object, info: ?Object, type: ?string) {

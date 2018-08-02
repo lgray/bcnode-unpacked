@@ -507,10 +507,6 @@ export class Engine {
         this._server._wsBroadcastPeerDisonnected(peer)
       }
     })
-    this.node._quasar.quasarSubscribe('newblock', (newBlock) => {
-      this._logger.info('----------------- >>>>>>>>>>>>>>> new block from subscribe ')
-      this._logger.info(newBlock)
-    })
   }
 
   /**
