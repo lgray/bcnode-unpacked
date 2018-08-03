@@ -9,9 +9,10 @@ function blake2bl (input) {
 }
 
 function Discovery () {
-  const hash = blake2bl('bt01_' + config.blockchainFingerprintsHash) // peers that do not update for one year
-  this.port = 16600 + Math.floor(Math.random() * 20)
+  const hash = blake2bl('bt1_' + config.blockchainFingerprintsHash) // peers that do not update for one year
+  this.port = 16612
   this._logger = logging.getLogger(__filename)
+  this._logger.info(hash)
   this.hash = hash
   this.swarm = swarm({
     tcp: false,
