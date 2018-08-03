@@ -78,7 +78,7 @@ const logger = new winston.Logger({
       }
     })
   ],
-  exitOnError: true
+  exitOnError: false
 })
 
 const pathToLogPrefix = (path, topLevelDir = 'lib') => {

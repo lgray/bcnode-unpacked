@@ -13,6 +13,7 @@ import type BcBlock from '../protos/core_pb'
 const BN = require('bn.js')
 const bitPony = require('bitpony')
 const dns = require('bdns')
+const getIP = require('external-ip')()
 
 /**
  * High-level functions
@@ -67,7 +68,13 @@ export const anyDns = async () => {
     const ip = await dns.getIPv4()
     return Promise.resolve(ip)
   } catch (err) {
-    return Promise.reject(new Error('dns'))
+    return new Promise((resolve, reject) => {
+      getIP((err, ip) => {
+        if (err) { reject(err) } else {
+          resolve(ip)
+        }
+      })
+    })
   }
 }
 

@@ -14,9 +14,14 @@ function Discovery () {
   this._logger = logging.getLogger(__filename)
   this.hash = hash
   this.swarm = swarm({
-    tcp: false,
-    dht: false,
-    utp: true
+    tcp: true,
+    utp: true,
+    dns: {
+      interval: 60000
+    },
+    dht: {
+      interval: 10000
+    }
   })
 }
 Discovery.prototype = {
