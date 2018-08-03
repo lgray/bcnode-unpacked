@@ -16,12 +16,8 @@ function Discovery () {
   this.swarm = swarm({
     tcp: false,
     utp: true,
-    dns: {
-      interval: 60000
-    },
-    dht: {
-      interval: 10000
-    }
+    dns: false,
+    dht: true
   })
 }
 Discovery.prototype = {
