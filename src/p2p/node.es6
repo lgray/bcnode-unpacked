@@ -308,6 +308,7 @@ export class PeerNode {
     this._logger.info('quasarPort: ' + this._quasarPort)
     this._logger.info('quasarDbDirectory: ' + this._quasarDbDirectory)
     this._logger.info('quasarDbPath: ' + this._quasarDbPath)
+    this._quasar.pendingConnections = {}
     // add quasar to manager
     // register discovery scanner handlers
     this._scanner.on('connection', (conn, info, type) => {
@@ -322,7 +323,6 @@ export class PeerNode {
       this._logger.info('------- CONNECTION CLOSED ------')
       console.log(conn)
       console.log(info)
-      console.log(type)
     })
     this._scanner.on('error', (err) => {
       console.trace(err)
@@ -336,6 +336,16 @@ export class PeerNode {
     this._scanner.on('peer', (peer) => {
       this._logger.info('------- PEER JOINED ------')
       console.log(peer)
+      const purposedHost = peer.removeAddress + ':' + peer.remotePort
+      if(this._quasar.pendingConnections[purposedHost] !== undefined){
+        const conn = this._quasar.pendingConnections[purposedHost]
+        const idMessage = 'i*' + this._externalIP + '*' + this._quasarPort + '*' + this._identity
+        this._logger.info(idMessage)
+        conn.write(idMessage)
+        conn.on('data', (data) => {
+          this.peerDataHandler(conn, data)
+        })
+      }
     })
     this._scanner.on('drop', (peer, type) => {
       this._logger.info('------- PEER DROPPED ------')
@@ -364,35 +374,54 @@ export class PeerNode {
       console.log(type)
     })
     this._quasar.quasarSubscribe('newblock', (data) => {
-      this._logger.info('------- NEW BLOCK QUASAR ------')
+      console.log('------- NEW BLOCK QUASAR ------')
       this._logger.info(data)
-      console.trace(data)
+      console.log(data)
+    })
+    this._quasar.on('error', (err) => {
+      this._logger.info('------- ERROR QUASAR ------')
+      console.log(err)
+    })
+    this._quasar.on('join', (data) => {
+      this._logger.info('------- JOIN QUASAR ------')
+    })
+    this._quasar.on('request', (data) => {
+      this._logger.info('------- REQUEST QUASAR ------')
     })
     this._logger.info('p2p services ready')
     this._engine._quasar = this._quasar
     this._manager._quasar = this._quasar
     setInterval(() => {
-
-      console.log('PEERS STATS')
-      console.log(this._scanner.connected)
+      console.log('PEERS STATS ' + this._scanner.connected)
     }, 5000)
     setInterval(() => {
-      this._quasar.quasarPublish('newblock', {
+      if(this._engine._quasar !== undefined){
+        console.log('QUASAR is attached')
+      }
+      console.log('PEERS PUBLISH NEW BLOCK')
+      this._engine._quasar.quasarPublish('newblock', {
+        time: new Date(),
         some: 'data'
+      }, (err) => {
+         if(err) {
+          this._logger.error(err)
+         } else {
+            console.log('--------> publish message sent ')
+         }
       })
-    }, 15000)
+    }, 10000)
 
     /* eslint-disable */
   }
 
   peerNewConnectionHandler (conn: Object, info: ?Object, type: ?string) {
     // TODO: Check if this connection is unique
-    const idMessage = 'i*' + this._externalIP + '*' + this._quasarPort + '*' + this._identity
-    this._logger.info(idMessage)
-    conn.write(idMessage)
-    conn.on('data', (data) => {
-      this.peerDataHandler(conn, data)
-    })
+
+    const purposedHost = conn.remoteAddress + ':' + conn.remotePort;
+
+    if(this._quasar.pendingConnections[purposedHost] === undefined){
+      this._quasar.pendingConnections[purposedHost] = conn
+    }
     // create quasar link
     // TODO: move this to pull conn
   }
