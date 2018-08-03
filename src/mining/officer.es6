@@ -467,7 +467,7 @@ export class MiningOfficer {
     }
   }
 
-  restartMining (): Promise<boolean> {
+  restartMining (): boolean {
     debug('Restarting mining', this._knownRovers)
 
     // this.stopMining()

@@ -77,7 +77,7 @@ export class PeerNode {
     this._logger = logging.getLogger(__filename)
     this._manager = new PeerManager(this)
     this._identity = kad.utils.getRandomKeyString()
-    this._quasarPort = 10006 + Math.floor(Math.random() * 10000)
+    this._quasarPort = 5006 + Math.floor(Math.random() * 6000)
     this._quasarDbDirectory = manualDirectory + '/quasar'
     this._quasarDbPath = manualDirectory + '/quasar/dht.db'
     this._logger.info('quasar db path: ' + manualDirectory + '/quasar/dht.db')
