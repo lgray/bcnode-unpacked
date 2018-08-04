@@ -753,23 +753,23 @@ export class PeerNode {
 
     this._p2p._es.emit('announceNewBlock', block)
 
-    const url = `${PROTOCOL_PREFIX}/newblock`
-    this.manager.peerBookConnected.getAllArray().map(peer => {
-      this._logger.debug(`Sending to peer ${peer}`)
-      const peerId = peer.id.toB58String()
-      if (withoutPeerId === undefined || peerId !== withoutPeerId) {
-        this.bundle.dialProtocol(peer, url, (err, conn) => {
-          if (err) {
-            this._logger.error('error sending message to peer', peer.id.toB58String(), err)
-            this._logger.error(err)
-            return err
-          }
+    // const url = `${PROTOCOL_PREFIX}/newblock`
+    // this.manager.peerBookConnected.getAllArray().map(peer => {
+    //  this._logger.debug(`Sending to peer ${peer}`)
+    //  const peerId = peer.id.toB58String()
+    //  if (withoutPeerId === undefined || peerId !== withoutPeerId) {
+    //    this.bundle.dialProtocol(peer, url, (err, conn) => {
+    //      if (err) {
+    //        this._logger.error('error sending message to peer', peer.id.toB58String(), err)
+    //        this._logger.error(err)
+    //        return err
+    //      }
 
-          // TODO JSON.stringify?
-          pull(pull.values([block.serializeBinary()]), conn)
-        })
-      }
-    })
+    //      // TODO JSON.stringify?
+    //      pull(pull.values([block.serializeBinary()]), conn)
+    //    })
+    //  }
+    // })
   }
 
   // get the best multiverse from all peers
