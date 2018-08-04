@@ -299,6 +299,7 @@ export class PeerNode {
     this._p2p._events.on('getBlockList', (request) => {
       (async () => {
 
+      // check required fields
       if(!request || request.from === undefined || request.to === undefined || request.connection === undefined){
         return
       }
@@ -523,7 +524,7 @@ export class PeerNode {
       }
 
     /*
-     * New Block
+     * Peer Sends New Block
      */
     } else if (type === '0008W01') {
       this._logger.info('unable to parse: ' + type)
@@ -538,6 +539,10 @@ export class PeerNode {
         remotePort: conn.remotePort,
         id: conn.id.toString('hex')
       })
+
+    /*
+     * Peer Sends Block List
+     */
     } else if (type === '0007W01') {
       const parts = str.split(protocolBits[type])
 
@@ -548,12 +553,26 @@ export class PeerNode {
           return all
         }, [])
 
+        const sorted = list.sort((a, b) => {
+          if(a.getHeight() > b.getHeight()) {
+            return -1 // move block forward
+          }
+          if(a.getHeight() < b.getHeight()) {
+            return 1 // move block forward
+          }
+          return 0
+        })
+
         e.emit('putBlockList', {
-          data: list,
+          data: {,
+            from: sorted[sorted.length - 1],
+            to: sorted[0]
+          },
           remoteHost: conn.remoteHost,
           remotePort: conn.remotePort,
           id: conn.id.toString('hex')
         })
+
       } catch (err) {
         this._logger.error('unable to parse: ' + type + ' from peer ')
       }
