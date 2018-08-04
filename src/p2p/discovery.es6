@@ -20,8 +20,8 @@ function Discovery (id) {
     dns: false,
     dht: {
       bootstrap: bootstrap,
-      interval: 15000,
-      timeBucketOutdated: 1000
+      interval: 10000,
+      timeBucketOutdated: 9000
     }
   }
 
