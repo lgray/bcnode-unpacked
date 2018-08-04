@@ -11,12 +11,12 @@ function blake2bl (input) {
 
 function Discovery (id) {
   const hash = blake2bl('bcbt002' + config.blockchainFingerprintsHash) // peers that do not update for one year
-  this.port = 16061
+  this.port = 16060
   this._logger = logging.getLogger(__filename)
   this._logger.info('edge selection <- ' + hash)
   this.hash = hash
   const options = {
-    id: id,
+    // id: id,
     dns: false,
     dht: {
       bootstrap: bootstrap,
@@ -33,10 +33,11 @@ Discovery.prototype = {
   start: function () {
     this._logger.info('initializing far reach discovery from ' + this.port + '@' + this.hash)
     const localHash = this.hash
-    this.dht.addPeer('18.210.15.44', 16061)
     // this.dht.addPeer('54.197.206.163', 16061)
     this.dht.listen(this.port)
     this.dht.join(this.hash, this.port)
+    this.dht.addNode({ host: '18.210.15.44', port: 16061 })
+    this.dht.addNode({ host: '54.197.206.163', port: 16061 })
 
     this.dht.getPeerByHost = (query) => {
       return this.dht.connections.filter((a) => {
