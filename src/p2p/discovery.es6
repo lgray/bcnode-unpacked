@@ -36,7 +36,7 @@ Discovery.prototype = {
     this.dht.addPeer('18.210.15.44', 16061)
     // this.dht.addPeer('54.197.206.163', 16061)
     this.dht.listen(this.port)
-    this.dht.join(this.hash)
+    this.dht.join(this.hash, this.port)
 
     this.dht.getPeerByHost = (query) => {
       return this.dht.connections.filter((a) => {
