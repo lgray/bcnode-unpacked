@@ -10,7 +10,7 @@
 const { Block } = require('../../protos/core_pb')
 const { serialize, deserialize } = require('../codec')
 
-describe('codec', () => {
+describe.skip('codec', () => {
   describe('type checks', () => {
     it('serialize returns buffer', () => {
       const payload = serialize({})
