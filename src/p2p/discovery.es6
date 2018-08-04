@@ -87,24 +87,24 @@ Discovery.prototype = {
     const signNetwork = () => {
       this.dht._discovery.dht.put({ v: localHash }, (err, hash) => {
         if (err) { this._logger.error(err) } else {
-          setTimeout(() => {
-            if (this.dht._discovery.dht.connected !== undefined && this.dht._discovery.dht.connected.length > 0) {
-              this.dht._discovery.dht.get(hash, (err, localHashObject) => {
-                if (err) { this._logger.error(err) } else {
-                  this._logger.info('network signature: ' + hash.toString())
-                  this.dht._discovery.dht.lookup(localHash, (err) => {
-                    if (err) { this._logger.error(err) } else {
-                      this.dht._discovery.dht.announce(localHash, (err) => {
-                        if (err) { this._logger.error(err) } else {
-                          this._logger.debug('discovery beacon cycled')
-                        }
-                      })
-                    }
-                  })
-                }
-              })
-            }
-          }, 20000)
+          // setTimeout(() => {
+          //  if (this.dht._discovery.dht.connected !== undefined && this.dht._discovery.dht.connected.length > 0) {
+          //    this.dht._discovery.dht.get(hash, (err, localHashObject) => {
+          //      if (err) { this._logger.error(err) } else {
+          //        this._logger.info('network signature: ' + hash.toString())
+          //        this.dht._discovery.dht.lookup(localHash, (err) => {
+          //          if (err) { this._logger.error(err) } else {
+          //            this.dht._discovery.dht.announce(localHash, (err) => {
+          //              if (err) { this._logger.error(err) } else {
+          //                this._logger.debug('discovery beacon cycled')
+          //              }
+          //            })
+          //          }
+          //        })
+          //      }
+          //    })
+          //  }
+          // }, 20000)
         }
       })
     }
