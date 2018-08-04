@@ -83,6 +83,7 @@ export class Engine {
   _peerIsResyncing: boolean
   _storageQueue: any
   _miningOfficer: MiningOfficer
+  _stepSyncTimestamps: Number[]
 
   constructor (opts: { rovers: string[], minerKey: string}) {
     this._logger = getLogger(__filename)
@@ -99,6 +100,7 @@ export class Engine {
     this._server = new Server(this, this._rpc)
     this._subscribers = {}
     this._verses = []
+    this._stepSyncTimestamps = []
     this._storageQueue = queue((fn, cb) => {
       return fn.then((res) => { cb(null, res) }).catch((err) => { cb(err) })
     })
@@ -518,6 +520,23 @@ export class Engine {
       await this.persistence.put('bc.dht.id', JSON.stringify({ id: networkId, timestamp: Math.floor(Date.now() * 0.001) }))
     }
     this.node.start(networkId).then(() => {
+      this.node._p2p.on('putMultiverse', async (msg) => {
+        await this.getMultiverseHandler(msg, msg.data)
+      })
+
+      this.node._p2p.on('putBlockList', async (msg) => {
+        await this.stepSyncHandler(msg)
+      })
+
+      this.node._p2p.on('putBlock', (msg) => {
+        this.blockFromPeer(msg, msg)
+      })
+
+      /*
+       * ******************
+       * Add Event Handlers
+       * ******************
+       */
       this._emitter.on('peerConnected', ({ peer }) => {
         if (this._server) {
           this._server._wsBroadcastPeerConnected(peer)
@@ -773,6 +792,45 @@ export class Engine {
     }
   }
 
+  async stepSyncHandler (msg: Object) {
+    let cancelSync = false
+    const now = Math.floor(Date.now() * 0.001)
+    const data = msg.data
+    const connection = {
+      remoteHost: msg.remoteHost,
+      remotePort: msg.remotePort,
+      id: msg.id
+    }
+
+    // sync is complete emit event
+    if (data.low.getHeight() < 3) {
+      this.node._p2p._es.emit('syncComplete', connection)
+      this._stepSyncTimestamps.length = 0
+      await this.persistence.put('synclock', getGenesisBlock())
+      return
+    }
+
+    let previousTimestamp = now
+    if (this._stepSyncTimestamps.length > 0) {
+      previousTimestamp = this._stepSyncTimestamps[this._stepSyncTimestamps.length - 1]
+    }
+
+    this._logger.info('sync request returned from peer in ' + (now - previousTimestamp) + ' seconds')
+    await this.persistence.put('synclock', data.low)
+
+    const high = max(3, data.low.getHeight())
+    const low = max(2, high - 500)
+
+    connection.data = {
+      low: low,
+      high: high
+    }
+
+    if (cancelSync === false) {
+      this._p2p._es.emit('getBlockList', connection)
+    }
+  }
+
   stepSync (conn: Object, height: Number, syncBlockHash: string): Promise<*> {
     this._logger.info('step sync from height: ' + height)
     // return new Promise(resolve, reject) {
@@ -941,158 +999,124 @@ export class Engine {
                 // 4. set bc.depth to lowest height and hash of new multiverse
                 // 5. get peer lock status
                 //
-                //
-                const upperBound = newBlock.getHeight()
-                // get the lowest of the current multiverse
-                try {
-                  this.miningOfficer.stopMining()
-                  return conn.getPeerInfo((err, peerInfo) => {
-                    if (err) {
-                      this._logger.error(errToString(err))
-                      return Promise.reject(err)
-                    }
-                    // request proof of the multiverse from the peer
-                    const peerLockKey = peerInfo.id.toB58String()
-                    const query = {
-                      queryHash: newBlock.getHash(),
-                      queryHeight: upperBound,
-                      low: upperBound - 7,
-                      high: upperBound
-                    }
-                    this._logger.info(newBlock.getHash() + ' resync upper bound: ' + query.high)
-                    this._logger.info(newBlock.getHash() + ' resync lower bound: ' + query.low)
-                    this._logger.info(newBlock.getHash() + ' multiverse peer proof: ' + peerLockKey)
-                    return this.node.manager.createPeer(peerInfo)
-                      .query(query)
-                      .then(newBlocks => {
-                        if (newBlocks === undefined) {
-                          this._logger.warn(newBlock.getHash() + ' incomplete proof')
+                /// /////// MULTIVERSE PROOF //////////////
+                /// /////// MULTIVERSE PROOF //////////////
+                /// /////// MULTIVERSE PROOF //////////////
+                /// /////// MULTIVERSE PROOF //////////////
+                /// /////// MULTIVERSE PROOF //////////////
+                /// /////// MULTIVERSE PROOF //////////////
+                /// /////// MULTIVERSE PROOF //////////////
+                /// /////// MULTIVERSE PROOF //////////////
+
+                this.node._p2p._es.emit('getMultiverse', {
+                  data: {
+                    high: newBlock.getHeight(),
+                    low: newBlock.getHeight() - 7
+                  },
+                  remoteHost: conn.remoteHost,
+                  remotePort: conn.remotePort
+                })
+
+                // the above triggers for the sync
+                // mining will only remaining 'stopped' until a new block shows up
+                // if the claimed peer hopes to convert this node it must send evidence
+                // otherwise the miner wil continue forward with it's current multiverse
+                // this.getMultiverseHandler(conn, newBlock)
+              } else {
+                this.node._p2p._es.emit('qsend', {
+                  data: newBlock,
+                  connection: {
+                    remoteHost: conn.remoteHost,
+                    remotePort: conn.remotePort
+                  }
+                })
+              }
+            })
+        }
+      })
+        .catch((multiverseError) => {
+          this._logger.error(multiverseError)
+        })
+    }
+  }
+
+  async getMultiverseHandler (conn: Object, newBlocks: BcBlock[]): Promise<?boolean> {
+    // get the lowest of the current multiverse
+    this.miningOfficer.stopMining()
+
+    if (newBlocks === undefined || newBlocks.length < 7) {
+      this._logger.warn('incomplete multiverse proof')
+      return Promise.resolve(true)
+    }
+
+    const sorted = newBlocks.sort((a, b) => {
+      if (new BN(a.getHeight()).gt(new BN(b.getHeight())) === true) {
+        return -1
+      }
+      if (new BN(a.getHeight()).lt(new BN(b.getHeight())) === true) {
+        return 1
+      }
+      return 0
+    })
+
+    const newBlock = sorted[0]
+    const highestBlock = this.multiverse.getHighestBlock()
+
+    this._logger.info('comparable blocks: ' + sorted.length)
+    this._logger.info(newBlock.getHash() + ' height: ' + newBlock.getHeight() + ' comparing with ' + highestBlock.getHash() + ' height: ' + highestBlock.getHeight())
+    let conditional = false
+    // means the newBlock is the newest best highest block
+    if (highestBlock.getHash() === newBlock.getHash()) {
+      conditional = true
+    } else if (highestBlock !== undefined && sorted !== undefined && sorted.length > 0) {
+      // conanaOut
+      conditional = new BN(sorted[0].getTotalDistance()).gt(new BN(highestBlock.getTotalDistance()))
+      if (conditional === false) {
+        this._logger.info('purposed new block has lower total difficulty than current multiverse height')
+      }
+    } else if (sorted.length < 6) {
+      conditional = true
+    }
+
+    if (conditional === true) {
+      // overwrite current multiverse
+      const hasBlock = this.multiverse.hasBlock(sorted[0])
+      this._logger.info(newBlock.getHash() + ' approved --> assigning as current multiverse')
+      this.multiverse._chain.length = 0
+      this.multiverse._chain = this.multiverse._chain.concat(sorted)
+      this._logger.info('multiverse has been assigned')
+
+      return this.syncSetBlocksInline(sorted)
+        .then((blocksStoredResults) => {
+          return this.persistence.put('bc.depth', sorted[0].getHeight())
+            .then(() => {
+              // if the block is already in the multiverse dont conduct a full sync
+              if (hasBlock === false) {
+                this._logger.info('legacy multiverse did not include current block')
+
+                // determine if a sync is already in progress
+                return this.multiverse.isSyncLockActive().then((lock) => {
+                  if (lock === false) {
+                    return this.persistence.put('synclock', this.multiverse.getHighestBlock())
+                      .then(() => {
+                        this.pubsub.publish('update.block.latest', { key: 'bc.block.latest', data: newBlock, force: true, multiverse: this.multiverse._chain })
+                        this.node.broadcastNewBlock(newBlock)
+                        this._logger.debug('sync unlocked')
+                        const targetHeight = this.multiverse.getLowestBlock().getHeight() - 1
+                        // dont have to sync
+                        if (targetHeight < 2) {
                           return Promise.resolve(true)
                         }
-                        this._logger.info(newBlock.getHash() + ' recieved ' + newBlocks.length + ' blocks for multiverse proof')
-                        const currentHeights = this.multiverse._chain.map(b => {
-                          return b.getHeight()
+
+                        this.node._p2p.emit('getBlockList', {
+                          low: newBlock.getHeight() - 500,
+                          high: newBlock.getHeight(),
+                          connection: conn
                         })
-                        this._logger.info(newBlock.getHash() + ' new heights: ' + currentHeights)
-
-                        const sorted = newBlocks.sort((a, b) => {
-                          if (new BN(a.getHeight()).gt(new BN(b.getHeight())) === true) {
-                            return -1
-                          }
-                          if (new BN(a.getHeight()).lt(new BN(b.getHeight())) === true) {
-                            return 1
-                          }
-                          return 0
-                        })
-
-                        this._logger.info('comparable blocks: ' + newBlocks.length)
-                        const highestBlock = this.multiverse.getHighestBlock()
-                        this._logger.info(newBlock.getHash() + ' height: ' + newBlock.getHeight() + ' comparing with ' + highestBlock.getHash() + ' height: ' + highestBlock.getHeight())
-                        let conditional = false
-                        if (highestBlock.getHash() === newBlock.getHash()) {
-                          conditional = true
-                        } else if (highestBlock !== undefined && sorted !== undefined && newBlocks.length > 0) {
-                          // conanaOut
-                          conditional = new BN(sorted[0].getTotalDistance()).gt(new BN(highestBlock.getTotalDistance()))
-                          if (conditional === false) {
-                            this._logger.info('purposed new block has lower total difficulty than current multiverse height')
-                          }
-                        } else if (sorted.length < 6) {
-                          conditional = true
-                        }
-
-                        this._logger.info('highest in sorted: ' + sorted[0].getHeight())
-                        this._logger.info('lowest in sorted: ' + sorted[sorted.length - 1].getHeight())
-                        this._logger.info('sorted highest block: ' + sorted[0].getHeight() + ' ' + sorted[0].getHash())
-                        if (conditional === true) {
-                          // overwrite current multiverse
-                          const hasBlock = this.multiverse.hasBlock(sorted[0])
-                          this._logger.info(newBlock.getHash() + ' approved --> assigning as current multiverse')
-                          this.multiverse._chain.length = 0
-                          this.multiverse._chain = this.multiverse._chain.concat(sorted)
-                          this._logger.info('multiverse has been assigned')
-
-                          return this.syncSetBlocksInline(newBlocks)
-                            .then((blocksStoredResults) => {
-                              return this.persistence.put('bc.depth', this.multiverse.getHighestBlock().getHeight())
-                                .then(() => {
-                                  // if the block is already in the multiverse dont conduct a full sync
-                                  if (hasBlock === false) {
-                                    this._logger.info('legacy multiverse did not include current block')
-
-                                    // determine if a sync is already in progress
-                                    return this.multiverse.isSyncLockActive().then((lock) => {
-                                      if (lock === false) {
-                                        return this.persistence.put('synclock', this.multiverse.getHighestBlock())
-                                          .then(() => {
-                                            this.pubsub.publish('update.block.latest', { key: 'bc.block.latest', data: newBlock, force: true, multiverse: this.multiverse._chain })
-                                            this.node.broadcastNewBlock(newBlock, peerInfo.id.toB58String())
-                                            this._logger.debug('sync unlocked')
-                                            const targetHeight = this.multiverse.getLowestBlock().getHeight() - 1
-                                            // dont have to sync
-                                            if (targetHeight === 1) {
-                                              return Promise.resolve(true)
-                                            }
-
-                                            return this.stepSync(conn,
-                                              this.multiverse.getHighestBlock().getHeight() - 1,
-                                              this.multiverse.getHighestBlock().getHash())
-                                          })
-                                          .catch((e) => {
-                                            this._logger.error(e)
-                                            return this.persistence.put('synclock', getGenesisBlock()).then(() => {
-                                              this._logger.info('sync reset')
-                                            })
-                                              .catch((e) => {
-                                                this._logger.error(e)
-                                              })
-                                          })
-                                      } else {
-                                        this.pubsub.publish('update.block.latest', { key: 'bc.block.latest', data: newBlock, force: true, multiverse: this.multiverse._chain })
-                                        this.node.broadcastNewBlock(newBlock, peerInfo.id.toB58String())
-                                        return Promise.resolve(true)
-                                      }
-                                    })
-                                      .catch((e) => {
-                                        this._logger.error(e)
-                                        return Promise.reject(e)
-                                      })
-                                  } else {
-                                    return this.persistence.put('synclock', getGenesisBlock()).then(() => {
-                                      this._logger.info('sync reset')
-                                    })
-                                  }
-                                  // assign where the last sync began
-                                })
-                                .catch(e => {
-                                  this._logger.info(99)
-                                  this._logger.error(errToString(e))
-                                  return this.persistence.put('synclock', getGenesisBlock()).then(() => {
-                                    this._logger.info('sync reset')
-                                  })
-                                    .catch((e) => {
-                                      this._logger.error(e)
-                                    })
-                                })
-                            })
-
-                            .catch((e) => {
-                              this._logger.error(e)
-                              return Promise.resolve(true)
-                            })
-                        } else {
-                          this._logger.info('resync conditions failed')
-                          return this.persistence.put('synclock', getGenesisBlock()).then(() => {
-                            this._logger.info('sync reset')
-                          })
-                            .catch((e) => {
-                              this._logger.error(e)
-                            })
-                        }
+                        return Promise.resolve(true)
                       })
-                      .catch(e => {
-                        this._logger.error(errToString(e))
-                        this._logger.info(222)
+                      .catch((e) => {
+                        this._logger.error(e)
                         return this.persistence.put('synclock', getGenesisBlock()).then(() => {
                           this._logger.info('sync reset')
                         })
@@ -1100,34 +1124,46 @@ export class Engine {
                             this._logger.error(e)
                           })
                       })
-                  })
-                } catch (e) {
-                  this._logger.info(333)
-                  this._logger.error(e)
-                  return this.persistence.put('synclock', getGenesisBlock()).then(() => {
-                    this._logger.info('sync reset')
-                  })
-                    .catch((e) => {
-                      this._logger.error(e)
-                    })
-                }
-              } else {
-                return this.sendPeerLatestBlock(conn, this.multiverse.getHighestBlock())
-                  .then(() => {
-                    this._logger.info('peer sent for highest block to peer latest block')
+                  } else {
+                    this.pubsub.publish('update.block.latest', { key: 'bc.block.latest', data: newBlock, force: true, multiverse: this.multiverse._chain })
+                    this.node.broadcastNewBlock(newBlock)
                     return Promise.resolve(true)
-                  })
+                  }
+                })
                   .catch((e) => {
-                    this._logger.warn('unable to warn peer of weaker branch')
                     this._logger.error(e)
-                    return Promise.resolve(true)
+                    return Promise.reject(e)
                   })
+              } else {
+                return this.persistence.put('synclock', getGenesisBlock()).then(() => {
+                  this._logger.info('sync reset')
+                })
               }
+              // assign where the last sync began
             })
-        }
+            .catch(e => {
+              this._logger.info(99)
+              this._logger.error(errToString(e))
+              return this.persistence.put('synclock', getGenesisBlock()).then(() => {
+                this._logger.info('sync reset')
+              })
+                .catch((e) => {
+                  this._logger.error(e)
+                })
+            })
+        })
+
+        .catch((e) => {
+          this._logger.error(e)
+          return Promise.resolve(true)
+        })
+    } else {
+      this._logger.info('resync conditions failed')
+      return this.persistence.put('synclock', getGenesisBlock()).then(() => {
+        this._logger.info('sync reset')
       })
-        .catch((multiverseError) => {
-          this._logger.error(multiverseError)
+        .catch((e) => {
+          this._logger.error(e)
         })
     }
   }

@@ -47,10 +47,12 @@ const protocolBits = {
   '0003R01': '[*]', // reserved
   '0004W01': '[*]', // reserved
   '0005R01': '[*]', // list services
-  '0006R01': '[*]', // read block heights
+  '0006R01': '[*]', // read block heights (full sync)
   '0007W01': '[*]', // write block heights
   '0008R01': '[*]', // read highest block
-  '0008W01': '[*]' // write highest block
+  '0008W01': '[*]', // write highest block
+  '0009R01': '[*]', // read multiverse (selective sync)
+  '0010W01': '[*]' // write multiverse (selective sync)
 }
 
 process.on('uncaughtError', (err) => {
@@ -291,25 +293,55 @@ export class PeerNode {
     const discovery = new Discovery(networkId)
 
     this._p2p = discovery.start()
-    this._p2p._events = new events.EventEmitter()
-    this._p2p._events.on('announceNewBlock', (block) => {
+    this._p2p._es = new events.EventEmitter()
+
+    this._p2p._es.on('qsend', (msg) => {
+      (async () => {
+        // check required fields
+        if(!msg || msg.data === undefined || msg.connection === undefined){
+          return
+        }
+        await this._p2p.qsend(msg.connection, '0008W01' + '[*]' +  msg.data.serializeBinary())
+      })
+    })
+
+    this._p2p._es.on('announceNewBlock', (block) => {
       this._p2p.qbroadcast('0008W01' + '[*]' +  block.serializeBinary())
     })
 
-    this._p2p._events.on('getBlockList', (request) => {
+    this._p2p._es.on('getMultiverse', (request) => {
       (async () => {
 
       // check required fields
-      if(!request || request.from === undefined || request.to === undefined || request.connection === undefined){
+      if(!request || request.low === undefined || request.high === undefined || request.connection === undefined){
         return
       }
 
+      const now = Math.floor(Date.now() * 0.001)
+      const type = '0009R01' // read selective block list (multiverse)
+      const split = protocolBits[type]
+      const low = request.low
+      const high = request.high
+      const msg = type + split + low + split + high
+      await this._p2p._es.qsend(request.connection, msg)
+      })
+    })
+
+    this._p2p._es.on('getBlockList', (request) => {
+      (async () => {
+
+      // check required fields
+      if(!request || request.low === undefined || request.high === undefined || request.connection === undefined){
+        return
+      }
+
+      const now = Math.floor(Date.now() * 0.001)
       const type = '0006R01'
-      const split = procolBits[type]
-      const from = request.from
-      const to = request.to
-      const msg = type + split + from + split + to
-      await this._p2p.events.qsend(request.connection, msg)
+      const split = protocolBits[type]
+      const low = request.low
+      const high = request.high
+      const msg = type + split + low + split + high
+      await this._p2p._es.qsend(request.connection, msg)
       })
     })
 
@@ -347,10 +379,10 @@ export class PeerNode {
           this._ds[address] = this._ds[address] + chunk.toString()
         } else if (chunk.length !== 1382 && this._ds[address] !== false) {
           const complete = this._ds[address] + chunk.toString()
-          this.peerDataHandler(conn, info, complete, this._p2p._events)
+          this.peerDataHandler(conn, info, complete, this._p2p._es)
           this._ds[address] = false
         } else {
-          this.peerDataHandler(conn, info, chunk, this._p2p._events)
+          this.peerDataHandler(conn, info, chunk, this._p2p._es)
         }
       })
       })()
@@ -438,16 +470,18 @@ export class PeerNode {
   }
 
   // const protocolBits = {
-  //   '0000R01': '*', // introduction
-  //   '0001R01': '*', // reserved
-  //   '0002W01': '*', // reserved
-  //   '0003R01': '*', // reserved
-  //   '0004W01': '*', // reserved
-  //   '0005R01': '*', // list services
-  //   '0006R01': '*', // read block heights
-  //   '0007W01': '*', // write block heights
-  //   '0008R01': '*', // read highest block
-  //   '0008W01': '*'  // write highest block
+  //   '0000R01': '[*]', // introduction
+  //   '0001R01': '[*]', // reserved
+  //   '0002W01': '[*]', // reserved
+  //   '0003R01': '[*]', // reserved
+  //   '0004W01': '[*]', // reserved
+  //   '0005R01': '[*]', // list services
+  //   '0006R01': '[*]', // read block heights
+  //   '0007W01': '[*]', // write block heights
+  //   '0008R01': '[*]', // read highest block
+  //   '0008W01': '[*]', // write highest block
+  //   '0009R01': '[*]', // read multiverse (selective sync)
+  //   '0010W01': '[*]'  // write multiverse (selective sync)
   // }
   async peerDataHandler (conn: Object, info: Object, str: ?string, e: Object) {
     if (str === undefined) { return }
@@ -479,25 +513,29 @@ export class PeerNode {
         id: conn.id.toString('hex')
       })
 
-    /*
-     * Peer Requests Highest Block
-     */
+    /***********
+     *********** Peer Requests Highest Block
+     ***********/
     } else if (type === '0008R01') {
       const latestBlock = await this._engine.persistence.get('bc.block.latest')
       const msg = '0008W01' + protocolBits[type] + latestBlock.serializeBinary()
       await this._p2p.qsend(conn, msg)
 
-    /*
-     * Peer Requests Block Range
-     */
-    } else if (type === '0006R01') {
+    /***********
+     *********** Peer Requests Block Range
+     ***********/
+    } else if (type === '0006R01' || type === '0009R01') {
       const parts = str.split(protocolBits[type])
-      const from = parts[1]
-      const to = parts[2]
-      const outboundType = '0007W01'
+      const low = parts[1]
+      const high = parts[2]
+
+      let outboundType = '0007W01'
+      if (type === '0009R01') {
+        outboundType = '0010W01'
+      }
 
       try {
-        const query = range(max(2, from), (to + 1)).map((n) => {
+        const query = range(max(2, low), (high + 1)).map((n) => {
           return 'bc.block.' + n
         })
 
@@ -523,9 +561,9 @@ export class PeerNode {
         this._logger.error(err)
       }
 
-    /*
-     * Peer Sends New Block
-     */
+    /***********
+     *********** Peer Sends New Block
+     ***********/
     } else if (type === '0008W01') {
       this._logger.info('unable to parse: ' + type)
       const parts = str.split(protocolBits[type])
@@ -540,10 +578,10 @@ export class PeerNode {
         id: conn.id.toString('hex')
       })
 
-    /*
-     * Peer Sends Block List
-     */
-    } else if (type === '0007W01') {
+    /***********
+     *********** Peer Sends Block List 0007 // Peer Sends Multiverse 001
+     ***********/
+    } else if (type === '0007W01' || type === '0010W01') {
       const parts = str.split(protocolBits[type])
 
       try {
@@ -554,25 +592,33 @@ export class PeerNode {
         }, [])
 
         const sorted = list.sort((a, b) => {
-          if(a.getHeight() > b.getHeight()) {
+          if (a.getHeight() > b.getHeight()) {
             return -1 // move block forward
           }
-          if(a.getHeight() < b.getHeight()) {
+          if (a.getHeight() < b.getHeight()) {
             return 1 // move block forward
           }
           return 0
         })
 
-        e.emit('putBlockList', {
-          data: {,
-            from: sorted[sorted.length - 1],
-            to: sorted[0]
-          },
-          remoteHost: conn.remoteHost,
-          remotePort: conn.remotePort,
-          id: conn.id.toString('hex')
-        })
-
+        if (type === '0007W01') {
+          e.emit('putBlockList', {
+            data: {
+              low: sorted[sorted.length - 1], // lowest block
+              high: sorted[0] // highest block
+            },
+            remoteHost: conn.remoteHost,
+            remotePort: conn.remotePort,
+            id: conn.id.toString('hex')
+          })
+        } else if (type === '0010W01') {
+          e.emit('putMultiverse', {
+            data: sorted,
+            remoteHost: conn.remoteHost,
+            remotePort: conn.remotePort,
+            id: conn.id.toString('hex')
+          })
+        }
       } catch (err) {
         this._logger.error('unable to parse: ' + type + ' from peer ')
       }
@@ -705,7 +751,7 @@ export class PeerNode {
     // this.bundle.pubsub.publish('newBlock', Buffer.from(JSON.stringify(block.toObject())), () => {})
     // const raw = block.serializeBinary()
 
-    this._p2p._events.emit('announceNewBlock', block)
+    this._p2p._es.emit('announceNewBlock', block)
 
     const url = `${PROTOCOL_PREFIX}/newblock`
     this.manager.peerBookConnected.getAllArray().map(peer => {
