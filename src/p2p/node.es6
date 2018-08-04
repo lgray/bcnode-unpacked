@@ -13,6 +13,7 @@ const { inspect } = require('util')
 
 const PeerInfo = require('peer-info')
 const waterfall = require('async/waterfall')
+const queue = require('async/queue')
 const multiaddr = require('multiaddr')
 const pull = require('pull-stream')
 const events = require('events')
@@ -34,7 +35,7 @@ const { BlockPool } = require('../bc/blockpool')
 const { PROTOCOL_PREFIX, NETWORK_ID } = require('./protocol/version')
 const LOW_HEALTH_NET = process.env.LOW_HEALTH_NET === 'true'
 
-// const { uniqBy } = require('ramda')
+const { range, max } = require('ramda')
 // const { toObject } = require('../helper/debug')
 // const { validateBlockSequence } = require('../bc/validation')
 // const { blockByTotalDistanceSorter } = require('../engine/helper')
@@ -73,6 +74,7 @@ export class PeerNode {
   _scanner: Object // eslint-disable-line no-undef
   _externalIP: string // eslint-disable-line no-undef
   _ds: Object // eslint-disable-line no-undef
+  _queue: Object // eslint-disable-line no-undef
 
   constructor (engine: Engine) {
     this._engine = engine
@@ -81,6 +83,23 @@ export class PeerNode {
     this._logger = logging.getLogger(__filename)
     this._manager = new PeerManager(this)
     this._ds = {}
+    this._queue = queue((task, cb) => {
+      if (task.constructor === Array) {
+        this._engine.persistence.getBulk(task).then((res) => {
+          cb(null, res)
+        })
+          .catch((err) => {
+            cb(err)
+          })
+      } else {
+        this._engine.persistence.get(task).then((res) => {
+          cb(null, res)
+        })
+          .catch((err) => {
+            cb(err)
+          })
+      }
+    })
 
     if (config.p2p.stats.enabled) {
       this._interval = setInterval(() => {
@@ -277,7 +296,24 @@ export class PeerNode {
       this._p2p.qbroadcast('0008W01' + '[*]' +  block.serializeBinary())
     })
 
-    this._logger.info('started far reaching discovery...')
+    this._p2p._events.on('getBlockList', (request) => {
+      (async () => {
+
+      if(!request || request.from === undefined || request.to === undefined || request.connection === undefined){
+        return
+      }
+
+      const type = '0006R01'
+      const split = procolBits[type]
+      const from = request.from
+      const to = request.to
+      const msg = type + split + from + split + to
+      await this._p2p.events.qsend(request.connection, msg)
+      })
+    })
+
+    this._logger.info('initialized far reaching discovery module')
+
     this._p2p.on('connection', (conn, info) => {
       (async () => {
       // greeting reponse to connection with provided host information and connection ID
@@ -410,9 +446,9 @@ export class PeerNode {
   //   '0006R01': '*', // read block heights
   //   '0007W01': '*', // write block heights
   //   '0008R01': '*', // read highest block
-  //   '0008W01': '*' // write highest block
+  //   '0008W01': '*'  // write highest block
   // }
-  peerDataHandler (conn: Object, info: Object, str: ?string, e: Object) {
+  async peerDataHandler (conn: Object, info: Object, str: ?string, e: Object) {
     if (str === undefined) { return }
     if (str.length < 8) { return }
 
@@ -430,6 +466,25 @@ export class PeerNode {
      * Peer Sent Highest Block
      */
     if (type === '0007W01') {
+      const parts = str.split(protocolBits[type])
+      const rawUint = parts[1]
+      const raw = Uint8Array(rawUint)
+      const block = BcBlock.deserializeBinary(raw)
+
+      e.emit('putBlock', {
+        data: block,
+        remoteHost: conn.remoteHost,
+        remotePort: conn.remotePort,
+        id: conn.id.toString('hex')
+      })
+
+    /*
+     * Peer Requests Highest Block
+     */
+    } else if (type === '0008R01') {
+      const latestBlock = await this._engine.persistence.get('bc.block.latest')
+      const msg = '0008W01' + protocolBits[type] + latestBlock.serializeBinary()
+      await this._p2p.qsend(conn, msg)
 
     /*
      * Peer Requests Block Range
@@ -438,16 +493,35 @@ export class PeerNode {
       const parts = str.split(protocolBits[type])
       const from = parts[1]
       const to = parts[2]
+      const outboundType = '0007W01'
 
-      e.emit('getBlockList', {
-        data: {
-          from: from,
-          to: to
-        },
-        remoteHost: conn.remoteHost,
-        remotePort: conn.remotePort,
-        id: conn.id.toString('hex')
-      })
+      try {
+        const query = range(max(2, from), (to + 1)).map((n) => {
+          return 'bc.block.' + n
+        })
+
+        this._logger.info(query.length + ' blocks requested by peer: ' + conn.remoteHost)
+
+        this._queue.push(query, (err, res) => {
+          if (err) {
+            this._logger.warn(err)
+          } else {
+            const split = protocolBits[outboundType]
+            const msg = outboundType + split + res.map((r) => {
+              return r.serializeBinary()
+            }).join(split)
+            this._p2p.qsend(conn, msg).then(() => {
+              this._logger.info('sent message of length: ' + msg.length)
+            })
+              .catch((err) => {
+                this._logger.error(err)
+              })
+          }
+        })
+      } catch (err) {
+        this._logger.error(err)
+      }
+
     /*
      * New Block
      */
@@ -466,6 +540,7 @@ export class PeerNode {
       })
     } else if (type === '0007W01') {
       const parts = str.split(protocolBits[type])
+
       try {
         const list = parts.split(protocolBits[type]).reduce((all, rawBlock) => {
           const raw = Uint8Array(rawBlock)
@@ -485,6 +560,8 @@ export class PeerNode {
     } else {
       this._logger.info('unable to parse: ' + type)
     }
+
+    return Promise.resolve(true)
   }
 
   addNodeHandler (peer: Object, req: Array) {
@@ -608,6 +685,8 @@ export class PeerNode {
 
     // this.bundle.pubsub.publish('newBlock', Buffer.from(JSON.stringify(block.toObject())), () => {})
     // const raw = block.serializeBinary()
+
+    this._p2p._events.emit('announceNewBlock', block)
 
     const url = `${PROTOCOL_PREFIX}/newblock`
     this.manager.peerBookConnected.getAllArray().map(peer => {
