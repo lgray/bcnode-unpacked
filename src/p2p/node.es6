@@ -15,6 +15,7 @@ const PeerInfo = require('peer-info')
 const waterfall = require('async/waterfall')
 const multiaddr = require('multiaddr')
 const pull = require('pull-stream')
+const events = require('events')
 
 const debug = require('debug')('bcnode:p2p:node')
 const { config } = require('../config')
@@ -31,24 +32,25 @@ const { Multiverse } = require('../bc/multiverse')
 const { BlockPool } = require('../bc/blockpool')
 
 const { PROTOCOL_PREFIX, NETWORK_ID } = require('./protocol/version')
+const LOW_HEALTH_NET = process.env.LOW_HEALTH_NET === 'true'
 
 // const { uniqBy } = require('ramda')
 // const { toObject } = require('../helper/debug')
 // const { validateBlockSequence } = require('../bc/validation')
 // const { blockByTotalDistanceSorter } = require('../engine/helper')
 
-// const protocolBits = {
-//   '0000R01': '*', // introduction
-//   '0001R01': '*', // reserved
-//   '0002W01': '*', // reserved
-//   '0003R01': '*', // reserved
-//   '0004W01': '*', // reserved
-//   '0005R01': '*', // list services
-//   '0006R01': '*', // read block heights
-//   '0007W01': '*', // write block heights
-//   '0008R01': '*', // read highest block
-//   '0008W01': '*' // write highest block
-// }
+const protocolBits = {
+  '0000R01': '[*]', // introduction
+  '0001R01': '[*]', // reserved
+  '0002W01': '[*]', // reserved
+  '0003R01': '[*]', // reserved
+  '0004W01': '[*]', // reserved
+  '0005R01': '[*]', // list services
+  '0006R01': '[*]', // read block heights
+  '0007W01': '[*]', // write block heights
+  '0008R01': '[*]', // read highest block
+  '0008W01': '[*]' // write highest block
+}
 
 process.on('uncaughtError', (err) => {
   /* eslint-disable */
@@ -258,7 +260,7 @@ export class PeerNode {
     ]
   }
 
-  async start () {
+  async start (networkId) {
     waterfall(this._pipelineStartNode(), (err) => {
       if (err) {
         this._logger.error(err)
@@ -267,9 +269,15 @@ export class PeerNode {
     })
 
     /* eslint-disable */
-    this._logger.info('start far reaching discovery...')
-    const discovery = new Discovery()
+    const discovery = new Discovery(networkId)
+
     this._p2p = discovery.start()
+    this._p2p._events = new events.EventEmitter()
+    this._p2p._events.on('announceNewBlock', (block) => {
+      this._p2p.qbroadcast('0008W01' + '[*]' +  block.serializeBinary())
+    })
+
+    this._logger.info('started far reaching discovery...')
     this._p2p.on('connection', (conn, info) => {
       (async () => {
       // greeting reponse to connection with provided host information and connection ID
@@ -280,10 +288,19 @@ export class PeerNode {
 
       // get heighest block
       const latestBlock = await this._engine.persistence.get('bc.block.latest')
-      //const msg = '0007W01' + latestBlock.serializeBinary()
-      const msg = '0000R01' + info.host + '*' + info.port + '*' + info.id.toString('hex')
+      const quorumState = await this._engine.persistence.get('bc.dht.quorum')
+      const quorum = parseInt(quorumState, 10) // coerce for Flow
 
-      await this._p2p.qsend(conn, msg)
+      if(this._p2p.connected >= quorum && quorum === 0){
+        await this._engine.persistence.put('bc.dht.quorum', "1")
+      } else if (quorum === 0 && LOW_HEALTH_NET !== false){
+        await this._engine.persistence.put('bc.dht.quorum', "1")
+      }
+
+      //const msg = '0000R01' + info.host + '*' + info.port + '*' + info.id.toString('hex')
+      const type = '0008W01'
+      const msg = type + protocolBits[type] + latestBlock.serializeBinary()
+      const results = await this._p2p.qsend(conn, msg)
 
       conn.on('data', (data) => {
         let chunk = data.toString()
@@ -293,10 +310,10 @@ export class PeerNode {
           this._ds[address] = this._ds[address] + chunk.toString()
         } else if (chunk.length !== 1382 && this._ds[address] !== false) {
           const complete = this._ds[address] + chunk.toString()
-          this.peerDataHandler(conn, info, complete)
+          this.peerDataHandler(conn, info, complete, this._p2p._events)
           this._ds[address] = false
         } else {
-          this.peerDataHandler(conn, info, chunk)
+          this.peerDataHandler(conn, info, chunk, this._p2p._events)
         }
       })
       })()
@@ -376,13 +393,26 @@ export class PeerNode {
 
     this._engine._p2p = this._p2p
     this._manager._p2p = this._p2p
+    console.log('PEERS CONNECTED ' + this._p2p.connected)
     setInterval(() => {
       console.log('PEERS CONNECTED ' + this._p2p.connected)
     }, 5000)
     /* eslint-enable */
   }
 
-  peerDataHandler (conn: Object, str: ?string) {
+  // const protocolBits = {
+  //   '0000R01': '*', // introduction
+  //   '0001R01': '*', // reserved
+  //   '0002W01': '*', // reserved
+  //   '0003R01': '*', // reserved
+  //   '0004W01': '*', // reserved
+  //   '0005R01': '*', // list services
+  //   '0006R01': '*', // read block heights
+  //   '0007W01': '*', // write block heights
+  //   '0008R01': '*', // read highest block
+  //   '0008W01': '*' // write highest block
+  // }
+  peerDataHandler (conn: Object, info: Object, str: ?string, e: Object) {
     if (str === undefined) { return }
     if (str.length < 8) { return }
 
@@ -390,35 +420,70 @@ export class PeerNode {
     const type = str.slice(0, 7)
     this._logger.info(str)
 
-    this._logger.info('peerDataHandler -> ' + str)
+    if (protocolBits[type] === undefined) {
+      return
+    }
 
-    if (type === 'i') {
-      const parts = str.split('*')
-      const host = parts[1]
-      const port = parts[2]
-      const remoteIdentity = parts[3]
+    this._logger.info('peerDataHandler -> ' + type)
 
-      const req = [remoteIdentity, {
-        hostname: host,
-        port: port
-      }]
+    /*
+     * Peer Sent Highest Block
+     */
+    if (type === '0007W01') {
 
-      this._logger.info('writing to remote peer ' + host + ':' + port + ' [' + remoteIdentity + ']')
-      this._quasar.join(req, (err) => {
-        if (err) {
-          this._logger.warn('XXXX failed to join quasar of peer')
-          this._logger.error(err)
-        } else {
-          this._logger.info('entered gravity well for seed ' + remoteIdentity)
-        }
+    /*
+     * Peer Requests Block Range
+     */
+    } else if (type === '0006R01') {
+      const parts = str.split(protocolBits[type])
+      const from = parts[1]
+      const to = parts[2]
+
+      e.emit('getBlockList', {
+        data: {
+          from: from,
+          to: to
+        },
+        remoteHost: conn.remoteHost,
+        remotePort: conn.remotePort,
+        id: conn.id.toString('hex')
       })
-    } else if (type === 'b') {
-      this._logger.info('bulk block type')
-    } else if (type === 'r') {
-      this._logger.info('request type')
+    /*
+     * New Block
+     */
+    } else if (type === '0008W01') {
+      this._logger.info('unable to parse: ' + type)
+      const parts = str.split(protocolBits[type])
+      const rawUint = parts[1]
+      const raw = Uint8Array(rawUint)
+      const block = BcBlock.deserializeBinary(raw)
+
+      e.emit('putBlock', {
+        data: block,
+        remoteHost: conn.remoteHost,
+        remotePort: conn.remotePort,
+        id: conn.id.toString('hex')
+      })
+    } else if (type === '0007W01') {
+      const parts = str.split(protocolBits[type])
+      try {
+        const list = parts.split(protocolBits[type]).reduce((all, rawBlock) => {
+          const raw = Uint8Array(rawBlock)
+          all.push(BcBlock.deserializeBinary(raw))
+          return all
+        }, [])
+
+        e.emit('putBlockList', {
+          data: list,
+          remoteHost: conn.remoteHost,
+          remotePort: conn.remotePort,
+          id: conn.id.toString('hex')
+        })
+      } catch (err) {
+        this._logger.error('unable to parse: ' + type + ' from peer ')
+      }
     } else {
-      this._logger.error('unable to parse incoming message')
-      // TODO: downweight peer
+      this._logger.info('unable to parse: ' + type)
     }
   }
 
@@ -543,12 +608,6 @@ export class PeerNode {
 
     // this.bundle.pubsub.publish('newBlock', Buffer.from(JSON.stringify(block.toObject())), () => {})
     // const raw = block.serializeBinary()
-    if (this._quasar !== undefined) {
-      this._logger.info('============================')
-      this._quasar.quasarPublish('newblock', { data: JSON.stringify(block.toObject()) })
-    } else {
-      this._logger.info('---------------------------')
-    }
 
     const url = `${PROTOCOL_PREFIX}/newblock`
     this.manager.peerBookConnected.getAllArray().map(peer => {

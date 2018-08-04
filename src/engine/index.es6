@@ -16,6 +16,7 @@ console.trace = () => {}
 /* eslint-enable */
 
 const debug = require('debug')('bcnode:engine')
+const crypto = require('crypto')
 const { EventEmitter } = require('events')
 const { queue } = require('async')
 const { join, resolve } = require('path')
@@ -52,7 +53,6 @@ const DATA_DIR = process.env.BC_DATA_DIR || config.persistence.path
 const MONITOR_ENABLED = process.env.BC_MONITOR === 'true'
 const BC_CHECK = process.env.BC_CHECK === 'true'
 const PERSIST_ROVER_DATA = process.env.PERSIST_ROVER_DATA === 'true'
-const LOW_HEALTH_NET = process.env.PERSIST_ROVER_DATA === 'true'
 
 process.on('uncaughtError', (err) => {
   /* eslint-disable */
@@ -198,19 +198,21 @@ export class Engine {
         this._logger.info('stored appversion to persistence')
       }
       try {
-        await this.persistence.put('synclock', getGenesisBlock())
-        await this.persistence.put('bc.block.oldest', getGenesisBlock())
-        await this.persistence.get('bc.block.1')
         const latestBlock = await this.persistence.get('bc.block.latest')
         await this.multiverse.addNextBlock(latestBlock)
+        await this.persistence.put('synclock', newGenesisBlock)
+        await this.persistence.put('bc.block.oldest', newGenesisBlock)
+        await this.persistence.get('bc.block.1')
+        await this.persistence.put('bc.dht.quorum', '0')
         this._logger.info('highest block height on disk ' + latestBlock.getHeight())
       } catch (_) { // genesis block not found
         try {
-          await this.persistence.put('synclock', getGenesisBlock())
+          await this.persistence.put('synclock', newGenesisBlock)
           await this.persistence.put('bc.block.1', newGenesisBlock)
           await this.persistence.put('bc.block.latest', newGenesisBlock)
-          await this.persistence.put('bc.block.oldest', getGenesisBlock())
+          await this.persistence.put('bc.block.oldest', newGenesisBlock)
           await this.persistence.put('bc.block.checkpoint', newGenesisBlock)
+          await this.persistence.put('bc.dht.quorum', '0')
           await this.persistence.put('bc.depth', 2)
           await this.multiverse.addNextBlock(newGenesisBlock)
           this._logger.info('genesis block saved to disk ' + newGenesisBlock.getHash())
@@ -493,9 +495,29 @@ export class Engine {
   /**
    * Start Server
    */
-  startNode () {
+  async startNode () {
     this._logger.info('starting P2P node')
-    this.node.start().then(() => {
+    let networkId
+    try {
+      const now = Math.floor(Date.now() * 0.001)
+      const networkObjectData = await this.persistence.get('bc.dht.id')
+      const networkObject = JSON.parse(networkObjectData)
+      networkId = networkObject.id
+      const networkTimestamp = networkObject.timestamp
+      // if the key is more than 72 hours old reset it
+      if (networkTimestamp + 259200 < now) {
+        this._logger.warn('key needs to be set')
+        networkId = crypto.randomBytes(32).toString('hex')
+        this._logger.info('asssigned network key <- ' + networkId)
+        await this.persistence.put('bc.dht.id', JSON.stringify({ id: networkId, timestamp: Math.floor(Date.now() * 0.001) }))
+      }
+    } catch (_) {
+      this._logger.warn('key needs to be set')
+      networkId = crypto.randomBytes(32).toString('hex')
+      this._logger.info('asssigned network key <- ' + networkId)
+      await this.persistence.put('bc.dht.id', JSON.stringify({ id: networkId, timestamp: Math.floor(Date.now() * 0.001) }))
+    }
+    this.node.start(networkId).then(() => {
       this._emitter.on('peerConnected', ({ peer }) => {
         if (this._server) {
           this._server._wsBroadcastPeerConnected(peer)

@@ -9,46 +9,68 @@ function blake2bl (input) {
   return avon.sumBuffer(Buffer.from(input), avon.ALGORITHMS.B).toString('hex').slice(64, 128)
 }
 
-function Discovery () {
+function Discovery (id) {
   const hash = blake2bl('bcbt001' + config.blockchainFingerprintsHash) // peers that do not update for one year
   this.port = 16061
   this._logger = logging.getLogger(__filename)
   this._logger.info('edge selection <- ' + hash)
   this.hash = hash
-  this.dht = swarm({
+  const options = {
+    id: id,
     dns: false,
     dht: {
-      host: '18.210.15.44:16061',
       bootstrap: bootstrap,
-      interval: 9000,
-      timeBucketOutdated: 600000
+      interval: 15000,
+      timeBucketOutdated: 900000
     }
-  })
+  }
+
+  this.dht = swarm(options)
 }
 
 Discovery.prototype = {
 
   start: function () {
+    this._logger.info('initializing far reach discovery from ' + this.port + '@' + this.hash)
     const localHash = this.hash
+    this.dht.addPeer('18.210.15.44', 16061)
+    // this.dht.addPeer('54.197.206.163', 16061)
     this.dht.listen(this.port)
     this.dht.join(this.hash)
-    this.dht.qsend = async (conn, msg) => {
-      return new Promise((resolve, reject) => {
-        try {
-          conn.write(msg)
-          return resolve({
-            address: conn.remoteAddress + ':' + conn.remotePort,
-            success: true,
-            message: 'success'
-          })
-        } catch (err) {
-          return resolve({
-            address: conn.remoteAddress + ':' + conn.remotePort,
-            success: false,
-            message: err.message
-          })
+
+    this.dht.getPeerByHost = (query) => {
+      return this.dht.connections.filter((a) => {
+        if (a.remoteHost === query.remoteHost && a.remotePort === query.remotePort) {
+          return a
         }
       })
+    }
+
+    this.dht.qsend = async (conn, msg) => {
+      const list = this.dht.getPeerByHost(conn)
+      if (list.length < 1) { return Promise.resolve(false) }
+      const tasks = list.reduce((all, conn) => {
+        const a = new Promise((resolve, reject) => {
+          try {
+            conn.write(msg)
+            return resolve({
+              address: conn.remoteAddress + ':' + conn.remotePort,
+              success: true,
+              message: 'success'
+            })
+          } catch (err) {
+            conn.destroy()
+            return resolve({
+              address: conn.remoteAddress + ':' + conn.remotePort,
+              success: false,
+              message: err.message
+            })
+          }
+        })
+        all.push(a)
+        return all
+      }, [])
+      await Promise.all(tasks)
     }
 
     this.dht.qbroadcast = async (msg) => {
@@ -62,27 +84,31 @@ Discovery.prototype = {
       return warnings
     }
 
-    this.dht.beacon = setInterval(() => {
+    const signNetwork = () => {
       this.dht._discovery.dht.put({ v: localHash }, (err, hash) => {
         if (err) { this._logger.error(err) } else {
           setTimeout(() => {
-            this.dht._discovery.dht.get(this.hash, (err, localHashObject) => {
-              if (err) { this._logger.error(err) } else {
-                this.dht._discovery.dht.lookup(localHash, (err) => {
-                  if (err) { this._logger.error(err) } else {
-                    this.dht._discovery.dht.announce(localHash, (err) => {
-                      if (err) { this._logger.error(err) } else {
-                        this._logger.debug('beacon cycled')
-                      }
-                    })
-                  }
-                })
-              }
-            })
+            if (this.dht._discovery.dht.connected !== undefined && this.dht._discovery.dht.connected.length > 0) {
+              this.dht._discovery.dht.get(hash, (err, localHashObject) => {
+                if (err) { this._logger.error(err) } else {
+                  this._logger.info('network signature: ' + hash.toString())
+                  this.dht._discovery.dht.lookup(localHash, (err) => {
+                    if (err) { this._logger.error(err) } else {
+                      this.dht._discovery.dht.announce(localHash, (err) => {
+                        if (err) { this._logger.error(err) } else {
+                          this._logger.debug('discovery beacon cycled')
+                        }
+                      })
+                    }
+                  })
+                }
+              })
+            }
           }, 20000)
         }
       })
-    }, 60000)
+    }
+    this.dht.manualNetworkSigInverval = setInterval(signNetwork, 60000)
     return this.dht
   },
 

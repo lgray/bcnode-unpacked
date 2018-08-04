@@ -26,22 +26,14 @@ const blake2bl = (input) => {
   return avon.sumBuffer(Buffer.from(input), avon.ALGORITHMS.B).toString('hex').slice(64, 128)
 }
 
+/* eslint-disable */
 export const register = (manager: PeerManager, bundle: Bundle) => {
   const uri = `${PROTOCOL_PREFIX}/newblock`
   debug(`Registering protocol - ${uri}`)
 
-  if (manager.engine.node._quasar !== undefined) {
-    globalLog.info('subscribed to newblock:quasar')
-    manager.engine.node._quasar.quasarSubscribe('newblock', (data) => {
-      globalLog.info('-----------------------------')
-      globalLog.info('-----------------------------')
-      globalLog.info('-----------------------------')
-      globalLog.info('-----------------------------')
-      globalLog.info('-----------------------------')
-      globalLog.info('-----------------------------')
-      globalLog.info(data)
-    })
-  }
+  manager.engine._p2p.on('putBlock', (data) => {
+    console.log(data)
+  })
 
   bundle.handle(uri, (protocol, conn) => {
     pull(

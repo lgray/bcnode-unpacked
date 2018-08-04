@@ -66,7 +66,9 @@ export const cmd = async (program: typeof Command) => {
   }
 
   if (node) {
-    engine.startNode()
+    engine.startNode().then(() => {
+      logger.info('client initialized')
+    })
   }
 
   // Should the Server be started?
