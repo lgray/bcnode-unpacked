@@ -10,7 +10,7 @@ function blake2bl (input) {
 }
 
 function Discovery (id) {
-  const hash = blake2bl('bcbt001' + config.blockchainFingerprintsHash) // peers that do not update for one year
+  const hash = blake2bl('bcbt002' + config.blockchainFingerprintsHash) // peers that do not update for one year
   this.port = 16061
   this._logger = logging.getLogger(__filename)
   this._logger.info('edge selection <- ' + hash)
@@ -21,7 +21,7 @@ function Discovery (id) {
     dht: {
       bootstrap: bootstrap,
       interval: 15000,
-      timeBucketOutdated: 900000
+      timeBucketOutdated: 1000
     }
   }
 
