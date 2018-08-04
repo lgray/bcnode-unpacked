@@ -6,7 +6,7 @@ var ee = require("events").EventEmitter;
 var string = require("./utils/strings.js");
 var Log = require('./log.js');
 
-var log = new Log(); 
+var log = new Log();
 
 function Discovery(opts) {
 
@@ -17,7 +17,7 @@ function Discovery(opts) {
     if(opts != undefined){
 
         Object.keys(opts).map(function(k){
-            options[k] = opts[k]; 
+            options[k] = opts[k];
         });
 
     }
@@ -38,17 +38,17 @@ Discovery.prototype = {
 
         var self = this;
 
-            self.hash = string.blake2bl("bc+"+moment().format("YYYY"));
+            self.hash = string.blake2bl("bc1+"+moment().format("YYYY"));
 
             self.swarm.listen(self.port);
 
-            self.swarm.join(self.hash); 
+            self.swarm.join(self.hash);
 
       log.info("banner key assigned "+self.hash);
 
             return self.swarm;
 
-    }, 
+    },
 
     stop: function(){
 
@@ -57,7 +57,7 @@ Discovery.prototype = {
             self.swarm.leave(self.hash);
 
     }
-    
+
 }
 
 module.exports = Discovery;

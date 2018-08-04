@@ -20,7 +20,7 @@ jest.mock('../../persistence/rocksdb')
 jest.mock('child_process')
 jest.mock('../../bc/validation')
 
-describe(MiningOfficer, () => {
+describe.skip(MiningOfficer, () => {
   beforeEach(() => {
     // $FlowFixMe - flow is unable to properly type mocked module
     PersistenceRocksDb.mockClear()

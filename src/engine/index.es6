@@ -52,6 +52,7 @@ const DATA_DIR = process.env.BC_DATA_DIR || config.persistence.path
 const MONITOR_ENABLED = process.env.BC_MONITOR === 'true'
 const BC_CHECK = process.env.BC_CHECK === 'true'
 const PERSIST_ROVER_DATA = process.env.PERSIST_ROVER_DATA === 'true'
+const LOW_HEALTH_NET = process.env.PERSIST_ROVER_DATA === 'true'
 
 process.on('uncaughtError', (err) => {
   /* eslint-disable */
@@ -92,7 +93,6 @@ export class Engine {
     this._persistence = new PersistenceRocksDb(DATA_DIR)
     this._pubsub = new PubSub()
     this._node = new Node(this)
-    // this._nodep2p2 = new NodeP2P2(this)
     this._rovers = new RoverManager()
     this._emitter = new EventEmitter()
     this._rpc = new RpcServer(this)

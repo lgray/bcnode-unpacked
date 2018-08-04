@@ -13,14 +13,11 @@ const { inspect } = require('util')
 
 const PeerInfo = require('peer-info')
 const waterfall = require('async/waterfall')
-// const parallel = require('async/parallel')
 const multiaddr = require('multiaddr')
 const pull = require('pull-stream')
-// const { uniqBy } = require('ramda')
 
 const debug = require('debug')('bcnode:p2p:node')
 const { config } = require('../config')
-// const { toObject } = require('../helper/debug')
 const { getVersion } = require('../helper/version')
 const logging = require('../logger')
 
@@ -30,18 +27,28 @@ const Bundle = require('./bundle').default
 const Discovery = require('./discovery')
 const Signaling = require('./signaling').websocket
 const { PeerManager, DATETIME_STARTED_AT, QUORUM_SIZE } = require('./manager/manager')
-// const { validateBlockSequence } = require('../bc/validation')
 const { Multiverse } = require('../bc/multiverse')
 const { BlockPool } = require('../bc/blockpool')
-const { anyDns } = require('../engine/helper')
-// const { blockByTotalDistanceSorter } = require('../engine/helper')
 
 const { PROTOCOL_PREFIX, NETWORK_ID } = require('./protocol/version')
-//
-const kad = require('kad')
-const levelup = require('levelup')
-const leveldown = require('leveldown')
-const fs = require('fs-extra')
+
+// const { uniqBy } = require('ramda')
+// const { toObject } = require('../helper/debug')
+// const { validateBlockSequence } = require('../bc/validation')
+// const { blockByTotalDistanceSorter } = require('../engine/helper')
+
+// const protocolBits = {
+//   '0000R01': '*', // introduction
+//   '0001R01': '*', // reserved
+//   '0002W01': '*', // reserved
+//   '0003R01': '*', // reserved
+//   '0004W01': '*', // reserved
+//   '0005R01': '*', // list services
+//   '0006R01': '*', // read block heights
+//   '0007W01': '*', // write block heights
+//   '0008R01': '*', // read highest block
+//   '0008W01': '*' // write highest block
+// }
 
 process.on('uncaughtError', (err) => {
   /* eslint-disable */
@@ -61,28 +68,17 @@ export class PeerNode {
   _multiverse: Multiverse // eslint-disable-line no-undef
   _blockPool: BlockPool // eslint-disable-line no-undef
   _identity: string // eslint-disable-line no-undef
-  _quasarPort: number // eslint-disable-line no-undef
-  _quasarDbDirectory: string // eslint-disable-line no-undef
-  _quasarDbPath: string // eslint-disable-line no-undef
-  _quasar: Object // eslint-disable-line no-undef
   _scanner: Object // eslint-disable-line no-undef
   _externalIP: string // eslint-disable-line no-undef
+  _ds: Object // eslint-disable-line no-undef
 
   constructor (engine: Engine) {
-    const manualDirectory = process.env.BC_DATA_DIR || config.persistence.path
-
     this._engine = engine
     this._multiverse = new Multiverse(engine.persistence) /// !important this is a (nonselective) multiverse
     this._blockPool = new BlockPool(engine.persistence, engine._pubsub)
     this._logger = logging.getLogger(__filename)
     this._manager = new PeerManager(this)
-    this._identity = kad.utils.getRandomKeyString()
-    this._quasarPort = 16611
-    this._quasarDbDirectory = manualDirectory + '/quasar'
-    this._quasarDbPath = manualDirectory + '/quasar/dht.db'
-    this._logger.info('quasar db path: ' + manualDirectory + '/quasar/dht.db')
-
-    fs.ensureDirSync(manualDirectory + '/quasar')
+    this._ds = {}
 
     if (config.p2p.stats.enabled) {
       this._interval = setInterval(() => {
@@ -121,14 +117,6 @@ export class PeerNode {
 
   set multiverse (multiverse: Multiverse) {
     this._multiverse = multiverse
-  }
-
-  get quasar (): Object {
-    return this._quasar
-  }
-
-  set quasar (quasar: Object) {
-    this._quasar = quasar
   }
 
   _pipelineStartNode () {
@@ -277,180 +265,132 @@ export class PeerNode {
         throw err
       }
     })
-    this._logger.info('initialize p2p messaging...')
-    const ip = await anyDns()
-    this._externalIP = ip
-    this._logger.info('external ip address <- ' + ip)
 
+    /* eslint-disable */
     this._logger.info('start far reaching discovery...')
     const discovery = new Discovery()
-    this._scanner = discovery.start()
-    this._logger.info('successful discovery start <- edge ' + discovery.hash)
-
-    const contact = {
-      hostname: ip,
-      port: this._quasarPort
-    }
-
-    this._quasar = kad({
-      identity: this._identity,
-      transport: new kad.UDPTransport(),
-      storage: levelup(leveldown(this._quasarDbPath)),
-      contact: contact,
-      logger: this._logger
-    })
-
-    /* eslint-disable */
-    const QuasarPlugin = require('kad-quasar')
-    this._quasar.plugin(QuasarPlugin)
-    this._quasar.listen(this._quasarPort)
-    this._logger.info('p2p messaging initialized')
-    this._logger.info('quasarPort: ' + this._quasarPort)
-    this._logger.info('quasarDbDirectory: ' + this._quasarDbDirectory)
-    this._logger.info('quasarDbPath: ' + this._quasarDbPath)
-    this._quasar.pendingConnections = {}
-    // add quasar to manager
-    // register discovery scanner handlers
-    this._scanner.on('connection', (conn, info, type) => {
-      this._logger.info('connection made to discovery interface')
-      console.log(conn)
-      console.log(info)
-      console.log(type)
-      this.peerNewConnectionHandler(conn, info, type)
-    })
-    this._scanner.on('connection-closed', (conn, info) => {
-      //this.peerClosedConnectionHandler(conn, info)
-      this._logger.info('------- CONNECTION CLOSED ------')
-      console.log(conn)
-      console.log(info)
-    })
-    this._scanner.on('error', (err) => {
-      console.trace(err)
-    })
-    this._scanner.on('redundant-connection', (conn, info) => {
-      this._logger.info('------- REDUNDANT CONNECTION ------')
-      console.log(conn)
-      console.log(info)
-      this.peerClosedConnectionHandler(conn, info)
-    })
-    this._scanner.on('peer', (peer) => {
-      this._logger.info('------- PEER JOINED ------')
-      console.log(peer)
-      const purposedHost = peer.removeAddress + ':' + peer.remotePort
-      if(this._quasar.pendingConnections[purposedHost] !== undefined){
-        const conn = this._quasar.pendingConnections[purposedHost]
-        const idMessage = 'i*' + this._externalIP + '*' + this._quasarPort + '*' + this._identity
-        this._logger.info(idMessage)
-        conn.write(idMessage)
-        conn.on('data', (data) => {
-          this.peerDataHandler(conn, data)
-        })
+    this._p2p = discovery.start()
+    this._p2p.on('connection', (conn, info) => {
+      (async () => {
+      // greeting reponse to connection with provided host information and connection ID
+      const address = conn.remoteAddress + ':' + conn.remotePort
+      if (this._ds[address] === undefined) {
+        this._ds[address] = false
       }
-    })
-    this._scanner.on('drop', (peer, type) => {
-      this._logger.info('------- PEER DROPPED ------')
-      console.log(peer)
-      console.log(type)
-    })
-    this._scanner.on('peer-banned', (peer, type) => {
-      this._logger.info('------- PEER BANNED ------')
-      console.log(peer)
-      console.log(type)
-    })
-    this._scanner.on('connect-failed', (next, timeout) => {
-      this._logger.info('------- CONNECT FAILED ------')
-      console.log(next)
-      console.log(timeout)
-    })
-    this._scanner.on('handshake-timeout', (conn, timeout) => {
-      this._logger.info('------- CONNECT FAILED ------')
-      console.log(conn)
-      console.log(timeout)
-    })
 
-    this._scanner.on('peer-rejected', (peer, type) => {
-      this._logger.warn('peer rejected ')
-      console.log(peer)
-      console.log(type)
-    })
-    this._quasar.quasarSubscribe('newblock', (data) => {
-      console.log('------- NEW BLOCK QUASAR ------')
-      this._logger.info(data)
-      console.log(data)
-    })
-    this._quasar.on('error', (err) => {
-      this._logger.info('------- ERROR QUASAR ------')
-      console.log(err)
-    })
-    this._quasar.on('join', (data) => {
-      this._logger.info('------- JOIN QUASAR ------')
-    })
-    this._quasar.on('request', (data) => {
-      this._logger.info('------- REQUEST QUASAR ------')
-    })
-    this._logger.info('p2p services ready')
-    this._engine._quasar = this._quasar
-    this._manager._quasar = this._quasar
-    setInterval(() => {
-      console.log('PEERS STATS ' + this._scanner.connected)
-    }, 5000)
-    setInterval(() => {
-      if(this._engine._quasar !== undefined){
-        console.log('QUASAR is attached')
-      }
-      console.log('PEERS PUBLISH NEW BLOCK')
-      this._engine._quasar.quasarPublish('newblock', {
-        time: new Date(),
-        some: 'data'
-      }, (err) => {
-         if(err) {
-          this._logger.error(err)
-         } else {
-            console.log('--------> publish message sent ')
-         }
+      // get heighest block
+      const latestBlock = await this._engine.persistence.get('bc.block.latest')
+      //const msg = '0007W01' + latestBlock.serializeBinary()
+      const msg = '0000R01' + info.host + '*' + info.port + '*' + info.id.toString('hex')
+
+      await this._p2p.qsend(conn, msg)
+
+      conn.on('data', (data) => {
+        let chunk = data.toString()
+        if (chunk.length === 1382 && this._ds[address] === false) {
+          this._ds[address] = chunk
+        } else if (chunk.length === 1382 && this._ds[address] !== false) {
+          this._ds[address] = this._ds[address] + chunk.toString()
+        } else if (chunk.length !== 1382 && this._ds[address] !== false) {
+          const complete = this._ds[address] + chunk.toString()
+          this.peerDataHandler(conn, info, complete)
+          this._ds[address] = false
+        } else {
+          this.peerDataHandler(conn, info, chunk)
+        }
       })
-    }, 10000)
+      })()
+    })
 
-    /* eslint-disable */
-  }
+    // this._scanner.on('connection-closed', (conn, info) => {
+    //  // this.peerClosedConnectionHandler(conn, info)
+    //  this._logger.info('------- CONNECTION CLOSED ------')
+    //  console.log(conn)
+    //  console.log(info)
+    // })
+    // this._scanner.on('error', (err) => {
+    //  console.trace(err)
+    // })
+    // this._scanner.on('redundant-connection', (conn, info) => {
+    //  this._logger.info('------- REDUNDANT CONNECTION ------')
+    //  console.log(conn)
+    //  console.log(info)
+    //  this.peerClosedConnectionHandler(conn, info)
+    // })
+    // this._scanner.on('peer', (peer) => {
+    //  this._logger.info('------- PEER JOINED ------')
+    //  console.log(peer)
+    //  const purposedHost = peer.removeAddress + ':' + peer.remotePort
+    //  if (this._quasar.pendingConnections[purposedHost] !== undefined) {
+    //    const conn = this._quasar.pendingConnections[purposedHost]
+    //    const idMessage = 'i*' + this._externalIP + '*' + this._quasarPort + '*' + this._identity
+    //    this._logger.info(idMessage)
+    //    conn.write(idMessage)
+    //    conn.on('data', (data) => {
+    //      this.peerDataHandler(conn, data)
+    //    })
+    //  }
+    // })
+    // this._scanner.on('drop', (peer, type) => {
+    //  this._logger.info('------- PEER DROPPED ------')
+    //  console.log(peer)
+    //  console.log(type)
+    // })
+    // this._scanner.on('peer-banned', (peer, type) => {
+    //  this._logger.info('------- PEER BANNED ------')
+    //  console.log(peer)
+    //  console.log(type)
+    // })
+    // this._scanner.on('connect-failed', (next, timeout) => {
+    //  this._logger.info('------- CONNECT FAILED ------')
+    //  console.log(next)
+    //  console.log(timeout)
+    // })
+    // this._scanner.on('handshake-timeout', (conn, timeout) => {
+    //  this._logger.info('------- CONNECT FAILED ------')
+    //  console.log(conn)
+    //  console.log(timeout)
+    // })
 
-  peerNewConnectionHandler (conn: Object, info: ?Object, type: ?string) {
-    // TODO: Check if this connection is unique
+    // this._scanner.on('peer-rejected', (peer, type) => {
+    //  this._logger.warn('peer rejected ')
+    //  console.log(peer)
+    //  console.log(type)
+    // })
+    // this._quasar.quasarSubscribe('newblock', (data) => {
+    //  console.log('------- NEW BLOCK QUASAR ------')
+    //  this._logger.info(data)
+    //  console.log(data)
+    // })
+    // this._quasar.on('error', (err) => {
+    //  this._logger.info('------- ERROR QUASAR ------')
+    //  console.log(err)
+    // })
+    // this._quasar.on('join', (data) => {
+    //  this._logger.info('------- JOIN QUASAR ------')
+    // })
+    // this._quasar.on('request', (data) => {
+    //  this._logger.info('------- REQUEST QUASAR ------')
+    // })
+    // this._logger.info('p2p services ready')
 
-    const purposedHost = conn.remoteAddress + ':' + conn.remotePort;
-
-    if(this._quasar.pendingConnections[purposedHost] === undefined){
-      this._quasar.pendingConnections[purposedHost] = conn
-    }
-    // create quasar link
-    // TODO: move this to pull conn
-  }
-
-  peerClosedConnectionHandler (conn: Object, info: Object) {
-    /* eslint-disable */
-    console.trace(info)
-    console.trace(conn)
-    this._logger.warn('peer disconnect ')
+    this._engine._p2p = this._p2p
+    this._manager._p2p = this._p2p
+    setInterval(() => {
+      console.log('PEERS CONNECTED ' + this._p2p.connected)
+    }, 5000)
     /* eslint-enable */
-    // TODO: Update current connected peers remove or otherwise
   }
 
-  peerDataHandler (conn: Object, data: ?Object) {
-    if (data === undefined) { return }
+  peerDataHandler (conn: Object, str: ?string) {
+    if (str === undefined) { return }
+    if (str.length < 8) { return }
 
     // TODO: add lz4 compression for things larger than 1000 characters
-    //
-    const str = data.toString()
-    const type = str[0]
+    const type = str.slice(0, 7)
     this._logger.info(str)
 
     this._logger.info('peerDataHandler -> ' + str)
-
-    // TYPES
-    // i - peer identity
-    // b - bulk block delivery
-    // r - request (future use)
-    // const block = BcBlock.deserializeBinary(raw)
 
     if (type === 'i') {
       const parts = str.split('*')
