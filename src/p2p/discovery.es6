@@ -73,6 +73,8 @@ Discovery.prototype = {
     // client.on('peer', function (addr) {
     //  console.log('found a peer: ' + addr) // 85.10.239.191:48623
     // })
+    client.start()
+
     return client
   },
 
