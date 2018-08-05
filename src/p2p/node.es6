@@ -488,10 +488,6 @@ export class PeerNode {
       this._logger.info('active waypoints:  ' + this._p2p.totalConnections)
     }, 5000)
 
-    setInterval(() => {
-      this._p2p._seeder.update()
-    }, 10000)
-
     setTimeout(() => {
       this._p2p._seeder.complete()
     }, 2000)
