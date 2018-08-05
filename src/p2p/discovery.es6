@@ -1,43 +1,94 @@
 
+const Client = require('bittorrent-tracker')
 const swarm = require('discovery-swarm')
 const avon = require('avon')
 const { config } = require('../config')
 const bootstrap = require('../utils/templates/bootstrap')
+const seeds = require('../utils/templates/seed')
 const logging = require('../logger')
 // load
 function blake2bl (input) {
   return avon.sumBuffer(Buffer.from(input), avon.ALGORITHMS.B).toString('hex').slice(64, 128)
 }
 
-function Discovery (id) {
+function random (range) {
+  return Math.floor(Math.random() * range)
+}
+
+function Discovery (nodeId) {
+
+  seeds.unshift("udp://tds.blockcollider.org:16061")
+  seeds.unshift("http://tds.blockcollider.org:16061")
+
   const hash = blake2bl('bcbt002' + config.blockchainFingerprintsHash) // peers that do not update for one year
-  this.port = 16061
+  const port = 16061
+  const options = {
+    id: peerId,
+    dns: false,
+    dht: {
+      nodeId: nodeId,
+      bootstrap: bootstrap,
+      interval: 10000 + random(1000),
+      timeBucketOutdated: (180000 + random(40000))
+    }
+  }
+  this.streamOptions = {
+    infoHash: new Buffer(hash),
+    peerId: new Buffer(nodeId),
+    port: port,
+    announce: ['udp://tds.blockcollider.org:16061', 'http://tds.blockcollider.org:16061'].concat(seeds)
+  }
+  this.port = port
+  this.nodeId = nodeId
   this._logger = logging.getLogger(__filename)
   this._logger.info('edge selection <- ' + hash)
   this.hash = hash
-  const options = {
-    id: id,
-    dns: false,
-    dht: {
-      bootstrap: bootstrap,
-      interval: 10000,
-      timeBucketOutdated: 9000
-    }
-  }
-
   this.dht = swarm(options)
 }
 
 Discovery.prototype = {
 
+  stream: function () {
+		const self = this
+    const client = new Client(self.streamOptions)
+    client.on('error', function (err) {
+      self._logger.error((err.message)
+    })
+
+    client.on('warning', function (err) {
+      self._logger.warn(err.message)
+    })
+
+    // start getting peers from the tracker
+    //client.on('update', function (data) {
+    //  console.log('got an announce response from tracker: ' + data.announce)
+    //  console.log('number of seeders in the swarm: ' + data.complete)
+    //  console.log('number of leechers in the swarm: ' + data.incomplete)
+    //})
+
+    //client.on('peer', function (addr) {
+    //  console.log('found a peer: ' + addr) // 85.10.239.191:48623
+    //})
+
+    return client
+  },
+
   start: function () {
     this._logger.info('initializing far reach discovery from ' + this.port + '@' + this.hash)
     const localHash = this.hash
     // this.dht.addPeer('54.197.206.163', 16061)
+    // this.dht.addNode({ host: '18.210.15.44', port: 16061 })
+    // this.dht.addNode({ host: '54.197.206.163', port: 16061 })
     this.dht.listen(this.port)
-    this.dht.join(this.hash, this.port)
-    this.dht._discovery.addNode({ host: '18.210.15.44', port: 16061 })
-    this.dht._discovery.addNode({ host: '54.197.206.163', port: 16061 })
+	  // add({ host: port: }, done)
+    this.dht.add = (obj, done) => {
+			this.dht.addNode(obj)
+			this.dht.once('node', done)
+		}
+    this.dht.join(this.hash, this.port, () => {
+			this._logger.info('joined network')
+			process.exit()
+		})
 
     this.dht.getPeerByHost = (query) => {
       return this.dht.connections.filter((a) => {
@@ -60,7 +111,7 @@ Discovery.prototype = {
               message: 'success'
             })
           } catch (err) {
-            conn.destroy()
+            conn.close()
             return resolve({
               address: conn.remoteAddress + ':' + conn.remotePort,
               success: false,
