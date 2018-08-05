@@ -17,6 +17,7 @@ const queue = require('async/queue')
 const multiaddr = require('multiaddr')
 const pull = require('pull-stream')
 const events = require('events')
+const utp = require('utp-native')
 
 const debug = require('debug')('bcnode:p2p:node')
 const { config } = require('../config')
@@ -470,6 +471,10 @@ export class PeerNode {
 
            //this._p2p._discovery._utp.connect(obj.port, obj.host)
            const conn = utp().connect(obj.port, obj.host)
+           conn.once('connection', this._p2pconnections(conn))
+           conn.once('close', conn.destroy)
+           conn.once('exit', conn.destroy)
+           conn.once('error', conn.destroy)
 
            this._logger.info('peer from seeder: ' + url.href)
            this._p2p.onconnections(conn)
@@ -502,9 +507,9 @@ export class PeerNode {
       this._logger.info('active waypoints:  ' + this._p2p.totalConnections)
     }, 5000)
 
-    setTimeout(() => {
-      this._p2p._seeder.complete()
-    }, 2000)
+    //[setTimeout(() => {
+    //[  this._p2p._seeder.complete()
+    //[}, 2000)
 
     return Promise.resolve(true)
     /* eslint-enable */
