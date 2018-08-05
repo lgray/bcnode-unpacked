@@ -5,7 +5,7 @@ const avon = require('avon')
 const crypto = require('crypto')
 const { config } = require('../config')
 const bootstrap = require('../utils/templates/bootstrap')
-const seeds = require('../utils/templates/seed')
+// const seeds = require('../utils/templates/seed')
 const logging = require('../logger')
 // load
 function blake2bl (input) {
@@ -21,6 +21,7 @@ function randomId () {
 }
 
 function Discovery (nodeId) {
+  const seeds = []
   seeds.unshift('udp://tds.blockcollider.org:16061')
   seeds.unshift('http://tds.blockcollider.org:16061')
 
