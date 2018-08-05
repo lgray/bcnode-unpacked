@@ -395,7 +395,9 @@ export class PeerNode {
 
     this._p2p._seeder.on('peer', (peer) => {
        console.log(this._p2p)
-       this._loggger.info(data)
+       console.log('------------------')
+       console.log(peer)
+       this._loggger.info(peer)
     })
 
     // this._scanner.on('connection-closed', (conn, info) => {
