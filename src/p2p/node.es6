@@ -391,14 +391,17 @@ export class PeerNode {
     })
 
     this._p2p._seeder.on('scrape', (scrape) => {
+      console.log(' ----> SCRAPE ' )
        this._loggger.info(scrape)
     })
 
     this._p2p._seeder.on('update', (data) => {
+      console.log(' ----> UPDATE ' )
        this._loggger.info(data)
     })
 
     this._p2p._seeder.on('peer', (peer) => {
+      console.log(' ----> PEER ' )
        console.log(this._p2p)
        console.log('------------------')
        console.log(peer)
