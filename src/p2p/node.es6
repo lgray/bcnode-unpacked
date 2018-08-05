@@ -295,7 +295,6 @@ export class PeerNode {
     this._p2p = discovery.start()
     this._p2p._seeder = discovery.seeder()
     this._p2p._es = new events.EventEmitter()
-    this._p2p._seeder.scrape()
 
     this._p2p._es.on('qsend', (msg) => {
       (async () => {
