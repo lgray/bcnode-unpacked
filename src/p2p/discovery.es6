@@ -83,9 +83,7 @@ Discovery.prototype = {
   start: function () {
     this._logger.info('initializing far reach discovery from ' + this.port + '@' + this.hash)
     const localHash = this.hash
-    // this.dht.addPeer('54.197.206.163', 16061)
-    // this.dht.addNode({ host: '18.210.15.44', port: 16061 })
-    // this.dht.addNode({ host: '54.197.206.163', port: 16061 })
+    this.dht.hash = this.hash
     this.dht = swarm(this.options)
     this.dht.listen(this.port)
     // add({ host: port: }, done)
