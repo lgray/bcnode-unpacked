@@ -453,7 +453,7 @@ export class PeerNode {
        const url = Url.parse(peer)
        const h = url.href.split(':')
        const obj = {
-         id: crypto.createHash('sha1').update(peer).digest('hex'),
+         //id: crypto.createHash('sha1').update(peer).digest('hex'),
          host: h[0],
          port: Number(h[1])
        }
