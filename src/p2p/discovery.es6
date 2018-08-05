@@ -40,7 +40,7 @@ function Discovery (nodeId) {
     infoHash: Buffer.from(hash),
     peerId: Buffer.from(nodeId),
     port: port,
-    announce: ['udp://tds.blockcollider.org:16061', 'http://tds.blockcollider.org:16061'].concat(seeds)
+    announce: seeds
   }
   this.port = port
   this.nodeId = nodeId
@@ -72,7 +72,6 @@ Discovery.prototype = {
     // client.on('peer', function (addr) {
     //  console.log('found a peer: ' + addr) // 85.10.239.191:48623
     // })
-
     return client
   },
 
@@ -94,7 +93,6 @@ Discovery.prototype = {
     }
     this.dht.join(this.hash, this.port, () => {
       this._logger.info('joined network')
-      process.exit()
     })
 
     this.dht.getPeerByHost = (query) => {

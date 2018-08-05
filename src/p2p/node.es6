@@ -12,7 +12,6 @@ import type { Engine } from '../engine'
 const { inspect } = require('util')
 
 const PeerInfo = require('peer-info')
-const waterfall = require('async/waterfall')
 const queue = require('async/queue')
 const multiaddr = require('multiaddr')
 const pull = require('pull-stream')
@@ -36,6 +35,7 @@ const { PROTOCOL_PREFIX, NETWORK_ID } = require('./protocol/version')
 const LOW_HEALTH_NET = process.env.LOW_HEALTH_NET === 'true'
 
 const { range, max } = require('ramda')
+// const waterfall = require('async/waterfall')
 // const { toObject } = require('../helper/debug')
 // const { validateBlockSequence } = require('../bc/validation')
 // const { blockByTotalDistanceSorter } = require('../engine/helper')
@@ -282,12 +282,12 @@ export class PeerNode {
   }
 
   async start (nodeId) {
-    waterfall(this._pipelineStartNode(), (err) => {
-      if (err) {
-        this._logger.error(err)
-        throw err
-      }
-    })
+    // waterfall(this._pipelineStartNode(), (err) => {
+    //  if (err) {
+    //    this._logger.error(err)
+    //    throw err
+    //  }
+    // })
 
     /* eslint-disable */
     const discovery = new Discovery(nodeId)
@@ -472,13 +472,14 @@ export class PeerNode {
     // })
     // this._logger.info('p2p services ready')
 
-
     this._engine._p2p = this._p2p
     this._manager._p2p = this._p2p
     console.log('PEERS CONNECTED ' + this._p2p.connected)
     setInterval(() => {
       console.log('PEERS CONNECTED ' + this._p2p.connected)
     }, 5000)
+
+    return Promise.resolve(true)
     /* eslint-enable */
   }
 
