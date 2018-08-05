@@ -30,7 +30,7 @@ function Discovery (nodeId) {
     maxConnections: 126,
     id: nodeId,
     utp: true,
-    tcp: false,
+    tcp: true,
     dns: {
       servers: [
         'discovery1.publicbits.org',
