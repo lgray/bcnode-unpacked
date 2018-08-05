@@ -11,6 +11,7 @@ import type { Engine } from '../engine'
 
 const { inspect } = require('util')
 
+const Url = require('url')
 const PeerInfo = require('peer-info')
 const queue = require('async/queue')
 const multiaddr = require('multiaddr')
@@ -402,16 +403,14 @@ export class PeerNode {
 
     this._p2p._seeder.on('peer', (peer) => {
        console.log(' ----> PEER ' )
-       const parts = peer.split(":")
-       const host = parts[0]
-       const port = parts[1]
+       const url = Url(peer)
        const obj = {
          id: crypto.createHash('sha1').update(peer).digest('hex'),
-         host: host,
-         port: port
+         host: url.hostname,
+         port: url.port
        }
 
-			 this._p2p.addPeer(obj, this._p2p.hash)
+			 this._p2p.addPeer(this._p2p.hash, obj)
        this._p2p.add(obj, () => {
           this._logger.info('adding peer: ' + peer)
 					console.log('Connected peers: ' + this._p2p.connected)

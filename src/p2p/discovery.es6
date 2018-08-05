@@ -91,8 +91,8 @@ Discovery.prototype = {
       if (obj.id === undefined) {
         obj.id = randomId()
       }
-      this.dht.addNode(obj)
-      this.dht.once('node', done)
+      this.dht._discovery.dht.addNode(obj)
+      this.dht._discovery.dht.once('node', done)
     }
     this.dht.join(this.hash, this.port, () => {
       this._logger.info('joined network')
