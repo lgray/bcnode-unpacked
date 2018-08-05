@@ -83,8 +83,8 @@ Discovery.prototype = {
   start: function () {
     this._logger.info('initializing far reach discovery from ' + this.port + '@' + this.hash)
     const localHash = this.hash
-    this.dht.hash = this.hash
     this.dht = swarm(this.options)
+    this.dht.hash = this.hash
     this.dht.listen(this.port)
     // add({ host: port: }, done)
     this.dht.add = (obj, done) => {
