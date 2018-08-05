@@ -715,7 +715,7 @@ async-eventemitter@^0.2.2:
   dependencies:
     async "^2.4.0"
 
-"async-eventemitter@github:ahultgren/async-eventemitter#fa06e39e56786ba541c180061dbf2c0a5bbf951c":
+async-eventemitter@ahultgren/async-eventemitter#fa06e39e56786ba541c180061dbf2c0a5bbf951c:
   version "0.2.3"
   resolved "https://codeload.github.com/ahultgren/async-eventemitter/tar.gz/fa06e39e56786ba541c180061dbf2c0a5bbf951c"
   dependencies:
@@ -1604,7 +1604,7 @@ backo@1.1.0:
   version "1.1.0"
   resolved "https://registry.yarnpkg.com/backo/-/backo-1.1.0.tgz#a36c4468923f2d265c9e8a709ea56ecdaff807e6"
 
-"bagpipe@github:Ivshti/bagpipe#ae11730ef59364b20868287fb3ce0970a87dc8c8":
+bagpipe@Ivshti/bagpipe#ae11730ef59364b20868287fb3ce0970a87dc8c8:
   version "0.3.7"
   resolved "https://codeload.github.com/Ivshti/bagpipe/tar.gz/ae11730ef59364b20868287fb3ce0970a87dc8c8"
   dependencies:
@@ -2018,9 +2018,9 @@ bitpony@0.0.1:
   dependencies:
     int64-buffer "^0.1.9"
 
-bittorrent-dht@^8.4.0, "bittorrent-dht@https://github.com/mmpmm/bittorrent-dht":
+bittorrent-dht@^8.4.0, "bittorrent-dht@git+https://github.com/mmpmm/bittorrent-dht.git":
   version "8.4.0"
-  resolved "https://github.com/mmpmm/bittorrent-dht#17a56310f74edd647d00b0c0aead616c209099bf"
+  resolved "git+https://github.com/mmpmm/bittorrent-dht.git#17a56310f74edd647d00b0c0aead616c209099bf"
   dependencies:
     bencode "^2.0.0"
     buffer-equals "^1.0.3"
@@ -2039,9 +2039,9 @@ bittorrent-peerid@^1.0.2:
   version "1.3.0"
   resolved "https://registry.yarnpkg.com/bittorrent-peerid/-/bittorrent-peerid-1.3.0.tgz#a435d3b267c887c586c528b53359845905d7c158"
 
-bittorrent-tracker@^9.10.0:
+"bittorrent-tracker@git+https://github.com/webtorrent/bittorrent-tracker.git":
   version "9.10.0"
-  resolved "https://registry.yarnpkg.com/bittorrent-tracker/-/bittorrent-tracker-9.10.0.tgz#8d9aea670c885411dd0bb9239b1e4944111bf49f"
+  resolved "git+https://github.com/webtorrent/bittorrent-tracker.git#f6c77c35507449704d7f8019395582573da42bbc"
   dependencies:
     bencode "^2.0.0"
     bittorrent-peerid "^1.0.2"
@@ -2582,7 +2582,7 @@ buffer@^5.0.5:
     base64-js "^1.0.2"
     ieee754 "^1.1.4"
 
-"buffers@github:bitpay/node-buffers#v0.1.2-bitpay", buffers@~0.1.1:
+buffers@bitpay/node-buffers#v0.1.2-bitpay, buffers@~0.1.1:
   version "0.1.1"
   resolved "https://codeload.github.com/bitpay/node-buffers/tar.gz/04f4c4264e0d105db2b99b786843ed64f23230d8"
 
@@ -7215,7 +7215,7 @@ js-beautify@^1.5.4:
     mkdirp "~0.5.0"
     nopt "~3.0.1"
 
-"js-nacl@github:LiskHQ/js-nacl#6dc1417":
+js-nacl@LiskHQ/js-nacl#6dc1417:
   version "1.2.1"
   resolved "https://codeload.github.com/LiskHQ/js-nacl/tar.gz/6dc1417057cd81381d332b370e82ceab1f2416af"
 
@@ -12967,17 +12967,17 @@ util@0.10.3:
   dependencies:
     inherits "2.0.1"
 
+util@Ivshti/node-util:
+  version "0.10.3"
+  resolved "https://codeload.github.com/Ivshti/node-util/tar.gz/97b6beed8e0e478cd4184965ac94bf316f94e5f5"
+  dependencies:
+    inherits Ivshti/inherits
+
 util@^0.10.3:
   version "0.10.4"
   resolved "https://registry.yarnpkg.com/util/-/util-0.10.4.tgz#3aa0125bfe668a4672de58857d3ace27ecb76901"
   dependencies:
     inherits "2.0.3"
-
-"util@github:Ivshti/node-util":
-  version "0.10.3"
-  resolved "https://codeload.github.com/Ivshti/node-util/tar.gz/97b6beed8e0e478cd4184965ac94bf316f94e5f5"
-  dependencies:
-    inherits Ivshti/inherits
 
 utile@0.3.x:
   version "0.3.0"
