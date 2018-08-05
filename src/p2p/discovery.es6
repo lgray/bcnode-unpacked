@@ -82,7 +82,6 @@ Discovery.prototype = {
 
   start: function () {
     this._logger.info('initializing far reach discovery from ' + this.port + '@' + this.hash)
-    const localHash = this.hash
     this.dht = swarm(this.options)
     this.dht.hash = this.hash
     this.dht.port = this.port
@@ -143,34 +142,34 @@ Discovery.prototype = {
       return warnings
     }
 
-    const signNetwork = () => {
-      this._logger.info(this.dht.totalConnections)
-      if (this.dht.totalConnections !== undefined && this.dht.totalConnections > 0) {
-        this.dht._discovery.put({ v: localHash }, (err, hash) => {
-          if (err) { this._logger.error(err) } else {
-          // setTimeout(() => {
-          //  if (this.dht._discovery.dht.connected !== undefined && this.dht._discovery.dht.connected.length > 0) {
-          //    this.dht._discovery.dht.get(hash, (err, localHashObject) => {
-          //      if (err) { this._logger.error(err) } else {
-          //        this._logger.info('network signature: ' + hash.toString())
-          //        this.dht._discovery.dht.lookup(localHash, (err) => {
-          //          if (err) { this._logger.error(err) } else {
-          //            this.dht._discovery.dht.announce(localHash, (err) => {
-          //              if (err) { this._logger.error(err) } else {
-          //                this._logger.debug('discovery beacon cycled')
-          //              }
-          //            })
-          //          }
-          //        })
-          //      }
-          //    })
-          //  }
-          // }, 20000)
-          }
-        })
-      }
-    }
-    this.dht.manualNetworkSigInverval = setInterval(signNetwork, 60000)
+    // const signNetwork = () => {
+    //  this._logger.info(this.dht.totalConnections)
+    //  if (this.dht.totalConnections !== undefined && this.dht.totalConnections > 0) {
+    //    this.dht._discovery.put({ v: localHash }, (err, hash) => {
+    //      if (err) { this._logger.error(err) } else {
+    //      // setTimeout(() => {
+    //      //  if (this.dht._discovery.dht.connected !== undefined && this.dht._discovery.dht.connected.length > 0) {
+    //      //    this.dht._discovery.dht.get(hash, (err, localHashObject) => {
+    //      //      if (err) { this._logger.error(err) } else {
+    //      //        this._logger.info('network signature: ' + hash.toString())
+    //      //        this.dht._discovery.dht.lookup(localHash, (err) => {
+    //      //          if (err) { this._logger.error(err) } else {
+    //      //            this.dht._discovery.dht.announce(localHash, (err) => {
+    //      //              if (err) { this._logger.error(err) } else {
+    //      //                this._logger.debug('discovery beacon cycled')
+    //      //              }
+    //      //            })
+    //      //          }
+    //      //        })
+    //      //      }
+    //      //    })
+    //      //  }
+    //      // }, 20000)
+    //      }
+    //    })
+    //  }
+    // }
+    // this.dht.manualNetworkSigInverval = setInterval(signNetwork, 60000)
     return this.dht
   },
 
