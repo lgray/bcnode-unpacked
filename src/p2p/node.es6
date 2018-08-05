@@ -17,7 +17,7 @@ const queue = require('async/queue')
 const multiaddr = require('multiaddr')
 const pull = require('pull-stream')
 const events = require('events')
-const utp = require('utp-native')
+// const utp = require('utp-native')
 
 const debug = require('debug')('bcnode:p2p:node')
 const { config } = require('../config')
@@ -464,21 +464,26 @@ export class PeerNode {
          port: Number(h[1])
        }
 
+       // add seen protection
        if(peer.indexOf('52.71.82.17') < 0){
 
          try {
-           console.log(this._p2p._discovery)
 
-           //this._p2p._discovery._utp.connect(obj.port, obj.host)
-           const conn = utp().connect(obj.port, obj.host)
-           conn.once('connection', (c) => {
-             this._p2p._onconnection(c, 'utp')
-           })
-           conn.once('close', conn.destroy)
-           conn.once('exit', conn.destroy)
-           conn.once('error', conn.destroy)
+           //this._p2p._discovery announce(this._p2p.hash)
 
-           this._logger.info('peer from seeder: ' + url.href)
+           console.log(obj)
+
+           this._p2p._discovery.dht.emit('peer', obj, infohash)
+
+           //const conn = utp().connect(obj.port, obj.host)
+           //conn.once('connection', (c) => {
+           //  this._p2p._onconnection(c, 'utp')
+           //})
+           //conn.once('close', conn.destroy)
+           //conn.once('exit', conn.destroy)
+           //conn.once('error', conn.destroy)
+
+           //this._logger.info('peer from seeder: ' + url.href)
            //this._p2p._discovery.emit('peer', this._p2p.hash, obj)
 
          } catch (err) {
