@@ -31,12 +31,12 @@ function Discovery (nodeId) {
     id: nodeId,
     utp: true,
     tcp: false,
-    // dns: {
-    //  servers: [
-    //    'discovery1.publicbits.org',
-    //    'discovery2.publicbits.org'
-    //  ]
-    // },
+    dns: {
+      servers: [
+        'discovery1.publicbits.org',
+        'discovery2.publicbits.org'
+      ]
+    },
     dht: {
       nodeId: nodeId,
       bootstrap: bootstrap,
