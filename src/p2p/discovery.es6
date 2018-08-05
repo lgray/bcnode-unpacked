@@ -28,8 +28,6 @@ function Discovery (nodeId) {
   seeds.unshift('wss://tds.blockcollider.org:16060/announce')
   seeds.unshift('ws://tds.blockcollider.org:16060')
   seeds.unshift('ws://tds.blockcollider.org:16060/announce')
-  seeds.unshift('http://tds.blockcollider.org:16060')
-  seeds.unshift('http://tds.blockcollider.org:16060/announce')
 
   const hash = blake2bl('bcbt002' + config.blockchainFingerprintsHash) // peers that do not update for one year
   const port = 16061
