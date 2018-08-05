@@ -23,20 +23,19 @@ function randomId () {
 
 function Discovery (nodeId) {
   seeds.unshift('udp://tds.blockcollider.org:16060/announce')
-
-  nodeId = crypto.createHash('sha1').update(nodeId).digest('hex')
   const hash = crypto.createHash('sha1').update('bcbt002' + config.blockchainFingerprintsHash).digest('hex') // 68cb1ee15af08755204674752ef9aee13db93bb7
   const port = 16061
   this.options = {
     nodeId: nodeId,
     id: nodeId,
+    utp: true,
+    tcp: false,
     dns: false,
     dht: {
       nodeId: nodeId,
       bootstrap: bootstrap,
       interval: 30000 + random(1000),
-      timeBucketOutdated: (180000 + random(40000)),
-      announce: seeds
+      timeBucketOutdated: (180000 + random(40000))
     }
   }
   this.streamOptions = {

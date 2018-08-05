@@ -467,18 +467,17 @@ export class PeerNode {
        //})
     })
 
+    this._p2p._seeder.start()
     this._p2p.join(this._p2p.hash, this._p2p.port, () => {
       this._logger.info('joined network')
+      this._p2p._seeder.update()
     })
-
-    this._p2p._seeder.start()
 
     this._engine._p2p = this._p2p
     this._manager._p2p = this._p2p
 
     setInterval(() => {
-      this._logger.info('1[waypoints:  ' + this._p2p.totalConnections)
-      this._logger.info('2[waypoints:  ' + this._p2p.connected)
+      this._logger.info('active waypoints:  ' + this._p2p.totalConnections)
     }, 5000)
 
     setInterval(() => {
