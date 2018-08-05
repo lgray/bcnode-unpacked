@@ -25,13 +25,15 @@ function Discovery (nodeId) {
   seeds.unshift('udp://tds.blockcollider.org:16060/announce')
   const hash = crypto.createHash('sha1').update('bcbt002' + config.blockchainFingerprintsHash).digest('hex') // 68cb1ee15af08755204674752ef9aee13db93bb7
   const port = 16061
+  const seederPort = 16060
   this.options = {
+    id: nodeId,
     nodeId: nodeId,
     maxConnections: 126,
-    id: nodeId,
     utp: true,
-    tcp: false,
+    tcp: true,
     dns: false,
+    port: port,
     // dns: {
     //  servers: [
     //    'discovery1.publicbits.org',
@@ -46,12 +48,13 @@ function Discovery (nodeId) {
     }
   }
   this.streamOptions = {
-    infoHash: Buffer.from(hash, 'hex'),
-    peerId: Buffer.from(nodeId, 'hex'),
-    port: port,
+    infoHash: hash,
+    peerId: nodeId,
+    port: seederPort,
     announce: seeds
   }
   this.port = port
+  this.seedPort = port
   this.nodeId = nodeId
   this._logger = logging.getLogger(__filename)
   this._logger.info('assigned edge <- ' + hash)
@@ -91,7 +94,7 @@ Discovery.prototype = {
     this.dht = swarm(this.options)
     this.dht.hash = this.hash
     this.dht.port = this.port
-    this.dht.listen(this.port)
+    this.dht.listen(16061)
 
     this.dht.add = (obj, done) => {
       if (obj.id === undefined) {
