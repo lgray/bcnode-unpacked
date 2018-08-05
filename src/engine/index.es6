@@ -509,13 +509,13 @@ export class Engine {
       // if the key is more than 72 hours old reset it
       if (nodeTimestamp + 259200 < now) {
         this._logger.warn('key needs to be set')
-        nodeId = crypto.randomBytes(32).toString('hex')
+        nodeId = crypto.createHash('sha1').update(crypto.randomBytes(32).toString('hex')).digest('hex')
         this._logger.info('asssigned node ID <- ' + nodeId)
         await this.persistence.put('bc.dht.id', JSON.stringify({ id: nodeId, timestamp: Math.floor(Date.now() * 0.001) }))
       }
     } catch (_) {
       this._logger.warn('key needs to be set')
-      nodeId = crypto.randomBytes(32).toString('hex')
+      nodeId = crypto.createHash('sha1').update(crypto.randomBytes(32).toString('hex')).digest('hex')
       this._logger.info('asssigned node key <- ' + nodeId)
       await this.persistence.put('bc.dht.id', JSON.stringify({ id: nodeId, timestamp: Math.floor(Date.now() * 0.001) }))
     }

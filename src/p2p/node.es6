@@ -391,20 +391,27 @@ export class PeerNode {
 
     this._p2p._seeder.on('scrape', (scrape) => {
       console.log(' ----> SCRAPE ' )
-       this._loggger.info(scrape)
+       this._logger.info(scrape)
     })
 
     this._p2p._seeder.on('update', (data) => {
       console.log(' ----> UPDATE ' )
-       this._loggger.info(data)
+      console.log(data)
     })
 
     this._p2p._seeder.on('peer', (peer) => {
-      console.log(' ----> PEER ' )
-       console.log(this._p2p)
-       console.log('------------------')
-       console.log(peer)
-       this._loggger.info(peer)
+       console.log(' ----> PEER ' )
+       const parts = peer.split(":")
+       const host = parts[0]
+       const port = parts[1]
+       const obj = {
+         id: crypto.createHash('sha1').update(peer).digest('hex'),
+         host: host,
+         port: port
+       }
+       this._p2p.add(obj, () => {
+          this._logger.info('adding peer: ' + peer)
+       })
     })
 
     setTimeout(() => {

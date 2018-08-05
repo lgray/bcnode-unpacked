@@ -1,16 +1,16 @@
 
 const Client = require('bittorrent-tracker')
 const swarm = require('discovery-swarm')
-const avon = require('avon')
+// const avon = require('avon')
 const crypto = require('crypto')
 const { config } = require('../config')
-const bootstrap = require('../utils/templates/bootstrap')
+// const bootstrap = require('../utils/templates/bootstrap')
 // const seeds = require('../utils/templates/seed')
 const logging = require('../logger')
 // load
-function blake2bl (input) {
-  return avon.sumBuffer(Buffer.from(input), avon.ALGORITHMS.B).toString('hex').slice(64, 128)
-}
+// function blake2bl (input) {
+//  return avon.sumBuffer(Buffer.from(input), avon.ALGORITHMS.B).toString('hex').slice(64, 128)
+// }
 
 function random (range) {
   return Math.floor(Math.random() * range)
@@ -22,35 +22,33 @@ function randomId () {
 
 function Discovery (nodeId) {
   const seeds = []
-  seeds.unshift('udp://tds.blockcollider.org:16060')
-  seeds.unshift('udp://tds.blockcollider.org:16060/announce')
-  seeds.unshift('http://tds.blockcollider.org:16060')
-  seeds.unshift('http://tds.blockcollider.org:16060/announce')
-  seeds.unshift('wss://tds.blockcollider.org:16060')
-  seeds.unshift('wss://tds.blockcollider.org:16060/announce')
+  seeds.unshift('udp://52.71.82.17:16060/announce')
 
-  const hash = blake2bl('bcbt002' + config.blockchainFingerprintsHash) // peers that do not update for one year
+  nodeId = crypto.createHash('sha1').update(nodeId).digest('hex')
+  const hash = crypto.createHash('sha1').update('bcbt002' + config.blockchainFingerprintsHash).digest('hex') // 68cb1ee15af08755204674752ef9aee13db93bb7
   const port = 16061
   this.options = {
+    nodeId: nodeId,
     id: nodeId,
     dns: false,
     dht: {
       nodeId: nodeId,
-      bootstrap: bootstrap,
-      interval: 10000 + random(1000),
-      timeBucketOutdated: (180000 + random(40000))
+      bootstrap: seeds,
+      interval: 30000 + random(1000),
+      timeBucketOutdated: (180000 + random(40000)),
+      announce: seeds
     }
   }
   this.streamOptions = {
-    infoHash: Buffer.from(hash),
-    peerId: Buffer.from(nodeId),
+    infoHash: Buffer.from(hash, 'hex'),
+    peerId: Buffer.from(nodeId, 'hex'),
     port: port,
     announce: seeds
   }
   this.port = port
   this.nodeId = nodeId
   this._logger = logging.getLogger(__filename)
-  this._logger.info('edge selection <- ' + hash)
+  this._logger.info('assigned edge <- ' + hash)
   this.hash = hash
 }
 
@@ -149,8 +147,10 @@ Discovery.prototype = {
     }
 
     const signNetwork = () => {
-      this.dht._discovery.dht.put({ v: localHash }, (err, hash) => {
-        if (err) { this._logger.error(err) } else {
+      this._logger.info(this.dht.connected.length)
+      if (this.dht.connected !== undefined && this.dht.connected.length > 0) {
+        this.dht._discovery.put({ v: localHash }, (err, hash) => {
+          if (err) { this._logger.error(err) } else {
           // setTimeout(() => {
           //  if (this.dht._discovery.dht.connected !== undefined && this.dht._discovery.dht.connected.length > 0) {
           //    this.dht._discovery.dht.get(hash, (err, localHashObject) => {
@@ -169,8 +169,9 @@ Discovery.prototype = {
           //    })
           //  }
           // }, 20000)
-        }
-      })
+          }
+        })
+      }
     }
     this.dht.manualNetworkSigInverval = setInterval(signNetwork, 60000)
     return this.dht
