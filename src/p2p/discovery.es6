@@ -6,6 +6,7 @@ const crypto = require('crypto')
 const { config } = require('../config')
 // const bootstrap = require('../utils/templates/bootstrap')
 // const seeds = require('../utils/templates/seed')
+const seeds = []
 const logging = require('../logger')
 // load
 // function blake2bl (input) {
@@ -21,8 +22,8 @@ function randomId () {
 }
 
 function Discovery (nodeId) {
-  const seeds = []
   seeds.unshift('udp://tds.blockcollider.org:16060/announce')
+  seeds.unshift('ws://tds.blockcollider.org:16060/announce')
 
   nodeId = crypto.createHash('sha1').update(nodeId).digest('hex')
   const hash = crypto.createHash('sha1').update('bcbt002' + config.blockchainFingerprintsHash).digest('hex') // 68cb1ee15af08755204674752ef9aee13db93bb7
@@ -108,6 +109,7 @@ Discovery.prototype = {
 
     this.dht.qsend = async (conn, msg) => {
       const list = this.dht.getPeerByHost(conn)
+      this._logger._info('peers to write: ' + list.length)
       if (list.length < 1) { return Promise.resolve(false) }
       const tasks = list.reduce((all, conn) => {
         const a = new Promise((resolve, reject) => {

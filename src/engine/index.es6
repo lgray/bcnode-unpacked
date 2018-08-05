@@ -566,11 +566,11 @@ export class Engine {
   startRovers (rovers: string[]) {
     this._logger.info(`starting rovers '${rovers.join(',')}'`)
 
-    rovers.forEach(name => {
-      if (name) {
-        this._rovers.startRover(name)
-      }
-    })
+    // rovers.forEach(name => {
+    //  if (name) {
+    //    this._rovers.startRover(name)
+    //  }
+    // })
 
     this._emitter.on('collectBlock', ({ block }) => {
       // Persist block if needed
