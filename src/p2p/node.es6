@@ -463,8 +463,20 @@ export class PeerNode {
          port: Number(h[1])
        }
 
-       this._logger.info('peer from seeder: ' + url.href)
-       this._p2p._discovery.emit('peer', this._p2p.hash, obj)
+       try {
+         console.log(this._p2p._discovery)
+
+         this._p2p._discovery._utp.connect(obj.port, obj.host)
+         //const conn = utp().connect(obj.port, obj.host)
+
+         this._logger.info('peer from seeder: ' + url.href)
+         //this._p2p.onconnections(conn)
+         //this._p2p._discovery.emit('peer', this._p2p.hash, obj)
+
+       } catch (err) {
+
+
+       }
 			 //this._p2p.addPeer(this._p2p.hash, obj)
        //this._p2p.add(obj, () => {
        //   this._logger.info('adding peer: ' + peer)

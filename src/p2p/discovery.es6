@@ -31,12 +31,12 @@ function Discovery (nodeId) {
     id: nodeId,
     utp: true,
     tcp: false,
-    dns: {
-      servers: [
-        'discovery1.publicbits.org',
-        'discovery2.publicbits.org'
-      ]
-    },
+    // dns: {
+    //  servers: [
+    //    'discovery1.publicbits.org',
+    //    'discovery2.publicbits.org'
+    //  ]
+    // },
     dht: {
       nodeId: nodeId,
       bootstrap: bootstrap,
@@ -122,7 +122,6 @@ Discovery.prototype = {
               message: 'success'
             })
           } catch (err) {
-            conn.close()
             return resolve({
               address: conn.remoteAddress + ':' + conn.remotePort,
               success: false,
