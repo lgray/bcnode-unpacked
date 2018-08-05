@@ -459,7 +459,7 @@ export class PeerNode {
        }
 
        this._logger.info('peer from seeder: ' + url.href)
-       this._p2p._discvoery.emti('peer', this._p2p.hash, obj)
+       this._p2p._discovery.emit('peer', this._p2p.hash, obj)
 			 //this._p2p.addPeer(this._p2p.hash, obj)
        //this._p2p.add(obj, () => {
        //   this._logger.info('adding peer: ' + peer)
