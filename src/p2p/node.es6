@@ -378,10 +378,10 @@ export class PeerNode {
       })()
     })
 
-    this._p2p._seeder.on('scrape', (scrape) => {
-      console.log(' ----> SCRAPE ' )
-       this._logger.info(scrape)
-    })
+    //this._p2p._seeder.on('scrape', (scrape) => {
+    //  console.log(' ----> SCRAPE ' )
+    //   this._logger.info(scrape)
+    //})
 
     this._p2p._seeder.on('update', (data) => {
       console.log(' ----> UPDATE ' )
@@ -409,69 +409,65 @@ export class PeerNode {
     setTimeout(() => {
       if(this._p2p.totalConnections < 1) {
         this._logger.info('requesting seed update')
-        this._p2p._seeder.update({
-						nodeId: this._p2p.nodeId,
-						connected: this._p2p.totalConnections
-				})
+        this._p2p._seeder.update()
       }
     }, 15000)
 
-    // this._scanner.on('connection-closed', (conn, info) => {
-    //  // this.peerClosedConnectionHandler(conn, info)
-    //  this._logger.info('------- CONNECTION CLOSED ------')
-    //  console.log(conn)
-    //  console.log(info)
-    // })
-    // this._scanner.on('error', (err) => {
-    //  console.trace(err)
-    // })
-    // this._scanner.on('redundant-connection', (conn, info) => {
-    //  this._logger.info('------- REDUNDANT CONNECTION ------')
-    //  console.log(conn)
-    //  console.log(info)
-    //  this.peerClosedConnectionHandler(conn, info)
-    // })
-    // this._scanner.on('peer', (peer) => {
-    //  this._logger.info('------- PEER JOINED ------')
-    //  console.log(peer)
-    //  const purposedHost = peer.removeAddress + ':' + peer.remotePort
-    //  if (this._quasar.pendingConnections[purposedHost] !== undefined) {
-    //    const conn = this._quasar.pendingConnections[purposedHost]
-    //    const idMessage = 'i*' + this._externalIP + '*' + this._quasarPort + '*' + this._identity
-    //    this._logger.info(idMessage)
-    //    conn.write(idMessage)
-    //    conn.on('data', (data) => {
-    //      this.peerDataHandler(conn, data)
-    //    })
-    //  }
-    // })
-    // this._scanner.on('drop', (peer, type) => {
-    //  this._logger.info('------- PEER DROPPED ------')
-    //  console.log(peer)
-    //  console.log(type)
-    // })
-    // this._scanner.on('peer-banned', (peer, type) => {
-    //  this._logger.info('------- PEER BANNED ------')
-    //  console.log(peer)
-    //  console.log(type)
-    // })
-    // this._scanner.on('connect-failed', (next, timeout) => {
-    //  this._logger.info('------- CONNECT FAILED ------')
-    //  console.log(next)
-    //  console.log(timeout)
-    // })
-    // this._scanner.on('handshake-timeout', (conn, timeout) => {
-    //  this._logger.info('------- CONNECT FAILED ------')
-    //  console.log(conn)
-    //  console.log(timeout)
-    // })
+    this._p2p.on('connection-closed', (conn, info) => {
+     // this.peerClosedConnectionHandler(conn, info)
+     this._logger.info('------- CONNECTION CLOSED ------')
+     console.log(conn)
+     console.log(info)
+     console.log("^^^^^^^^^^^^^^^^^^^^^^^^")
+    })
+    this._p2p.on('error', (err) => {
+     this._logger.info('------- ERROR ------')
+     console.trace(err)
+     console.log("^^^^^^^^^^^^^^^^^^^^^^^^")
+    })
+    this._p2p.on('redundant-connection', (conn, info) => {
+     this._logger.info('------- REDUNDANT CONNECTION ------')
+     console.log(conn)
+     console.log(info)
+     console.log("^^^^^^^^^^^^^^^^^^^^^^^^")
+    })
+    this._p2p.on('peer', (peer) => {
+     this._logger.info('------- PEER JOINED ------')
+     console.log(peer)
+     console.log("^^^^^^^^^^^^^^^^^^^^^^^^")
+    })
+    this._p2p.on('drop', (peer, type) => {
+     this._logger.info('------- PEER DROPPED ------')
+      console.log(peer)
+      console.log(type)
+     console.log("^^^^^^^^^^^^^^^^^^^^^^^^")
+    })
+    this._p2p.on('peer-banned', (peer, type) => {
+     this._logger.info('------- PEER BANNED ------')
+     console.log(peer)
+     console.log(type)
+     console.log("^^^^^^^^^^^^^^^^^^^^^^^^")
+    })
+    this._p2p.on('connect-failed', (next, timeout) => {
+     this._logger.info('------- CONNECT FAILED ------')
+     console.log(next)
+     console.log(timeout)
+     console.log("^^^^^^^^^^^^^^^^^^^^^^^^")
+    })
+    this._p2p.on('handshake-timeout', (conn, timeout) => {
+     this._logger.info('------- HANDSHAKE TIMEOUT ------')
+     console.log(conn)
+     console.log(timeout)
+     console.log("^^^^^^^^^^^^^^^^^^^^^^^^")
+    })
 
-    // this._scanner.on('peer-rejected', (peer, type) => {
-    //  this._logger.warn('peer rejected ')
-    //  console.log(peer)
-    //  console.log(type)
-    // })
-    // this._quasar.quasarSubscribe('newblock', (data) => {
+    this._p2p.on('peer-rejected', (peer, type) => {
+     this._logger.warn('peer rejected ')
+     console.log(peer)
+     console.log(type)
+     console.log("^^^^^^^^^^^^^^^^^^^^^^^^")
+    })
+    //this._quasar.quasarSubscribe('newblock', (data) => {
     //  console.log('------- NEW BLOCK QUASAR ------')
     //  this._logger.info(data)
     //  console.log(data)
@@ -488,6 +484,8 @@ export class PeerNode {
     // })
     // this._logger.info('p2p services ready')
 
+
+    this._p2p._seeder.start()
     this._engine._p2p = this._p2p
     this._manager._p2p = this._p2p
     this._logger.info('peer waypoints:  ' + this._p2p.totalConnections)
