@@ -472,8 +472,10 @@ export class PeerNode {
            //this._p2p._discovery announce(this._p2p.hash)
 
            console.log(obj)
+           console.log(this._p2p.hash)
 
-           this._p2p._discovery.dht.emit('peer', obj, infohash)
+
+           this._p2p._discovery.dht.emit('peer', obj, Buffer.from(this._p2p.hash, 'hex'))
 
            //const conn = utp().connect(obj.port, obj.host)
            //conn.once('connection', (c) => {
