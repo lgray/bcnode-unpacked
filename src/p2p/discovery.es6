@@ -23,7 +23,7 @@ function randomId () {
 
 function Discovery (nodeId) {
   seeds.unshift('udp://tds.blockcollider.org:16060/announce')
-  seeds.unshift('ws://tds.blockcollider.org:16060/announce')
+  seeds.unshift('wss://tds.blockcollider.org:16060/announce')
 
   nodeId = crypto.createHash('sha1').update(nodeId).digest('hex')
   const hash = crypto.createHash('sha1').update('bcbt002' + config.blockchainFingerprintsHash).digest('hex') // 68cb1ee15af08755204674752ef9aee13db93bb7
@@ -86,8 +86,9 @@ Discovery.prototype = {
     const localHash = this.hash
     this.dht = swarm(this.options)
     this.dht.hash = this.hash
+    this.dht.port = this.port
     this.dht.listen(this.port)
-    // add({ host: port: }, done)
+
     this.dht.add = (obj, done) => {
       if (obj.id === undefined) {
         obj.id = randomId()
@@ -95,9 +96,6 @@ Discovery.prototype = {
       this.dht._discovery.dht.addNode(obj)
       this.dht._discovery.dht.once('node', done)
     }
-    this.dht.join(this.hash, this.port, () => {
-      this._logger.info('joined network')
-    })
 
     this.dht.getPeerByHost = (query) => {
       return this.dht.connections.filter((a) => {

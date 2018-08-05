@@ -378,6 +378,7 @@ export class PeerNode {
       })()
     })
 
+
     this._p2p.on('connection-closed', (conn, info) => {
      // this.peerClosedConnectionHandler(conn, info)
      this._logger.info('------- CONNECTION CLOSED ------')
@@ -398,9 +399,9 @@ export class PeerNode {
      console.log("^^^^^^^^^^^^^^^^^^^^^^^^")
     })
 
-    this._p2p.on('peer', (peer) => {
-     this._logger.info('------- PEER JOINED ------')
-     console.log(Buffer.from(peer, 'hex').toString())
+    this._p2p.on('peer', (channel, peer) => {
+     this._logger.info('------- DHT PEER CONNECTED ------')
+     console.log(peer)
      console.log("^^^^^^^^^^^^^^^^^^^^^^^^")
     })
 
@@ -458,6 +459,8 @@ export class PeerNode {
          port: Number(h[1])
        }
 
+       this._logger.info('peer from seeder: ' + url.href + ' @ ' + obj.id)
+
        this._p2p.emit('peer', Buffer.from(this._p2p.hash, 'hex'), obj)
 			 //this._p2p.addPeer(this._p2p.hash, obj)
        //this._p2p.add(obj, () => {
@@ -466,7 +469,12 @@ export class PeerNode {
        //})
     })
 
-    this._p2p._seeder.start()
+    // start the seeder as soon as the DHT peer connects
+    this._p2p.join(this._p2p.hash, this._p2p.port, () => {
+      this._p2p._seeder.start()
+      this._logger.info('joined network')
+    })
+
     this._engine._p2p = this._p2p
     this._manager._p2p = this._p2p
 
