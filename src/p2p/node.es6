@@ -405,6 +405,13 @@ export class PeerNode {
        this._loggger.info(peer)
     })
 
+    setTimeout(() => {
+      if(this._p2p.connected < 1) {
+        this._logger.info('requesting seed update')
+        this._p2p._seeder.update()
+      }
+    }, 30)
+
     // this._scanner.on('connection-closed', (conn, info) => {
     //  // this.peerClosedConnectionHandler(conn, info)
     //  this._logger.info('------- CONNECTION CLOSED ------')
