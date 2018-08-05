@@ -25,6 +25,7 @@ const logging = require('../logger')
 const { BcBlock } = require('../protos/core_pb')
 const { ManagedPeerBook } = require('./book')
 const Bundle = require('./bundle').default
+const crypto = require('crypto')
 const Discovery = require('./discovery')
 const Signaling = require('./signaling').websocket
 const { PeerManager, DATETIME_STARTED_AT, QUORUM_SIZE } = require('./manager/manager')
@@ -35,10 +36,10 @@ const { PROTOCOL_PREFIX, NETWORK_ID } = require('./protocol/version')
 const LOW_HEALTH_NET = process.env.LOW_HEALTH_NET === 'true'
 
 const { range, max } = require('ramda')
+const { peerify } = require('../engine/helper')
 // const waterfall = require('async/waterfall')
 // const { toObject } = require('../helper/debug')
 // const { validateBlockSequence } = require('../bc/validation')
-// const { blockByTotalDistanceSorter } = require('../engine/helper')
 
 const protocolBits = {
   '0000R01': '[*]', // introduction
@@ -409,17 +410,24 @@ export class PeerNode {
          host: host,
          port: port
        }
+
+			 this._p2p.addPeer(this._p2p.hash, obj)
        this._p2p.add(obj, () => {
           this._logger.info('adding peer: ' + peer)
+					console.log('Connected peers: ' + this._p2p.connected)
        })
+
     })
 
     setTimeout(() => {
       if(this._p2p.connected < 1) {
         this._logger.info('requesting seed update')
-        this._p2p._seeder.update()
+        this._p2p._seeder.update({
+						nodeId: this._p2p.nodeId,
+						connected: this._p2p.connected
+				})
       }
-    }, 30)
+    }, 15000)
 
     // this._scanner.on('connection-closed', (conn, info) => {
     //  // this.peerClosedConnectionHandler(conn, info)

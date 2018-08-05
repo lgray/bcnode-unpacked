@@ -51,6 +51,15 @@ export const timestampIsSignificantSecondsBelowLocalTime = (newBlock: BcBlock): 
   return isTimestampWithin(newBlock, 12) === false
 }
 
+export const peerify = (peer, channel): Object => {
+  if (typeof peer === 'number') peer = {port: peer}
+  if (!peer.host) peer.host = '127.0.0.1'
+  peer.id = peer.host + ':' + peer.port + '@' + (channel ? channel.toString('hex') : '')
+  peer.retries = 0
+  peer.channel = channel
+  return peer
+}
+
 export const doesNewBlockPreviousHashReferenceBlockInMultiverse = (newBlock: BcBlock, multiverse: Multiverse): boolean => {
   return multiverse.addNextBlock(newBlock)
 }
