@@ -399,9 +399,9 @@ export class PeerNode {
      console.log("^^^^^^^^^^^^^^^^^^^^^^^^")
     })
 
-    this._p2p.on('peer', (channel, peer) => {
-     this._logger.info('------- DHT PEER CONNECTED ------')
-     console.log(peer)
+    this._p2p.on('peer', (channel) => {
+     this._logger.info('-------  PEER DISCOVERED ------')
+     console.log(channel)
      console.log("^^^^^^^^^^^^^^^^^^^^^^^^")
     })
 
@@ -464,20 +464,21 @@ export class PeerNode {
          port: Number(h[1])
        }
 
-       if(obj.host !== '52.71.82.17'){
+       if(peer.indexOf('52.71.82.17') < 0){
 
          try {
            console.log(this._p2p._discovery)
 
            //this._p2p._discovery._utp.connect(obj.port, obj.host)
            const conn = utp().connect(obj.port, obj.host)
-           conn.once('connection', this._p2pconnections(conn))
+           conn.once('connection', (c) => {
+             this._p2p._onconnection(c, 'utp')
+           })
            conn.once('close', conn.destroy)
            conn.once('exit', conn.destroy)
            conn.once('error', conn.destroy)
 
            this._logger.info('peer from seeder: ' + url.href)
-           this._p2p.onconnections(conn)
            //this._p2p._discovery.emit('peer', this._p2p.hash, obj)
 
          } catch (err) {
