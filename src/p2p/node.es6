@@ -463,25 +463,28 @@ export class PeerNode {
          port: Number(h[1])
        }
 
-       try {
-         console.log(this._p2p._discovery)
+       if(obj.host !== '52.71.82.17'){
 
-         this._p2p._discovery._utp.connect(obj.port, obj.host)
-         //const conn = utp().connect(obj.port, obj.host)
+         try {
+           console.log(this._p2p._discovery)
 
-         this._logger.info('peer from seeder: ' + url.href)
-         //this._p2p.onconnections(conn)
-         //this._p2p._discovery.emit('peer', this._p2p.hash, obj)
+           //this._p2p._discovery._utp.connect(obj.port, obj.host)
+           const conn = utp().connect(obj.port, obj.host)
 
-       } catch (err) {
+           this._logger.info('peer from seeder: ' + url.href)
+           this._p2p.onconnections(conn)
+           //this._p2p._discovery.emit('peer', this._p2p.hash, obj)
 
-
+         } catch (err) {
+           console.log('unable to reuse server')
+           this._logger.error(err)
+         }
+         //this._p2p.addPeer(this._p2p.hash, obj)
+         //this._p2p.add(obj, () => {
+         //   this._logger.info('adding peer: ' + peer)
+         // 	console.log('connected peers: ' + this._p2p.totalConnections)
+         //})
        }
-			 //this._p2p.addPeer(this._p2p.hash, obj)
-       //this._p2p.add(obj, () => {
-       //   this._logger.info('adding peer: ' + peer)
-			 // 	console.log('connected peers: ' + this._p2p.totalConnections)
-       //})
     })
 
     this._p2p._seeder.start()
