@@ -26,7 +26,6 @@ const logging = require('../logger')
 const { BcBlock } = require('../protos/core_pb')
 const { ManagedPeerBook } = require('./book')
 const Bundle = require('./bundle').default
-const crypto = require('crypto')
 const Discovery = require('./discovery')
 const Signaling = require('./signaling').websocket
 const { PeerManager, DATETIME_STARTED_AT, QUORUM_SIZE } = require('./manager/manager')
@@ -459,9 +458,8 @@ export class PeerNode {
          port: Number(h[1])
        }
 
-       this._logger.info('peer from seeder: ' + url.href + ' @ ' + obj.id)
-
-       this._p2p.emit('peer', Buffer.from(this._p2p.hash, 'hex'), obj)
+       this._logger.info('peer from seeder: ' + url.href)
+       this._p2p._discvoery.emti('peer', this._p2p.hash, obj)
 			 //this._p2p.addPeer(this._p2p.hash, obj)
        //this._p2p.add(obj, () => {
        //   this._logger.info('adding peer: ' + peer)
@@ -469,11 +467,11 @@ export class PeerNode {
        //})
     })
 
-    // start the seeder as soon as the DHT peer connects
     this._p2p.join(this._p2p.hash, this._p2p.port, () => {
-      this._p2p._seeder.start()
       this._logger.info('joined network')
     })
+
+    this._p2p._seeder.start()
 
     this._engine._p2p = this._p2p
     this._manager._p2p = this._p2p

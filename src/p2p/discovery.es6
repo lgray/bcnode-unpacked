@@ -4,7 +4,7 @@ const swarm = require('discovery-swarm')
 // const avon = require('avon')
 const crypto = require('crypto')
 const { config } = require('../config')
-// const bootstrap = require('../utils/templates/bootstrap')
+const bootstrap = require('../utils/templates/bootstrap')
 // const seeds = require('../utils/templates/seed')
 const seeds = []
 const logging = require('../logger')
@@ -34,7 +34,7 @@ function Discovery (nodeId) {
     dns: false,
     dht: {
       nodeId: nodeId,
-      bootstrap: seeds,
+      bootstrap: bootstrap,
       interval: 30000 + random(1000),
       timeBucketOutdated: (180000 + random(40000)),
       announce: seeds
