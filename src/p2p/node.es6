@@ -281,7 +281,7 @@ export class PeerNode {
     ]
   }
 
-  async start (networkId) {
+  async start (nodeId) {
     waterfall(this._pipelineStartNode(), (err) => {
       if (err) {
         this._logger.error(err)
@@ -290,7 +290,7 @@ export class PeerNode {
     })
 
     /* eslint-disable */
-    const discovery = new Discovery(networkId)
+    const discovery = new Discovery(nodeId)
 
     this._p2p = discovery.start()
     this._p2p._seeder = discovery.seeder()

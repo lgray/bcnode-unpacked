@@ -499,27 +499,27 @@ export class Engine {
    */
   async startNode () {
     this._logger.info('starting P2P node')
-    let networkId
+    let nodeId
     try {
       const now = Math.floor(Date.now() * 0.001)
-      const networkObjectData = await this.persistence.get('bc.dht.id')
-      const networkObject = JSON.parse(networkObjectData)
-      networkId = networkObject.id
-      const networkTimestamp = networkObject.timestamp
+      const nodeObjectData = await this.persistence.get('bc.dht.id')
+      const nodeObject = JSON.parse(nodeObjectData)
+      nodeId = nodeObject.id
+      const nodeTimestamp = nodeObject.timestamp
       // if the key is more than 72 hours old reset it
-      if (networkTimestamp + 259200 < now) {
+      if (nodeTimestamp + 259200 < now) {
         this._logger.warn('key needs to be set')
-        networkId = crypto.randomBytes(32).toString('hex')
-        this._logger.info('asssigned network key <- ' + networkId)
-        await this.persistence.put('bc.dht.id', JSON.stringify({ id: networkId, timestamp: Math.floor(Date.now() * 0.001) }))
+        nodeId = crypto.randomBytes(32).toString('hex')
+        this._logger.info('asssigned node ID <- ' + nodeId)
+        await this.persistence.put('bc.dht.id', JSON.stringify({ id: nodeId, timestamp: Math.floor(Date.now() * 0.001) }))
       }
     } catch (_) {
       this._logger.warn('key needs to be set')
-      networkId = crypto.randomBytes(32).toString('hex')
-      this._logger.info('asssigned network key <- ' + networkId)
-      await this.persistence.put('bc.dht.id', JSON.stringify({ id: networkId, timestamp: Math.floor(Date.now() * 0.001) }))
+      nodeId = crypto.randomBytes(32).toString('hex')
+      this._logger.info('asssigned node key <- ' + nodeId)
+      await this.persistence.put('bc.dht.id', JSON.stringify({ id: nodeId, timestamp: Math.floor(Date.now() * 0.001) }))
     }
-    this.node.start(networkId).then(() => {
+    this.node.start(nodeId).then(() => {
       this.node._p2p.on('putMultiverse', async (msg) => {
         await this.getMultiverseHandler(msg, msg.data)
       })
@@ -606,7 +606,7 @@ export class Engine {
               process.exit()
             })
         }).catch(_ => {
-          this._logger.info('“Save Waves and NEO!” - After Block Collider miners completely brought down the Waves network 22 minutes into mining the team has paused the launch of genesis until we setup protections for centralized chains. Your NRG is safe.')
+          this._logger.info('“Save Waves and NEO!” - After Block Collider miners completely brought down the Waves node 22 minutes into mining the team has paused the launch of genesis until we setup protections for centralized chains. Your NRG is safe.')
         })
       })
     })
@@ -733,7 +733,7 @@ export class Engine {
 
                       /*
                       * test if it connects to the previous synced chain
-                      * this would happen if a peer disconnected from the network
+                      * this would happen if a peer disconnected from the node
                       * and was now resyncing
                       */
                       // all done, no more depth clean up, unlock peer
