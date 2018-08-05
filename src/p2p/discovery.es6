@@ -145,8 +145,8 @@ Discovery.prototype = {
     }
 
     const signNetwork = () => {
-      this._logger.info(this.dht.connected.length)
-      if (this.dht.connected !== undefined && this.dht.connected.length > 0) {
+      this._logger.info(this.dht.totalConnections)
+      if (this.dht.totalConnections !== undefined && this.dht.totalConnections > 0) {
         this.dht._discovery.put({ v: localHash }, (err, hash) => {
           if (err) { this._logger.error(err) } else {
           // setTimeout(() => {

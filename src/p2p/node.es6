@@ -257,19 +257,6 @@ export class PeerNode {
         cb(null)
       },
 
-      // Start discovery
-      // (_discovery: Object, cb: Function) => {
-      //  this._logger.info('starting far reaching discovery')
-      //  try {
-      //    const discovery = new Discovery()
-      //    const scan = discovery.start()
-      //    cb(null, scan)
-      //  } catch (err) {
-      //    this._logger.error(err)
-      //    cb(err)
-      //  }
-      // },
-
       // Register protocols
       (cb: Function) => {
         this._logger.info('Registering protocols')
@@ -363,7 +350,7 @@ export class PeerNode {
       const quorumState = await this._engine.persistence.get('bc.dht.quorum')
       const quorum = parseInt(quorumState, 10) // coerce for Flow
 
-      if(this._p2p.connected >= quorum && quorum === 0){
+      if(this._p2p.totalConnections >= quorum && quorum === 0){
         await this._engine.persistence.put('bc.dht.quorum', "1")
       } else if (quorum === 0 && LOW_HEALTH_NET !== false){
         await this._engine.persistence.put('bc.dht.quorum', "1")
@@ -402,28 +389,29 @@ export class PeerNode {
     })
 
     this._p2p._seeder.on('peer', (peer) => {
-       console.log(' ----> PEER ' )
-       const url = Url(peer)
+       const url = Url.parse(peer)
+       const h = url.href.split(':')
        const obj = {
          id: crypto.createHash('sha1').update(peer).digest('hex'),
-         host: url.hostname,
-         port: url.port
+         host: h[0],
+         port: Number(h[1])
        }
 
+       this._p2p.emit('peer', this._p2p.hash, obj)
 			 this._p2p.addPeer(this._p2p.hash, obj)
        this._p2p.add(obj, () => {
           this._logger.info('adding peer: ' + peer)
-					console.log('Connected peers: ' + this._p2p.connected)
+					console.log('connected peers: ' + this._p2p.totalConnections)
        })
 
     })
 
     setTimeout(() => {
-      if(this._p2p.connected < 1) {
+      if(this._p2p.totalConnections < 1) {
         this._logger.info('requesting seed update')
         this._p2p._seeder.update({
 						nodeId: this._p2p.nodeId,
-						connected: this._p2p.connected
+						connected: this._p2p.totalConnections
 				})
       }
     }, 15000)
@@ -502,9 +490,9 @@ export class PeerNode {
 
     this._engine._p2p = this._p2p
     this._manager._p2p = this._p2p
-    console.log('PEERS CONNECTED ' + this._p2p.connected)
+    this._logger.info('peer waypoints:  ' + this._p2p.totalConnections)
     setInterval(() => {
-      console.log('PEERS CONNECTED ' + this._p2p.connected)
+      this._logger.info('peer waypoints:  ' + this._p2p.totalConnections)
     }, 5000)
 
     return Promise.resolve(true)
@@ -669,14 +657,6 @@ export class PeerNode {
     }
 
     return Promise.resolve(true)
-  }
-
-  addNodeHandler (peer: Object, req: Array) {
-    const nodeId = req[0]
-
-    this._logger.info('node added: ' + nodeId)
-    // TODO: check if nodeId has been seen before
-    // if it has not continue with it and set the expire timeout
   }
 
   /**
