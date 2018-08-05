@@ -293,6 +293,7 @@ export class PeerNode {
     const discovery = new Discovery(networkId)
 
     this._p2p = discovery.start()
+    this._p2p._seeder = discovery.seeder()
     this._p2p._es = new events.EventEmitter()
 
     this._p2p._es.on('qsend', (msg) => {
@@ -388,6 +389,15 @@ export class PeerNode {
       })()
     })
 
+    this._p2p._seeder.on('update', (data) => {
+       this._loggger.info(data)
+    })
+
+    this._p2p._seeder.on('peer', (peer) => {
+       console.log(this._p2p)
+       this._loggger.info(data)
+    })
+
     // this._scanner.on('connection-closed', (conn, info) => {
     //  // this.peerClosedConnectionHandler(conn, info)
     //  this._logger.info('------- CONNECTION CLOSED ------')
@@ -459,6 +469,7 @@ export class PeerNode {
     //  this._logger.info('------- REQUEST QUASAR ------')
     // })
     // this._logger.info('p2p services ready')
+
 
     this._engine._p2p = this._p2p
     this._manager._p2p = this._p2p

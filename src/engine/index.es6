@@ -820,12 +820,10 @@ export class Engine {
 
     const high = max(3, data.low.getHeight())
     const low = max(2, high - 500)
-
     connection.data = {
       low: low,
       high: high
     }
-
     if (cancelSync === false) {
       this._p2p._es.emit('getBlockList', connection)
     }
