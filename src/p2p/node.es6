@@ -478,7 +478,6 @@ export class PeerNode {
       this._p2p._seeder.update({
         peerId: this._p2p.hash
       })
-      this._p2p.update()
     })
 
     this._engine._p2p = this._p2p
