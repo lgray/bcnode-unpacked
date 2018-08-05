@@ -22,8 +22,8 @@ function randomId () {
 
 function Discovery (nodeId) {
   const seeds = []
-  seeds.unshift('udp://tds.blockcollider.org:16061')
-  seeds.unshift('http://tds.blockcollider.org:16061')
+  seeds.unshift('udp://tds.blockcollider.org:16060')
+  seeds.unshift('http://tds.blockcollider.org:16060')
 
   const hash = blake2bl('bcbt002' + config.blockchainFingerprintsHash) // peers that do not update for one year
   const port = 16061
