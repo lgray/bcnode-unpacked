@@ -27,6 +27,7 @@ function Discovery (nodeId) {
   const port = 16061
   this.options = {
     nodeId: nodeId,
+    maxConnections: 126,
     id: nodeId,
     utp: true,
     tcp: false,
