@@ -38,25 +38,11 @@ const { PROTOCOL_PREFIX, NETWORK_ID } = require('./protocol/version')
 const LOW_HEALTH_NET = process.env.LOW_HEALTH_NET === 'true'
 
 const { range, max } = require('ramda')
-// const { peerify } = require('../engine/helper')
+const { protocolBits } = require('../engine/helper')
 // const waterfall = require('async/waterfall')
 // const { toObject } = require('../helper/debug')
 // const { validateBlockSequence } = require('../bc/validation')
 
-const protocolBits = {
-  '0000R01': '[*]', // introduction
-  '0001R01': '[*]', // reserved
-  '0002W01': '[*]', // reserved
-  '0003R01': '[*]', // reserved
-  '0004W01': '[*]', // reserved
-  '0005R01': '[*]', // list services
-  '0006R01': '[*]', // read block heights (full sync)
-  '0007W01': '[*]', // write block heights
-  '0008R01': '[*]', // read highest block
-  '0008W01': '[*]', // write highest block
-  '0009R01': '[*]', // read multiverse (selective sync)
-  '0010W01': '[*]' // write multiverse (selective sync)
-}
 
 process.on('uncaughtError', (err) => {
   /* eslint-disable */
@@ -311,52 +297,6 @@ export class PeerNode {
       })
     })
 
-    this._p2p._es.on('getMultiverse', (request) => {
-      this._logger.info('getMultiverse <- event ')
-       (async () => {
-
-      // check required fields
-      if(!request || request.low === undefined || request.high === undefined || request.connection === undefined){
-        return
-      }
-
-      const now = Math.floor(Date.now() * 0.001)
-      const type = '0009R01' // read selective block list (multiverse)
-      const split = protocolBits[type]
-      const low = request.low
-      const high = request.high
-      const msg = type + split + low + split + high
-      const results = await this._p2p._es.qsend(request.connection, msg)
-      this._logger.debug('getMultiverse request sent ' + results.length + ' destinations')
-      return Promise.resolve(results)
-      })().catch(err => {
-					this._logger.error(err)
-			})
-    })
-
-    this._p2p._es.on('getBlockList', (request) => {
-      (async () => {
-
-      // check required fields
-      if(!request || request.low === undefined || request.high === undefined || request.connection === undefined){
-        return
-      }
-
-      const now = Math.floor(Date.now() * 0.001)
-      const type = '0006R01'
-      const split = protocolBits[type]
-      const low = request.low
-      const high = request.high
-      const msg = type + split + low + split + high
-      const results = await this._p2p._es.qsend(request.connection, msg)
-      this._logger.debug('getBlockList request sent ' + results.length + ' destinations')
-
-      return Promise.resolve(results)
-
-      })().catch(err => {
-					this._logger.error(err)
-			})
-    })
 
     this._logger.info('initialized far reaching discovery module')
 
@@ -388,7 +328,7 @@ export class PeerNode {
 					if(!data && this._ds[address] !== false){
 						 const remaining = "" + this._ds[address]
 						 this._ds[address] = false
-						 this.peerDataHandler(conn, info, remaining, this._p2p._es)
+						 this.peerDataHandler(conn, info, remaining)
 					} else {
 						let chunk = data.toString()
 						if (chunk.length === 1382 && this._ds[address] === false) {

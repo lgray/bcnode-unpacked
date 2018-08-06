@@ -47,6 +47,7 @@ const { Block } = require('../protos/core_pb')
 const { errToString } = require('../helper/error')
 const { getVersion } = require('../helper/version')
 const { MiningOfficer } = require('../mining/officer')
+const { protocolBits } = require('../engine/helper')
 const ts = require('../utils/time').default // ES6 default export
 
 const DATA_DIR = process.env.BC_DATA_DIR || config.persistence.path
@@ -528,6 +529,47 @@ export class Engine {
           await self.getMultiverseHandler(msg, msg.data)
         })().catch((err) => {
           self._logger.error(err)
+        })
+      })
+
+      this.node._p2p._es.on('getMultiverse', (request) => {
+        (async () => {
+        // check required fields
+          if (!request || request.low === undefined || request.high === undefined || request.connection === undefined) {
+            return
+          }
+
+          const type = '0009R01' // read selective block list (multiverse)
+          const split = protocolBits[type]
+          const low = request.low
+          const high = request.high
+          const msg = type + split + low + split + high
+          const results = await this.node._p2p._es.qsend(request.connection, msg)
+          this._logger.debug('getMultiverse request sent ' + results.length + ' destinations')
+          return Promise.resolve(results)
+        })().catch(err => {
+          this._logger.error(err)
+        })
+      })
+
+      this.node._p2p._es.on('getBlockList', (request) => {
+        (async () => {
+        // check required fields
+          if (!request || request.low === undefined || request.high === undefined || request.connection === undefined) {
+            return
+          }
+
+          const type = '0006R01'
+          const split = protocolBits[type]
+          const low = request.low
+          const high = request.high
+          const msg = type + split + low + split + high
+          const results = await this.node._p2p._es.qsend(request.connection, msg)
+          this._logger.debug('getBlockList request sent ' + results.length + ' destinations')
+
+          return Promise.resolve(results)
+        })().catch(err => {
+          this._logger.error(err)
         })
       })
 
@@ -1024,6 +1066,7 @@ export class Engine {
 
   async getMultiverseHandler (conn: Object, newBlocks: BcBlock[]): Promise<?boolean> {
     // get the lowest of the current multiverse
+    this._logger.info('getMultiverse <- event')
     try {
       this.miningOfficer.stopMining()
       this._logger.info('end mining')

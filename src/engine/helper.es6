@@ -87,6 +87,21 @@ export const anyDns = async () => {
   }
 }
 
+export const protocolBits = {
+  '0000R01': '[*]', // introduction
+  '0001R01': '[*]', // reserved
+  '0002W01': '[*]', // reserved
+  '0003R01': '[*]', // reserved
+  '0004W01': '[*]', // reserved
+  '0005R01': '[*]', // list services
+  '0006R01': '[*]', // read block heights (full sync)
+  '0007W01': '[*]', // write block heights
+  '0008R01': '[*]', // read highest block
+  '0008W01': '[*]', // write highest block
+  '0009R01': '[*]', // read multiverse (selective sync)
+  '0010W01': '[*]' // write multiverse (selective sync)
+}
+
 export const utf8ArrayToString = (array): string => {
   var out, i, len, c
   var char2, char3
