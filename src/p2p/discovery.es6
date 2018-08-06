@@ -24,22 +24,21 @@ function randomId () {
 function Discovery (nodeId) {
   seeds.unshift('udp://tds.blockcollider.org:16060/announce')
   const hash = crypto.createHash('sha1').update('bcbt002' + config.blockchainFingerprintsHash).digest('hex') // 68cb1ee15af08755204674752ef9aee13db93bb7
-  const port = 16061
   const seederPort = 16060
+  const port = 16061
   this.options = {
     id: nodeId,
     nodeId: nodeId,
     maxConnections: 126,
     utp: true,
-    tcp: true,
-    dns: false,
+    tcp: false,
     port: port,
-    // dns: {
-    //  servers: [
-    //    'discovery1.publicbits.org',
-    //    'discovery2.publicbits.org'
-    //  ]
-    // },
+    dns: {
+      servers: [
+        'discovery2.publicbits.org',
+        '8.8.8.8'
+      ]
+    },
     dht: {
       nodeId: nodeId,
       bootstrap: bootstrap,
@@ -94,8 +93,7 @@ Discovery.prototype = {
     this.dht = swarm(this.options)
     this.dht.hash = this.hash
     this.dht.port = this.port
-    this.dht.listen(16061)
-
+    this.dht.listen(this.port)
     this.dht.add = (obj, done) => {
       if (obj.id === undefined) {
         obj.id = randomId()
@@ -150,34 +148,6 @@ Discovery.prototype = {
       return warnings
     }
 
-    // const signNetwork = () => {
-    //  this._logger.info(this.dht.totalConnections)
-    //  if (this.dht.totalConnections !== undefined && this.dht.totalConnections > 0) {
-    //    this.dht._discovery.put({ v: localHash }, (err, hash) => {
-    //      if (err) { this._logger.error(err) } else {
-    //      // setTimeout(() => {
-    //      //  if (this.dht._discovery.dht.connected !== undefined && this.dht._discovery.dht.connected.length > 0) {
-    //      //    this.dht._discovery.dht.get(hash, (err, localHashObject) => {
-    //      //      if (err) { this._logger.error(err) } else {
-    //      //        this._logger.info('network signature: ' + hash.toString())
-    //      //        this.dht._discovery.dht.lookup(localHash, (err) => {
-    //      //          if (err) { this._logger.error(err) } else {
-    //      //            this.dht._discovery.dht.announce(localHash, (err) => {
-    //      //              if (err) { this._logger.error(err) } else {
-    //      //                this._logger.debug('discovery beacon cycled')
-    //      //              }
-    //      //            })
-    //      //          }
-    //      //        })
-    //      //      }
-    //      //    })
-    //      //  }
-    //      // }, 20000)
-    //      }
-    //    })
-    //  }
-    // }
-    // this.dht.manualNetworkSigInverval = setInterval(signNetwork, 60000)
     return this.dht
   },
 

@@ -282,9 +282,11 @@ export class PeerNode {
     const discovery = new Discovery(nodeId)
 
     this._p2p = discovery.start()
-    this._p2p._seeder = discovery.seeder()
+    console.log('listening on ' + this._p2p.hash + ' : ' + this._p2p.port)
+    this._p2p.join(this._p2p.hash, this._p2p.port, () => {
     this._p2p._es = new events.EventEmitter()
 
+    this._p2p._seeder = discovery.seeder()
     this._p2p._es.on('qsend', (msg) => {
       (async () => {
         // check required fields
@@ -475,7 +477,7 @@ export class PeerNode {
            console.log("local hash: " + this._p2p.hash)
            console.log("local port: " + this._p2p.hash)
 
-           this._p2p._discovery.dht.emit('peer', obj, this._p2p.hash)
+           //this._p2p._discovery.dht.emit('peer', obj, this._p2p.hash)
 
            //const conn = utp().connect(obj.port, obj.host)
            //conn.once('connection', (c) => {
@@ -501,15 +503,9 @@ export class PeerNode {
     })
 
     this._p2p._seeder.start()
-    this._p2p.join(this._p2p.hash, this._p2p.port, () => {
-      this._logger.info('joined network')
-      this._p2p._seeder.update({
-        peerId: this._p2p.hash
-      })
-    })
 
-    this._engine._p2p = this._p2p
     this._manager._p2p = this._p2p
+    this._engine._p2p = this._p2p
 
     setInterval(() => {
       this._logger.info('active waypoints:  ' + this._p2p.totalConnections)
@@ -519,6 +515,8 @@ export class PeerNode {
     //[  this._p2p._seeder.complete()
     //[}, 2000)
 
+        console.log('joined channel')
+    })
     return Promise.resolve(true)
     /* eslint-enable */
   }
