@@ -196,8 +196,6 @@ export class PeerNode {
 
         cb(null, this._bundle)
       },
-
-      // Start node
       (bundle: Object, cb: Function) => {
         this._logger.info('starting P2P node')
 
@@ -283,8 +281,8 @@ export class PeerNode {
     const discovery = new Discovery(nodeId)
 
     this._p2p = discovery.start()
-    this._p2p.join(this._p2p.hash, this._p2p.port, () => {
     this._p2p._es = new events.EventEmitter()
+    this._p2p.join(this._p2p.hash, this._p2p.port, () => {
 
     this._p2p._es.on('sendBlock', (msg) => {
       (async () => {
@@ -553,7 +551,6 @@ export class PeerNode {
 
     // TODO: add lz4 compression for things larger than 1000 characters
     const type = str.slice(0, 7)
-    this._logger.info(str)
 
     if (protocolBits[type] === undefined) {
       return
@@ -567,7 +564,7 @@ export class PeerNode {
     if (type === '0007W01') {
       const parts = str.split(protocolBits[type])
       const rawUint = parts[1]
-      const raw = new Uint8Array(rawUint)
+      const raw = new Uint8Array(rawUint.split(','))
       const block = BcBlock.deserializeBinary(raw)
 
       e.emit('putBlock', {
@@ -582,7 +579,11 @@ export class PeerNode {
     } else if (type === '0008R01') {
       const latestBlock = await this._engine.persistence.get('bc.block.latest')
       const msg = '0008W01' + protocolBits[type] + latestBlock.serializeBinary()
-      await this._p2p.qsend(conn, msg)
+      const results = await this._p2p.qsend(conn, msg)
+
+      if (results && results.length > 0) {
+        this._logger.info('successful update sent to peer')
+      }
 
     /***********
      *********** Peer Requests Block Range
@@ -633,7 +634,6 @@ export class PeerNode {
       const raw = new Uint8Array(rawUint.split(','))
       const block = BcBlock.deserializeBinary(raw)
 
-      this._logger.info(block)
       e.emit('putBlock', {
         data: block,
         remoteHost: conn.remoteHost,

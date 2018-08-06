@@ -521,16 +521,17 @@ export class Engine {
     }
     this.node.start(nodeId).then(() => {
       try {
-        this.node._p2p.on('putMultiverse', async (msg) => {
-          await this.getMultiverseHandler(msg.conn, msg.data)
+        this.node._p2p._es.on('putMultiverse', async (msg) => {
+          await this.getMultiverseHandler(msg, msg.data)
         })
 
-        this.node._p2p.on('putBlockList', async (msg) => {
+        this.node._p2p._es.on('putBlockList', async (msg) => {
           await this.stepSyncHandler(msg)
         })
 
         this.node._p2p._es.on('putBlock', (msg) => {
-          this.blockFromPeer(msg.connection, msg.data)
+          this._logger.info('candidate block ' + msg.data.getHeight() + ' recieved')
+          this.blockFromPeer(msg, msg.data)
         })
       } catch (err) {
         this._logger.info('=============================================')
@@ -566,11 +567,11 @@ export class Engine {
   startRovers (rovers: string[]) {
     this._logger.info(`starting rovers '${rovers.join(',')}'`)
 
-    // rovers.forEach(name => {
-    //  if (name) {
-    //    this._rovers.startRover(name)
-    //  }
-    // })
+    rovers.forEach(name => {
+      if (name) {
+        this._rovers.startRover(name)
+      }
+    })
 
     this._emitter.on('collectBlock', ({ block }) => {
       // Persist block if needed
@@ -972,22 +973,7 @@ export class Engine {
           // RESTART MINING USED newBlock.getHash()
           this.pubsub.publish('update.block.latest', { key: 'bc.block.latest', data: newBlock })
           // notify the miner
-          return conn.getPeerInfo((err, peerInfo) => {
-            if (err) {
-              this._logger.error(err)
-            } else {
-            // broadcast to other peers without sending back to the peer that sent it to us
-              this.node.broadcastNewBlock(newBlock, peerInfo.id.toB58String())
-            }
-          })
-        // if depth !== 0
-        // if peer unlocked
-        // lock peer
-        // request lowest multiverse block height, lowest block height - 5000 / 0
-        // set the bc.depth depth  at the lowest - 5000 height
-        // if the request succeeds check the depth and see if we are done
-        // if we are done unlock the peer
-        // if we are not done re-request a sync
+          this.node.broadcastNewBlock(newBlock)
         } else {
           this._logger.info('block from peer ' + newBlock.getHeight() + ' is NOT next in multiverse block -> evaluating as sync candidate.')
           return this.multiverse.addResyncRequest(newBlock, this.miningOfficer._canMine)
@@ -995,8 +981,10 @@ export class Engine {
               if (shouldResync === true) {
                 this._logger.info(newBlock.getHash() + ' <- new block: ' + newBlock.getHeight() + ' should sync request approved')
 
+                this.pubsub.publish('update.block.latest', { key: 'bc.block.latest', data: newBlock })
+                // notify the miner
+                this.node.broadcastNewBlock(newBlock)
                 /// //////// MULTIVERSE PROOF //////////////
-
                 this.node._p2p._es.emit('getMultiverse', {
                   data: {
                     high: newBlock.getHeight(),
