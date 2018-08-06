@@ -521,19 +521,13 @@ export class Engine {
       await this.persistence.put('bc.dht.id', JSON.stringify({ id: nodeId, timestamp: Math.floor(Date.now() * 0.001) }))
     }
     this.node.start(nodeId).then(() => {
-      /*
-       * ******************
-       * Add Event Handlers
-       * ******************
-       */
+      // Add Event Handlers
       this.node._p2p._es.on('putMultiverse', (msg) => {
-        this.getMultiverseHandler(msg, msg.data)
-          .then(() => {
-            this._logger.debug('putMultiverse sent')
-          })
-          .catch((err) => {
-            this._logger.error(err)
-          })
+        (async () => {
+          await this.getMultiverseHandler(msg, msg.data)
+        })().catch((err) => {
+          this._logger.error(err)
+        })
       })
 
       this.node._p2p._es.on('putBlockList', (msg) => {
