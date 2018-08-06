@@ -995,8 +995,10 @@ export class Engine {
               if (shouldResync === true) {
                 this._logger.info(newBlock.getHash() + ' <- new block: ' + newBlock.getHeight() + ' should sync request approved')
 
-                /// //////// MULTIVERSE PROOF //////////////
+                // note the local machine does not broadcast this block update until the multiverse has been proven
+                this.pubsub.publish('update.block.latest', { key: 'bc.block.latest', data: newBlock, force: true, multiverse: this.multiverse._chain })
 
+                /// //////// MULTIVERSE PROOF //////////////
                 this.node._p2p._es.emit('getMultiverse', {
                   data: {
                     high: newBlock.getHeight(),

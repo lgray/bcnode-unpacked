@@ -321,8 +321,9 @@ export class PeerNode {
       const low = request.low
       const high = request.high
       const msg = type + split + low + split + high
-      await this._p2p._es.qsend(request.connection, msg)
-      })
+      const results = await this._p2p._es.qsend(request.connection, msg)
+      this._logger.debug('getMultiverse request sent ' + results.length + ' destinations')
+      })()
     })
 
     this._p2p._es.on('getBlockList', (request) => {
@@ -339,8 +340,9 @@ export class PeerNode {
       const low = request.low
       const high = request.high
       const msg = type + split + low + split + high
-      await this._p2p._es.qsend(request.connection, msg)
-      })
+      const results = await this._p2p._es.qsend(request.connection, msg)
+      this._logger.debug('getMultiverse request sent ' + results.length + ' destinations')
+      })()
     })
 
     this._logger.info('initialized far reaching discovery module')
