@@ -79,6 +79,7 @@ export class PeerNode {
   _scanner: Object // eslint-disable-line no-undef
   _externalIP: string // eslint-disable-line no-undef
   _ds: Object // eslint-disable-line no-undef
+  _p2p: Object // eslint-disable-line no-undef
   _queue: Object // eslint-disable-line no-undef
 
   constructor (engine: Engine) {
@@ -86,6 +87,7 @@ export class PeerNode {
     this._multiverse = new Multiverse(engine.persistence) /// !important this is a (nonselective) multiverse
     this._blockPool = new BlockPool(engine.persistence, engine._pubsub)
     this._logger = logging.getLogger(__filename)
+    this._p2p = {}
     this._manager = new PeerManager(this)
     this._ds = {}
     this._queue = queue((task, cb) => {
@@ -351,7 +353,7 @@ export class PeerNode {
     this._logger.info('initialized far reaching discovery module')
 
     this._p2p.on('connection', (conn, info) => {
-      (async () => {
+      const prime = async () => {
       // greeting reponse to connection with provided host information and connection ID
       const address = conn.remoteAddress + ':' + conn.remotePort
       if (this._ds[address] === undefined) {
@@ -375,6 +377,7 @@ export class PeerNode {
       const results = await this._p2p.qsend(conn, msg)
 
       conn.on('data', (data) => {
+        console.log('DATA REQUEST SIZE: ' + data.length)
         if(!data && this._ds[address] !== false){
            const remaining = "" + this._ds[address]
            this._ds[address] = false
@@ -394,7 +397,7 @@ export class PeerNode {
           }
         }
       })
-      })()
+      }
     })
 
 

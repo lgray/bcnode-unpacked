@@ -564,6 +564,8 @@ export function prepareNewBlock (currentTimestamp: number, lastPreviousBlock: Bc
     ]
   ]))
 
+  const chainWeight = new BN(lastPreviousBlock.getDifficulty().minus(new BN(lastPreviousBlock.getDistance())).div(4).toString()
+
   const newBlock = new BcBlock()
   newBlock.setHash(blake2bl(lastPreviousBlock.getHash() + newMerkleRoot))
   newBlock.setPreviousHash(lastPreviousBlock.getHash())
@@ -574,15 +576,15 @@ export function prepareNewBlock (currentTimestamp: number, lastPreviousBlock: Bc
   newBlock.setDifficulty(finalDifficulty)
   newBlock.setMerkleRoot(newMerkleRoot)
   newBlock.setChainRoot(blake2bl(newChainRoot.toString()))
-  newBlock.setDistance('') // is set to proper value after successful mining
+  newBlock.setDistance(chainWeigh) // is set to proper value after successful mining
   newBlock.setTotalDistance(lastPreviousBlock.getTotalDistance()) // distance from mining solution will be added to this after mining
   newBlock.setNrgGrant(GENESIS_DATA.nrgGrant)
   newBlock.setTargetHash(GENESIS_DATA.targetHash)
   newBlock.setTargetHeight(GENESIS_DATA.targetHeight)
   newBlock.setTargetMiner(GENESIS_DATA.targetMiner)
   newBlock.setTargetSignature(GENESIS_DATA.targetSignature)
-  newBlock.setTwn(GENESIS_DATA.twn)
-  newBlock.setTwsList(GENESIS_DATA.twsList)
+  newBlock.setTwn(GENESIS_DATA.twn) // Overline
+  newBlock.setTwsList(GENESIS_DATA.twsList) // Overline
   newBlock.setEmblemWeight(GENESIS_DATA.emblemWeight)
   newBlock.setEmblemChainBlockHash(GENESIS_DATA.emblemChainBlockHash)
   newBlock.setEmblemChainFingerprintRoot(GENESIS_DATA.emblemChainFingerprintRoot)

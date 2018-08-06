@@ -522,8 +522,8 @@ export class Engine {
     }
     this.node.start(nodeId).then(() => {
       try {
-        this.node._p2p._es.on('putMultiverse', async (msg) => {
-          await this.getMultiverseHandler(msg, msg.data)
+        this.node._p2p._es.on('putMultiverse', (msg) => {
+          this.node.getMultiverseHandler(msg, msg.data)
         })
 
         this.node._p2p._es.on('putBlockList', async (msg) => {
