@@ -522,15 +522,15 @@ export class Engine {
     this.node.start(nodeId).then(() => {
       try {
         this.node._p2p.on('putMultiverse', async (msg) => {
-          await this.getMultiverseHandler(msg, msg.data)
+          await this.getMultiverseHandler(msg.conn, msg.data)
         })
 
         this.node._p2p.on('putBlockList', async (msg) => {
           await this.stepSyncHandler(msg)
         })
 
-        this.node._p2p.on('putBlock', (msg) => {
-          this.blockFromPeer(msg, msg)
+        this.node._p2p._es.on('putBlock', (msg) => {
+          this.blockFromPeer(msg.connection, msg.data)
         })
       } catch (err) {
         this._logger.info('=============================================')
