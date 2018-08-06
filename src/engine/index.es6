@@ -499,6 +499,7 @@ export class Engine {
    * Start Server
    */
   async startNode () {
+    const self = this
     this._logger.info('starting P2P node')
     let nodeId
     try {
@@ -524,25 +525,25 @@ export class Engine {
       // Add Event Handlers
       this.node._p2p._es.on('putMultiverse', (msg) => {
         (async () => {
-          await this.getMultiverseHandler(msg, msg.data)
+          await self.getMultiverseHandler(msg, msg.data)
         })().catch((err) => {
-          this._logger.error(err)
+          self._logger.error(err)
         })
       })
 
       this.node._p2p._es.on('putBlockList', (msg) => {
-        this.stepSyncHandler(msg)
+        self.stepSyncHandler(msg)
           .then(() => {
-            this._logger.debug('stepSync complete sent')
+            self._logger.debug('stepSync complete sent')
           })
           .catch((err) => {
-            this._logger.error(err)
+            self._logger.error(err)
           })
       })
 
       this.node._p2p._es.on('putBlock', (msg) => {
-        this._logger.info('candidate block ' + msg.data.getHeight() + ' recieved')
-        this.blockFromPeer(msg, msg.data)
+        self._logger.info('candidate block ' + msg.data.getHeight() + ' recieved')
+        self.blockFromPeer(msg, msg.data)
       })
 
       this._emitter.on('peerConnected', ({ peer }) => {

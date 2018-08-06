@@ -311,7 +311,6 @@ export class PeerNode {
       })
     })
 
-
     this._p2p._es.on('getMultiverse', (request) => {
       this._logger.info('getMultiverse <- event ')
        (async () => {
