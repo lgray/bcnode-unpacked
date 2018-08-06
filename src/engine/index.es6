@@ -11,8 +11,8 @@ import type { Logger } from 'winston'
 import type { BcBlock } from '../protos/core_pb'
 
 /* eslint-disable */
-console.warn = () => {}
-console.trace = () => {}
+//console.warn = () => {}
+//console.trace = () => {}
 /* eslint-enable */
 
 const debug = require('debug')('bcnode:engine')

@@ -7,6 +7,7 @@
  * @flow
  */
 
+/* eslint-disable */
 import type { Engine } from '../engine'
 
 const { inspect } = require('util')
@@ -382,8 +383,8 @@ export class PeerNode {
     this._p2p.on('connection-closed', (conn, info) => {
      // this.peerClosedConnectionHandler(conn, info)
      this._logger.info('------- CONNECTION CLOSED ------')
-     console.log(conn)
-     console.log(info)
+     //console.log(conn)
+     //console.log(info)
      console.log("^^^^^^^^^^^^^^^^^^^^^^^^")
     })
     this._p2p.on('error', (err) => {
@@ -394,8 +395,6 @@ export class PeerNode {
 
     this._p2p.on('redundant-connection', (conn, info) => {
      this._logger.info('------- REDUNDANT CONNECTION ------')
-     console.log(conn)
-     console.log(info)
      console.log("^^^^^^^^^^^^^^^^^^^^^^^^")
     })
 
@@ -428,7 +427,6 @@ export class PeerNode {
 
     this._p2p.on('handshake-timeout', (conn, timeout) => {
      this._logger.info('------- HANDSHAKE TIMEOUT ------')
-     console.log(conn)
      console.log(timeout)
      console.log("^^^^^^^^^^^^^^^^^^^^^^^^")
     })
@@ -448,7 +446,12 @@ export class PeerNode {
 
     this._p2p._seeder.on('update', (data) => {
       console.log(' ----> UPDATE ' )
+    })
+    this._p2p._discovery.on('peer', (data) => {
+
+      console.log('333333333333')
       console.log(data)
+
     })
 
     this._p2p._seeder.on('peer', (peer) => {
@@ -463,19 +466,19 @@ export class PeerNode {
        }
 
        // add seen protection
-       if(peer.indexOf('52.71.82.17') < 0){
+       if (this._p2p._peersCleared[obj.host] === undefined) {
 
          try {
 
-           //this._p2p._discovery announce(this._p2p.hash)
+       const name = obj.host + ':' + obj.port + this._p2p.hash
+           this._p2p._peersCleared[obj.host] = obj.host
 
            console.log(obj)
            console.log("local hash: " + this._p2p.hash)
            console.log("local port: " + this._p2p.port)
 
-           //this._p2p._discovery.dht.emit('peer', obj, this._p2p.hash)
+           this._p2p.addPeer(obj.host + ':' + obj.port + this._p2p.hash, obj)
 
-           //const conn = utp().connect(obj.port, obj.host)
            //conn.once('connection', (c) => {
            //  this._p2p._onconnection(c, 'utp')
            //})
@@ -616,9 +619,10 @@ export class PeerNode {
       this._logger.info('unable to parse: ' + type)
       const parts = str.split(protocolBits[type])
       const rawUint = parts[1]
-      const raw = Uint8Array(rawUint)
+      const raw = Uint8Array(rawUint.split(','))
       const block = BcBlock.deserializeBinary(raw)
 
+      this._logger.info(block)
       e.emit('putBlock', {
         data: block,
         remoteHost: conn.remoteHost,
