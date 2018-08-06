@@ -117,11 +117,11 @@ export function getDiff (currentBlockTime: number, previousBlockTime: number, pr
   const bigMinus99 = new BN(-99)
   const big1 = new BN(1)
   const big0 = new BN(0)
-  const bigTargetTimeWindow = new BN(6)
+  const bigTargetTimeWindow = new BN(7)
   let elapsedTime = bigCurentBlockTime.sub(bigPreviousBlockTime)
 
   // elapsedTime + ((elapsedTime - 4) * newBlocks)
-  const elapsedTimeBonus = elapsedTime.add(elapsedTime.sub(new BN(3)).mul(new BN(newBlockCount)))
+  const elapsedTimeBonus = elapsedTime.add(elapsedTime.sub(new BN(5)).mul(new BN(newBlockCount)))
 
   if (elapsedTimeBonus.gt(big0)) {
     elapsedTime = elapsedTimeBonus
