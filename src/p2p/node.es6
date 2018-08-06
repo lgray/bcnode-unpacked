@@ -288,13 +288,16 @@ export class PeerNode {
 
     this._p2p._es.on('sendBlock', (msg) => {
       this._logger.info('sendBlock event triggered')
-      async () => {
+      (async () => {
         // check required fields
         if(!msg || msg.data === undefined || msg.connection === undefined){
           return
         }
         await this._p2p.qsend(msg.connection, '0008W01' + '[*]' +  msg.data.serializeBinary())
       }
+			)().catch(err => {
+					this._logger.error(err)
+			})
     })
 
     this._p2p._es.on('announceBlock', (block) => {
@@ -313,7 +316,7 @@ export class PeerNode {
 
     this._p2p._es.on('getMultiverse', (request) => {
       this._logger.info('getMultiverse <- event ')
-       async () => {
+       (async () => {
 
       // check required fields
       if(!request || request.low === undefined || request.high === undefined || request.connection === undefined){
@@ -329,11 +332,13 @@ export class PeerNode {
       const results = await this._p2p._es.qsend(request.connection, msg)
       this._logger.debug('getMultiverse request sent ' + results.length + ' destinations')
       return Promise.resolve(results)
-      }
+      })().catch(err => {
+					this._logger.error(err)
+			})
     })
 
     this._p2p._es.on('getBlockList', (request) => {
-      async () => {
+      (async () => {
 
       // check required fields
       if(!request || request.low === undefined || request.high === undefined || request.connection === undefined){
@@ -351,225 +356,229 @@ export class PeerNode {
 
       return Promise.resolve(results)
 
-      }
+      })().catch(err => {
+					this._logger.error(err)
+			})
     })
 
     this._logger.info('initialized far reaching discovery module')
 
     this._p2p.on('connection', (conn, info) => {
-      async () => {
-      // greeting reponse to connection with provided host information and connection ID
-      const address = conn.remoteAddress + ':' + conn.remotePort
-      if (this._ds[address] === undefined) {
-        this._ds[address] = false
-      }
+      (async () => {
+				// greeting reponse to connection with provided host information and connection ID
+				const address = conn.remoteAddress + ':' + conn.remotePort
+				if (this._ds[address] === undefined) {
+					this._ds[address] = false
+				}
 
-      // get heighest block
-      const latestBlock = await this._engine.persistence.get('bc.block.latest')
-      const quorumState = await this._engine.persistence.get('bc.dht.quorum')
-      const quorum = parseInt(quorumState, 10) // coerce for Flow
+				// get heighest block
+				const latestBlock = await this._engine.persistence.get('bc.block.latest')
+				const quorumState = await this._engine.persistence.get('bc.dht.quorum')
+				const quorum = parseInt(quorumState, 10) // coerce for Flow
 
-      if(this._p2p.totalConnections >= quorum && quorum === 0){
-        await this._engine.persistence.put('bc.dht.quorum', "1")
-      } else if (quorum === 0 && LOW_HEALTH_NET !== false){
-        await this._engine.persistence.put('bc.dht.quorum', "1")
-      }
+				if(this._p2p.totalConnections >= quorum && quorum === 0){
+					await this._engine.persistence.put('bc.dht.quorum', "1")
+				} else if (quorum === 0 && LOW_HEALTH_NET !== false){
+					await this._engine.persistence.put('bc.dht.quorum', "1")
+				}
 
-      //const msg = '0000R01' + info.host + '*' + info.port + '*' + info.id.toString('hex')
-      const type = '0008W01'
-      const msg = type + protocolBits[type] + latestBlock.serializeBinary()
+				//const msg = '0000R01' + info.host + '*' + info.port + '*' + info.id.toString('hex')
+				const type = '0008W01'
+				const msg = type + protocolBits[type] + latestBlock.serializeBinary()
 
-      conn.on('data', (data) => {
-        console.log('DATA REQUEST SIZE: ' + data.length)
-        if(!data && this._ds[address] !== false){
-           const remaining = "" + this._ds[address]
-           this._ds[address] = false
-           this.peerDataHandler(conn, info, remaining, this._p2p._es)
-        } else {
-          let chunk = data.toString()
-          if (chunk.length === 1382 && this._ds[address] === false) {
-            this._ds[address] = chunk
-          } else if (chunk.length === 1382 && this._ds[address] !== false) {
-            this._ds[address] = this._ds[address] + chunk
-          } else if (chunk.length !== 1382 && this._ds[address] !== false) {
-            const complete = "" + this._ds[address] + chunk
-            this._ds[address] = false
-            this.peerDataHandler(conn, info, complete)
-          } else {
-            this.peerDataHandler(conn, info, chunk)
-          }
-        }
-      })
+				conn.on('data', (data) => {
+					console.log('DATA REQUEST SIZE: ' + data.length)
+					if(!data && this._ds[address] !== false){
+						 const remaining = "" + this._ds[address]
+						 this._ds[address] = false
+						 this.peerDataHandler(conn, info, remaining, this._p2p._es)
+					} else {
+						let chunk = data.toString()
+						if (chunk.length === 1382 && this._ds[address] === false) {
+							this._ds[address] = chunk
+						} else if (chunk.length === 1382 && this._ds[address] !== false) {
+							this._ds[address] = this._ds[address] + chunk
+						} else if (chunk.length !== 1382 && this._ds[address] !== false) {
+							const complete = "" + this._ds[address] + chunk
+							this._ds[address] = false
+							this.peerDataHandler(conn, info, complete)
+						} else {
+							this.peerDataHandler(conn, info, chunk)
+						}
+					}
+				})
 
-      await this._p2p.qsend(conn, msg)
-      return Promise.resolve(results)
+				await this._p2p.qsend(conn, msg)
+				return Promise.resolve(results)
 
-      }
-    })
+      })().catch(err => {
+						this._logger.error(err);
+				})
+			})
 
 
-    this._p2p.on('connection-closed', (conn, info) => {
-     // this.peerClosedConnectionHandler(conn, info)
-     this._logger.info('------- CONNECTION CLOSED ------')
-     //console.log(conn)
-     //console.log(info)
-     console.log("^^^^^^^^^^^^^^^^^^^^^^^^")
-    })
-    this._p2p.on('error', (err) => {
-     this._logger.info('------- ERROR ------')
-     console.trace(err)
-     console.log("^^^^^^^^^^^^^^^^^^^^^^^^")
-    })
+			this._p2p.on('connection-closed', (conn, info) => {
+			 // this.peerClosedConnectionHandler(conn, info)
+			 this._logger.info('------- CONNECTION CLOSED ------')
+			 //console.log(conn)
+			 //console.log(info)
+			 console.log("^^^^^^^^^^^^^^^^^^^^^^^^")
+			})
+			this._p2p.on('error', (err) => {
+			 this._logger.info('------- ERROR ------')
+			 console.trace(err)
+			 console.log("^^^^^^^^^^^^^^^^^^^^^^^^")
+			})
 
-    this._p2p.on('redundant-connection', (conn, info) => {
-     this._logger.info('------- REDUNDANT CONNECTION ------')
-     console.log("^^^^^^^^^^^^^^^^^^^^^^^^")
-    })
+			this._p2p.on('redundant-connection', (conn, info) => {
+			 this._logger.info('------- REDUNDANT CONNECTION ------')
+			 console.log("^^^^^^^^^^^^^^^^^^^^^^^^")
+			})
 
-    this._p2p.on('peer', (channel) => {
-     this._logger.info('-------  PEER DISCOVERED ------')
-     console.log(channel)
-     console.log("^^^^^^^^^^^^^^^^^^^^^^^^")
-    })
+			this._p2p.on('peer', (channel) => {
+			 this._logger.info('-------  PEER DISCOVERED ------')
+			 console.log(channel)
+			 console.log("^^^^^^^^^^^^^^^^^^^^^^^^")
+			})
 
-    this._p2p.on('drop', (peer, type) => {
-     this._logger.info('------- PEER DROPPED ------')
-      console.log(peer)
-      console.log(type)
-     console.log("^^^^^^^^^^^^^^^^^^^^^^^^")
-    })
+			this._p2p.on('drop', (peer, type) => {
+			 this._logger.info('------- PEER DROPPED ------')
+				console.log(peer)
+				console.log(type)
+			 console.log("^^^^^^^^^^^^^^^^^^^^^^^^")
+			})
 
-    this._p2p.on('peer-banned', (peer, type) => {
-     this._logger.info('------- PEER BANNED ------')
-     console.log(peer)
-     console.log(type)
-     console.log("^^^^^^^^^^^^^^^^^^^^^^^^")
-    })
+			this._p2p.on('peer-banned', (peer, type) => {
+			 this._logger.info('------- PEER BANNED ------')
+			 console.log(peer)
+			 console.log(type)
+			 console.log("^^^^^^^^^^^^^^^^^^^^^^^^")
+			})
 
-    this._p2p.on('connect-failed', (next, timeout) => {
-     this._logger.info('------- CONNECT FAILED ------')
-     console.log(next)
-     console.log(timeout)
-     console.log("^^^^^^^^^^^^^^^^^^^^^^^^")
-    })
+			this._p2p.on('connect-failed', (next, timeout) => {
+			 this._logger.info('------- CONNECT FAILED ------')
+			 console.log(next)
+			 console.log(timeout)
+			 console.log("^^^^^^^^^^^^^^^^^^^^^^^^")
+			})
 
-    this._p2p.on('handshake-timeout', (conn, timeout) => {
-     this._logger.info('------- HANDSHAKE TIMEOUT ------')
-     console.log(timeout)
-     console.log("^^^^^^^^^^^^^^^^^^^^^^^^")
-    })
+			this._p2p.on('handshake-timeout', (conn, timeout) => {
+			 this._logger.info('------- HANDSHAKE TIMEOUT ------')
+			 console.log(timeout)
+			 console.log("^^^^^^^^^^^^^^^^^^^^^^^^")
+			})
 
-    this._p2p.on('peer-rejected', (peer, type) => {
-     this._logger.warn('peer rejected ')
-     console.log(peer)
-     console.log(type)
-     console.log("^^^^^^^^^^^^^^^^^^^^^^^^")
-    })
+			this._p2p.on('peer-rejected', (peer, type) => {
+			 this._logger.warn('peer rejected ')
+			 console.log(peer)
+			 console.log(type)
+			 console.log("^^^^^^^^^^^^^^^^^^^^^^^^")
+			})
 
-    /*
-     * PEER SEEDER
-     */
+			/*
+			 * PEER SEEDER
+			 */
 
-    this._p2p._seeder = discovery.seeder()
+			this._p2p._seeder = discovery.seeder()
 
-    this._p2p._seeder.on('update', (data) => {
-      console.log(' ----> UPDATE ' )
-    })
-    this._p2p._discovery.on('peer', (data) => {
+			this._p2p._seeder.on('update', (data) => {
+				console.log(' ----> UPDATE ' )
+			})
+			this._p2p._discovery.on('peer', (data) => {
 
-      console.log('333333333333')
-      console.log(data)
+				console.log('333333333333')
+				console.log(data)
 
-    })
+			})
 
-    this._p2p._seeder.on('peer', (peer) => {
+			this._p2p._seeder.on('peer', (peer) => {
 
-       console.log('--------------> PEER FROM SEEDER ' )
-       const channel = Buffer.from(this._p2p.hash)
-       const url = Url.parse(peer)
-       const h = url.href.split(':')
-       const obj = {
-         //id: crypto.createHash('sha1').update(peer).digest('hex'),
-         host: h[0],
-         port: Number(h[1]) + 1, // seeder broadcasts listen on one port below the peers address
-         retries: 0,
-         channel: channel,
-       }
-       obj.id = obj.host + ':' + obj.port
+				 console.log('--------------> PEER FROM SEEDER ' )
+				 const channel = Buffer.from(this._p2p.hash)
+				 const url = Url.parse(peer)
+				 const h = url.href.split(':')
+				 const obj = {
+					 //id: crypto.createHash('sha1').update(peer).digest('hex'),
+					 host: h[0],
+					 port: Number(h[1]) + 1, // seeder broadcasts listen on one port below the peers address
+					 retries: 0,
+					 channel: channel,
+				 }
+				 obj.id = obj.host + ':' + obj.port
 
-       // add seen protection
+				 // add seen protection
 
-       try {
+				 try {
 
-           const name = obj.host + ':' + obj.port + this._p2p.hash
-           console.log(obj)
-           console.log("local hash: " + this._p2p.hash)
-           console.log("local port: " + this._p2p.port)
+						 const name = obj.host + ':' + obj.port + this._p2p.hash
+						 console.log(obj)
+						 console.log("local hash: " + this._p2p.hash)
+						 console.log("local port: " + this._p2p.port)
 
-           this._p2p._discovery.emit('peer', name, obj, 'dht')
+						 this._p2p._discovery.emit('peer', name, obj, 'dht')
 
-           //conn.once('connection', (c) => {
-           //  this._p2p._onconnection(c, 'utp')
-           //})
-           //conn.once('close', conn.destroy)
-           //conn.once('exit', conn.destroy)
-           //conn.once('error', conn.destroy)
+						 //conn.once('connection', (c) => {
+						 //  this._p2p._onconnection(c, 'utp')
+						 //})
+						 //conn.once('close', conn.destroy)
+						 //conn.once('exit', conn.destroy)
+						 //conn.once('error', conn.destroy)
 
-           //this._logger.info('peer from seeder: ' + url.href)
-           //this._p2p._discovery.emit('peer', this._p2p.hash, obj)
+						 //this._logger.info('peer from seeder: ' + url.href)
+						 //this._p2p._discovery.emit('peer', this._p2p.hash, obj)
 
-         } catch (err) {
-           console.log('unable to reuse server')
-         }
-         //this._p2p.addPeer(this._p2p.hash, obj)
-         //this._p2p.add(obj, () => {
-         //   this._logger.info('adding peer: ' + peer)
-         // 	console.log('connected peers: ' + this._p2p.totalConnections)
-         //})
+					 } catch (err) {
+						 console.log('unable to reuse server')
+					 }
+					 //this._p2p.addPeer(this._p2p.hash, obj)
+					 //this._p2p.add(obj, () => {
+					 //   this._logger.info('adding peer: ' + peer)
+					 // 	console.log('connected peers: ' + this._p2p.totalConnections)
+					 //})
 
-    })
+			})
 
-    this._p2p._es.on('putMultiverse', (msg) => {
-      this.engine.getMultiverseHandler(msg, msg.data)
-      .then(() => {
-        this._logger.debug('putMultiverse sent')
-      })
-      .catch((err) => {
-        this._logger.error(err)
-      })
-    })
+			this._p2p._es.on('putMultiverse', (msg) => {
+				this.engine.getMultiverseHandler(msg, msg.data)
+				.then(() => {
+					this._logger.debug('putMultiverse sent')
+				})
+				.catch((err) => {
+					this._logger.error(err)
+				})
+			})
 
-    this._p2p._es.on('putBlockList', (msg) => {
-      this.engine.stepSyncHandler(msg)
-      .then(() => {
-        this._logger.debug('stepSync complete sent')
-      })
-      .catch((err) => {
-        this._logger.error(err)
-      })
-    })
+			this._p2p._es.on('putBlockList', (msg) => {
+				this.engine.stepSyncHandler(msg)
+				.then(() => {
+					this._logger.debug('stepSync complete sent')
+				})
+				.catch((err) => {
+					this._logger.error(err)
+				})
+			})
 
-    this._p2p._es.on('putBlock', (msg) => {
-      this._logger.info('candidate block ' + msg.data.getHeight() + ' recieved')
-      this.engine.blockFromPeer(msg, msg.data)
-    })
+			this._p2p._es.on('putBlock', (msg) => {
+				this._logger.info('candidate block ' + msg.data.getHeight() + ' recieved')
+				this.engine.blockFromPeer(msg, msg.data)
+			})
 
-    this._p2p._seeder.start()
-    this._manager._p2p = this._p2p
-    this._engine._p2p = this._p2p
+			this._p2p._seeder.start()
+			this._manager._p2p = this._p2p
+			this._engine._p2p = this._p2p
 
-    setInterval(() => {
-      this._logger.info('active waypoints:  ' + this._p2p.totalConnections)
-    }, 5000)
+			setInterval(() => {
+				this._logger.info('active waypoints:  ' + this._p2p.totalConnections)
+			}, 5000)
 
-    setTimeout(() => {
-      this._p2p._seeder.complete()
-    }, 10000)
+			setTimeout(() => {
+				this._p2p._seeder.complete()
+			}, 10000)
 
-        console.log('joined channel')
-    })
-    return Promise.resolve(true)
-    /* eslint-enable */
+					console.log('joined channel')
+			})
+			return Promise.resolve(true)
+			/* eslint-enable */
   }
 
   // const protocolBits = {
@@ -587,147 +596,140 @@ export class PeerNode {
   //   '0010W01': '[*]'  // write multiverse (selective sync)
   // }
   async peerDataHandler (conn: Object, info: Object, str: ?string) {
-    if (str === undefined) { return }
-    if (str.length < 8) { return }
+    (async () => {
+      if (str === undefined) { return }
+      if (str.length < 8) { return }
 
-    // TODO: add lz4 compression for things larger than 1000 characters
-    const type = str.slice(0, 7)
+      // TODO: add lz4 compression for things larger than 1000 characters
+      const type = str.slice(0, 7)
 
-    if (protocolBits[type] === undefined) {
-      return
-    }
-
-    this._logger.info('peerDataHandler -> ' + type)
-
-    /*
-     * Peer Sent Highest Block
-     */
-    if (type === '0007W01') {
-      const parts = str.split(protocolBits[type])
-      const rawUint = parts[1]
-      const raw = new Uint8Array(rawUint.split(','))
-      const block = BcBlock.deserializeBinary(raw)
-
-      this._p2p._es.emit('putBlock', {
-        data: block,
-        remoteHost: conn.remoteHost,
-        remotePort: conn.remotePort
-      })
-
-    /***********
-     *********** Peer Requests Highest Block
-     ***********/
-    } else if (type === '0008R01') {
-      const latestBlock = await this._engine.persistence.get('bc.block.latest')
-      const msg = '0008W01' + protocolBits[type] + latestBlock.serializeBinary()
-      const results = await this._p2p.qsend(conn, msg)
-
-      if (results && results.length > 0) {
-        this._logger.info('successful update sent to peer')
+      if (protocolBits[type] === undefined) {
+        return
       }
 
-    /***********
-     *********** Peer Requests Block Range
-     ***********/
-    } else if (type === '0006R01' || type === '0009R01') {
-      const parts = str.split(protocolBits[type])
-      const low = parts[1]
-      const high = parts[2]
+      this._logger.info('peerDataHandler -> ' + type)
+      // Peer Sent Highest Block
+      if (type === '0007W01') {
+        const parts = str.split(protocolBits[type])
+        const rawUint = parts[1]
+        const raw = new Uint8Array(rawUint.split(','))
+        const block = BcBlock.deserializeBinary(raw)
 
-      let outboundType = '0007W01'
-      if (type === '0009R01') {
-        outboundType = '0010W01'
-      }
-
-      try {
-        const query = range(max(2, low), (high + 1)).map((n) => {
-          return 'bc.block.' + n
+        this._p2p._es.emit('putBlock', {
+          data: block,
+          remoteHost: conn.remoteHost,
+          remotePort: conn.remotePort
         })
 
-        this._logger.info(query.length + ' blocks requested by peer: ' + conn.remoteHost)
+      // Peer Requests Highest Block
+      } else if (type === '0008R01') {
+        const latestBlock = await this._engine.persistence.get('bc.block.latest')
+        const msg = '0008W01' + protocolBits[type] + latestBlock.serializeBinary()
+        const results = await this._p2p.qsend(conn, msg)
 
-        this._queue.push(query, (err, res) => {
-          if (err) {
-            this._logger.warn(err)
-          } else {
-            const split = protocolBits[outboundType]
-            const msg = outboundType + split + res.map((r) => {
-              return r.serializeBinary()
-            }).join(split)
-            this._p2p.qsend(conn, msg).then(() => {
-              this._logger.info('sent message of length: ' + msg.length)
-            })
-              .catch((err) => {
-                this._logger.error(err)
-              })
-          }
-        })
-      } catch (err) {
-        this._logger.error(err)
-      }
-
-    /***********
-     *********** Peer Sends New Block
-     ***********/
-    } else if (type === '0008W01') {
-      const parts = str.split(protocolBits[type])
-      const rawUint = parts[1]
-      const raw = new Uint8Array(rawUint.split(','))
-      const block = BcBlock.deserializeBinary(raw)
-
-      this._p2p._es.emit('putBlock', {
-        data: block,
-        remoteHost: conn.remoteHost,
-        remotePort: conn.remotePort
-      })
-
-    /***********
-     *********** Peer Sends Block List 0007 // Peer Sends Multiverse 001
-     ***********/
-    } else if (type === '0007W01' || type === '0010W01') {
-      const parts = str.split(protocolBits[type])
-
-      try {
-        const list = parts.split(protocolBits[type]).reduce((all, rawBlock) => {
-          const raw = new Uint8Array(rawBlock.split(','))
-          all.push(BcBlock.deserializeBinary(raw))
-          return all
-        }, [])
-
-        const sorted = list.sort((a, b) => {
-          if (a.getHeight() > b.getHeight()) {
-            return -1 // move block forward
-          }
-          if (a.getHeight() < b.getHeight()) {
-            return 1 // move block forward
-          }
-          return 0
-        })
-
-        if (type === '0007W01') {
-          this._p2p._es.emit('putBlockList', {
-            data: {
-              low: sorted[sorted.length - 1], // lowest block
-              high: sorted[0] // highest block
-            },
-            remoteHost: conn.remoteHost,
-            remotePort: conn.remotePort
-          })
-        } else if (type === '0010W01') {
-          this._p2p._es.emit('putMultiverse', {
-            data: sorted,
-            remoteHost: conn.remoteHost,
-            remotePort: conn.remotePort
-          })
+        if (results && results.length > 0) {
+          this._logger.info('successful update sent to peer')
         }
-      } catch (err) {
-        this._logger.error('unable to parse: ' + type + ' from peer ')
-      }
-    } else {
-      this._logger.info('unable to parse: ' + type)
-    }
 
-    return Promise.resolve(true)
+      // Peer Requests Block Range
+      } else if (type === '0006R01' || type === '0009R01') {
+        const parts = str.split(protocolBits[type])
+        const low = parts[1]
+        const high = parts[2]
+
+        let outboundType = '0007W01'
+        if (type === '0009R01') {
+          outboundType = '0010W01'
+        }
+
+        try {
+          const query = range(max(2, low), (high + 1)).map((n) => {
+            return 'bc.block.' + n
+          })
+
+          this._logger.info(query.length + ' blocks requested by peer: ' + conn.remoteHost)
+
+          this._queue.push(query, (err, res) => {
+            if (err) {
+              this._logger.warn(err)
+            } else {
+              const split = protocolBits[outboundType]
+              const msg = outboundType + split + res.map((r) => {
+                return r.serializeBinary()
+              }).join(split)
+              this._p2p.qsend(conn, msg).then(() => {
+                this._logger.info('sent message of length: ' + msg.length)
+              })
+                .catch((err) => {
+                  this._logger.error(err)
+                })
+            }
+          })
+        } catch (err) {
+          this._logger.error(err)
+        }
+
+      // Peer Sends New Block
+      } else if (type === '0008W01') {
+        const parts = str.split(protocolBits[type])
+        const rawUint = parts[1]
+        const raw = new Uint8Array(rawUint.split(','))
+        const block = BcBlock.deserializeBinary(raw)
+
+        this._p2p._es.emit('putBlock', {
+          data: block,
+          remoteHost: conn.remoteHost,
+          remotePort: conn.remotePort
+        })
+
+      // Peer Sends Block List 0007 // Peer Sends Multiverse 001
+      } else if (type === '0007W01' || type === '0010W01') {
+        const parts = str.split(protocolBits[type])
+
+        try {
+          const list = parts.split(protocolBits[type]).reduce((all, rawBlock) => {
+            const raw = new Uint8Array(rawBlock.split(','))
+            all.push(BcBlock.deserializeBinary(raw))
+            return all
+          }, [])
+
+          const sorted = list.sort((a, b) => {
+            if (a.getHeight() > b.getHeight()) {
+              return -1 // move block forward
+            }
+            if (a.getHeight() < b.getHeight()) {
+              return 1 // move block forward
+            }
+            return 0
+          })
+
+          if (type === '0007W01') {
+            this._p2p._es.emit('putBlockList', {
+              data: {
+                low: sorted[sorted.length - 1], // lowest block
+                high: sorted[0] // highest block
+              },
+              remoteHost: conn.remoteHost,
+              remotePort: conn.remotePort
+            })
+          } else if (type === '0010W01') {
+            this._p2p._es.emit('putMultiverse', {
+              data: sorted,
+              remoteHost: conn.remoteHost,
+              remotePort: conn.remotePort
+            })
+          }
+        } catch (err) {
+          this._logger.error('unable to parse: ' + type + ' from peer ')
+        }
+      } else {
+        this._logger.info('unable to parse: ' + type)
+      }
+
+      return Promise.resolve(true)
+    })().catch(err => {
+      this._logger.error(err)
+    })
   }
 
   /**
