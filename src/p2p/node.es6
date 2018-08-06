@@ -595,7 +595,7 @@ export class PeerNode {
   //   '0009R01': '[*]', // read multiverse (selective sync)
   //   '0010W01': '[*]'  // write multiverse (selective sync)
   // }
-  async peerDataHandler (conn: Object, info: Object, str: ?string) {
+  peerDataHandler (conn: Object, info: Object, str: ?string) {
     (async () => {
       if (str === undefined) { return }
       if (str.length < 8) { return }
