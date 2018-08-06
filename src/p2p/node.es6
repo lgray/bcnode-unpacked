@@ -409,7 +409,6 @@ export class PeerNode {
 				})
 
 				await this._p2p.qsend(conn, msg)
-				return Promise.resolve(results)
 
       })().catch(err => {
 						this._logger.error(err);
