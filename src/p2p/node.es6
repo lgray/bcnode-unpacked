@@ -473,16 +473,13 @@ export class PeerNode {
          retries: 0,
          channel: channel,
        }
-       obj.id = obj.host + ':' + obj.port + '@' + this._p2p.hash
+       obj.id = obj.host + ':' + obj.port
 
        // add seen protection
-       if (this._p2p._peersCleared[obj.host] === undefined) {
 
-         try {
+       try {
 
-       const name = obj.host + ':' + obj.port + this._p2p.hash
-           this._p2p._peersCleared[obj.host] = obj.host
-
+           const name = obj.host + ':' + obj.port + this._p2p.hash
            console.log(obj)
            console.log("local hash: " + this._p2p.hash)
            console.log("local port: " + this._p2p.port)
@@ -507,7 +504,7 @@ export class PeerNode {
          //   this._logger.info('adding peer: ' + peer)
          // 	console.log('connected peers: ' + this._p2p.totalConnections)
          //})
-       }
+
     })
 
     this._p2p._seeder.start()
