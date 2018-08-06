@@ -27,23 +27,17 @@ function Discovery (nodeId) {
   const seederPort = 16060
   const port = 16061
   this.options = {
-    id: nodeId,
-    nodeId: nodeId,
+    // id: nodeId,
+    // nodeId: nodeId,
     maxConnections: 126,
-    utp: true,
-    tcp: false,
     port: port,
-    dns: {
-      servers: [
-        'discovery2.publicbits.org',
-        '8.8.8.8'
-      ]
-    },
+    dns: false,
     dht: {
-      nodeId: nodeId,
+      // nodeId: nodeId,
       bootstrap: bootstrap,
-      interval: 30000 + random(1000),
-      timeBucketOutdated: (180000 + random(40000))
+      interval: 10000 + random(1000),
+      timeBucketOutdated: (18000 + random(10000)),
+      maxConnections: 66
     }
   }
   this.streamOptions = {
