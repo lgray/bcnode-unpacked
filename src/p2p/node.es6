@@ -287,28 +287,33 @@ export class PeerNode {
     this._p2p.join(this._p2p.hash, this._p2p.port, () => {
 
     this._p2p._es.on('sendBlock', (msg) => {
-      (async () => {
+      this._logger.info('sendBlock event triggered')
+      async () => {
         // check required fields
         if(!msg || msg.data === undefined || msg.connection === undefined){
           return
         }
         await this._p2p.qsend(msg.connection, '0008W01' + '[*]' +  msg.data.serializeBinary())
-      })
+      }
     })
 
     this._p2p._es.on('announceBlock', (block) => {
+      this._logger.info('announceBlock <- event')
       this._p2p.qbroadcast('0008W01' + '[*]' +  block.serializeBinary())
-      .then((warnings) => {
+        .then((warnings) => {
         this._logger.info('broadcast sent! <- warnings: ' + warnings.length)
+
       })
       .catch((err) => {
         this._logger.error(err)
       })
+      return Promise.resolve(warnings)
     })
 
 
     this._p2p._es.on('getMultiverse', (request) => {
-      const getMultiverse = async () => {
+      this._logger.info('getMultiverse <- event ')
+       async () => {
 
       // check required fields
       if(!request || request.low === undefined || request.high === undefined || request.connection === undefined){
@@ -325,11 +330,10 @@ export class PeerNode {
       this._logger.debug('getMultiverse request sent ' + results.length + ' destinations')
       return Promise.resolve(results)
       }
-      return getMultiverse()
     })
 
     this._p2p._es.on('getBlockList', (request) => {
-      const getBlockList = async () => {
+      async () => {
 
       // check required fields
       if(!request || request.low === undefined || request.high === undefined || request.connection === undefined){
@@ -344,16 +348,16 @@ export class PeerNode {
       const msg = type + split + low + split + high
       const results = await this._p2p._es.qsend(request.connection, msg)
       this._logger.debug('getBlockList request sent ' + results.length + ' destinations')
+
       return Promise.resolve(results)
 
       }
-      return getBlockList()
     })
 
     this._logger.info('initialized far reaching discovery module')
 
     this._p2p.on('connection', (conn, info) => {
-      const prime = async () => {
+      async () => {
       // greeting reponse to connection with provided host information and connection ID
       const address = conn.remoteAddress + ':' + conn.remotePort
       if (this._ds[address] === undefined) {
@@ -374,7 +378,6 @@ export class PeerNode {
       //const msg = '0000R01' + info.host + '*' + info.port + '*' + info.id.toString('hex')
       const type = '0008W01'
       const msg = type + protocolBits[type] + latestBlock.serializeBinary()
-      const results = await this._p2p.qsend(conn, msg)
 
       conn.on('data', (data) => {
         console.log('DATA REQUEST SIZE: ' + data.length)
@@ -391,12 +394,16 @@ export class PeerNode {
           } else if (chunk.length !== 1382 && this._ds[address] !== false) {
             const complete = "" + this._ds[address] + chunk
             this._ds[address] = false
-            this.peerDataHandler(conn, info, complete, this._p2p._es)
+            this.peerDataHandler(conn, info, complete)
           } else {
-            this.peerDataHandler(conn, info, chunk, this._p2p._es)
+            this.peerDataHandler(conn, info, chunk)
           }
         }
       })
+
+      await this._p2p.qsend(conn, msg)
+      return Promise.resolve(results)
+
       }
     })
 
@@ -522,8 +529,32 @@ export class PeerNode {
 
     })
 
-    this._p2p._seeder.start()
+    this._p2p._es.on('putMultiverse', (msg) => {
+      this.engine.getMultiverseHandler(msg, msg.data)
+      .then(() => {
+        this._logger.debug('putMultiverse sent')
+      })
+      .catch((err) => {
+        this._logger.error(err)
+      })
+    })
 
+    this._p2p._es.on('putBlockList', (msg) => {
+      this.engine.stepSyncHandler(msg)
+      .then(() => {
+        this._logger.debug('stepSync complete sent')
+      })
+      .catch((err) => {
+        this._logger.error(err)
+      })
+    })
+
+    this._p2p._es.on('putBlock', (msg) => {
+      this._logger.info('candidate block ' + msg.data.getHeight() + ' recieved')
+      this.engine.blockFromPeer(msg, msg.data)
+    })
+
+    this._p2p._seeder.start()
     this._manager._p2p = this._p2p
     this._engine._p2p = this._p2p
 
@@ -531,9 +562,9 @@ export class PeerNode {
       this._logger.info('active waypoints:  ' + this._p2p.totalConnections)
     }, 5000)
 
-    //[setTimeout(() => {
-    //[  this._p2p._seeder.complete()
-    //[}, 2000)
+    setTimeout(() => {
+      this._p2p._seeder.complete()
+    }, 10000)
 
         console.log('joined channel')
     })
@@ -555,7 +586,7 @@ export class PeerNode {
   //   '0009R01': '[*]', // read multiverse (selective sync)
   //   '0010W01': '[*]'  // write multiverse (selective sync)
   // }
-  async peerDataHandler (conn: Object, info: Object, str: ?string, e: Object) {
+  async peerDataHandler (conn: Object, info: Object, str: ?string) {
     if (str === undefined) { return }
     if (str.length < 8) { return }
 
@@ -577,7 +608,7 @@ export class PeerNode {
       const raw = new Uint8Array(rawUint.split(','))
       const block = BcBlock.deserializeBinary(raw)
 
-      e.emit('putBlock', {
+      this._p2p._es.emit('putBlock', {
         data: block,
         remoteHost: conn.remoteHost,
         remotePort: conn.remotePort
@@ -644,7 +675,7 @@ export class PeerNode {
       const raw = new Uint8Array(rawUint.split(','))
       const block = BcBlock.deserializeBinary(raw)
 
-      e.emit('putBlock', {
+      this._p2p._es.emit('putBlock', {
         data: block,
         remoteHost: conn.remoteHost,
         remotePort: conn.remotePort
@@ -674,7 +705,7 @@ export class PeerNode {
         })
 
         if (type === '0007W01') {
-          e.emit('putBlockList', {
+          this._p2p._es.emit('putBlockList', {
             data: {
               low: sorted[sorted.length - 1], // lowest block
               high: sorted[0] // highest block
@@ -683,7 +714,7 @@ export class PeerNode {
             remotePort: conn.remotePort
           })
         } else if (type === '0010W01') {
-          e.emit('putMultiverse', {
+          this._p2p._es.emit('putMultiverse', {
             data: sorted,
             remoteHost: conn.remoteHost,
             remotePort: conn.remotePort

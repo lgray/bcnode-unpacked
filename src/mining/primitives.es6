@@ -564,7 +564,11 @@ export function prepareNewBlock (currentTimestamp: number, lastPreviousBlock: Bc
     ]
   ]))
 
-  const chainWeight = new BN(lastPreviousBlock.getDistance()).minus(new BN(lastPreviousBlock.getDifficulty())).div(4).toString()
+  let chainWeight = 0
+
+  if (lastPreviousBlock.getHeight() > 2) {
+    chainWeight = new BN(lastPreviousBlock.getDistance()).sub(new BN(lastPreviousBlock.getDifficulty())).div(4).toString()
+  }
 
   const newBlock = new BcBlock()
   newBlock.setHash(blake2bl(lastPreviousBlock.getHash() + newMerkleRoot))

@@ -105,6 +105,18 @@ export class MiningOfficer {
       this._canMine = true
     }
 
+    if (this._canMine === true) {
+      try {
+        const quorum = this._persistence.get('bc.dht.quorum')
+        if (parseInt(quorum, 10) < 1 && this._canMine === true) {
+          this._canMine = false
+        }
+      } catch (err) {
+        this._canMine = false
+        this._logger.error('quorum state is not persisted on disk')
+      }
+    }
+
     // Check if _canMine
     if (!this._canMine) {
       const keys = Object.keys(this._collectedBlocks)

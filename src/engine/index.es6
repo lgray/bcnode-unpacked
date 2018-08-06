@@ -521,24 +521,6 @@ export class Engine {
       await this.persistence.put('bc.dht.id', JSON.stringify({ id: nodeId, timestamp: Math.floor(Date.now() * 0.001) }))
     }
     this.node.start(nodeId).then(() => {
-      try {
-        this.node._p2p._es.on('putMultiverse', (msg) => {
-          this.node.getMultiverseHandler(msg, msg.data)
-        })
-
-        this.node._p2p._es.on('putBlockList', async (msg) => {
-          await this.stepSyncHandler(msg)
-        })
-
-        this.node._p2p._es.on('putBlock', (msg) => {
-          this._logger.info('candidate block ' + msg.data.getHeight() + ' recieved')
-          this.blockFromPeer(msg, msg.data)
-        })
-      } catch (err) {
-        this._logger.info('=============================================')
-        this._logger.error(err)
-      }
-
       /*
        * ******************
        * Add Event Handlers
@@ -1022,7 +1004,13 @@ export class Engine {
 
   async getMultiverseHandler (conn: Object, newBlocks: BcBlock[]): Promise<?boolean> {
     // get the lowest of the current multiverse
-    this.miningOfficer.stopMining()
+    try {
+      this.miningOfficer.stopMining()
+      this._logger.info('end mining')
+      return Promise.resolve(true)
+    } catch (e) {
+      this._logger.error(e)
+    }
 
     if (newBlocks === undefined || newBlocks.length < 7) {
       this._logger.warn('incomplete multiverse proof')

@@ -316,7 +316,7 @@ export class Multiverse {
     try {
       const synclock = await this.persistence.get('synclock')
 
-      if (synclock.getHeight() !== 1 && (synclock.getTimestamp() + 369) < Math.floor(Date.now() * 0.001)) {
+      if (synclock.getHeight() !== 1 && (synclock.getTimestamp() + 969) < Math.floor(Date.now() * 0.001)) {
         this._logger.warn('sync lock is stale resetting')
         return Promise.resolve(false)
       } else if (synclock.getHeight() === 1) {
