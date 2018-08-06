@@ -298,6 +298,12 @@ export class PeerNode {
 
     this._p2p._es.on('announceNewBlock', (block) => {
       this._p2p.qbroadcast('0008W01' + '[*]' +  block.serializeBinary())
+      .then((warnings) => {
+        this._logger.info('broadcast sent! <- warnings: ' + warnings.length)
+      })
+      .catch((err) => {
+        this._logger.error(err)
+      })
     })
 
     this._p2p._es.on('getMultiverse', (request) => {
