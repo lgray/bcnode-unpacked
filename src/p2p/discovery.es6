@@ -31,12 +31,13 @@ function Discovery (nodeId) {
     // nodeId: nodeId,
     maxConnections: 126,
     port: port,
+    tcp: false,
+    utp: true,
     dns: false,
     dht: {
       // nodeId: nodeId,
       bootstrap: bootstrap,
-      interval: 10000 + random(1000),
-      timeBucketOutdated: (18000 + random(10000)),
+      interval: 40000 + random(1000),
       maxConnections: 66
     }
   }

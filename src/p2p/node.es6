@@ -363,17 +363,23 @@ export class PeerNode {
       const results = await this._p2p.qsend(conn, msg)
 
       conn.on('data', (data) => {
-        let chunk = data.toString()
-        if (chunk.length === 1382 && this._ds[address] === false) {
-          this._ds[address] = chunk
-        } else if (chunk.length === 1382 && this._ds[address] !== false) {
-          this._ds[address] = this._ds[address] + chunk.toString()
-        } else if (chunk.length !== 1382 && this._ds[address] !== false) {
-          const complete = this._ds[address] + chunk.toString()
-          this.peerDataHandler(conn, info, complete, this._p2p._es)
-          this._ds[address] = false
+        if(!data && this._ds[address] !== false){
+           const remaining = "" + this._ds[address]
+           this._ds[address] = false
+           this.peerDataHandler(conn, info, remaining, this._p2p._es)
         } else {
-          this.peerDataHandler(conn, info, chunk, this._p2p._es)
+          let chunk = data.toString()
+          if (chunk.length === 1382 && this._ds[address] === false) {
+            this._ds[address] = chunk
+          } else if (chunk.length === 1382 && this._ds[address] !== false) {
+            this._ds[address] = this._ds[address] + chunk
+          } else if (chunk.length !== 1382 && this._ds[address] !== false) {
+            const complete = "" + this._ds[address] + chunk
+            this._ds[address] = false
+            this.peerDataHandler(conn, info, complete, this._p2p._es)
+          } else {
+            this.peerDataHandler(conn, info, chunk, this._p2p._es)
+          }
         }
       })
       })()
@@ -554,14 +560,13 @@ export class PeerNode {
     if (type === '0007W01') {
       const parts = str.split(protocolBits[type])
       const rawUint = parts[1]
-      const raw = Uint8Array(rawUint)
+      const raw = new Uint8Array(rawUint)
       const block = BcBlock.deserializeBinary(raw)
 
       e.emit('putBlock', {
         data: block,
         remoteHost: conn.remoteHost,
-        remotePort: conn.remotePort,
-        id: conn.id.toString('hex')
+        remotePort: conn.remotePort
       })
 
     /***********
@@ -619,15 +624,14 @@ export class PeerNode {
       this._logger.info('unable to parse: ' + type)
       const parts = str.split(protocolBits[type])
       const rawUint = parts[1]
-      const raw = Uint8Array(rawUint.split(','))
+      const raw = new Uint8Array(rawUint.split(','))
       const block = BcBlock.deserializeBinary(raw)
 
       this._logger.info(block)
       e.emit('putBlock', {
         data: block,
         remoteHost: conn.remoteHost,
-        remotePort: conn.remotePort,
-        id: conn.id.toString('hex')
+        remotePort: conn.remotePort
       })
 
     /***********
@@ -638,7 +642,7 @@ export class PeerNode {
 
       try {
         const list = parts.split(protocolBits[type]).reduce((all, rawBlock) => {
-          const raw = Uint8Array(rawBlock)
+          const raw = new Uint8Array(rawBlock)
           all.push(BcBlock.deserializeBinary(raw))
           return all
         }, [])
@@ -660,15 +664,13 @@ export class PeerNode {
               high: sorted[0] // highest block
             },
             remoteHost: conn.remoteHost,
-            remotePort: conn.remotePort,
-            id: conn.id.toString('hex')
+            remotePort: conn.remotePort
           })
         } else if (type === '0010W01') {
           e.emit('putMultiverse', {
             data: sorted,
             remoteHost: conn.remoteHost,
-            remotePort: conn.remotePort,
-            id: conn.id.toString('hex')
+            remotePort: conn.remotePort
           })
         }
       } catch (err) {
