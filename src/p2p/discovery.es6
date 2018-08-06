@@ -136,7 +136,7 @@ Discovery.prototype = {
       const warnings = []
       for (const conn of this.dht.connections) {
         const res = await this.dht.qsend(conn, msg)
-        if (!res.success) {
+        if (!res || res.length === 0) {
           warnings.push(res)
         }
       }
