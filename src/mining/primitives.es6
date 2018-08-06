@@ -564,8 +564,6 @@ export function prepareNewBlock (currentTimestamp: number, lastPreviousBlock: Bc
     ]
   ]))
 
-  // nonce, distance, timestamp and difficulty are set to proper values after successful mining of this block
-  const difficultyNormalized = new BN(new BN(lastPreviousBlock.getDistance()).div(8)).add(new BN(lastPreviousBlock.getTotalDistance()))
   const newBlock = new BcBlock()
   newBlock.setHash(blake2bl(lastPreviousBlock.getHash() + newMerkleRoot))
   newBlock.setPreviousHash(lastPreviousBlock.getHash())
@@ -577,7 +575,7 @@ export function prepareNewBlock (currentTimestamp: number, lastPreviousBlock: Bc
   newBlock.setMerkleRoot(newMerkleRoot)
   newBlock.setChainRoot(blake2bl(newChainRoot.toString()))
   newBlock.setDistance('') // is set to proper value after successful mining
-  newBlock.setTotalDistance(difficultyNormalized) // distance from mining solution will be added to this after mining
+  newBlock.setTotalDistance(lastPreviousBlock.getTotalDistance()) // distance from mining solution will be added to this after mining
   newBlock.setNrgGrant(GENESIS_DATA.nrgGrant)
   newBlock.setTargetHash(GENESIS_DATA.targetHash)
   newBlock.setTargetHeight(GENESIS_DATA.targetHeight)

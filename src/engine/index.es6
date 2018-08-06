@@ -409,6 +409,7 @@ export class Engine {
       }
       return Promise.resolve(true)
     } catch (err) {
+      this._logger.warn(err)
       this._logger.error(errToString(err))
       this._logger.warn('no previous block found')
       if (block !== undefined && msg.force === true) {
