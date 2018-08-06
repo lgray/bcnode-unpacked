@@ -306,7 +306,7 @@ export class PeerNode {
 
 
     this._p2p._es.on('getMultiverse', (request) => {
-      (async () => {
+      const getMultiverse = async () => {
 
       // check required fields
       if(!request || request.low === undefined || request.high === undefined || request.connection === undefined){
@@ -321,11 +321,13 @@ export class PeerNode {
       const msg = type + split + low + split + high
       const results = await this._p2p._es.qsend(request.connection, msg)
       this._logger.debug('getMultiverse request sent ' + results.length + ' destinations')
-      })()
+      return Promise.resolve(results)
+      }
+      return getMultiverse()
     })
 
     this._p2p._es.on('getBlockList', (request) => {
-      (async () => {
+      const getBlockList = async () => {
 
       // check required fields
       if(!request || request.low === undefined || request.high === undefined || request.connection === undefined){
@@ -339,8 +341,11 @@ export class PeerNode {
       const high = request.high
       const msg = type + split + low + split + high
       const results = await this._p2p._es.qsend(request.connection, msg)
-      this._logger.debug('getMultiverse request sent ' + results.length + ' destinations')
-      })()
+      this._logger.debug('getBlockList request sent ' + results.length + ' destinations')
+      return Promise.resolve(results)
+
+      }
+      return getBlockList()
     })
 
     this._logger.info('initialized far reaching discovery module')
