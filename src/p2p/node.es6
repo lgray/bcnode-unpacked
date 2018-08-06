@@ -463,13 +463,17 @@ export class PeerNode {
     this._p2p._seeder.on('peer', (peer) => {
 
        console.log('--------------> PEER FROM SEEDER ' )
+       const channel = Buffer.from(this._p2p.hash)
        const url = Url.parse(peer)
        const h = url.href.split(':')
        const obj = {
          //id: crypto.createHash('sha1').update(peer).digest('hex'),
          host: h[0],
-         port: Number(h[1]) + 1 // seeder broadcasts listen on one port below the peers address
+         port: Number(h[1]) + 1, // seeder broadcasts listen on one port below the peers address
+         retries: 0,
+         channel: channel,
        }
+       obj.id = obj.host + ':' + obj.port + '@' + this._p2p.hash
 
        // add seen protection
        if (this._p2p._peersCleared[obj.host] === undefined) {
@@ -483,7 +487,7 @@ export class PeerNode {
            console.log("local hash: " + this._p2p.hash)
            console.log("local port: " + this._p2p.port)
 
-           this._p2p.addPeer(obj.host + ':' + obj.port + this._p2p.hash, obj)
+           this._p2p.addPeer(name, obj, 'dht')
 
            //conn.once('connection', (c) => {
            //  this._p2p._onconnection(c, 'utp')
@@ -497,7 +501,6 @@ export class PeerNode {
 
          } catch (err) {
            console.log('unable to reuse server')
-           this._logger.error(err)
          }
          //this._p2p.addPeer(this._p2p.hash, obj)
          //this._p2p.add(obj, () => {
@@ -621,7 +624,6 @@ export class PeerNode {
      *********** Peer Sends New Block
      ***********/
     } else if (type === '0008W01') {
-      this._logger.info('unable to parse: ' + type)
       const parts = str.split(protocolBits[type])
       const rawUint = parts[1]
       const raw = new Uint8Array(rawUint.split(','))
@@ -642,7 +644,7 @@ export class PeerNode {
 
       try {
         const list = parts.split(protocolBits[type]).reduce((all, rawBlock) => {
-          const raw = new Uint8Array(rawBlock)
+          const raw = new Uint8Array(rawBlock.split(','))
           all.push(BcBlock.deserializeBinary(raw))
           return all
         }, [])
