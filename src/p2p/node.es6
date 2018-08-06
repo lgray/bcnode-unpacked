@@ -282,11 +282,9 @@ export class PeerNode {
     const discovery = new Discovery(nodeId)
 
     this._p2p = discovery.start()
-    console.log('listening on ' + this._p2p.hash + ' : ' + this._p2p.port)
     this._p2p.join(this._p2p.hash, this._p2p.port, () => {
     this._p2p._es = new events.EventEmitter()
 
-    this._p2p._seeder = discovery.seeder()
     this._p2p._es.on('qsend', (msg) => {
       (async () => {
         // check required fields
@@ -442,28 +440,26 @@ export class PeerNode {
      console.log("^^^^^^^^^^^^^^^^^^^^^^^^")
     })
 
-    //this._p2p._seeder.on('scrape', (scrape) => {
-    //  console.log(' ----> SCRAPE ' )
-    //   this._logger.info(scrape)
-    //})
+    /*
+     * PEER SEEDER
+     */
+
+    this._p2p._seeder = discovery.seeder()
 
     this._p2p._seeder.on('update', (data) => {
-
-      if(data.peerId !== undefined){
-
-      }
-
       console.log(' ----> UPDATE ' )
       console.log(data)
     })
 
     this._p2p._seeder.on('peer', (peer) => {
+
+       console.log('--------------> PEER FROM SEEDER ' )
        const url = Url.parse(peer)
        const h = url.href.split(':')
        const obj = {
          //id: crypto.createHash('sha1').update(peer).digest('hex'),
          host: h[0],
-         port: Number(h[1])
+         port: Number(h[1]) + 1 // seeder broadcasts listen on one port below the peers address
        }
 
        // add seen protection
@@ -475,7 +471,7 @@ export class PeerNode {
 
            console.log(obj)
            console.log("local hash: " + this._p2p.hash)
-           console.log("local port: " + this._p2p.hash)
+           console.log("local port: " + this._p2p.port)
 
            //this._p2p._discovery.dht.emit('peer', obj, this._p2p.hash)
 
