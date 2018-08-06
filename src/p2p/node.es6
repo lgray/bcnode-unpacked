@@ -286,7 +286,7 @@ export class PeerNode {
     this._p2p.join(this._p2p.hash, this._p2p.port, () => {
     this._p2p._es = new events.EventEmitter()
 
-    this._p2p._es.on('qsend', (msg) => {
+    this._p2p._es.on('sendBlock', (msg) => {
       (async () => {
         // check required fields
         if(!msg || msg.data === undefined || msg.connection === undefined){
@@ -296,7 +296,7 @@ export class PeerNode {
       })
     })
 
-    this._p2p._es.on('announceNewBlock', (block) => {
+    this._p2p._es.on('announceBlock', (block) => {
       this._p2p.qbroadcast('0008W01' + '[*]' +  block.serializeBinary())
       .then((warnings) => {
         this._logger.info('broadcast sent! <- warnings: ' + warnings.length)
@@ -305,6 +305,7 @@ export class PeerNode {
         this._logger.error(err)
       })
     })
+
 
     this._p2p._es.on('getMultiverse', (request) => {
       (async () => {
@@ -802,7 +803,7 @@ export class PeerNode {
     // this.bundle.pubsub.publish('newBlock', Buffer.from(JSON.stringify(block.toObject())), () => {})
     // const raw = block.serializeBinary()
 
-    this._p2p._es.emit('announceNewBlock', block)
+    this._p2p._es.emit('announceBlock', block)
 
     // const url = `${PROTOCOL_PREFIX}/newblock`
     // this.manager.peerBookConnected.getAllArray().map(peer => {

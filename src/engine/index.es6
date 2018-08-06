@@ -994,22 +994,8 @@ export class Engine {
             .then(shouldResync => {
               if (shouldResync === true) {
                 this._logger.info(newBlock.getHash() + ' <- new block: ' + newBlock.getHeight() + ' should sync request approved')
-                // 1. request multiverse from peer, if fail ignore
-                // succeed in getting multiverse -->
-                // 2. Compare purposed multiverse sum of difficulty with current sum of diff
-                // determined newBlock multiverse better
-                // 3. restart miner
-                // 4. set bc.depth to lowest height and hash of new multiverse
-                // 5. get peer lock status
-                //
-                /// /////// MULTIVERSE PROOF //////////////
-                /// /////// MULTIVERSE PROOF //////////////
-                /// /////// MULTIVERSE PROOF //////////////
-                /// /////// MULTIVERSE PROOF //////////////
-                /// /////// MULTIVERSE PROOF //////////////
-                /// /////// MULTIVERSE PROOF //////////////
-                /// /////// MULTIVERSE PROOF //////////////
-                /// /////// MULTIVERSE PROOF //////////////
+
+                /// //////// MULTIVERSE PROOF //////////////
 
                 this.node._p2p._es.emit('getMultiverse', {
                   data: {
@@ -1026,7 +1012,9 @@ export class Engine {
                 // otherwise the miner wil continue forward with it's current multiverse
                 // this.getMultiverseHandler(conn, newBlock)
               } else {
-                this.node._p2p._es.emit('qsend', {
+                // this means the local peer has a better version of the chain and
+                // therefore pushing it to the outside peer
+                this.node._p2p._es.emit('sendBlock', {
                   data: newBlock,
                   connection: {
                     remoteHost: conn.remoteHost,
