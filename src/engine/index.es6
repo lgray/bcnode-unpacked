@@ -526,6 +526,31 @@ export class Engine {
        * Add Event Handlers
        * ******************
        */
+      this.node._p2p._es.on('putMultiverse', (msg) => {
+        this.getMultiverseHandler(msg, msg.data)
+          .then(() => {
+            this._logger.debug('putMultiverse sent')
+          })
+          .catch((err) => {
+            this._logger.error(err)
+          })
+      })
+
+      this.node._p2p._es.on('putBlockList', (msg) => {
+        this.stepSyncHandler(msg)
+          .then(() => {
+            this._logger.debug('stepSync complete sent')
+          })
+          .catch((err) => {
+            this._logger.error(err)
+          })
+      })
+
+      this.node._p2p._es.on('putBlock', (msg) => {
+        this._logger.info('candidate block ' + msg.data.getHeight() + ' recieved')
+        this.blockFromPeer(msg, msg.data)
+      })
+
       this._emitter.on('peerConnected', ({ peer }) => {
         if (this._server) {
           this._server._wsBroadcastPeerConnected(peer)

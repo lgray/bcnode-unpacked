@@ -537,30 +537,6 @@ export class PeerNode {
 
 			})
 
-			this._p2p._es.on('putMultiverse', (msg) => {
-				this.engine.getMultiverseHandler(msg, msg.data)
-				.then(() => {
-					this._logger.debug('putMultiverse sent')
-				})
-				.catch((err) => {
-					this._logger.error(err)
-				})
-			})
-
-			this._p2p._es.on('putBlockList', (msg) => {
-				this.engine.stepSyncHandler(msg)
-				.then(() => {
-					this._logger.debug('stepSync complete sent')
-				})
-				.catch((err) => {
-					this._logger.error(err)
-				})
-			})
-
-			this._p2p._es.on('putBlock', (msg) => {
-				this._logger.info('candidate block ' + msg.data.getHeight() + ' recieved')
-				this.engine.blockFromPeer(msg, msg.data)
-			})
 
 			this._p2p._seeder.start()
 			this._manager._p2p = this._p2p

@@ -566,7 +566,7 @@ export function prepareNewBlock (currentTimestamp: number, lastPreviousBlock: Bc
 
   let chainWeight = 0
   if (new BN(lastPreviousBlock.getHeight()).gt(2) === true) {
-    chainWeight = new BN(lastPreviousBlock.getDistance()).sub(new BN(lastPreviousBlock.getDifficulty())).divRound(4).toString()
+    chainWeight = new BN(lastPreviousBlock.getDistance()).sub(new BN(lastPreviousBlock.getDifficulty())).divRound(new BN(4)).toString()
   }
 
   const newBlock = new BcBlock()
