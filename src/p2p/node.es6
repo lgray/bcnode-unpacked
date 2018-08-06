@@ -487,7 +487,7 @@ export class PeerNode {
            console.log("local hash: " + this._p2p.hash)
            console.log("local port: " + this._p2p.port)
 
-           this._p2p.addPeer(name, obj, 'dht')
+           this._p2p._discovery.emit('peer', name, obj, 'dht')
 
            //conn.once('connection', (c) => {
            //  this._p2p._onconnection(c, 'utp')
