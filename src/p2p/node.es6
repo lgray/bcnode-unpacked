@@ -77,6 +77,7 @@ export class PeerNode {
   _externalIP: string // eslint-disable-line no-undef
   _ds: Object // eslint-disable-line no-undef
   _p2p: Object // eslint-disable-line no-undef
+  _possibleHostname: string // eslint-disable-line no-undef
   _queue: Object // eslint-disable-line no-undef
   _emitter: Object // eslint-disable-line no-undef
 
@@ -91,6 +92,7 @@ export class PeerNode {
     }
     this._manager = new PeerManager(this)
     this._ds = {}
+	  this._possibleHostname = ""
     this._seededPeers = LRUCache({
       max: 1000
     })
@@ -299,6 +301,7 @@ export class PeerNode {
     //  })
     //}, 15000)
 
+		this._possibleHostname = await anyDns()
     this._engine._emitter.on('sendblock', (msg) => {
       this._logger.info('sendBlock event triggered')
         if(!msg || msg.data === undefined || msg.connection === undefined){
@@ -367,8 +370,7 @@ export class PeerNode {
 
 				pull(
 					pull.values(msg),
-					toPull.duplex(conn),
-					pull.infinite(),
+					toPull(conn),
 					pull.collect((err, data) => {
 							this.peerDataHandler(conn, info, data)
 					})
@@ -493,6 +495,8 @@ export class PeerNode {
 					 channel: Buffer.from(channel),
 				 }
 				 obj.id = toBuffer(obj.host + ':' + obj.port)
+
+				 if(obj.host === this._possibleHostname) return
 
          this._p2p.connections.map((c) => {
             if(c.remoteHost === obj.host && c.remotePort == obj.port){
