@@ -17,6 +17,7 @@ const PeerInfo = require('peer-info')
 const queue = require('async/queue')
 const multiaddr = require('multiaddr')
 const pull = require('pull-stream')
+const toPull = require('stream-to-pull-stream')
 const events = require('events')
 // const utp = require('utp-native')
 
@@ -363,14 +364,14 @@ export class PeerNode {
 				//const type = '0008W01'
 				const msg = ['0008W01',latestBlock.serializeBinary()]
 
-        pull(pull.values(msg), conn)
+        toPull.duplex(conn, pull(pull.values(msg), conn))
 
-        pull(
+        toPull.duplex(conn, pull(
           conn,
           pull.collect((err, data) => {
 				     this.peerDataHandler(conn, info, data)
           })
-        )
+        ))
 
 				//conn.on('data', (data) => {
 				//	console.log('DATA REQUEST SIZE: ' + data.length)
