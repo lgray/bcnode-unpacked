@@ -283,9 +283,11 @@ export class PeerNode {
 
     /* eslint-disable */
     const discovery = new Discovery(nodeId)
+		anyDns().then((ip) => {
+
     this._p2p = discovery.start()
     this._p2p.join(this._p2p.hash, this._p2p.port, (data) => {
-		this._p2p.ip = await anyDns()
+		this._p2p.ip = ip
     //const waypoint = setInterval(() => {
     //  this._p2p.announce(this._p2p.hash, this._p2p.port, function() {
     //    this._logger.info('confirmed waypoint key')
@@ -601,6 +603,10 @@ export class PeerNode {
             }, 10000)
 
    })
+		})
+		.catch((err) => {
+
+		})
      return Promise.resolve(true)
             /* eslint-enable */
   }
