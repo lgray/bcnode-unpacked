@@ -364,7 +364,7 @@ export class PeerNode {
 				//const type = '0008W01'
 				const msg = ['0008W01',latestBlock.serializeBinary()]
 
-        toPull.duplex(conn, pull(pull.values(msg), conn))
+        pull(pull.values(msg), conn)
 
         toPull.duplex(conn, pull(
           conn,
@@ -597,8 +597,8 @@ export class PeerNode {
       } else if (type === '0008R01') {
         const latestBlock = await this._engine.persistence.get('bc.block.latest')
         const msg = ['0008W01', latestBlock.serializeBinary()]
-        toPull.duplex(conn, pull(pull.values(msg), conn))
 
+        pull(pull.values(msg), conn)
       // Peer Requests Block Range
       } else if (type === '0006R01' || type === '0009R01') {
         const low = data[1]
@@ -623,7 +623,7 @@ export class PeerNode {
               const msg = [outboundType, res.map((r) => {
                 return r.serializeBinary()
               })]
-              toPull.duplex(conn, pull(pull.values(msg), conn))
+              pull(pull.values(msg), conn)
             }
           })
         } catch (err) {
@@ -792,7 +792,6 @@ export class PeerNode {
             return err
           }
           // TODO JSON.stringify?
-          toPull(conn, pull(pull.values([block.serializeBinary()]), conn))
         })
       }
     })
