@@ -538,7 +538,12 @@ export class Engine {
         this._server._wsBroadcastPeerDisonnected(peer)
       }
     })
-    return this.node.start(nodeId)
+    return this.node.start(nodeId).then(() => {
+      this._logger.info(nodeId)
+    })
+      .catch((err) => {
+        this._logger.error(err)
+      })
   }
 
   /**
@@ -790,7 +795,7 @@ export class Engine {
 
     // sync is complete emit event
     if (data.low.getHeight() < 3) {
-      this.node._engine._emitter.emit('synccomplete', connection)
+      this._emitter.emit('synccomplete', connection)
       this._stepSyncTimestamps.length = 0
       await this.persistence.put('synclock', getGenesisBlock())
       return
@@ -811,7 +816,7 @@ export class Engine {
       high: high
     }
     if (cancelSync === false) {
-      this.node._engine._emitter.emit('getblockList', connection)
+      this._emitter.emit('getblocklist', connection)
     }
   }
 
@@ -964,7 +969,15 @@ export class Engine {
                 try {
                   /// //////// MULTIVERSE PROOF //////////////
                   this._logger.info(777777777777777777)
-                  this.node._engine._emitter.emit('getmultiverse', {
+                  this._logger.info(777777777777777777)
+                  this._logger.info(777777777777777777)
+                  this._logger.info(777777777777777777)
+                  this._logger.info(777777777777777777)
+                  this._logger.info(777777777777777777)
+                  this._logger.info(777777777777777777)
+                  this._logger.info(777777777777777777)
+                  this._logger.info(777777777777777777)
+                  this._emitter.emit('getmultiverse', {
                     data: {
                       high: newBlock.getHeight(),
                       low: newBlock.getHeight() - 7
@@ -973,6 +986,13 @@ export class Engine {
                     remotePort: conn.remotePort
                   })
                 } catch (err) {
+                  this._logger.info(6666666666666666666666)
+                  this._logger.info(6666666666666666666666)
+                  this._logger.info(6666666666666666666666)
+                  this._logger.info(6666666666666666666666)
+                  this._logger.info(6666666666666666666666)
+                  this._logger.info(6666666666666666666666)
+                  this._logger.info(6666666666666666666666)
                   this._logger.info(6666666666666666666666)
                   this._logger.error(err)
                 }
@@ -988,7 +1008,7 @@ export class Engine {
               } else {
                 // this means the local peer has a better version of the chain and
                 // therefore pushing it to the outside peer
-                this.node._engine._emitter.emit('sendblock', {
+                this._emitter.emit('sendblock', {
                   data: newBlock,
                   connection: {
                     remoteHost: conn.remoteHost,
@@ -1082,7 +1102,7 @@ export class Engine {
                           return Promise.resolve(true)
                         }
 
-                        this.node._engine._emitter.emit('getblocklist', {
+                        this._emitter.emit('getblocklist', {
                           low: newBlock.getHeight() - 500,
                           high: newBlock.getHeight(),
                           connection: conn

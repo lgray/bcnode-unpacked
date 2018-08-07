@@ -78,11 +78,9 @@ export class PeerNode {
   _ds: Object // eslint-disable-line no-undef
   _p2p: Object // eslint-disable-line no-undef
   _queue: Object // eslint-disable-line no-undef
-  _emitter: Object // eslint-disable-line no-undef
 
   constructor (engine: Engine) {
     this._engine = engine
-    this._emitter = engine._emitter
     this._multiverse = new Multiverse(engine.persistence) /// !important this is a (nonselective) multiverse
     this._blockPool = new BlockPool(engine.persistence, engine._pubsub)
     this._logger = logging.getLogger(__filename)
@@ -439,6 +437,8 @@ export class PeerNode {
             })
 
             this._engine._emitter.on('getmultiverse', (request) => {
+
+							console.log('bone art event get multiverse not fired <----------------')
               // check required fields
               if (!request || request.low === undefined || request.high === undefined || request.connection === undefined) {
                 return
@@ -665,9 +665,10 @@ export class PeerNode {
               this._logger.warn(err)
             } else {
               const split = protocolBits[outboundType]
-              const msg = outboundType + split + res.map((r) => {
+              const msg = [outboundType, res.map((r) => {
                 return r.serializeBinary()
-              }).join(split)
+              })].join(split)
+
               this._p2p.qsend(conn, msg).then(() => {
                 this._logger.info('sent message of length: ' + msg.length)
               })
