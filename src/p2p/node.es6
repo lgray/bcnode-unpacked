@@ -41,7 +41,7 @@ const { PROTOCOL_PREFIX, NETWORK_ID } = require('./protocol/version')
 const LOW_HEALTH_NET = process.env.LOW_HEALTH_NET === 'true'
 
 const { range, max } = require('ramda')
-const { protocolBits } = require('../engine/helper')
+const { anyDns, protocolBits } = require('../engine/helper')
 // const waterfall = require('async/waterfall')
 // const { toObject } = require('../helper/debug')
 // const { validateBlockSequence } = require('../bc/validation')
@@ -365,12 +365,15 @@ export class PeerNode {
 				//const type = '0008W01'
 				const msg = ['0008W01',latestBlock.serializeBinary()]
 
-        pull(pull.values(msg), conn, pull.sink)
+        pull(pull.values(msg), conn)
 
-				pull(conn, pull.collect((err, data) => {
-						 this.peerDataHandler(conn, info, data)
-				}), pull.sink)
-
+				pull(
+					toPull.source(conn),
+					toPull.toDuplex(process.stdout, function (err) {
+						if(err) throw err
+						console.log('done')
+					})
+				)
 				//conn.on('data', (data) => {
 				//	console.log('DATA REQUEST SIZE: ' + data.length)
 				//	if(!data && this._ds[address] !== false){
