@@ -320,7 +320,7 @@ export class PeerNode {
         }, false)
 
         if(connection !== false){
-          pull(pull.values(['0008W01', msg.data.serializeBinary]), conn)
+          pull(pull.values(['0008W01', msg.data.serializeBinary]), conn, pull.sink)
           return true
         } else {
           return false
@@ -365,9 +365,11 @@ export class PeerNode {
 				//const type = '0008W01'
 				const msg = ['0008W01',latestBlock.serializeBinary()]
 
-				pull(pull.values(msg), toPull.duplex(conn), pull.collect((err, data) => {
+        pull(pull.values(msg), conn, pull.sink)
+
+				pull(conn, pull.collect((err, data) => {
 						 this.peerDataHandler(conn, info, data)
-				}))
+				}), pull.sink)
 
 				//conn.on('data', (data) => {
 				//	console.log('DATA REQUEST SIZE: ' + data.length)
@@ -594,7 +596,7 @@ export class PeerNode {
         const latestBlock = await this._engine.persistence.get('bc.block.latest')
         const msg = ['0008W01', latestBlock.serializeBinary()]
 
-        pull(pull.values(msg), conn)
+        pull(pull.values(msg), conn, pull.sink)
       // Peer Requests Block Range
       } else if (type === '0006R01' || type === '0009R01') {
         const low = data[1]
@@ -619,7 +621,7 @@ export class PeerNode {
               const msg = [outboundType, res.map((r) => {
                 return r.serializeBinary()
               })]
-              pull(pull.values(msg), conn)
+              pull(pull.values(msg), conn, pull.sink)
             }
           })
         } catch (err) {
