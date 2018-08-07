@@ -369,7 +369,7 @@ export class PeerNode {
 
 				pull(toPull.source(conn), pull.collect((err, data) => {
 						 this.peerDataHandler(conn, info, data)
-				}))
+				}), pull.sink)
 
 				//conn.on('data', (data) => {
 				//	console.log('DATA REQUEST SIZE: ' + data.length)
