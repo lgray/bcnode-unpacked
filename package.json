@@ -199,6 +199,7 @@
     "promise-while": "^1.0.1",
     "prompt": "^1.0.0",
     "prop-types": "^15.6.1",
+    "pull-pushable": "^2.2.0",
     "pull-stream": "^3.6.8",
     "ramda": "^0.25.0",
     "random-js": "1.0.8",
