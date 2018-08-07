@@ -369,7 +369,7 @@ export class PeerNode {
 					pull.values(msg),
 					toPull(conn),
 					pull.collect((err, data) => {
-							this.peerDataHandler(conn, info, complete)
+							this.peerDataHandler(conn, info, data)
 					})
 				)
 				//conn.on('data', (data) => {
