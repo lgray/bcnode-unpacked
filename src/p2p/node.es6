@@ -365,11 +365,9 @@ export class PeerNode {
 				//const type = '0008W01'
 				const msg = ['0008W01',latestBlock.serializeBinary()]
 
-        pull(pull.values(msg), conn)
-
-				pull(toPull.source(conn), pull.collect((err, data) => {
+				pull(pull.values(msg), toPull.duplex(conn), pull.collect((err, data) => {
 						 this.peerDataHandler(conn, info, data)
-				}), pull.sink)
+				}))
 
 				//conn.on('data', (data) => {
 				//	console.log('DATA REQUEST SIZE: ' + data.length)
