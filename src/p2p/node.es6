@@ -299,16 +299,30 @@ export class PeerNode {
 
     this._engine._emitter.on('sendblock', (msg) => {
       this._logger.info('sendBlock event triggered')
-      (async () => {
-        // check required fields
         if(!msg || msg.data === undefined || msg.connection === undefined){
           return
         }
-        await this._p2p.qsend(msg.connection, '0008W01' + '[*]' +  msg.data.serializeBinary())
-      }
-			)().catch(err => {
-					this._logger.error(err)
-			})
+        let goal
+        if(msg.connection.host !== undefined){
+            goal = msg.connection.host + msg.connection.port
+        } else {
+            goal = msg.connection.remoteHost + msg.connection.remotePort
+        }
+
+        const connection = this._p2p.connections.reduce((conn, c) => {
+          const key = c.remoteHost + c.remotePort
+          if(key === goal && conn === false) {
+              conn = c
+          }
+          return conn
+        }, false)
+
+        if(connection !== false){
+          pull(pull.values(['0008W01', msg.data.serializeBinary]), conn)
+          return true
+        } else {
+          return false
+        }
     })
 
     this._engine._emitter.on('announceblock', (block) => {
@@ -562,15 +576,13 @@ export class PeerNode {
   //   '0009R01': '[*]', // read multiverse (selective sync)
   //   '0010W01': '[*]'  // write multiverse (selective sync)
   // }
-  peerDataHandler (conn: Object, info: Object, str: ?string) {
+  peerDataHandler (conn: Object, info: Object, data: ?Array) {
     (async () => {
-      if (str === undefined) { return }
-      if (str.length < 8) { return }
+      if (data === undefined) { return }
+      if (data.length < 8) { return }
 
       // TODO: add lz4 compression for things larger than 1000 characters
-      const type = str.slice(0, 7)
       const type = data[0]
-
       if (protocolBits[type] === undefined) {
         return
       }
@@ -578,8 +590,7 @@ export class PeerNode {
       this._logger.info('peerDataHandler <- ' + type)
       // Peer Sent Highest Block
       if (type === '0007W01') {
-        const parts = str.split(protocolBits[type])
-        const rawUint = parts[1]
+        const rawUint = data[1]
         const raw = new Uint8Array(rawUint)
         const block = BcBlock.deserializeBinary(raw)
 
@@ -597,9 +608,8 @@ export class PeerNode {
 
       // Peer Requests Block Range
       } else if (type === '0006R01' || type === '0009R01') {
-        const parts = str.split(protocolBits[type])
-        const low = parts[1]
-        const high = parts[2]
+        const low = data[1]
+        const high = data[2]
 
         let outboundType = '0007W01'
         if (type === '0009R01') {
@@ -617,11 +627,9 @@ export class PeerNode {
             if (err) {
               this._logger.warn(err)
             } else {
-              const split = protocolBits[outboundType]
               const msg = [outboundType, res.map((r) => {
                 return r.serializeBinary()
               })]
-
               pull(pull.values(msg), conn)
             }
           })
@@ -631,9 +639,8 @@ export class PeerNode {
 
       // Peer Sends New Block
       } else if (type === '0008W01') {
-        const parts = str.split(protocolBits[type])
-        const rawUint = parts[1]
-        const raw = new Uint8Array(rawUint.split(','))
+        const rawUint = data[1]
+        const raw = new Uint8Array(rawUint)
         const block = BcBlock.deserializeBinary(raw)
 
         this._engine._emitter.emit('putblock', {
@@ -644,11 +651,9 @@ export class PeerNode {
 
       // Peer Sends Block List 0007 // Peer Sends Multiverse 001
       } else if (type === '0007W01' || type === '0010W01') {
-        const parts = str.split(protocolBits[type])
-
         try {
-          const list = parts.split(protocolBits[type]).reduce((all, rawBlock) => {
-            const raw = new Uint8Array(rawBlock.split(','))
+          const list = data[1].reduce((all, rawBlock) => {
+            const raw = new Uint8Array(rawBlock)
             all.push(BcBlock.deserializeBinary(raw))
             return all
           }, [])
