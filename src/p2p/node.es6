@@ -365,9 +365,8 @@ export class PeerNode {
 				//const type = '0008W01'
 				const msg = ['0008W01',latestBlock.serializeBinary()]
 
-        pull(pull.values(msg), conn)
-
 				pull(
+					pull.values(msg),
 					toPull.toDuplex(conn),
 					pull.map(a => { return a}),
 					pull.collect((err, data) => {
