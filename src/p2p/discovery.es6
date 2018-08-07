@@ -42,8 +42,8 @@ function Discovery (nodeId) {
     utp: true,
     dns: false,
     dht: {
-      // nodeId: nodeId,
-      bootstrap: bootstrap,
+      nodeId: nodeId,
+      bootstrap: [],
       interval: 40000 + random(1000),
       maxConnections: 126,
       concurrency: 80
