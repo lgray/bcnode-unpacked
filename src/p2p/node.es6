@@ -367,7 +367,7 @@ export class PeerNode {
 
         pull(pull.values(msg), conn)
 
-				pull(conn, pull.sink, pull.collect((err, data) => {
+				pull(conn, toPull.duplex, pull.collect((err, data) => {
 						 this.peerDataHandler(conn, info, data)
 				}))
 
