@@ -790,7 +790,7 @@ export class Engine {
 
     // sync is complete emit event
     if (data.low.getHeight() < 3) {
-      this._emitter.emit('synccomplete', connection)
+      this.node._engine._emitter.emit('synccomplete', connection)
       this._stepSyncTimestamps.length = 0
       await this.persistence.put('synclock', getGenesisBlock())
       return
@@ -811,7 +811,7 @@ export class Engine {
       high: high
     }
     if (cancelSync === false) {
-      this._emitter.emit('getblockList', connection)
+      this.node._engine._emitter.emit('getblockList', connection)
     }
   }
 
@@ -963,7 +963,8 @@ export class Engine {
 
                 try {
                   /// //////// MULTIVERSE PROOF //////////////
-                  this._emitter.emit('getmultiverse', {
+                  this._logger.info(777777777777777777)
+                  this.node._engine._emitter.emit('getmultiverse', {
                     data: {
                       high: newBlock.getHeight(),
                       low: newBlock.getHeight() - 7
@@ -972,6 +973,7 @@ export class Engine {
                     remotePort: conn.remotePort
                   })
                 } catch (err) {
+                  this._logger.info(6666666666666666666666)
                   this._logger.error(err)
                 }
 
@@ -986,7 +988,7 @@ export class Engine {
               } else {
                 // this means the local peer has a better version of the chain and
                 // therefore pushing it to the outside peer
-                this._emitter.emit('sendblock', {
+                this.node._engine._emitter.emit('sendblock', {
                   data: newBlock,
                   connection: {
                     remoteHost: conn.remoteHost,
@@ -1067,8 +1069,10 @@ export class Engine {
                 // determine if a sync is already in progress
                 return this.multiverse.isSyncLockActive().then((lock) => {
                   if (lock === false) {
+                    this._logger.info('lock is set to false')
                     return this.persistence.put('synclock', this.multiverse.getHighestBlock())
                       .then(() => {
+                        this._logger.info('synclock was set to ' + this.multiverse.getHighestBlock())
                         this.pubsub.publish('update.block.latest', { key: 'bc.block.latest', data: newBlock, force: true, multiverse: this.multiverse._chain })
                         this.node.broadcastNewBlock(newBlock)
                         this._logger.debug('sync unlocked')
@@ -1078,7 +1082,7 @@ export class Engine {
                           return Promise.resolve(true)
                         }
 
-                        this.node._p2p.emit('getblocklist', {
+                        this.node._engine._emitter.emit('getblocklist', {
                           low: newBlock.getHeight() - 500,
                           high: newBlock.getHeight(),
                           connection: conn
@@ -1095,12 +1099,14 @@ export class Engine {
                           })
                       })
                   } else {
+                    this._logger.info('22222222222222222222222')
                     this.pubsub.publish('update.block.latest', { key: 'bc.block.latest', data: newBlock, force: true, multiverse: this.multiverse._chain })
                     this.node.broadcastNewBlock(newBlock)
                     return Promise.resolve(true)
                   }
                 })
                   .catch((e) => {
+                    this._logger.info('333333333333333333333')
                     this._logger.error(e)
                     return Promise.reject(e)
                   })
@@ -1112,7 +1118,7 @@ export class Engine {
               // assign where the last sync began
             })
             .catch(e => {
-              this._logger.info(99)
+              this._logger.info(4444444444444444444444444)
               this._logger.error(errToString(e))
               return this.persistence.put('synclock', getGenesisBlock()).then(() => {
                 this._logger.info('sync reset')
@@ -1124,6 +1130,7 @@ export class Engine {
         })
 
         .catch((e) => {
+          this._logger.info(55555555555555555555555555)
           this._logger.error(e)
           return Promise.resolve(true)
         })
