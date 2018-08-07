@@ -29,6 +29,7 @@ const { getBlockchainsBlocksCount } = require('../bc/helper')
 const ts = require('../utils/time').default // ES6 default export
 
 const MINER_WORKER_PATH = resolve(__filename, '..', '..', 'mining', 'worker.js')
+const LOW_HEALTH_NET = process.env.LOW_HEALTH_NET === 'true'
 
 type UnfinishedBlockData = {
   lastPreviousBlock: ?BcBlock,
@@ -105,7 +106,7 @@ export class MiningOfficer {
       this._canMine = true
     }
 
-    if (this._canMine === true) {
+    if (this._canMine === true && LOW_HEALTH_NET === false) {
       try {
         const quorum = await this._persistence.get('bc.dht.quorum')
         if (parseInt(quorum, 10) < 1 && this._canMine === true) {
@@ -122,7 +123,7 @@ export class MiningOfficer {
     }
 
     // make sure the miner has at least two blocks of the depth
-    if (this._canMine === true) {
+    if (this._canMine === true && LOW_HEALTH_NET === false) {
       try {
         const parent = await this._persistence.get('bc.block.parent')
         const latest = await this._persistence.get('bc.block.latest')
@@ -193,6 +194,7 @@ export class MiningOfficer {
     this._timers[name] = Math.floor(Date.now() * 0.001)
   }
 
+  // TODO: will have to remake for overline, no boundaries
   stopTimer (name: string): ?Number {
     if (this._timers[name] !== undefined) {
       const startTime = delete this._timers[name]
