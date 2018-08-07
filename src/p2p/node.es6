@@ -18,7 +18,7 @@ const queue = require('async/queue')
 const multiaddr = require('multiaddr')
 const pull = require('pull-stream')
 //const toPull = require('stream-to-pull-stream')
-const Pushable = require('pull-pushable')
+//const Pushable = require('pull-pushable')
 const events = require('events')
 // const utp = require('utp-native')
 
@@ -367,14 +367,9 @@ export class PeerNode {
 
         pull(pull.values(msg), conn)
 
-				 const pushable = Pushable();
-				 pull(
-						pushable,
-						conn,
-						pull.collect((err, data) => {
-							 this.peerDataHandler(conn, info, data)
-						})
-					);
+				pull(conn, pull.sink, pull.collect((err, data) => {
+						 this.peerDataHandler(conn, info, data)
+				}))
 
 				//conn.on('data', (data) => {
 				//	console.log('DATA REQUEST SIZE: ' + data.length)
