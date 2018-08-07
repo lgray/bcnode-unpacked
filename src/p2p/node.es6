@@ -512,7 +512,7 @@ export class PeerNode {
 						 console.log("local port: " + this._p2p.port)
 
 						 //this._p2p._discovery.dht._addPeer(obj, toBuffer(this._p2p.hash), { host: obj.host, port: obj.port })
-						 this._p2p._discovery.dht.emit('announce', obj, toBuffer(this._p2p.hash), { host: obj.host, port: obj.port })
+						 //this._p2p._discovery.dht.emit('announce', obj, toBuffer(this._p2p.hash), { host: obj.host, port: obj.port })
 
 						 this._p2p._discovery.emit('peer', name, obj, 'utp')
 
@@ -535,19 +535,11 @@ export class PeerNode {
 					 // 	console.log('connected peers: ' + this._p2p.totalConnections)
 					 //})
 
-
 			})
 
       this._p2p._seeder.start()
 			this._manager._p2p = this._p2p
 			this._engine._p2p = this._p2p
-
-    console.log(this._p2p.hash)
-    console.log(this._p2p.hash)
-    console.log(this._p2p.hash)
-    console.log(this._p2p.hash)
-    console.log(this._p2p.hash)
-    console.log(this._p2p.hash)
 
       this._logger.info('joined waypoint table')
 			setInterval(() => {
@@ -605,7 +597,7 @@ export class PeerNode {
       } else if (type === '0008R01') {
         const latestBlock = await this._engine.persistence.get('bc.block.latest')
         const msg = ['0008W01', latestBlock.serializeBinary()]
-        pull(pull.values(msg), conn)
+        toPull.duplex(conn, pull(pull.values(msg), conn))
 
       // Peer Requests Block Range
       } else if (type === '0006R01' || type === '0009R01') {
@@ -631,7 +623,7 @@ export class PeerNode {
               const msg = [outboundType, res.map((r) => {
                 return r.serializeBinary()
               })]
-              pull(pull.values(msg), conn)
+              toPull.duplex(conn, pull(pull.values(msg), conn))
             }
           })
         } catch (err) {
@@ -800,7 +792,7 @@ export class PeerNode {
             return err
           }
           // TODO JSON.stringify?
-          pull(pull.values([block.serializeBinary()]), conn)
+          toPull(conn, pull(pull.values([block.serializeBinary()]), conn))
         })
       }
     })
