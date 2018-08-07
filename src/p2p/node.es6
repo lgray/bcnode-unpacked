@@ -305,15 +305,25 @@ export class PeerNode {
             })
     })
 
-    this._engine._emitter.on('announceblock', (block) => {
+    this._engine._emitter.on('announceblock', (msg) => {
       this._logger.info('announceblock <- event')
-      this._p2p.qbroadcast('0008W01' + '[*]' +  block.serializeBinary())
+			if(msg.filters !== undefined && msg.filters.length > 0){
+      	this._p2p.qbroadcast('0008W01' + '[*]' +  msg.data.serializeBinary(), msg.filters)
         .then(() => {
-        this._logger.info('block announced!')
-      })
-      .catch((err) => {
-        this._logger.error(err)
-      })
+        	this._logger.info('block announced!')
+				})
+				.catch((err) => {
+					this._logger.error(err)
+				})
+			} else {
+      	this._p2p.qbroadcast('0008W01' + '[*]' +  msg.data.serializeBinary())
+        .then(() => {
+        	this._logger.info('block announced!')
+				})
+				.catch((err) => {
+					this._logger.error(err)
+				})
+			}
     })
 
 
@@ -852,13 +862,21 @@ export class PeerNode {
     })
   }
 
-  broadcastNewBlock (block: BcBlock, withoutPeerId: ?string) {
+  broadcastNewBlock (block: BcBlock, withoutPeerId: ?Object) {
     this._logger.debug(`broadcasting msg to peers, ${inspect(block.toObject())}`)
 
     // this.bundle.pubsub.publish('newBlock', Buffer.from(JSON.stringify(block.toObject())), () => {})
     // const raw = block.serializeBinary()
 
-    this._engine._emitter.emit('announceblock', block)
+    let filters = []
+    if (withoutPeerId !== undefined) {
+      if (withoutPeerId.constructor === Array) {
+        filters = withoutPeerId
+      } else {
+        filters.push(withoutPeerId)
+      }
+    }
+    this._engine._emitter.emit('announceblock', { data: block, filters: filters })
 
     // const url = `${PROTOCOL_PREFIX}/newblock`
     // this.manager.peerBookConnected.getAllArray().map(peer => {

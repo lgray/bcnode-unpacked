@@ -140,17 +140,19 @@ Discovery.prototype = {
       await Promise.all(tasks)
     }
 
-    this.dht.qbroadcast = async (msg) => {
+    this.dht.qbroadcast = async (msg, filters) => {
       const warnings = []
       for (const conn of this.dht.connections) {
-        const res = await this.dht.qsend(conn, msg)
-        if (!res || res.length === 0) {
-          warnings.push(res)
+        const idr = conn.remoteHost || conn.host
+        if (filters.indexOf(idr) < 0) {
+          const res = await this.dht.qsend(conn, msg)
+          if (!res || res.length === 0) {
+            warnings.push(res)
+          }
         }
       }
       return warnings
     }
-    this._logger.info(11111111111111111111111111111)
     return this.dht
   },
 

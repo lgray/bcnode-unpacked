@@ -958,7 +958,7 @@ export class Engine {
           // RESTART MINING USED newBlock.getHash()
           this.pubsub.publish('update.block.latest', { key: 'bc.block.latest', data: newBlock })
           // notify the miner
-          this.node.broadcastNewBlock(newBlock)
+          this.node.broadcastNewBlock(newBlock, conn)
         } else {
           this._logger.info('block from peer ' + newBlock.getHeight() + ' is NOT next in multiverse block -> evaluating as sync candidate.')
           return this.multiverse.addResyncRequest(newBlock, this.miningOfficer._canMine)
@@ -1094,7 +1094,7 @@ export class Engine {
                       .then(() => {
                         this._logger.info('synclock was set to ' + this.multiverse.getHighestBlock())
                         this.pubsub.publish('update.block.latest', { key: 'bc.block.latest', data: newBlock, force: true, multiverse: this.multiverse._chain })
-                        this.node.broadcastNewBlock(newBlock)
+                        this.node.broadcastNewBlock(newBlock, conn)
                         this._logger.debug('sync unlocked')
                         const targetHeight = this.multiverse.getLowestBlock().getHeight() - 1
                         // dont have to sync
@@ -1121,7 +1121,7 @@ export class Engine {
                   } else {
                     this._logger.info('22222222222222222222222')
                     this.pubsub.publish('update.block.latest', { key: 'bc.block.latest', data: newBlock, force: true, multiverse: this.multiverse._chain })
-                    this.node.broadcastNewBlock(newBlock)
+                    this.node.broadcastNewBlock(conn, newBlock)
                     return Promise.resolve(true)
                   }
                 })
