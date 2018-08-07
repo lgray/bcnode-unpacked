@@ -419,6 +419,7 @@ export class Engine {
       this._logger.error(errToString(err))
       this._logger.warn('no previous block found')
       if (block !== undefined && msg.force === true) {
+        await this.persistence.put('bc.block.parent', getGenesisBlock())
         await this.persistence.put('bc.block.latest', block)
         await this.persistence.put('bc.block.' + block.getHeight(), block)
         await this.persistence.putChildHeaders(block)
@@ -529,7 +530,7 @@ export class Engine {
     }
     this.node.start(nodeId).then(() => {
       // Add Event Handlers
-      this.node._p2p._es.on('putMultiverse', (msg) => {
+      this.node._tasks.on('putMultiverse', (msg) => {
         (async () => {
           await self.getMultiverseHandler(msg, msg.data)
         })().catch((err) => {
@@ -537,7 +538,7 @@ export class Engine {
         })
       })
 
-      this.node._p2p._es.on('getMultiverse', (request) => {
+      this.node._tasks.on('getMultiverse', (request) => {
         (async () => {
         // check required fields
           if (!request || request.low === undefined || request.high === undefined || request.connection === undefined) {
@@ -549,7 +550,7 @@ export class Engine {
           const low = request.low
           const high = request.high
           const msg = type + split + low + split + high
-          const results = await this.node._p2p._es.qsend(request.connection, msg)
+          const results = await this.node._p2p.qsend(request.connection, msg)
           this._logger.debug('getMultiverse request sent ' + results.length + ' destinations')
           return Promise.resolve(results)
         })().catch(err => {
@@ -557,7 +558,7 @@ export class Engine {
         })
       })
 
-      this.node._p2p._es.on('getBlockList', (request) => {
+      this.node._tasks.on('getBlockList', (request) => {
         (async () => {
         // check required fields
           if (!request || request.low === undefined || request.high === undefined || request.connection === undefined) {
@@ -569,7 +570,7 @@ export class Engine {
           const low = request.low
           const high = request.high
           const msg = type + split + low + split + high
-          const results = await this.node._p2p._es.qsend(request.connection, msg)
+          const results = await this.node._p2p.qsend(request.connection, msg)
           this._logger.debug('getBlockList request sent ' + results.length + ' destinations')
 
           return Promise.resolve(results)
@@ -578,7 +579,7 @@ export class Engine {
         })
       })
 
-      this.node._p2p._es.on('putBlockList', (msg) => {
+      this.node._tasks.on('putBlockList', (msg) => {
         self.stepSyncHandler(msg)
           .then(() => {
             self._logger.debug('stepSync complete sent')
@@ -588,7 +589,7 @@ export class Engine {
           })
       })
 
-      this.node._p2p._es.on('putBlock', (msg) => {
+      this.node._tasks.on('putBlock', (msg) => {
         self._logger.info('candidate block ' + msg.data.getHeight() + ' recieved')
         self.blockFromPeer(msg, msg.data)
       })
@@ -860,7 +861,7 @@ export class Engine {
 
     // sync is complete emit event
     if (data.low.getHeight() < 3) {
-      this.node._p2p._es.emit('syncComplete', connection)
+      this.node._tasks.emit('syncComplete', connection)
       this._stepSyncTimestamps.length = 0
       await this.persistence.put('synclock', getGenesisBlock())
       return
@@ -881,7 +882,7 @@ export class Engine {
       high: high
     }
     if (cancelSync === false) {
-      this._p2p._es.emit('getBlockList', connection)
+      this.node._tasks.emit('getBlockList', connection)
     }
   }
 
@@ -1031,18 +1032,22 @@ export class Engine {
               if (shouldResync === true) {
                 this._logger.info(newBlock.getHash() + ' <- new block: ' + newBlock.getHeight() + ' should sync request approved')
 
+                try {
+                  /// //////// MULTIVERSE PROOF //////////////
+                  this.node._tasks.emit('getMultiverse', {
+                    data: {
+                      high: newBlock.getHeight(),
+                      low: newBlock.getHeight() - 7
+                    },
+                    remoteHost: conn.remoteHost,
+                    remotePort: conn.remotePort
+                  })
+                } catch (err) {
+                  this._logger.error(err)
+                }
+
                 // note the local machine does not broadcast this block update until the multiverse has been proven
                 this.pubsub.publish('update.block.latest', { key: 'bc.block.latest', data: newBlock, force: true })
-
-                /// //////// MULTIVERSE PROOF //////////////
-                this.node._p2p._es.emit('getMultiverse', {
-                  data: {
-                    high: newBlock.getHeight(),
-                    low: newBlock.getHeight() - 7
-                  },
-                  remoteHost: conn.remoteHost,
-                  remotePort: conn.remotePort
-                })
 
                 // the above triggers for the sync
                 // mining will only remaining 'stopped' until a new block shows up
@@ -1052,7 +1057,7 @@ export class Engine {
               } else {
                 // this means the local peer has a better version of the chain and
                 // therefore pushing it to the outside peer
-                this.node._p2p._es.emit('sendBlock', {
+                this.node._tasks.emit('sendBlock', {
                   data: newBlock,
                   connection: {
                     remoteHost: conn.remoteHost,

@@ -65,6 +65,7 @@ export class PeerNode {
   _scanner: Object // eslint-disable-line no-undef
   _externalIP: string // eslint-disable-line no-undef
   _ds: Object // eslint-disable-line no-undef
+  _tasks: Object // eslint-disable-line no-undef
   _p2p: Object // eslint-disable-line no-undef
   _queue: Object // eslint-disable-line no-undef
 
@@ -74,6 +75,7 @@ export class PeerNode {
     this._blockPool = new BlockPool(engine.persistence, engine._pubsub)
     this._logger = logging.getLogger(__filename)
     this._p2p = {}
+    this._tasks = new events.EventEmitter()
     this._manager = new PeerManager(this)
     this._ds = {}
     this._queue = queue((task, cb) => {
@@ -269,10 +271,9 @@ export class PeerNode {
     const discovery = new Discovery(nodeId)
 
     this._p2p = discovery.start()
-    this._p2p._es = new events.EventEmitter()
     this._p2p.join(this._p2p.hash, this._p2p.port, () => {
 
-    this._p2p._es.on('sendBlock', (msg) => {
+    this._tasks.on('sendBlock', (msg) => {
       this._logger.info('sendBlock event triggered')
       (async () => {
         // check required fields
@@ -286,7 +287,7 @@ export class PeerNode {
 			})
     })
 
-    this._p2p._es.on('announceBlock', (block) => {
+    this._tasks.on('announceBlock', (block) => {
       this._logger.info('announceBlock <- event')
       this._p2p.qbroadcast('0008W01' + '[*]' +  block.serializeBinary())
         .then(() => {
@@ -527,7 +528,7 @@ export class PeerNode {
         const raw = new Uint8Array(rawUint.split(','))
         const block = BcBlock.deserializeBinary(raw)
 
-        this._p2p._es.emit('putBlock', {
+        this._tasks.emit('putBlock', {
           data: block,
           remoteHost: conn.remoteHost,
           remotePort: conn.remotePort
@@ -588,7 +589,7 @@ export class PeerNode {
         const raw = new Uint8Array(rawUint.split(','))
         const block = BcBlock.deserializeBinary(raw)
 
-        this._p2p._es.emit('putBlock', {
+        this._tasks.emit('putBlock', {
           data: block,
           remoteHost: conn.remoteHost,
           remotePort: conn.remotePort
@@ -616,7 +617,7 @@ export class PeerNode {
           })
 
           if (type === '0007W01') {
-            this._p2p._es.emit('putBlockList', {
+            this._tasks.emit('putBlockList', {
               data: {
                 low: sorted[sorted.length - 1], // lowest block
                 high: sorted[0] // highest block
@@ -625,7 +626,7 @@ export class PeerNode {
               remotePort: conn.remotePort
             })
           } else if (type === '0010W01') {
-            this._p2p._es.emit('putMultiverse', {
+            this._tasks.emit('putMultiverse', {
               data: sorted,
               remoteHost: conn.remoteHost,
               remotePort: conn.remotePort
@@ -758,7 +759,7 @@ export class PeerNode {
     // this.bundle.pubsub.publish('newBlock', Buffer.from(JSON.stringify(block.toObject())), () => {})
     // const raw = block.serializeBinary()
 
-    this._p2p._es.emit('announceBlock', block)
+    this._tasks.emit('announceBlock', block)
 
     // const url = `${PROTOCOL_PREFIX}/newblock`
     // this.manager.peerBookConnected.getAllArray().map(peer => {

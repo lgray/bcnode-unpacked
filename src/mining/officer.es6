@@ -109,6 +109,7 @@ export class MiningOfficer {
       try {
         const quorum = await this._persistence.get('bc.dht.quorum')
         if (parseInt(quorum, 10) < 1 && this._canMine === true) {
+          this._logger.info('peer waypoint discovery in progress')
           this._canMine = false
           return Promise.resolve(false)
         }
@@ -126,7 +127,7 @@ export class MiningOfficer {
         const parent = await this._persistence.get('bc.block.parent')
         const latest = await this._persistence.get('bc.block.latest')
         if (parent.getHash() !== latest.getPreviousHash()) {
-          this._logger.warn('rebase occured <- miner adding new depth')
+          this._logger.warn('after resync approval rovers must complete new multiverse')
           this._canMine = false
           return Promise.resolve(false)
         }
