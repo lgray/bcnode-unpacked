@@ -17,7 +17,6 @@ const PeerInfo = require('peer-info')
 const queue = require('async/queue')
 const multiaddr = require('multiaddr')
 const pull = require('pull-stream')
-const toPull = require('stream-to-pull-stream')
 const events = require('events')
 // const utp = require('utp-native')
 
@@ -343,43 +342,28 @@ export class PeerNode {
                 //const msg = '0000R01' + info.host + '*' + info.port + '*' + info.id.toString('hex')
                 const type = '0008W01'
                 const msg = type + protocolBits[type] + latestBlock.serializeBinary()
-                const { source, sink } = toPull.duplex(conn)
 
-                pull(
-                  pull.values([msg]),
-                  sink,
-                )
-
-                pull(
-                  source,
-                  pull.collect((err, data) => {
-                    debug(err)
-                    debug(data)
-                    this.peerDataHandler(conn, info, data)
-                  })
-                )
-
-                // conn.on('data', (data) => {
-                //     console.log('DATA REQUEST SIZE: ' + data.length)
-                //     if(!data && this._ds[address] !== false){
-                //          const remaining = "" + this._ds[address]
-                //          this._ds[address] = false
-                //          this.peerDataHandler(conn, info, remaining)
-                //     } else {
-                //         let chunk = data.toString()
-                //         if (chunk.length === 1382 && this._ds[address] === false) {
-                //             this._ds[address] = chunk
-                //         } else if (chunk.length === 1382 && this._ds[address] !== false) {
-                //             this._ds[address] = this._ds[address] + chunk
-                //         } else if (chunk.length !== 1382 && this._ds[address] !== false) {
-                //             const complete = "" + this._ds[address] + chunk
-                //             this._ds[address] = false
-                //             this.peerDataHandler(conn, info, complete)
-                //         } else {
-                //             this.peerDataHandler(conn, info, chunk)
-                //         }
-                //     }
-                // })
+                conn.on('data', (data) => {
+                    console.log('DATA REQUEST SIZE: ' + data.length)
+                    if(!data && this._ds[address] !== false){
+                         const remaining = "" + this._ds[address]
+                         this._ds[address] = false
+                         this.peerDataHandler(conn, info, remaining)
+                    } else {
+                        let chunk = data.toString()
+                        if (chunk.length === 1382 && this._ds[address] === false) {
+                            this._ds[address] = chunk
+                        } else if (chunk.length === 1382 && this._ds[address] !== false) {
+                            this._ds[address] = this._ds[address] + chunk
+                        } else if (chunk.length !== 1382 && this._ds[address] !== false) {
+                            const complete = "" + this._ds[address] + chunk
+                            this._ds[address] = false
+                            this.peerDataHandler(conn, info, complete)
+                        } else {
+                            this.peerDataHandler(conn, info, chunk)
+                        }
+                    }
+                })
 
                 await this._p2p.qsend(conn, msg)
 
