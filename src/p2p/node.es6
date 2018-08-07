@@ -283,14 +283,8 @@ export class PeerNode {
 
     /* eslint-disable */
     const discovery = new Discovery(nodeId)
-
     this._p2p = discovery.start()
-
-    this._logger.info(22222222222222222222222)
-
     this._p2p.join(this._p2p.hash, this._p2p.port, (data) => {
-
-    this._logger.info(22222222222222222222222)
     //const waypoint = setInterval(() => {
     //  this._p2p.announce(this._p2p.hash, this._p2p.port, function() {
     //    this._logger.info('confirmed waypoint key')
@@ -441,16 +435,79 @@ export class PeerNode {
                 console.log(data)
             })
 
+            this._engine._emitter.on('getmultiverse', (request) => {
+              // check required fields
+              if (!request || request.low === undefined || request.high === undefined || request.connection === undefined) {
+                return
+              }
+
+              const type = '0009R01' // read selective block list (multiverse)
+              const split = protocolBits[type]
+              const low = request.low
+              const high = request.high
+              const msg = type + split + low + split + high
+              this._p2p.qsend(request.connection, msg)
+                .then((res) => {
+                  if (res) {
+                    this._logger.debug(res.length + ' delivered')
+                  }
+                })
+                .catch((err) => {
+                  this._logger.error(err)
+                })
+            })
+
+          this._engine._emitter.on('putmultiverse', (msg) => {
+            this._engine.getMultiverseHandler(msg, msg.data)
+          })
+
+          this._engine._emitter.on('getblocklist', (request) => {
+            if (!request || request.low === undefined || request.high === undefined || request.connection === undefined) {
+              return
+            }
+
+            const type = '0006R01'
+            const split = protocolBits[type]
+            const low = request.low
+            const high = request.high
+            const msg = type + split + low + split + high
+            this._p2p.qsend(request.connection, msg).then((res) => {
+              if (res !== undefined && res.length > 0) {
+                return Promise.resolve(true)
+              }
+              return Promise.resolve(false)
+            })
+              .catch((err) => {
+                this._logger.error(err)
+                return Promise.resolve(false)
+              })
+          })
+
+          this._engine._emitter.on('putblockList', (msg) => {
+            this._engine.stepSyncHandler(msg)
+              .then(() => {
+                this._logger.debug('stepSync complete sent')
+              })
+              .catch((err) => {
+                this._logger.error(err)
+              })
+          })
+
+          this._engine._emitter.on('putblock', (msg) => {
+            this._logger.info('candidate block ' + msg.data.getHeight() + ' recieved')
+            this._engine.blockFromPeer(msg, msg.data)
+          })
+
             /*
              * PEER SEEDER
              */
+					this._p2p._seeder = discovery.seeder()
+					this._p2p._seeder.on('update', (data) => {
+						console.log(' ----> UPDATE ' )
+						console.log(data)
+					})
 
-      this._p2p._seeder = discovery.seeder()
-      this._p2p._seeder.on('update', (data) => {
-        console.log(' ----> UPDATE ' )
-      })
-
-            this._p2p._seeder.on('peer', (peer) => {
+          this._p2p._seeder.on('peer', (peer) => {
 
           if(this._seededPeers.get(peer)) {
              return
@@ -484,7 +541,7 @@ export class PeerNode {
                          console.log("local port: " + this._p2p.port)
 
                          //this._p2p._discovery.dht._addPeer(obj, toBuffer(this._p2p.hash), { host: obj.host, port: obj.port })
-                         this._p2p._discovery.dht.emit('announce', obj, toBuffer(this._p2p.hash), { host: obj.host, port: obj.port })
+                         //this._p2p._discovery.dht.emit('announce', obj, toBuffer(this._p2p.hash), { host: obj.host, port: obj.port })
 
                          this._p2p._discovery.emit('peer', name, obj, 'utp')
 
@@ -510,7 +567,7 @@ export class PeerNode {
 
             })
 
-      this._p2p._seeder.start()
+      			this._p2p._seeder.start()
             this._manager._p2p = this._p2p
             this._engine._p2p = this._p2p
 

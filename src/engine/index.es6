@@ -47,7 +47,6 @@ const { Block } = require('../protos/core_pb')
 const { errToString } = require('../helper/error')
 const { getVersion } = require('../helper/version')
 const { MiningOfficer } = require('../mining/officer')
-const { protocolBits } = require('../engine/helper')
 const ts = require('../utils/time').default // ES6 default export
 
 const DATA_DIR = process.env.BC_DATA_DIR || config.persistence.path
@@ -508,7 +507,6 @@ export class Engine {
   async startNode () {
     this._logger.info('starting P2P node')
     let nodeId
-    this._logger.info('3333333333333333333333333333333')
     try {
       const now = Math.floor(Date.now() * 0.001)
       const nodeObjectData = await this.persistence.get('bc.dht.id')
@@ -528,70 +526,6 @@ export class Engine {
       this._logger.info('asssigned node key <- ' + nodeId)
       await this.persistence.put('bc.dht.id', JSON.stringify({ id: nodeId, timestamp: Math.floor(Date.now() * 0.001) }))
     }
-
-    this._emitter.on('putmultiverse', (msg) => {
-      (async () => {
-        await this.getMultiverseHandler(msg, msg.data)
-      })().catch((err) => {
-        this._logger.error(err)
-      })
-    })
-
-    this._emitter.on('getmultiverse', (request) => {
-      (async () => {
-        // check required fields
-        if (!request || request.low === undefined || request.high === undefined || request.connection === undefined) {
-          return
-        }
-
-        const type = '0009R01' // read selective block list (multiverse)
-        const split = protocolBits[type]
-        const low = request.low
-        const high = request.high
-        const msg = type + split + low + split + high
-        const results = await this.node._p2p.qsend(request.connection, msg)
-        this._logger.debug('getMultiverse request sent ' + results.length + ' destinations')
-        return Promise.resolve(results)
-      })().catch(err => {
-        this._logger.error(err)
-      })
-    })
-
-    this._emitter.on('getblockList', (request) => {
-      (async () => {
-        // check required fields
-        if (!request || request.low === undefined || request.high === undefined || request.connection === undefined) {
-          return
-        }
-
-        const type = '0006R01'
-        const split = protocolBits[type]
-        const low = request.low
-        const high = request.high
-        const msg = type + split + low + split + high
-        const results = await this.node._p2p.qsend(request.connection, msg)
-        this._logger.debug('getBlockList request sent ' + results.length + ' destinations')
-
-        return Promise.resolve(results)
-      })().catch(err => {
-        this._logger.error(err)
-      })
-    })
-
-    this._emitter.on('putblockList', (msg) => {
-      this.stepSyncHandler(msg)
-        .then(() => {
-          this._logger.debug('stepSync complete sent')
-        })
-        .catch((err) => {
-          this._logger.error(err)
-        })
-    })
-
-    this._emitter.on('putblock', (msg) => {
-      this._logger.info('candidate block ' + msg.data.getHeight() + ' recieved')
-      this.blockFromPeer(msg, msg.data)
-    })
 
     this._emitter.on('peerConnected', ({ peer }) => {
       if (this._server) {
@@ -1069,20 +1003,20 @@ export class Engine {
     }
   }
 
-  async getMultiverseHandler (conn: Object, newBlocks: BcBlock[]): Promise<?boolean> {
+  getMultiverseHandler (conn: Object, newBlocks: BcBlock[]): Promise<?boolean> {
     // get the lowest of the current multiverse
     this._logger.info('getMultiverse <- event')
     try {
       this.miningOfficer.stopMining()
       this._logger.info('end mining')
-      return Promise.resolve(true)
+      return true
     } catch (e) {
       this._logger.error(e)
     }
 
     if (newBlocks === undefined || newBlocks.length < 7) {
       this._logger.warn('incomplete multiverse proof')
-      return Promise.resolve(true)
+      return true
     }
 
     const sorted = newBlocks.sort((a, b) => {
@@ -1144,7 +1078,7 @@ export class Engine {
                           return Promise.resolve(true)
                         }
 
-                        this.node._p2p.emit('getBlockList', {
+                        this.node._p2p.emit('getblocklist', {
                           low: newBlock.getHeight() - 500,
                           high: newBlock.getHeight(),
                           connection: conn
