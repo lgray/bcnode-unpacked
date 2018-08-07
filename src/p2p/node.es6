@@ -41,7 +41,7 @@ const { PROTOCOL_PREFIX, NETWORK_ID } = require('./protocol/version')
 const LOW_HEALTH_NET = process.env.LOW_HEALTH_NET === 'true'
 
 const { range, max } = require('ramda')
-const { protocolBits } = require('../engine/helper')
+const { protocolBits, anyDns } = require('../engine/helper')
 // const waterfall = require('async/waterfall')
 // const { toObject } = require('../helper/debug')
 // const { validateBlockSequence } = require('../bc/validation')
@@ -285,6 +285,7 @@ export class PeerNode {
     const discovery = new Discovery(nodeId)
     this._p2p = discovery.start()
     this._p2p.join(this._p2p.hash, this._p2p.port, (data) => {
+		this._p2p.ip = await anyDns()
     //const waypoint = setInterval(() => {
     //  this._p2p.announce(this._p2p.hash, this._p2p.port, function() {
     //    this._logger.info('confirmed waypoint key')
@@ -542,6 +543,8 @@ export class PeerNode {
                      channel: Buffer.from(channel),
                  }
                  obj.id = obj.host + ':' + obj.port
+
+					if(this._p2p.ip === obj.host) return
 
          // the host name as described by external peers
          // first one is always the immediate response to current peer
