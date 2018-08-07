@@ -92,10 +92,11 @@ export class PeerNode {
     }
     this._manager = new PeerManager(this)
     this._ds = {}
-	  this._possibleHostname = ""
+    this._possibleHostname = ''
     this._seededPeers = LRUCache({
       max: 1000
     })
+    /* eslint-disable */
     this._queue = queue((task, cb) => {
       if (task.constructor === Array) {
         this._engine.persistence.getBulk(task).then((res) => {
@@ -113,7 +114,10 @@ export class PeerNode {
           })
       }
     })
-
+    (async() => {
+      this._possibleHostname = await anyDns()
+    })()
+		/* eslint-enable */
     if (config.p2p.stats.enabled) {
       this._interval = setInterval(() => {
         debug(`Peers count ${this.manager.peerBookConnected.getPeersCount()}`)
@@ -301,7 +305,6 @@ export class PeerNode {
     //  })
     //}, 15000)
 
-		this._possibleHostname = await anyDns()
     this._engine._emitter.on('sendblock', (msg) => {
       this._logger.info('sendBlock event triggered')
         if(!msg || msg.data === undefined || msg.connection === undefined){
@@ -627,7 +630,7 @@ export class PeerNode {
               const msg = [outboundType, res.map((r) => {
                 return r.serializeBinary()
               })]
-              pull(pull.values(msg), conn, pull.sink)
+              pull(pull.values(msg), conn)
             }
           })
         } catch (err) {
