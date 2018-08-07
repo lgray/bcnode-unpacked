@@ -142,6 +142,9 @@ Discovery.prototype = {
 
     this.dht.qbroadcast = async (msg, filters) => {
       const warnings = []
+      if (filters === undefined) {
+        filters = []
+      }
       for (const conn of this.dht.connections) {
         const idr = conn.remoteHost || conn.host
         if (filters.indexOf(idr) < 0) {
