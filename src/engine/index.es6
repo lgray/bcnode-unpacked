@@ -506,9 +506,9 @@ export class Engine {
    * Start Server
    */
   async startNode () {
-    const self = this
     this._logger.info('starting P2P node')
     let nodeId
+    this._logger.info('3333333333333333333333333333333')
     try {
       const now = Math.floor(Date.now() * 0.001)
       const nodeObjectData = await this.persistence.get('bc.dht.id')
@@ -528,87 +528,83 @@ export class Engine {
       this._logger.info('asssigned node key <- ' + nodeId)
       await this.persistence.put('bc.dht.id', JSON.stringify({ id: nodeId, timestamp: Math.floor(Date.now() * 0.001) }))
     }
-    this.node.start(nodeId).then(() => {
-      // Add Event Handlers
-      this.node._tasks.on('putMultiverse', (msg) => {
-        (async () => {
-          await self.getMultiverseHandler(msg, msg.data)
-        })().catch((err) => {
-          self._logger.error(err)
-        })
-      })
 
-      this.node._tasks.on('getMultiverse', (request) => {
-        (async () => {
-        // check required fields
-          if (!request || request.low === undefined || request.high === undefined || request.connection === undefined) {
-            return
-          }
-
-          const type = '0009R01' // read selective block list (multiverse)
-          const split = protocolBits[type]
-          const low = request.low
-          const high = request.high
-          const msg = type + split + low + split + high
-          const results = await this.node._p2p.qsend(request.connection, msg)
-          this._logger.debug('getMultiverse request sent ' + results.length + ' destinations')
-          return Promise.resolve(results)
-        })().catch(err => {
-          this._logger.error(err)
-        })
-      })
-
-      this.node._tasks.on('getBlockList', (request) => {
-        (async () => {
-        // check required fields
-          if (!request || request.low === undefined || request.high === undefined || request.connection === undefined) {
-            return
-          }
-
-          const type = '0006R01'
-          const split = protocolBits[type]
-          const low = request.low
-          const high = request.high
-          const msg = type + split + low + split + high
-          const results = await this.node._p2p.qsend(request.connection, msg)
-          this._logger.debug('getBlockList request sent ' + results.length + ' destinations')
-
-          return Promise.resolve(results)
-        })().catch(err => {
-          this._logger.error(err)
-        })
-      })
-
-      this.node._tasks.on('putBlockList', (msg) => {
-        self.stepSyncHandler(msg)
-          .then(() => {
-            self._logger.debug('stepSync complete sent')
-          })
-          .catch((err) => {
-            self._logger.error(err)
-          })
-      })
-
-      this.node._tasks.on('putBlock', (msg) => {
-        self._logger.info('candidate block ' + msg.data.getHeight() + ' recieved')
-        self.blockFromPeer(msg, msg.data)
-      })
-
-      this._emitter.on('peerConnected', ({ peer }) => {
-        if (this._server) {
-          this._server._wsBroadcastPeerConnected(peer)
-        }
-      })
-
-      this._emitter.on('peerDisconnected', ({ peer }) => {
-        if (this._server) {
-          this._server._wsBroadcastPeerDisonnected(peer)
-        }
-      })
-    })
-      .catch((err) => {
+    this._emitter.on('putmultiverse', (msg) => {
+      (async () => {
+        await this.getMultiverseHandler(msg, msg.data)
+      })().catch((err) => {
         this._logger.error(err)
       })
+    })
+
+    this._emitter.on('getmultiverse', (request) => {
+      (async () => {
+        // check required fields
+        if (!request || request.low === undefined || request.high === undefined || request.connection === undefined) {
+          return
+        }
+
+        const type = '0009R01' // read selective block list (multiverse)
+        const split = protocolBits[type]
+        const low = request.low
+        const high = request.high
+        const msg = type + split + low + split + high
+        const results = await this.node._p2p.qsend(request.connection, msg)
+        this._logger.debug('getMultiverse request sent ' + results.length + ' destinations')
+        return Promise.resolve(results)
+      })().catch(err => {
+        this._logger.error(err)
+      })
+    })
+
+    this._emitter.on('getblockList', (request) => {
+      (async () => {
+        // check required fields
+        if (!request || request.low === undefined || request.high === undefined || request.connection === undefined) {
+          return
+        }
+
+        const type = '0006R01'
+        const split = protocolBits[type]
+        const low = request.low
+        const high = request.high
+        const msg = type + split + low + split + high
+        const results = await this.node._p2p.qsend(request.connection, msg)
+        this._logger.debug('getBlockList request sent ' + results.length + ' destinations')
+
+        return Promise.resolve(results)
+      })().catch(err => {
+        this._logger.error(err)
+      })
+    })
+
+    this._emitter.on('putblockList', (msg) => {
+      this.stepSyncHandler(msg)
+        .then(() => {
+          this._logger.debug('stepSync complete sent')
+        })
+        .catch((err) => {
+          this._logger.error(err)
+        })
+    })
+
+    this._emitter.on('putblock', (msg) => {
+      this._logger.info('candidate block ' + msg.data.getHeight() + ' recieved')
+      this.blockFromPeer(msg, msg.data)
+    })
+
+    this._emitter.on('peerConnected', ({ peer }) => {
+      if (this._server) {
+        this._server._wsBroadcastPeerConnected(peer)
+      }
+    })
+
+    this._emitter.on('peerDisconnected', ({ peer }) => {
+      if (this._server) {
+        this._server._wsBroadcastPeerDisonnected(peer)
+      }
+    })
+    return this.node.start(nodeId)
   }
 
   /**
@@ -855,13 +851,12 @@ export class Engine {
     const data = msg.data
     const connection = {
       remoteHost: msg.remoteHost,
-      remotePort: msg.remotePort,
-      id: msg.id
+      remotePort: msg.remotePort
     }
 
     // sync is complete emit event
     if (data.low.getHeight() < 3) {
-      this.node._tasks.emit('syncComplete', connection)
+      this._emitter.emit('synccomplete', connection)
       this._stepSyncTimestamps.length = 0
       await this.persistence.put('synclock', getGenesisBlock())
       return
@@ -882,7 +877,7 @@ export class Engine {
       high: high
     }
     if (cancelSync === false) {
-      this.node._tasks.emit('getBlockList', connection)
+      this._emitter.emit('getblockList', connection)
     }
   }
 
@@ -1034,7 +1029,7 @@ export class Engine {
 
                 try {
                   /// //////// MULTIVERSE PROOF //////////////
-                  this.node._tasks.emit('getMultiverse', {
+                  this._emitter.emit('getmultiverse', {
                     data: {
                       high: newBlock.getHeight(),
                       low: newBlock.getHeight() - 7
@@ -1057,7 +1052,7 @@ export class Engine {
               } else {
                 // this means the local peer has a better version of the chain and
                 // therefore pushing it to the outside peer
-                this.node._tasks.emit('sendBlock', {
+                this._emitter.emit('sendblock', {
                   data: newBlock,
                   connection: {
                     remoteHost: conn.remoteHost,

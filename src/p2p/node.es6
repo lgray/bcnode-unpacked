@@ -20,6 +20,7 @@ const pull = require('pull-stream')
 const events = require('events')
 // const utp = require('utp-native')
 
+const LRUCache = require('lru-cache')
 const debug = require('debug')('bcnode:p2p:node')
 const { config } = require('../config')
 const { getVersion } = require('../helper/version')
@@ -44,6 +45,13 @@ const { protocolBits } = require('../engine/helper')
 // const { validateBlockSequence } = require('../bc/validation')
 
 
+function toBuffer (str) {
+  if (Buffer.isBuffer(str)) return str
+  if (ArrayBuffer.isView(str)) return Buffer.from(str.buffer, str.byteOffset, str.byteLength)
+  if (typeof str === 'string') return Buffer.from(str, 'hex')
+  throw new Error('Pass a buffer or a string')
+}
+
 process.on('uncaughtError', (err) => {
   /* eslint-disable */
   console.trace(err)
@@ -59,25 +67,31 @@ export class PeerNode {
   _bundle: Bundle // eslint-disable-line no-undef
   _manager: PeerManager // eslint-disable-line no-undef
   _peer: PeerInfo // eslint-disable-line no-undef
+  _seededPeers: Object // eslint-disable-line no-undef
   _multiverse: Multiverse // eslint-disable-line no-undef
   _blockPool: BlockPool // eslint-disable-line no-undef
   _identity: string // eslint-disable-line no-undef
   _scanner: Object // eslint-disable-line no-undef
   _externalIP: string // eslint-disable-line no-undef
   _ds: Object // eslint-disable-line no-undef
-  _tasks: Object // eslint-disable-line no-undef
   _p2p: Object // eslint-disable-line no-undef
   _queue: Object // eslint-disable-line no-undef
+  _emitter: Object // eslint-disable-line no-undef
 
   constructor (engine: Engine) {
     this._engine = engine
+    this._emitter = engine._emitter
     this._multiverse = new Multiverse(engine.persistence) /// !important this is a (nonselective) multiverse
     this._blockPool = new BlockPool(engine.persistence, engine._pubsub)
     this._logger = logging.getLogger(__filename)
-    this._p2p = {}
-    this._tasks = new events.EventEmitter()
+    this._p2p = {
+      givenHostName: false
+    }
     this._manager = new PeerManager(this)
     this._ds = {}
+    this._seededPeers = LRUCache({
+      max: 1000
+    })
     this._queue = queue((task, cb) => {
       if (task.constructor === Array) {
         this._engine.persistence.getBulk(task).then((res) => {
@@ -271,9 +285,19 @@ export class PeerNode {
     const discovery = new Discovery(nodeId)
 
     this._p2p = discovery.start()
-    this._p2p.join(this._p2p.hash, this._p2p.port, () => {
 
-    this._tasks.on('sendBlock', (msg) => {
+    this._logger.info(22222222222222222222222)
+
+    this._p2p.join(this._p2p.hash, this._p2p.port, (data) => {
+
+    this._logger.info(22222222222222222222222)
+    //const waypoint = setInterval(() => {
+    //  this._p2p.announce(this._p2p.hash, this._p2p.port, function() {
+    //    this._logger.info('confirmed waypoint key')
+    //  })
+    //}, 15000)
+
+    this._engine._emitter.on('sendblock', (msg) => {
       this._logger.info('sendBlock event triggered')
       (async () => {
         // check required fields
@@ -287,8 +311,8 @@ export class PeerNode {
 			})
     })
 
-    this._tasks.on('announceBlock', (block) => {
-      this._logger.info('announceBlock <- event')
+    this._engine._emitter.on('announceblock', (block) => {
+      this._logger.info('announceblock <- event')
       this._p2p.qbroadcast('0008W01' + '[*]' +  block.serializeBinary())
         .then(() => {
         this._logger.info('block announced!')
@@ -320,6 +344,7 @@ export class PeerNode {
 					await this._engine.persistence.put('bc.dht.quorum', "1")
 				}
 
+        //https://github.com/webtorrent/bittorrent-dht/blob/master/client.js#L579r
 				//const msg = '0000R01' + info.host + '*' + info.port + '*' + info.id.toString('hex')
 				const type = '0008W01'
 				const msg = type + protocolBits[type] + latestBlock.serializeBinary()
@@ -412,25 +437,27 @@ export class PeerNode {
 			 console.log("^^^^^^^^^^^^^^^^^^^^^^^^")
 			})
 
+			this._p2p._discovery.on('peer', (data) => {
+				console.log(data)
+			})
+
 			/*
 			 * PEER SEEDER
 			 */
 
-			this._p2p._seeder = discovery.seeder()
-
-			this._p2p._seeder.on('update', (data) => {
-				console.log(' ----> UPDATE ' )
-			})
-			this._p2p._discovery.on('peer', (data) => {
-
-				console.log('333333333333')
-				console.log(data)
-
-			})
+      this._p2p._seeder = discovery.seeder()
+      this._p2p._seeder.on('update', (data) => {
+        console.log(' ----> UPDATE ' )
+      })
 
 			this._p2p._seeder.on('peer', (peer) => {
 
-				 console.log('--------------> PEER FROM SEEDER ' )
+          if(this._seededPeers.get(peer)) {
+             return
+          }
+          this._seededPeers.set(peer, 1)
+
+
 				 const channel = Buffer.from(this._p2p.hash)
 				 const url = Url.parse(peer)
 				 const h = url.href.split(':')
@@ -439,10 +466,14 @@ export class PeerNode {
 					 host: h[0],
 					 port: Number(h[1]) + 1, // seeder broadcasts listen on one port below the peers address
 					 retries: 0,
-					 channel: channel,
+					 channel: Buffer.from(channel),
 				 }
 				 obj.id = obj.host + ':' + obj.port
 
+         // the host name as described by external peers
+         // first one is always the immediate response to current peer
+
+				 console.log('--------------> PEER FROM SEEDER ' )
 				 // add seen protection
 
 				 try {
@@ -452,7 +483,10 @@ export class PeerNode {
 						 console.log("local hash: " + this._p2p.hash)
 						 console.log("local port: " + this._p2p.port)
 
-						 this._p2p._discovery.emit('peer', name, obj, 'dht')
+						 //this._p2p._discovery.dht._addPeer(obj, toBuffer(this._p2p.hash), { host: obj.host, port: obj.port })
+						 this._p2p._discovery.dht.emit('announce', obj, toBuffer(this._p2p.hash), { host: obj.host, port: obj.port })
+
+						 this._p2p._discovery.emit('peer', name, obj, 'utp')
 
 						 //conn.once('connection', (c) => {
 						 //  this._p2p._onconnection(c, 'utp')
@@ -473,13 +507,21 @@ export class PeerNode {
 					 // 	console.log('connected peers: ' + this._p2p.totalConnections)
 					 //})
 
+
 			})
 
-
-			this._p2p._seeder.start()
+      this._p2p._seeder.start()
 			this._manager._p2p = this._p2p
 			this._engine._p2p = this._p2p
 
+    console.log(this._p2p.hash)
+    console.log(this._p2p.hash)
+    console.log(this._p2p.hash)
+    console.log(this._p2p.hash)
+    console.log(this._p2p.hash)
+    console.log(this._p2p.hash)
+
+      this._logger.info('joined waypoint table')
 			setInterval(() => {
 				this._logger.info('active waypoints:  ' + this._p2p.totalConnections)
 			}, 5000)
@@ -488,9 +530,8 @@ export class PeerNode {
 				this._p2p._seeder.complete()
 			}, 10000)
 
-					console.log('joined channel')
-			})
-			return Promise.resolve(true)
+   })
+	 return Promise.resolve(true)
 			/* eslint-enable */
   }
 
@@ -528,7 +569,7 @@ export class PeerNode {
         const raw = new Uint8Array(rawUint.split(','))
         const block = BcBlock.deserializeBinary(raw)
 
-        this._tasks.emit('putBlock', {
+        this._engine._emitter.emit('putblock', {
           data: block,
           remoteHost: conn.remoteHost,
           remotePort: conn.remotePort
@@ -589,7 +630,7 @@ export class PeerNode {
         const raw = new Uint8Array(rawUint.split(','))
         const block = BcBlock.deserializeBinary(raw)
 
-        this._tasks.emit('putBlock', {
+        this._engine._emitter.emit('putblock', {
           data: block,
           remoteHost: conn.remoteHost,
           remotePort: conn.remotePort
@@ -617,7 +658,7 @@ export class PeerNode {
           })
 
           if (type === '0007W01') {
-            this._tasks.emit('putBlockList', {
+            this._engine._emitter.emit('putblockList', {
               data: {
                 low: sorted[sorted.length - 1], // lowest block
                 high: sorted[0] // highest block
@@ -626,7 +667,7 @@ export class PeerNode {
               remotePort: conn.remotePort
             })
           } else if (type === '0010W01') {
-            this._tasks.emit('putMultiverse', {
+            this._engine._emitter.emit('putmultiverse', {
               data: sorted,
               remoteHost: conn.remoteHost,
               remotePort: conn.remotePort
@@ -759,7 +800,7 @@ export class PeerNode {
     // this.bundle.pubsub.publish('newBlock', Buffer.from(JSON.stringify(block.toObject())), () => {})
     // const raw = block.serializeBinary()
 
-    this._tasks.emit('announceBlock', block)
+    this._engine._emitter.emit('announceblock', block)
 
     // const url = `${PROTOCOL_PREFIX}/newblock`
     // this.manager.peerBookConnected.getAllArray().map(peer => {

@@ -13,6 +13,13 @@ const logging = require('../logger')
 //  return avon.sumBuffer(Buffer.from(input), avon.ALGORITHMS.B).toString('hex').slice(64, 128)
 // }
 
+// function toBuffer (str) {
+//  if (Buffer.isBuffer(str)) return str
+//  if (ArrayBuffer.isView(str)) return Buffer.from(str.buffer, str.byteOffset, str.byteLength)
+//  if (typeof str === 'string') return Buffer.from(str, 'hex')
+//  throw new Error('Pass a buffer or a string')
+// }
+
 function random (range) {
   return Math.floor(Math.random() * range)
 }
@@ -27,18 +34,19 @@ function Discovery (nodeId) {
   const seederPort = 16060
   const port = 16061
   this.options = {
-    // id: nodeId,
-    // nodeId: nodeId,
+    id: nodeId,
+    nodeId: nodeId,
     maxConnections: 126,
     port: port,
-    tcp: false,
+    // tcp: false,
     utp: true,
     dns: false,
     dht: {
       // nodeId: nodeId,
       bootstrap: bootstrap,
       interval: 40000 + random(1000),
-      maxConnections: 66
+      maxConnections: 126,
+      concurrency: 80
     }
   }
   this.streamOptions = {
@@ -48,7 +56,7 @@ function Discovery (nodeId) {
     announce: seeds
   }
   this.port = port
-  this.seedPort = port
+  this.seederPort = seederPort
   this.nodeId = nodeId
   this._logger = logging.getLogger(__filename)
   this._logger.info('assigned edge <- ' + hash)
@@ -94,7 +102,7 @@ Discovery.prototype = {
         obj.id = randomId()
       }
       this.dht._discovery.dht.addNode(obj)
-      this.dht._discovery.dht.once('node', done)
+      // this.dht._discovery.dht.once('node', done)
     }
 
     this.dht.getPeerByHost = (query) => {
@@ -142,7 +150,7 @@ Discovery.prototype = {
       }
       return warnings
     }
-
+    this._logger.info(11111111111111111111111111111)
     return this.dht
   },
 

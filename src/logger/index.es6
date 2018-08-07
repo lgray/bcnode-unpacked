@@ -31,7 +31,6 @@ const formatTemplate = options => {
 
   return `${ts}${level}\t${msg} ${meta}`
 }
-
 const logger = new winston.Logger({
   transports: [
     // Console
