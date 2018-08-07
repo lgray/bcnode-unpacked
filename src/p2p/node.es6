@@ -18,9 +18,11 @@ const queue = require('async/queue')
 const multiaddr = require('multiaddr')
 const pull = require('pull-stream')
 const events = require('events')
+const toPull = require('stream-to-pull-stream')
 // const utp = require('utp-native')
 
 const LRUCache = require('lru-cache')
+const zlib = require('zlib')
 const debug = require('debug')('bcnode:p2p:node')
 const { config } = require('../config')
 const { getVersion } = require('../helper/version')
@@ -365,6 +367,7 @@ export class PeerNode {
                     }
                 })
 
+
                 await this._p2p.qsend(conn, msg)
 
       })().catch(err => {
@@ -458,10 +461,13 @@ export class PeerNode {
             })
 
           this._engine._emitter.on('putmultiverse', (msg) => {
+            this._logger.info('getblocklist event requests')
             this._engine.getMultiverseHandler(msg, msg.data)
           })
 
           this._engine._emitter.on('getblocklist', (request) => {
+
+            this._logger.info('getblocklist event requests')
             if (!request || request.low === undefined || request.high === undefined || request.connection === undefined) {
               return
             }
@@ -571,12 +577,6 @@ export class PeerNode {
             this._manager._p2p = this._p2p
             this._engine._p2p = this._p2p
 
-    console.log(this._p2p.hash)
-    console.log(this._p2p.hash)
-    console.log(this._p2p.hash)
-    console.log(this._p2p.hash)
-    console.log(this._p2p.hash)
-    console.log(this._p2p.hash)
 
       this._logger.info('joined waypoint table')
             setInterval(() => {
