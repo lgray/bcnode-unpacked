@@ -540,6 +540,8 @@ export function prepareNewBlock (currentTimestamp: number, lastPreviousBlock: Bc
   const newChainRoot = getChildrenRootHash(blockHashes)
   const newBlockCount = getNewBlockCount(lastPreviousBlock.getBlockchainHeaders(), childBlockHeaders)
 
+  logger.info('number of new blocks: ' + newBlockCount)
+
   const preExpDiff = getNewPreExpDifficulty(
     currentTimestamp,
     lastPreviousBlock,

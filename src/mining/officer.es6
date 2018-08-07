@@ -107,13 +107,33 @@ export class MiningOfficer {
 
     if (this._canMine === true) {
       try {
-        const quorum = this._persistence.get('bc.dht.quorum')
+        const quorum = await this._persistence.get('bc.dht.quorum')
         if (parseInt(quorum, 10) < 1 && this._canMine === true) {
           this._canMine = false
+          return Promise.resolve(false)
         }
       } catch (err) {
         this._canMine = false
         this._logger.error('quorum state is not persisted on disk')
+        this._logger.error(err)
+        return Promise.reject(new Error('critical error -> restart application'))
+      }
+    }
+
+    // make sure the miner has at least two blocks of the depth
+    if (this._canMine === true) {
+      try {
+        const parent = await this._persistence.get('bc.block.parent')
+        const latest = await this._persistence.get('bc.block.latest')
+        if (parent.getHash() !== latest.getPreviousHash()) {
+          this._logger.warn('rebase occured <- miner adding new depth')
+          this._canMine = false
+          return Promise.resolve(false)
+        }
+      } catch (err) {
+        this._canMine = false
+        this._logger.error('unable to assert parent block of highest block')
+        return Promise.reject(new Error('crtical error -> restart application'))
       }
     }
 
@@ -352,7 +372,7 @@ export class MiningOfficer {
 
   stopMining (): bool {
     debug('stop mining')
-    this._logger.info('mining rebase pending')
+    this._logger.info('mining rebase approved')
 
     const process = this._workerProcess
     if (!process) {
@@ -468,7 +488,9 @@ export class MiningOfficer {
         }
         return 0
       })
+
       this._logger.info('stale branch blocks: ' + uniqueBlocks.length)
+
       if (uniqueBlocks.length < 1) {
         this._logger.info(uniqueBlocks.length + ' state changes ')
         return Promise.resolve(false)

@@ -205,6 +205,7 @@ export class Engine {
         await this.multiverse.addNextBlock(latestBlock)
         await this.persistence.put('synclock', newGenesisBlock)
         await this.persistence.put('bc.block.oldest', newGenesisBlock)
+        await this.persistence.put('bc.block.parent', newGenesisBlock)
         await this.persistence.get('bc.block.1')
         await this.persistence.put('bc.dht.quorum', '0')
         this._logger.info('highest block height on disk ' + latestBlock.getHeight())
@@ -213,6 +214,7 @@ export class Engine {
           await this.persistence.put('synclock', newGenesisBlock)
           await this.persistence.put('bc.block.1', newGenesisBlock)
           await this.persistence.put('bc.block.latest', newGenesisBlock)
+          await this.persistence.put('bc.block.parent', newGenesisBlock)
           await this.persistence.put('bc.block.oldest', newGenesisBlock)
           await this.persistence.put('bc.block.checkpoint', newGenesisBlock)
           await this.persistence.put('bc.dht.quorum', '0')
@@ -274,12 +276,12 @@ export class Engine {
               this._logger.info(`latest block ${msg.data.getHeight()} has been updated`)
             } else {
               // this.miningOfficer.rebaseMiner()
-              //  .then((state) => {
-              //    this._logger.info(`latest block ${msg.data.getHeight()} has been updated`)
-              //  })
-              //  .catch((err) => {
-              //    this._logger.error(`error occurred during updateLatestAndStore(), reason: ${err.message}`)
-              //  })
+              // .then((state) => {
+              //   this._logger.info(`latest block ${msg.data.getHeight()} has been updated`)
+              // })
+              // .catch((err) => {
+              //   this._logger.error(`error occurred during updateLatestAndStore(), reason: ${err.message}`)
+              // })
             }
           })
           .catch((err) => {
@@ -376,10 +378,12 @@ export class Engine {
       const previousLatest = await this.persistence.get('bc.block.latest')
 
       if (previousLatest.getHash() === block.getPreviousHash()) {
+        await this.persistence.put('bc.block.parent', previousLatest)
         await this.persistence.put('bc.block.latest', block)
         await this.persistence.put('bc.block.' + block.getHeight(), block)
         await this.persistence.putChildHeaders(block)
       } else if (msg.force === true || previousLatest.getHeight() === 1) {
+        await this.persistence.put('bc.block.parent', previousLatest)
         await this.persistence.put('bc.block.latest', block)
         await this.persistence.put('bc.block.' + block.getHeight(), block)
         await this.persistence.putChildHeaders(block)
@@ -401,6 +405,7 @@ export class Engine {
       if (msg.multiverse !== undefined) {
         while (msg.multiverse.length > 0) {
           const b = msg.multiverse.pop()
+          // strict local only write of genesis block
           if (b.getHeight() > 1) {
             await this.persistence.put('bc.block.' + b.getHeight(), b)
             await this.persistence.putChildHeaders(b)
@@ -509,7 +514,7 @@ export class Engine {
       const nodeObject = JSON.parse(nodeObjectData)
       nodeId = nodeObject.id
       const nodeTimestamp = nodeObject.timestamp
-      // if the key is more than 1 weeks old reset it
+      // if the key is more than 1 week old reset it
       if (nodeTimestamp + 604800 < now) {
         this._logger.warn('key needs to be set')
         nodeId = crypto.createHash('sha1').update(crypto.randomBytes(32).toString('hex')).digest('hex')

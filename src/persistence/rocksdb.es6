@@ -378,7 +378,10 @@ export default class PersistenceRocksDb {
           }
           return Promise.resolve(true)
         }))
-    ).then(() => {
+    ).then((c) => {
+      if (c !== undefined) {
+        this._logger.info('synchronized child headers: ' + c.length)
+      }
       return (async () => {
         const currentLatest = await Promise.all(Object.keys(table).map((chain) => {
           return this.get(chain + '.block.latest')
