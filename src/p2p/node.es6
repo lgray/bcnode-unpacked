@@ -346,32 +346,41 @@ export class PeerNode {
 
         //https://github.com/webtorrent/bittorrent-dht/blob/master/client.js#L579r
 				//const msg = '0000R01' + info.host + '*' + info.port + '*' + info.id.toString('hex')
-				const type = '0008W01'
-				const msg = type + protocolBits[type] + latestBlock.serializeBinary()
+				//const type = '0008W01'
+				const msg = ['0008W01',latestBlock.serializeBinary()]
 
-				conn.on('data', (data) => {
-					console.log('DATA REQUEST SIZE: ' + data.length)
-					if(!data && this._ds[address] !== false){
-						 const remaining = "" + this._ds[address]
-						 this._ds[address] = false
-						 this.peerDataHandler(conn, info, remaining)
-					} else {
-						let chunk = data.toString()
-						if (chunk.length === 1382 && this._ds[address] === false) {
-							this._ds[address] = chunk
-						} else if (chunk.length === 1382 && this._ds[address] !== false) {
-							this._ds[address] = this._ds[address] + chunk
-						} else if (chunk.length !== 1382 && this._ds[address] !== false) {
-							const complete = "" + this._ds[address] + chunk
-							this._ds[address] = false
-							this.peerDataHandler(conn, info, complete)
-						} else {
-							this.peerDataHandler(conn, info, chunk)
-						}
-					}
-				})
+        pull(pull.values(msg), conn)
 
-				await this._p2p.qsend(conn, msg)
+        pull(
+          conn,
+          pull.collect((err, data) => {
+				     this.peerDataHandler(conn, info, data)
+          })
+        )
+
+				//conn.on('data', (data) => {
+				//	console.log('DATA REQUEST SIZE: ' + data.length)
+				//	if(!data && this._ds[address] !== false){
+				//		 const remaining = "" + this._ds[address]
+				//		 this._ds[address] = false
+				//		 this.peerDataHandler(conn, info, remaining)
+				//	} else {
+				//		let chunk = data.toString()
+				//		if (chunk.length === 1382 && this._ds[address] === false) {
+				//			this._ds[address] = chunk
+				//		} else if (chunk.length === 1382 && this._ds[address] !== false) {
+				//			this._ds[address] = this._ds[address] + chunk
+				//		} else if (chunk.length !== 1382 && this._ds[address] !== false) {
+				//			const complete = "" + this._ds[address] + chunk
+				//			this._ds[address] = false
+				//			this.peerDataHandler(conn, info, complete)
+				//		} else {
+				//			this.peerDataHandler(conn, info, chunk)
+				//		}
+				//	}
+				//})
+
+				//await this._p2p.qsend(conn, msg)
 
       })().catch(err => {
 						this._logger.error(err);
@@ -452,11 +461,11 @@ export class PeerNode {
 
 			this._p2p._seeder.on('peer', (peer) => {
 
+          let makeConnection = true
           if(this._seededPeers.get(peer)) {
              return
           }
           this._seededPeers.set(peer, 1)
-
 
 				 const channel = Buffer.from(this._p2p.hash)
 				 const url = Url.parse(peer)
@@ -468,13 +477,17 @@ export class PeerNode {
 					 retries: 0,
 					 channel: Buffer.from(channel),
 				 }
-				 obj.id = obj.host + ':' + obj.port
+				 obj.id = toBuffer(obj.host + ':' + obj.port)
 
-         // the host name as described by external peers
-         // first one is always the immediate response to current peer
+         this._p2p.connections.map((c) => {
+            if(c.remoteHost === obj.host && c.remotePort == obj.port){
+                makeConnection = false
+            }
+          })
+
+         if(!makeConnection) return
 
 				 console.log('--------------> PEER FROM SEEDER ' )
-				 // add seen protection
 
 				 try {
 
@@ -556,6 +569,7 @@ export class PeerNode {
 
       // TODO: add lz4 compression for things larger than 1000 characters
       const type = str.slice(0, 7)
+      const type = data[0]
 
       if (protocolBits[type] === undefined) {
         return
@@ -566,7 +580,7 @@ export class PeerNode {
       if (type === '0007W01') {
         const parts = str.split(protocolBits[type])
         const rawUint = parts[1]
-        const raw = new Uint8Array(rawUint.split(','))
+        const raw = new Uint8Array(rawUint)
         const block = BcBlock.deserializeBinary(raw)
 
         this._engine._emitter.emit('putblock', {
@@ -578,12 +592,8 @@ export class PeerNode {
       // Peer Requests Highest Block
       } else if (type === '0008R01') {
         const latestBlock = await this._engine.persistence.get('bc.block.latest')
-        const msg = '0008W01' + protocolBits[type] + latestBlock.serializeBinary()
-        const results = await this._p2p.qsend(conn, msg)
-
-        if (results && results.length > 0) {
-          this._logger.info('successful update sent to peer')
-        }
+        const msg = ['0008W01', latestBlock.serializeBinary()]
+        pull(pull.values(msg), conn)
 
       // Peer Requests Block Range
       } else if (type === '0006R01' || type === '0009R01') {
@@ -608,15 +618,11 @@ export class PeerNode {
               this._logger.warn(err)
             } else {
               const split = protocolBits[outboundType]
-              const msg = outboundType + split + res.map((r) => {
+              const msg = [outboundType, res.map((r) => {
                 return r.serializeBinary()
-              }).join(split)
-              this._p2p.qsend(conn, msg).then(() => {
-                this._logger.info('sent message of length: ' + msg.length)
-              })
-                .catch((err) => {
-                  this._logger.error(err)
-                })
+              })]
+
+              pull(pull.values(msg), conn)
             }
           })
         } catch (err) {
