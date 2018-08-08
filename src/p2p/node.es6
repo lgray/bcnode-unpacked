@@ -472,6 +472,8 @@ export class PeerNode {
               console.log(msg)
               console.log(msg)
               console.log(msg)
+              console.log('>>>>>>>>>>>>>>>>>>>>>>>>> CONNECTION ')
+              console.log(conn)
               this._p2p.qsend(request.connection, msg)
                 .then((res) => {
                   if (res) {
@@ -643,7 +645,7 @@ export class PeerNode {
 
       // TODO: add lz4 compression for things larger than 1000 characters
       const type = str.slice(0, 7)
-      this._logger.info('<<<<<<<<<<<<<<<< ' + type)
+      console.log('  <<<<<<<<<<<<<<<< ' + type)
 
       if (protocolBits[type] === undefined) {
         return
