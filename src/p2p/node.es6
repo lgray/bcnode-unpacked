@@ -446,6 +446,7 @@ export class PeerNode {
              this._logger.warn('peer rejected ')
              console.log(peer)
              console.log(type)
+              this._logger.info("::::::::::::::::::::::::" + type)
              console.log("^^^^^^^^^^^^^^^^^^^^^^^^")
             })
 
@@ -650,6 +651,7 @@ export class PeerNode {
       this._logger.info('peerDataHandler <- ' + type)
       // Peer Sent Highest Block
       if (type === '0007W01') {
+        this._logger.info('::::::::::::::::::::::::' + type)
         const parts = str.split(protocolBits[type])
         const rawUint = parts[1]
         const raw = new Uint8Array(rawUint.split(','))
@@ -664,6 +666,7 @@ export class PeerNode {
 
       // Peer Requests Highest Block
       } else if (type === '0008R01') {
+        this._logger.info("::::::::::::::::::::::::" + type)
         const latestBlock = await this._engine.persistence.get('bc.block.latest')
         const msg = '0008W01' + protocolBits[type] + latestBlock.serializeBinary()
         const results = await this._p2p.qsend(conn, msg)
@@ -727,7 +730,7 @@ export class PeerNode {
 
       // Peer Sends New Block
       } else if (type === '0008W01') {
-        this._logger.info(555555555555555555555)
+        this._logger.info("::::::::::::::::::::::::" + type)
         const parts = str.split(protocolBits[type])
         const rawUint = parts[1]
         const raw = new Uint8Array(rawUint.split(','))
@@ -742,6 +745,7 @@ export class PeerNode {
       // Peer Sends Block List 0007 // Peer Sends Multiverse 001
       } else if (type === '0007W01' || type === '0010W01') {
         const parts = str.split(protocolBits[type])
+        this._logger.info("::::::::::::::::::::::::" + type)
 
         try {
           this._logger.info(6666666666666666666)
@@ -763,6 +767,7 @@ export class PeerNode {
 
           this._logger.info(77777777777777777777777)
           if (type === '0007W01') {
+        this._logger.info("::::::::::::::::::::::::" + type)
             this._engine._emitter.emit('putblocklist', {
               data: {
                 low: sorted[sorted.length - 1], // lowest block
@@ -772,6 +777,7 @@ export class PeerNode {
               remotePort: conn.remotePort
             })
           } else if (type === '0010W01') {
+        this._logger.info("::::::::::::::::::::::::" + type)
             this._engine._emitter.emit('putmultiverse', {
               data: sorted,
               remoteHost: conn.remoteHost || conn.remoteAddress,

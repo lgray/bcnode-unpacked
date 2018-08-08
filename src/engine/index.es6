@@ -980,26 +980,24 @@ export class Engine {
                 const port = conn.remotePort || conn.port
 
                 /* eslint-disable */
-                try {
-                    /////////// MULTIVERSE PROOF //////////////
-                    const obj = {
-                      data: {
-                        high: newBlock.getHeight(),
-                        low: newBlock.getHeight() - 7
-                      },
-                      connection: {
-                        remoteHost: host,
-                        remotePort: port
-                      }
-                  }
-                  this._emitter.emit('getmultiverse', obj)
-                } catch (err) {
-                  this._logger.error(err)
+                  /////////// MULTIVERSE PROOF //////////////
+                  const obj = {
+                    data: {
+                      high: newBlock.getHeight(),
+                      low: new BN(newBlock.getHeight()).sub(new BN(7)).toNumber()
+                    },
+                    connection: {
+                      remoteHost: host,
+                      remotePort: port
+                    }
                 }
+                this._emitter.emit('getmultiverse', obj)
+                this._logger.info('aaaaaaaaaaaaaaaaaaaaaaaaa')
 
                 // note the local machine does not broadcast this block update until the multiverse has been proven
                 this.pubsub.publish('update.block.latest', { key: 'bc.block.latest', data: newBlock, force: true })
 
+                this._logger.info('bbbbbbbbbbbbbbbbbbbbbbbbb')
                 // the above triggers for the sync
                 // mining will only remaining 'stopped' until a new block shows up
                 // if the claimed peer hopes to convert this node it must send evidence
@@ -1008,6 +1006,7 @@ export class Engine {
               } else {
                 // this means the local peer has a better version of the chain and
                 // therefore pushing it to the outside peer
+                this._logger.info('ccccccccccccccccccccccccc')
                 this._emitter.emit('sendblock', {
                   data: newBlock,
                   connection: {
