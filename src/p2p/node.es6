@@ -755,7 +755,7 @@ export class PeerNode {
               remoteHost: conn.remoteHost || conn.remoteAddress,
               remotePort: conn.remotePort
             })
-          } else if (type === '0010W01') {
+          } else if (type === '00010W01') {
             this._engine._emitter.emit('putmultiverse', {
               data: sorted,
               remoteHost: conn.remoteHost || conn.remoteAddress,
