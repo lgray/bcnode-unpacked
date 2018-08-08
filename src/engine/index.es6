@@ -797,7 +797,7 @@ export class Engine {
 
     // sync is complete emit event
     if (data.low.getHeight() < 3) {
-      this._emitter.emit('synccomplete', connection)
+      this._emitter.emit('synccomplete', true)
       this._stepSyncTimestamps.length = 0
       await this.persistence.put('synclock', getGenesisBlock())
       return
