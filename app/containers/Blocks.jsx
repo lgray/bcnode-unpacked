@@ -44,7 +44,7 @@ export class BlocksContainer extends Component<*> {
         <Helmet>
           <title>BLOCKS</title>
         </Helmet>
-        <h2 className='col-md-12 text-center' style={{marginTop: '16px', marginBottom: '16px'}}>
+        <h2 className='col-md-12 text-center' style={{marginTop: '16px', marginBottom: '9px'}}>
           BLOCKS
         </h2>
 

@@ -18,7 +18,7 @@ export class Profile extends Component<*> {
           <title>Profile</title>
         </Helmet>
 
-        <h2 className='col-md-12 text-center' style={{marginTop: '16px', marginBottom: '16px'}}>
+        <h2 className='col-md-12 text-center' style={{marginTop: '16px', marginBottom: '9px'}}>
           Profile
         </h2>
       </div>

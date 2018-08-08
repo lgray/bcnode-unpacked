@@ -55,7 +55,7 @@ export class BlockContainer extends Component<*> {
         <Helmet>
           <title>BLOCK</title>
         </Helmet>
-        <h2 className='col-md-12 text-center' style={{marginTop: '16px', marginBottom: '16px'}}>BLOCK #{this.props.id}</h2>
+        <h2 className='col-md-12 text-center' style={{marginTop: '16px', marginBottom: '9px'}}>BLOCK #{this.props.id}</h2>
 
         { pagination }
 

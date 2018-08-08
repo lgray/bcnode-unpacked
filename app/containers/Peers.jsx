@@ -41,7 +41,7 @@ export class PeersContainer extends Component<*> {
     const renderAnnouncedBlocks = (blocks: Object, blocksCount: number, timeDiff: number) => {
       return (
         <div className="d-flex d-flex flex-wrap flex-row">
-          <h2 className='col-md-12 text-center' style={{marginTop: '16px', marginBottom: '16px'}}>
+          <h2 className='col-md-12 text-center' style={{marginTop: '16px', marginBottom: '9px'}}>
             Announced blocks (last {blocks.capacity()} of {blocksCount}, BPS: {round(blocksCount / timeDiff, 3)})
           </h2>
           <BlocksTable blocks={blocks.toarray()} extraCols={[['Miner', renderBlockMiner]]} onClick={() => {}} />
@@ -52,11 +52,11 @@ export class PeersContainer extends Component<*> {
     return (
       <div className='d-flex flex-wrap flex-row'>
         <Helmet>
-          <title>Peers</title>
+          <title>PEERS</title>
         </Helmet>
 
-        <h2 className='col-md-12 text-center' style={{marginTop: '16px', marginBottom: '16px'}}>
-          Peers
+        <h2 className='col-md-12 text-center' style={{marginTop: '16px', marginBottom: '9px'}}>
+          PEERS
         </h2>
         <PeersTable peers={this.props.peers} onClick={this.props.actions.showPeer} />
 

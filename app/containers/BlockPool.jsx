@@ -18,7 +18,7 @@ export class BlockPool extends Component<*> {
           <title>Block Pool</title>
         </Helmet>
 
-        <h2 className='col-md-12 text-center' style={{marginTop: '16px', marginBottom: '16px'}}>
+        <h2 className='col-md-12 text-center' style={{marginTop: '16px', marginBottom: '9px'}}>
           Block Pool
         </h2>
       </div>

@@ -26,7 +26,7 @@ export class MultiverseContainer extends Component<*> {
     const verses = keys.map((k, idx) => {
       return (
         <div className='container' key={idx}>
-          <h2 className='col-md-12 text-center' style={{marginTop: '16px', marginBottom: '16px'}}>
+          <h2 className='col-md-12 text-center' style={{marginTop: '16px', marginBottom: '9px'}}>
             MULTIVERSE {k}
           </h2>
 
@@ -41,7 +41,7 @@ export class MultiverseContainer extends Component<*> {
           <title>MULTIVERSE</title>
         </Helmet>
 
-        <h2 className='col-md-12 text-center' style={{marginTop: '16px', marginBottom: '16px'}}>
+        <h2 className='col-md-12 text-center' style={{marginTop: '16px', marginBottom: '9px'}}>
           MULTIVERSE
         </h2>
 

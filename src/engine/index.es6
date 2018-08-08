@@ -1020,20 +1020,6 @@ export class Engine {
 
   getMultiverseHandler (conn: Object, newBlocks: BcBlock[]): Promise<?boolean> {
     // get the lowest of the current multiverse
-    this._logger.info('getMultiverse <- event')
-    this._logger.info('getMultiverse <- event')
-    this._logger.info('getMultiverse <- event')
-    this._logger.info('getMultiverse <- event')
-    this._logger.info('getMultiverse <- event')
-    this._logger.info('getMultiverse <- event')
-    this._logger.info('getMultiverse <- event')
-    this._logger.info('getMultiverse <- event')
-    this._logger.info('getMultiverse <- event')
-    this._logger.info('getMultiverse <- event')
-    this._logger.info('getMultiverse <- event')
-    this._logger.info('getMultiverse <- event')
-    this._logger.info('getMultiverse <- event')
-    this._logger.info('getMultiverse <- event')
     try {
       this.miningOfficer.stopMining()
       this._logger.info('end mining')

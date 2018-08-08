@@ -27,7 +27,7 @@ export class RoverContainer extends Component<*> {
           <title>ROVER</title>
         </Helmet>
 
-        <h2 className='col-md-12 text-center' style={{marginTop: '16px', marginBottom: '16px'}}>
+        <h2 className='col-md-12 text-center' style={{marginTop: '16px', marginBottom: '9px'}}>
              LAST {Math.min(this.props.blocks.capacity(), this.props.blocksCount)} ROVERED BLOCKS 
         </h2>
         {blocks}

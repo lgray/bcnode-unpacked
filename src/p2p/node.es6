@@ -466,6 +466,10 @@ export class PeerNode {
               const low = request.low
               const high = request.high
               const msg = type + split + low + split + high
+              console.log(msg)
+              console.log(msg)
+              console.log(msg)
+              console.log(msg)
               this._p2p.qsend(request.connection, msg)
                 .then((res) => {
                   if (res) {
