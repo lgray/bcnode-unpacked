@@ -379,6 +379,7 @@ export class PeerNode {
                 })
 
 
+
                 await this._p2p.qsend(conn, msg)
 
       })().catch(err => {
@@ -452,6 +453,14 @@ export class PeerNode {
             this._engine._emitter.on('getmultiverse', (request) => {
 
 							console.log('bone art event get multiverse not fired <----------------')
+						  console.log(request)
+						  console.log(request)
+						  console.log(request)
+						  console.log(request)
+						  console.log(request)
+						  console.log(request)
+						  console.log(request)
+						  console.log(request)
               // check required fields
               if (!request || request.low === undefined || request.high === undefined || request.connection === undefined) {
                 return
@@ -502,7 +511,7 @@ export class PeerNode {
               })
           })
 
-          this._engine._emitter.on('putblockList', (msg) => {
+          this._engine._emitter.on('putblocklist', (msg) => {
             this._engine.stepSyncHandler(msg)
               .then(() => {
                 this._logger.debug('stepSync complete sent')

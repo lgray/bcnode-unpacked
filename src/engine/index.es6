@@ -982,8 +982,10 @@ export class Engine {
                       high: newBlock.getHeight(),
                       low: newBlock.getHeight() - 7
                     },
-                    remoteHost: conn.remoteHost,
-                    remotePort: conn.remotePort
+                    connections: {
+                      remoteHost: conn.remoteHost,
+                      remotePort: conn.remotePort
+                    }
                   })
                 } catch (err) {
                   this._logger.info(6666666666666666666666)
