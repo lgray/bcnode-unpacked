@@ -359,6 +359,7 @@ export class PeerNode {
 
                 conn.on('data', (data) => {
                     /* eslint-disable */
+                    process.stdout.write('<< STREAM ' + data.length + '>>                           ')
                     console.log('DATA REQUEST SIZE: ' + data.length)
                     if(!data && this._ds[address] !== false){
                          const remaining = "" + this._ds[address]
@@ -486,14 +487,12 @@ export class PeerNode {
             this._logger.info('getblocklist event requests')
             this._engine.getMultiverseHandler(msg, msg.data)
           })
-
           this._engine._emitter.on('getblocklist', (request) => {
-
             this._logger.info('getblocklist event requests')
             if (!request || request.low === undefined || request.high === undefined || request.connection === undefined) {
               return
             }
-
+            this._logger.info('GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG')
             const type = '0006R01'
             const split = protocolBits[type]
             const low = request.low
@@ -539,6 +538,7 @@ export class PeerNode {
           if(this._seededPeers.get(peer)) {
              return
           }
+
           this._seededPeers.set(peer, 1)
 
 
@@ -643,6 +643,7 @@ export class PeerNode {
 
       // TODO: add lz4 compression for things larger than 1000 characters
       const type = str.slice(0, 7)
+      this._logger.info('<<<<<<<<<<<<<<<< ' + type)
 
       if (protocolBits[type] === undefined) {
         return
