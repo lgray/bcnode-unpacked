@@ -7,7 +7,8 @@
  * @flow
  */
 
-/* eslint-disable */
+/* eslint no-console: ["error", { allow: ["warn", "error", "log", "trace"  ] }] */
+
 import type { Engine } from '../engine'
 
 const { inspect } = require('util')
@@ -17,12 +18,8 @@ const PeerInfo = require('peer-info')
 const queue = require('async/queue')
 const multiaddr = require('multiaddr')
 const pull = require('pull-stream')
-const events = require('events')
-const toPull = require('stream-to-pull-stream')
-// const utp = require('utp-native')
 
 const LRUCache = require('lru-cache')
-const zlib = require('zlib')
 const debug = require('debug')('bcnode:p2p:node')
 const { config } = require('../config')
 const { getVersion } = require('../helper/version')
@@ -47,14 +44,13 @@ const { protocolBits, anyDns } = require('../engine/helper')
 // const { toObject } = require('../helper/debug')
 // const { validateBlockSequence } = require('../bc/validation')
 
-
-function toBuffer (str) {
-  if (Buffer.isBuffer(str)) return str
-  if (ArrayBuffer.isView(str)) return Buffer.from(str.buffer, str.byteOffset, str.byteLength)
-  if (typeof str === 'string') return Buffer.from(str, 'hex')
-  throw new Error('Pass a buffer or a string')
-}
-
+// function toBuffer (str) {
+//  if (Buffer.isBuffer(str)) return str
+//  if (ArrayBuffer.isView(str)) return Buffer.from(str.buffer, str.byteOffset, str.byteLength)
+//  if (typeof str === 'string') return Buffer.from(str, 'hex')
+//  throw new Error('Pass a buffer or a string')
+// }
+//
 process.on('uncaughtError', (err) => {
   /* eslint-disable */
   console.trace(err)
