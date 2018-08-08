@@ -356,7 +356,6 @@ export class PeerNode {
                 conn.on('data', (data) => {
                     /* eslint-disable */
                     process.stdout.write('<< STREAM ' + data.length + '>>                           ')
-                    console.log('DATA REQUEST SIZE: ' + data.length)
                     if(!data && this._ds[address] !== false){
                          const remaining = "" + this._ds[address]
                          this._ds[address] = false
@@ -455,7 +454,7 @@ export class PeerNode {
 
 							console.log('bone art event get multiverse not fired <----------------')
               // check required fields
-              if (!request || request.low === undefined || request.high === undefined || request.connection === undefined || request.connection.remoteAddress === undefined) {
+              if (!request || request.low === undefined || request.high === undefined || request.connection === undefined) {
                 return
               }
 
@@ -470,15 +469,15 @@ export class PeerNode {
               console.log(msg)
               console.log('>>>>>>>>>>>>>>>>>>>>>>>>> CONNECTION ')
               console.log(request)
-              this._p2p.qsend(request.connection, msg)
-                .then((res) => {
-                  if (res) {
-                    this._logger.debug(res.length + ' delivered')
-                  }
-                })
-                .catch((err) => {
-                  this._logger.error(err)
-                })
+              //this._p2p.qsend(request.connection, msg)
+              //  .then((res) => {
+              //    if (res) {
+              //      this._logger.debug(res.length + ' delivered')
+              //    }
+              //  })
+              //  .catch((err) => {
+              //    this._logger.error(err)
+              //  })
             })
 
           this._engine._emitter.on('putmultiverse', (msg) => {
