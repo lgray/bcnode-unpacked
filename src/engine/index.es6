@@ -813,12 +813,12 @@ export class Engine {
 
     const high = max(3, data.low.getHeight())
     const low = max(2, high - 50)
-    connection.data = {
+    obj.data = {
       low: low,
       high: high
     }
     if (cancelSync === false) {
-      this._logger.info(connection)
+      this._logger.info(obj)
       this._emitter.emit('getblocklist', obj)
     }
   }
