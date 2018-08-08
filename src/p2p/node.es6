@@ -690,8 +690,20 @@ export class PeerNode {
             return 'bc.block.' + n
           })
           this._logger.info(query)
+          this._logger.info(query)
+          this._logger.info(query)
+          this._logger.info(query)
+          this._logger.info(query)
+          this._logger.info(query)
+          this._logger.info(query)
+          this._logger.info(query)
+          this._logger.info(query)
+          this._logger.info(query)
+          this._logger.info(query)
           this._logger.info(query.length + ' blocks requested by peer: ' + conn.remoteHost)
           this._queue.push(query, (err, res) => {
+
+            this._logger.info(3333333333333)
             if (err) {
               this._logger.warn(err)
             } else {
@@ -699,7 +711,7 @@ export class PeerNode {
               const msg = [outboundType, res.map((r) => {
                 return r.serializeBinary()
               })].join(split)
-
+              this._logger.info(4444444444444)
               this._p2p.qsend(conn, msg).then(() => {
                 this._logger.info('sent message of length: ' + msg.length)
               })
@@ -714,6 +726,7 @@ export class PeerNode {
 
       // Peer Sends New Block
       } else if (type === '0008W01') {
+        this._logger.info(555555555555555555555)
         const parts = str.split(protocolBits[type])
         const rawUint = parts[1]
         const raw = new Uint8Array(rawUint.split(','))
@@ -730,6 +743,7 @@ export class PeerNode {
         const parts = str.split(protocolBits[type])
 
         try {
+          this._logger.info(6666666666666666666)
           const list = parts.split(protocolBits[type]).reduce((all, rawBlock) => {
             const raw = new Uint8Array(rawBlock.split(','))
             all.push(BcBlock.deserializeBinary(raw))
@@ -746,6 +760,7 @@ export class PeerNode {
             return 0
           })
 
+          this._logger.info(77777777777777777777777)
           if (type === '0007W01') {
             this._engine._emitter.emit('putblocklist', {
               data: {
@@ -755,7 +770,7 @@ export class PeerNode {
               remoteHost: conn.remoteHost || conn.remoteAddress,
               remotePort: conn.remotePort
             })
-          } else if (type === '00010W01') {
+          } else if (type === '0010W01') {
             this._engine._emitter.emit('putmultiverse', {
               data: sorted,
               remoteHost: conn.remoteHost || conn.remoteAddress,
