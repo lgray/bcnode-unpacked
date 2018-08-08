@@ -101,6 +101,7 @@ export class Engine {
     this._subscribers = {}
     this._verses = []
     this._stepSyncTimestamps = []
+    this._server.count = 0
     this._storageQueue = queue((fn, cb) => {
       return fn.then((res) => { cb(null, res) }).catch((err) => { cb(err) })
     })
@@ -526,6 +527,13 @@ export class Engine {
       this._logger.info('asssigned node key <- ' + nodeId)
       await this.persistence.put('bc.dht.id', JSON.stringify({ id: nodeId, timestamp: Math.floor(Date.now() * 0.001) }))
     }
+
+    this._emitter.on('upPeerCount', () => {
+      if (this._server) {
+        // this._server._
+        this._server._wsBroadcastPeerConnected(peer)
+      }
+    })
 
     this._emitter.on('peerConnected', ({ peer }) => {
       if (this._server) {

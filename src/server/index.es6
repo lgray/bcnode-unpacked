@@ -284,6 +284,16 @@ export class Server {
     }
   }
 
+  _transformNewPeerToWire (peer: Object) {
+    // console.log('peer', peer)
+    return {
+      id: peer.id.toB58String(),
+      meta: peer.meta,
+      addrs: peer.multiaddrs._multiaddrs.map((addr) => addr.toString()),
+      addr: peer._connectedMultiaddr && peer._connectedMultiaddr.toString()
+    }
+  }
+
   _wsBroadcast (msg: Object) {
     if (this._socket) {
       this._socket.emit(msg.type, msg.data)
@@ -310,6 +320,13 @@ export class Server {
     this._wsBroadcast({
       type: 'peer.disconnected',
       data: this._transformPeerToWire(peer)
+    })
+  }
+
+  _wsBroadcastPeerCount (count: Number) {
+    this._wsBroadcast({
+      type: 'peer.count',
+      data: count
     })
   }
 
