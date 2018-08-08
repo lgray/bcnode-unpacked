@@ -18,12 +18,10 @@ const logPath = `${LOG_DIR}/bcnode`
 const tsFormat = () => Math.floor(Date.now() * 0.001)
 
 const LOG_LEVEL = process.env.BC_LOG || 'info'
-const file = require('../../.version.json')
-const tag = file.npm + '-' + file.git.short
 const formatTemplate = options => {
   const ts = (options.timestamp) ? `${options.timestamp()} ` : ''
   const level = options.level.toUpperCase()
-  const msg = undefined !== options.message ? tag + ' ' + options.message : tag
+  const msg = undefined !== options.message ? ' ' + options.message : ''
   const meta =
     options.meta && Object.keys(options.meta).length
       ? '\n\t' + JSON.stringify(options.meta, null, 2)

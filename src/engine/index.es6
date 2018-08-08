@@ -788,9 +788,11 @@ export class Engine {
     let cancelSync = false
     const now = Math.floor(Date.now() * 0.001)
     const data = msg.data
-    const connection = {
-      remoteHost: msg.remoteHost,
-      remotePort: msg.remotePort
+    const obj = {
+      connction: {
+        remoteHost: msg.remoteHost,
+        remotePort: msg.remotePort
+      }
     }
 
     // sync is complete emit event
@@ -810,13 +812,14 @@ export class Engine {
     await this.persistence.put('synclock', data.low)
 
     const high = max(3, data.low.getHeight())
-    const low = max(2, high - 500)
+    const low = max(2, high - 50)
     connection.data = {
       low: low,
       high: high
     }
     if (cancelSync === false) {
-      this._emitter.emit('getblocklist', connection)
+      this._logger.info(connection)
+      this._emitter.emit('getblocklist', obj)
     }
   }
 
@@ -966,19 +969,23 @@ export class Engine {
               if (shouldResync === true) {
                 this._logger.info(newBlock.getHash() + ' <- new block: ' + newBlock.getHeight() + ' should sync request approved')
 
+                const host = conn.remoteHost || conn.remoteAddress
+                const port = conn.remotePort || conn.port
+
                 /* eslint-disable */
                 try {
-                  /// //////// MULTIVERSE PROOF //////////////
-                  this._emitter.emit('getmultiverse', {
-                    data: {
-                      high: newBlock.getHeight(),
-                      low: newBlock.getHeight() - 7
-                    },
-                    connection: {
-                      remoteHost: conn.remoteHost,
-                      remotePort: conn.remotePort
-                    }
-                  })
+                    /////////// MULTIVERSE PROOF //////////////
+                    const obj = {
+                      data: {
+                        high: newBlock.getHeight(),
+                        low: newBlock.getHeight() - 7
+                      },
+                      connection: {
+                        remoteHost: host,
+                        remotePort: port
+                      }
+                  }
+                  this._emitter.emit('getmultiverse', obj)
                 } catch (err) {
                   this._logger.error(err)
                 }
@@ -1013,6 +1020,19 @@ export class Engine {
 
   getMultiverseHandler (conn: Object, newBlocks: BcBlock[]): Promise<?boolean> {
     // get the lowest of the current multiverse
+    this._logger.info('getMultiverse <- event')
+    this._logger.info('getMultiverse <- event')
+    this._logger.info('getMultiverse <- event')
+    this._logger.info('getMultiverse <- event')
+    this._logger.info('getMultiverse <- event')
+    this._logger.info('getMultiverse <- event')
+    this._logger.info('getMultiverse <- event')
+    this._logger.info('getMultiverse <- event')
+    this._logger.info('getMultiverse <- event')
+    this._logger.info('getMultiverse <- event')
+    this._logger.info('getMultiverse <- event')
+    this._logger.info('getMultiverse <- event')
+    this._logger.info('getMultiverse <- event')
     this._logger.info('getMultiverse <- event')
     try {
       this.miningOfficer.stopMining()
@@ -1089,8 +1109,8 @@ export class Engine {
                         }
 
                         this._emitter.emit('getblocklist', {
-                          low: newBlock.getHeight() - 500,
-                          high: newBlock.getHeight(),
+                          low: max(2, newBlock.getHeight() - 500),
+                          high: max(3, newBlock.getHeight()),
                           connection: conn
                         })
                         return Promise.resolve(true)

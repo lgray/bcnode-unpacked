@@ -39,6 +39,7 @@ const { BlockPool } = require('../bc/blockpool')
 
 const { PROTOCOL_PREFIX, NETWORK_ID } = require('./protocol/version')
 const LOW_HEALTH_NET = process.env.LOW_HEALTH_NET === 'true'
+const USER_QUORUM = process.env.USER_QUORUM || config.bc.quorum
 
 const { range, max } = require('ramda')
 const { protocolBits, anyDns } = require('../engine/helper')
@@ -345,7 +346,7 @@ export class PeerNode {
                 const quorumState = await this._engine.persistence.get('bc.dht.quorum')
                 const quorum = parseInt(quorumState, 10) // coerce for Flow
 
-                if(this._p2p.totalConnections >= quorum && quorum === 0){
+                if(this._p2p.totalConnections >= USER_QUORUM && quorum === 0){
                     await this._engine.persistence.put('bc.dht.quorum', "1")
                 } else if (quorum === 0 && LOW_HEALTH_NET !== false){
                     await this._engine.persistence.put('bc.dht.quorum', "1")
@@ -455,14 +456,6 @@ export class PeerNode {
             this._engine._emitter.on('getmultiverse', (request) => {
 
 							console.log('bone art event get multiverse not fired <----------------')
-						  console.log(request)
-						  console.log(request)
-						  console.log(request)
-						  console.log(request)
-						  console.log(request)
-						  console.log(request)
-						  console.log(request)
-						  console.log(request)
               // check required fields
               if (!request || request.low === undefined || request.high === undefined || request.connection === undefined || request.connection.remoteAddress === undefined) {
                 return
@@ -658,13 +651,6 @@ export class PeerNode {
         const block = BcBlock.deserializeBinary(raw)
 
         /* eslint-disable */
-        console.log('================================')
-        console.log('================================')
-        console.log('================================')
-        console.log('================================')
-        console.log('================================')
-        console.log('================================')
-        console.log(block)
         this._engine._emitter.emit('putblock', {
           data: block,
           remoteHost: conn.remoteHost || conn.remoteAddress,
@@ -683,6 +669,7 @@ export class PeerNode {
 
       // Peer Requests Block Range
       } else if (type === '0006R01' || type === '0009R01') {
+
         const parts = str.split(protocolBits[type])
         const low = parts[1]
         const high = parts[2]
@@ -692,13 +679,14 @@ export class PeerNode {
           outboundType = '0010W01'
         }
 
+        this._logger.info(outboundType)
+
         try {
           const query = range(max(2, low), (high + 1)).map((n) => {
             return 'bc.block.' + n
           })
-
+          this._logger.info(query)
           this._logger.info(query.length + ' blocks requested by peer: ' + conn.remoteHost)
-
           this._queue.push(query, (err, res) => {
             if (err) {
               this._logger.warn(err)
@@ -727,12 +715,6 @@ export class PeerNode {
         const raw = new Uint8Array(rawUint.split(','))
         const block = BcBlock.deserializeBinary(raw)
 
-        console.log('*********************************')
-        console.log('*********************************')
-        console.log('*********************************')
-        console.log('*********************************')
-        console.log('*********************************')
-        console.log(conn)
         this._engine._emitter.emit('putblock', {
           data: block,
           remoteHost: conn.remoteHost || conn.remoteAddress,
@@ -761,7 +743,7 @@ export class PeerNode {
           })
 
           if (type === '0007W01') {
-            this._engine._emitter.emit('putblockList', {
+            this._engine._emitter.emit('putblocklist', {
               data: {
                 low: sorted[sorted.length - 1], // lowest block
                 high: sorted[0] // highest block

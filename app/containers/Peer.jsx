@@ -32,11 +32,11 @@ export class PeerContainer extends Component<*> {
     return (
       <div className='d-flex flex-wrap flex-row'>
         <Helmet>
-          <title>Peer</title>
+          <title>PEER</title>
         </Helmet>
 
         <h2 className='col-md-12 text-center' style={{marginTop: '16px', marginBottom: '16px'}}>
-          Peer
+          PEER
         </h2>
       </div>
     )

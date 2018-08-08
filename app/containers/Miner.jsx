@@ -28,7 +28,7 @@ export class MinerContainer extends Component<*> {
     return (
       <div className='d-flex flex-wrap flex-row'>
         <Helmet>
-          <title>Miner</title>
+          <title>MINER</title>
         </Helmet>
 
         <h2 className='col-md-12 text-center' style={{marginTop: '16px', marginBottom: '16px'}}>
