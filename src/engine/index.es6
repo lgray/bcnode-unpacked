@@ -966,36 +966,20 @@ export class Engine {
               if (shouldResync === true) {
                 this._logger.info(newBlock.getHash() + ' <- new block: ' + newBlock.getHeight() + ' should sync request approved')
 
+                /* eslint-disable */
                 try {
                   /// //////// MULTIVERSE PROOF //////////////
-                  this._logger.info(777777777777777777)
-                  this._logger.info(777777777777777777)
-                  this._logger.info(777777777777777777)
-                  this._logger.info(777777777777777777)
-                  this._logger.info(777777777777777777)
-                  this._logger.info(777777777777777777)
-                  this._logger.info(777777777777777777)
-                  this._logger.info(777777777777777777)
-                  this._logger.info(777777777777777777)
                   this._emitter.emit('getmultiverse', {
                     data: {
                       high: newBlock.getHeight(),
                       low: newBlock.getHeight() - 7
                     },
-                    connections: {
+                    connection: {
                       remoteHost: conn.remoteHost,
                       remotePort: conn.remotePort
                     }
                   })
                 } catch (err) {
-                  this._logger.info(6666666666666666666666)
-                  this._logger.info(6666666666666666666666)
-                  this._logger.info(6666666666666666666666)
-                  this._logger.info(6666666666666666666666)
-                  this._logger.info(6666666666666666666666)
-                  this._logger.info(6666666666666666666666)
-                  this._logger.info(6666666666666666666666)
-                  this._logger.info(6666666666666666666666)
                   this._logger.error(err)
                 }
 

@@ -357,6 +357,7 @@ export class PeerNode {
                 const msg = type + protocolBits[type] + latestBlock.serializeBinary()
 
                 conn.on('data', (data) => {
+                    /* eslint-disable */
                     console.log('DATA REQUEST SIZE: ' + data.length)
                     if(!data && this._ds[address] !== false){
                          const remaining = "" + this._ds[address]
@@ -387,6 +388,7 @@ export class PeerNode {
                 })
             })
 
+            /* eslint-disable */
 
             this._p2p.on('connection-closed', (conn, info) => {
              // this.peerClosedConnectionHandler(conn, info)
@@ -462,7 +464,7 @@ export class PeerNode {
 						  console.log(request)
 						  console.log(request)
               // check required fields
-              if (!request || request.low === undefined || request.high === undefined || request.connection === undefined) {
+              if (!request || request.low === undefined || request.high === undefined || request.connection === undefined || request.connection.remoteAddress === undefined) {
                 return
               }
 
@@ -532,7 +534,6 @@ export class PeerNode {
 					this._p2p._seeder = discovery.seeder()
 					this._p2p._seeder.on('update', (data) => {
 						console.log(' ----> UPDATE ' )
-						console.log(data)
 					})
 
           this._p2p._seeder.on('peer', (peer) => {
@@ -554,6 +555,8 @@ export class PeerNode {
                      channel: Buffer.from(channel),
                  }
                  obj.id = obj.host + ':' + obj.port
+                 obj.remotePort = obj.port
+                 obj.remoteHost = obj.host
 
 					if(this._p2p.ip === obj.host) return
 
@@ -654,9 +657,17 @@ export class PeerNode {
         const raw = new Uint8Array(rawUint.split(','))
         const block = BcBlock.deserializeBinary(raw)
 
+        /* eslint-disable */
+        console.log('================================')
+        console.log('================================')
+        console.log('================================')
+        console.log('================================')
+        console.log('================================')
+        console.log('================================')
+        console.log(block)
         this._engine._emitter.emit('putblock', {
           data: block,
-          remoteHost: conn.remoteHost,
+          remoteHost: conn.remoteHost || conn.remoteAddress,
           remotePort: conn.remotePort
         })
 
@@ -716,9 +727,15 @@ export class PeerNode {
         const raw = new Uint8Array(rawUint.split(','))
         const block = BcBlock.deserializeBinary(raw)
 
+        console.log('*********************************')
+        console.log('*********************************')
+        console.log('*********************************')
+        console.log('*********************************')
+        console.log('*********************************')
+        console.log(conn)
         this._engine._emitter.emit('putblock', {
           data: block,
-          remoteHost: conn.remoteHost,
+          remoteHost: conn.remoteHost || conn.remoteAddress,
           remotePort: conn.remotePort
         })
 
@@ -749,13 +766,13 @@ export class PeerNode {
                 low: sorted[sorted.length - 1], // lowest block
                 high: sorted[0] // highest block
               },
-              remoteHost: conn.remoteHost,
+              remoteHost: conn.remoteHost || conn.remoteAddress,
               remotePort: conn.remotePort
             })
           } else if (type === '0010W01') {
             this._engine._emitter.emit('putmultiverse', {
               data: sorted,
-              remoteHost: conn.remoteHost,
+              remoteHost: conn.remoteHost || conn.remoteAddress,
               remotePort: conn.remotePort
             })
           }
