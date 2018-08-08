@@ -528,10 +528,9 @@ export class Engine {
       await this.persistence.put('bc.dht.id', JSON.stringify({ id: nodeId, timestamp: Math.floor(Date.now() * 0.001) }))
     }
 
-    this._emitter.on('upPeerCount', () => {
+    this._emitter.on('peerCount', (count: Number) => {
       if (this._server) {
-        // this._server._
-        this._server._wsBroadcastPeerConnected(peer)
+        this._server._wsBroadcastPeerConnected(count)
       }
     })
 

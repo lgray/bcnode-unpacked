@@ -113,7 +113,7 @@ export class PeerNode {
 
     if (config.p2p.stats.enabled) {
       this._interval = setInterval(() => {
-        debug(`Peers count ${this.manager.peerBookConnected.getPeersCount()}`)
+        debug(`peers count ${this.manager.peerBookConnected.getPeersCount()}`)
       }, config.p2p.stats.interval * 1000)
     }
   }
@@ -605,6 +605,7 @@ export class PeerNode {
       this._logger.info('joined waypoint table')
             setInterval(() => {
                 this._logger.info('active waypoints:  ' + this._p2p.totalConnections)
+                this._engine._emitter.emit('peerCount' + this._p2p.totalConnections)
             }, 5000)
 
             setTimeout(() => {
