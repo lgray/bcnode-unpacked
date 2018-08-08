@@ -469,7 +469,7 @@ export class PeerNode {
               console.log(msg)
               console.log(msg)
               console.log('>>>>>>>>>>>>>>>>>>>>>>>>> CONNECTION ')
-              console.log(conn)
+              console.log(request)
               this._p2p.qsend(request.connection, msg)
                 .then((res) => {
                   if (res) {
