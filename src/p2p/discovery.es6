@@ -100,7 +100,7 @@ Discovery.prototype = {
     this.dht.listen(this.port)
     this.dht.add = (obj, done) => {
       if (obj.id === undefined) {
-        obj.id = randomId()
+        obj.id = new Uint8Array(Buffer.from(randomId()))
       }
       this.dht._discovery.dht.addNode(obj)
     }
