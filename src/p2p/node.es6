@@ -702,8 +702,7 @@ export class PeerNode {
 
         this._engine._emitter.emit('putblock', {
           data: block,
-          remoteHost: conn.remoteHost || conn.remoteAddress,
-          remotePort: conn.remotePort
+          connection: conn
         })
 
       // Peer Sends Block List 0007 // Peer Sends Multiverse 001
@@ -738,15 +737,13 @@ export class PeerNode {
                 low: sorted[sorted.length - 1], // lowest block
                 high: sorted[0] // highest block
               },
-              remoteHost: conn.remoteHost || conn.remoteAddress,
-              remotePort: conn.remotePort
+              connection: conn
             })
           } else if (type === '0010W01') {
         this._logger.info("::::::::::::::::::::::::" + type)
             this._engine._emitter.emit('putmultiverse', {
               data: sorted,
-              remoteHost: conn.remoteHost || conn.remoteAddress,
-              remotePort: conn.remotePort
+              connection: conn
             })
           }
         } catch (err) {

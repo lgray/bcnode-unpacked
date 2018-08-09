@@ -38,14 +38,14 @@ function Discovery (nodeId) {
     // nodeId: nodeId,
     maxConnections: 126,
     port: port,
-    utp: false,
+    utp: true,
     // tcp: false,
     dns: false,
     dht: {
       // nodeId: nodeId,
-      bootstrap: [],
+      bootstrap: ['udp://tds.blockcollider.org:16060'],
       interval: 40000 + random(1000),
-      maxConnections: 126,
+      maxConnections: 80,
       concurrency: 80,
       host: 'tds.blockcollider.org:16060'
     }
