@@ -230,7 +230,7 @@ function isDistanceCorrectlyCalculated (newBlock: BcBlock): bool {
   return receivedDistance === expectedDistance
 }
 
-export function blockchainHeadersAreChain (childHeaderList: BlockchainHeader[]|Block[], parentHeaderList: BlockchainHeader[]|Block[]) {
+export function blockchainHeadersAreChain (childHeaderList: BlockchainHeader[]|Block[], parentHeaderList: BlockchainHeader[]|Block[], block: BcBlock) {
   const firstChildHeader = head(childHeaderList)
   const lastParentHeader = last(parentHeaderList)
 
@@ -270,7 +270,7 @@ export function blockchainHeadersAreChain (childHeaderList: BlockchainHeader[]|B
 
     if (!check) {
       logger.info(`parent headers do not form a chain`)
-      return check
+      // return check // Disabled until AT
     }
   }
 

@@ -511,12 +511,13 @@ export class PeerNode {
             this._engine.blockFromPeer(msg, msg.data)
           })
 
-            /*
-             * PEER SEEDER
-             */
+          /*
+          * PEER SEEDER
+          */
 					this._p2p._seeder = discovery.seeder()
 					this._p2p._seeder.on('update', (data) => {
 						console.log(' ----> UPDATE ' )
+
 					})
 
           this._p2p._seeder.on('peer', (peer) => {

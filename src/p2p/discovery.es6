@@ -138,11 +138,18 @@ Discovery.prototype = {
                   })
                 })
           } catch (err) {
-            return resolve({
-              address: conn.remoteAddress + ':' + conn.remotePort,
-              success: false,
-              message: err.message
-            })
+            if(err) {
+              return resolve({
+                address: conn.remoteAddress + ':' + conn.remotePort,
+                success: false,
+                message: err.message
+              })
+            }
+              return resolve({
+                address: conn.remoteAddress + ':' + conn.remotePort,
+                success: false,
+                message: 'connection lost'
+              })
           }
         })
         all.push(a)
