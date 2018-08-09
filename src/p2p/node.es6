@@ -15,7 +15,6 @@ const { inspect } = require('util')
 
 const Url = require('url')
 const PeerInfo = require('peer-info')
-const utp = require('utp-native')
 const queue = require('async/queue')
 const multiaddr = require('multiaddr')
 const pull = require('pull-stream')
@@ -558,10 +557,7 @@ export class PeerNode {
 					if(this._p2p.ip === obj.host) return
           //  this._p2p.add(obj)
           //this._p2p._onconnection( ,'utp')
-                const ucon = utp.connect(obj.port, obj.host)
-                ucon.on('connection', (connection) => {
                  // the host name as described by external peers
-                  console.log(connection)
                  // first one is always the immediate response to current peer
                        console.log('--------------> PEER FROM SEEDER ' )
                        // add seen protection
@@ -571,7 +567,7 @@ export class PeerNode {
                            console.log("local hash: " + this._p2p.hash)
                            console.log("local port: " + this._p2p.port)
                            //this._p2p._discovery.dht.emit('announce', obj, toBuffer(this._p2p.hash), { host: obj.host, port: obj.port })
-                           this._p2p._discovery.emit('peer', name, obj, 'utp')
+                           this._p2p._discovery.emit('peer', name, obj, 'tcp')
 
                        } catch (err) {
                            console.log('unable to reuse server')
@@ -581,8 +577,6 @@ export class PeerNode {
                        //   this._logger.info('adding peer: ' + peer)
                        //     console.log('connected peers: ' + this._p2p.totalConnections)
                        //})
-
-                })
 
             })
 

@@ -38,8 +38,8 @@ function Discovery (nodeId) {
     // nodeId: nodeId,
     maxConnections: 126,
     port: port,
-    utp: true,
-    tcp: false,
+    utp: false,
+    // tcp: false,
     dns: false,
     dht: {
       // nodeId: nodeId,
