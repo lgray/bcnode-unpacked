@@ -347,6 +347,7 @@ export class PeerNode {
                 const type = '0008W01'
                 const msg = type + protocolBits[type] + latestBlock.serializeBinary()
 
+                await this._p2p.qsend(conn, msg)
 
                 conn.on('data', (data) => {
                     console.log('\r<< STREAM ' + data.length + '>>        ')
@@ -371,9 +372,6 @@ export class PeerNode {
                     }
                 })
 
-
-
-                await this._p2p.qsend(conn, msg)
 
       })().catch(err => {
                         this._logger.error(err);
