@@ -994,12 +994,18 @@ export class Engine {
                 }
                 console.log(obj)
                 this._logger.info('aaaaaaaaaaaaaaaaaaaaaaaaa')
+                // parent headers do not form a chain
                 console.log(obj)
                 this.node._engine._emitter.emit('getmultiverse', obj)
 
-                this.persistence.putChildHeaders(block).then(() => {
+                this.persistence.putChildHeaders(newBlock).then(() => {
                   // note the local machine does not broadcast this block update until the multiverse has been proven
-                  this.pubsub.publish('update.block.latest', { key: 'bc.block.latest', data: newBlock, force: true })
+                  this.pubsub.publish('update.block.latest', {
+                    key: 'bc.block.latest',
+                    data: newBlock,
+                    force: true,
+                    mined: false
+                  })
                 })
                 .catch((err) => {
                   this._logger.error(err)
@@ -1278,14 +1284,15 @@ export class Engine {
         } else {
           this._logger.warn('local mined block ' + newBlock.getHeight() + ' does not stack on multiverse height ' + this.multiverse.getHighestBlock().getHeight())
           this._logger.warn('mined block ' + newBlock.getHeight() + ' cannot go on top of multiverse block ' + this.multiverse.getHighestBlock().getHash())
-          return Promise.resolve(true)
-          // return this.miningOfficer.rebaseMiner()
-          //  .then((res) => {
-          //    this._logger.info(res)
-          //  })
-          //  .catch((e) => {
-          //    this._logger.error(errToString(e))
-          //  })
+          //return Promise.resolve(true)
+          return this.miningOfficer.rebaseMiner()
+            .then((res) => {
+              this._cleanUnfinishedBlock()
+              this._logger.info(res)
+            })
+            .catch((e) => {
+              this._logger.error(errToString(e))
+            })
         }
       })
       .catch((err) => {

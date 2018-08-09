@@ -464,7 +464,7 @@ export class MiningOfficer {
 
     this._logger.info('rebase miner request')
     try {
-      const stopped = await this.stopMining()
+      const stopped = this.stopMining()
       this._logger.info(`miner rebased, result: ${inspect(stopped)}`)
       const latestRoveredHeadersKeys: string[] = this._knownRovers.map(chain => `${chain}.block.latest`)
       this._logger.info(latestRoveredHeadersKeys)
