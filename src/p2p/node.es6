@@ -555,7 +555,7 @@ export class PeerNode {
                            console.log("local hash: " + this._p2p.hash)
                            console.log("local port: " + this._p2p.port)
                            //this._p2p._discovery.dht.emit('announce', obj, toBuffer(this._p2p.hash), { host: obj.host, port: obj.port })
-                           this._p2p._discovery.emit('peer', name, obj, 'tcp')
+                           this._p2p._discovery.emit('peer', name, obj, 'utp')
 
                        } catch (err) {
                            console.log('unable to reuse server')
