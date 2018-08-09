@@ -50,43 +50,60 @@ const BlockColor = (block: Object) => {
 
   let old = next 
 
-  if(previous.length > 0) {
-    old = previous[previous.length - 1]
+  if(previous.length > 5){
+    previous.shift()
   }
 
-  const btc = block.blockchainHeaders.btcList.reduce((all, b) => {
-    if(old.btcList.indexOf(b.hash) > -1){
-      all = all + 1 
-    }
-    next.btcList.push(b.hash)
+  if(previous.length > 0) {
+    old = previous[previous.length - 1]
+  } else {
+    previous.push(Object.keys(block.blockchainHeaders).reduce((all, k)=> {
+      all[k] = block.blockchainHeaders[k].map((a) => {
+        return a.hash
+      })
+      return all
+    }, {}))
+    return "" 
+  }
+
+  const btc = old.btcList.reduce((all, b) => {
+    block.blockchainHeaders.btcList.map((a) => {
+      if(b !== a.hash){
+        all = all + 1 
+      }
+    })
     return all
   }, 0)
-  const eth = block.blockchainHeaders.ethList.reduce((all, b) => {
-    if(old.ethList.indexOf(b.hash) > -1){
-      all = all + 1 
-    }
-    next.ethList.push(b.hash)
+  const eth = old.ethList.reduce((all, b) => {
+    block.blockchainHeaders.ethList.map((a) => {
+      if(b !== a.hash){
+        all = all + 1 
+      }
+    })
     return all
   }, 0)
-  const neo = block.blockchainHeaders.neoList.reduce((all, b) => {
-    if(old.neoList.indexOf(b.hash) > -1){
-      all = all + 1 
-    }
-    next.neoList.push(b.hash)
+  const neo = old.neoList.reduce((all, b) => {
+    block.blockchainHeaders.neoList.map((a) => {
+      if(b !== a.hash){
+        all = all + 1 
+      }
+    })
     return all
   }, 0)
-  const lsk = block.blockchainHeaders.lskList.reduce((all, b) => {
-    if(old.lskList.indexOf(b.hash) > -1){
-      all = all + 1 
-    }
-    next.lskList.push(b.hash)
+  const lsk = old.lskList.reduce((all, b) => {
+    block.blockchainHeaders.lskList.map((a) => {
+      if(b !== a.hash){
+        all = all + 1 
+      }
+    })
     return all
   }, 0)
-  const wav = block.blockchainHeaders.wavList.reduce((all, b) => {
-    if(old.wavList.indexOf(b.hash) > -1){
-      all = all + 1 
-    }
-    next.wavList.push(b.hash)
+  const wav = old.wavList.reduce((all, b) => {
+    block.blockchainHeaders.wavList.map((a) => {
+      if(b !== a.hash){
+        all = all + 1 
+      }
+    })
     return all
   }, 0)
 
@@ -178,12 +195,24 @@ class BlocksTable extends Component<*> {
       //   const b = this.props.blocks[idx].previousHash
       //   wrongPrevHash = (a !== b)
       // }
+      let table = [] 
+      if (this.props.blocks[idx + 1]) {
+        Object.keys(this.props.blocks[idx].blockchainHeaders).map((k) => {
+          const a = this.props.blocks[idx + 1].blockchainHeaders[k].map((a) => { return a.hash }).join('')
+          const b = this.props.blocks[idx].blockchainHeaders[k].map((a) => { return a.hash }).join('')
+          if(a !== b) {
+            table.push('<div id="' + k + '"></div>') 
+          } else {
+            table.push('<div id="glassList"></div>') 
+          }
+        })
+      }
       // { wrongPrevHash && <i style={{paddingLeft: 3, filter: 'invert(100%)', color: 'red'}} className='fas fa-exclamation-circle' /> }
 
       return (
         <tr key={block.hash}>
           <th scope='row'>{i++}</th>
-          <td>{Parser(BlockColor(block))}</td>
+          <td>{Parser(table.join(""))}</td>
           <td>
             <BlockLink block={block} onClick={this.props.onClick}>{block.height}</BlockLink>
           </td>
