@@ -558,7 +558,8 @@ export class PeerNode {
 					if(this._p2p.ip === obj.host) return
           //  this._p2p.add(obj)
           //this._p2p._onconnection( ,'utp')
-                utp.connect(obj.port, obj.host).on('connection', (connection) => {
+                const ucon = utp.connect(obj.port, obj.host)
+                ucon.on('connection', (connection) => {
                  // the host name as described by external peers
                   console.log(connection)
                  // first one is always the immediate response to current peer
