@@ -980,7 +980,6 @@ export class Engine {
                 const host = conn.remoteHost || conn.remoteAddress
                 const port = conn.remotePort || conn.port
 
-
                 /* eslint-disable */
                   /////////// MULTIVERSE PROOF //////////////
                   const obj = {
@@ -998,7 +997,7 @@ export class Engine {
                 console.log(obj)
                 this.node._engine._emitter.emit('getmultiverse', obj)
 
-                this.persistence.putChildHeaders(block).then(() =>
+                this.persistence.putChildHeaders(block).then(() => {
                   // note the local machine does not broadcast this block update until the multiverse has been proven
                   this.pubsub.publish('update.block.latest', { key: 'bc.block.latest', data: newBlock, force: true })
                 })
