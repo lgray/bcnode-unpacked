@@ -9,8 +9,6 @@
 
 import React, { Component } from 'react'
 
-// $FlowFixMermreser
-import VERSION from '../../.version.json'
 
 const STYLE = {
   height: '35px',
@@ -36,7 +34,7 @@ export class Brand extends Component<*> {
           BLOCK COLLIDER 
         </a>
         <a style={FIELD_STYLE} href={linkGithub}>
-          ({VERSION.npm}/{VERSION.git.short})
+          0.7.6/PREINSTALL
         </a>
 
         {this.props.children}
