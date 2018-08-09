@@ -295,6 +295,10 @@ export class PeerNode {
       return this._p2p.qsend(msg.connection, '0008W01' + '[*]' +  msg.data.serializeBinary())
     })
 
+    this._engine._emitter.on('sendblock', (msg) => {
+      return this._p2p.qsend(msg.connection, '0008W01' + '[*]' +  msg.data.serializeBinary())
+    })
+
     this._engine._emitter.on('announceblock', (msg) => {
       this._logger.info('announceblock <- event')
 			if(msg.filters !== undefined && msg.filters.length > 0){

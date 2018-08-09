@@ -269,12 +269,14 @@ export class Engine {
 
     this.pubsub.subscribe('update.block.latest', '<engine>', (msg) => {
       try {
-        this.miningOfficer.stopMining()
-        this.updateLatestAndStore(msg)
-          .then((res) => {
-            if (msg.mined !== undefined && msg.mined === true) {
-              this._logger.info(`latest block ${msg.data.getHeight()} has been updated`)
-            } else {
+        if (!this._knownBlocksCache.has(msg.data.getHash())) {
+          this._knownBlocksCache.set(msg.data.getHash(), 1)
+          this.miningOfficer.stopMining()
+          this.updateLatestAndStore(msg)
+            .then((res) => {
+              if (msg.mined !== undefined && msg.mined === true) {
+                this._logger.info(`latest block ${msg.data.getHeight()} has been updated`)
+              } else {
               // this.miningOfficer.rebaseMiner()
               // .then((state) => {
               //   this._logger.info(`latest block ${msg.data.getHeight()} has been updated`)
@@ -282,13 +284,14 @@ export class Engine {
               // .catch((err) => {
               //   this._logger.error(`error occurred during updateLatestAndStore(), reason: ${err.message}`)
               // })
-            }
-          })
-          .catch((err) => {
-            this._logger.info(errToString(err))
-            this._logger.error(`error occurred during updateLatestAndStore(), reason: ${err.message}`)
-            process.exit()
-          })
+              }
+            })
+            .catch((err) => {
+              this._logger.info(errToString(err))
+              this._logger.error(`error occurred during updateLatestAndStore(), reason: ${err.message}`)
+              process.exit()
+            })
+        }
       } catch (err) {
         this._logger.error(err)
       }

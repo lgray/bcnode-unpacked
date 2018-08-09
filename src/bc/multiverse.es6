@@ -232,6 +232,11 @@ export class Multiverse {
       return Promise.resolve(true)
     }
 
+    if (newBlock.getHeight() === 1 || newBlock.getHeight() === '1') {
+      // block being sent is genesis block
+      return Promise.resolve(false)
+    }
+
     // FAIL
     // case fails over into the resync
     if (newBlock.getHeight() - 7 > currentHighestBlock.getHeight()) {
