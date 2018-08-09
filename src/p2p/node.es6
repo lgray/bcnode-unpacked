@@ -452,9 +452,6 @@ export class PeerNode {
               const msg = type + split + low + split + high
               console.log('>>>>>>>>>>>>>>>>>>>>>>>>> CONNECTION ')
               console.log(obj)
-              console.log(obj)
-              console.log(obj)
-              console.log(obj)
               this._p2p.qsend(obj.connection, msg)
                 .then((res) => {
                   if (res) {
@@ -471,6 +468,12 @@ export class PeerNode {
             console.log('getblocklist event requests')
             console.log(msg)
             this._engine.getMultiverseHandler(msg, msg.data)
+            .then((res) => {
+              this._logger.info(res)
+            })
+            .catch((err) => {
+                this._logger.error(err)
+            })
           })
 
           this._engine._emitter.on('getblocklist', (request) => {
