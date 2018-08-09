@@ -102,7 +102,7 @@ Discovery.prototype = {
       if (obj.id === undefined) {
         // obj.id = new Uint8Array(Buffer.from(randomId()))
       }
-      this.dht._discovery.dht.addNode(obj)
+      // this.dht._discovery.dht.addNode(obj)
     }
 
     this.dht.getPeerByHost = (query) => {
