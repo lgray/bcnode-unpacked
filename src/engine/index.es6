@@ -799,10 +799,7 @@ export class Engine {
     const now = Math.floor(Date.now() * 0.001)
     const data = msg.data
     const obj = {
-      connction: {
-        remoteHost: msg.remoteHost,
-        remotePort: msg.remotePort
-      }
+      connction: msg.connection
     }
 
     // sync is complete emit event
@@ -979,8 +976,8 @@ export class Engine {
               if (shouldResync === true) {
                 this._logger.info(newBlock.getHash() + ' <- new block: ' + newBlock.getHeight() + ' should sync request approved')
 
-                const host = conn.remoteHost || conn.remoteAddress
-                const port = conn.remotePort || conn.port
+                // const host = conn.remoteHost || conn.remoteAddress
+                // const port = conn.remotePort || conn.port
 
                 /* eslint-disable */
                   /////////// MULTIVERSE PROOF //////////////
@@ -989,22 +986,10 @@ export class Engine {
                       high: newBlock.getHeight(),
                       low: new BN(newBlock.getHeight()).sub(new BN(7)).toNumber()
                     },
-                    connection: {
-                      remoteHost: host,
-                      remotePort: port
-                    }
+                    connection: conn
                 }
                 this._logger.info('aaaaaaaaaaaaaaaaaaaaaaaaa')
                 // parent headers do not form a chain
-                console.log(obj)
-                console.log(obj)
-                console.log(obj)
-                console.log(obj)
-                console.log(obj)
-                console.log(obj)
-                console.log(obj)
-                console.log(obj)
-                console.log(obj)
                 this.node._engine._emitter.emit('getmultiverse', obj)
 
                 this.persistence.putChildHeaders(newBlock).then(() => {
@@ -1026,10 +1011,7 @@ export class Engine {
                 this._logger.info('ccccccccccccccccccccccccc')
                 this._emitter.emit('sendblock', {
                   data: newBlock,
-                  connection: {
-                    remoteHost: conn.remoteHost,
-                    remotePort: conn.remotePort
-                  }
+                  connection: conn
                 })
               }
             })
