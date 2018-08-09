@@ -94,6 +94,7 @@ const BlockColor = (block: Object) => {
 
   const stack = []
 
+  const glassBlock = '<div id="glasscolor"></div>' 
   const btcBlock = '<div id="btccolor"></div>' 
   const ethBlock = '<div id="ethcolor"></div>' 
   const neoBlock = '<div id="neocolor"></div>' 
@@ -101,35 +102,35 @@ const BlockColor = (block: Object) => {
   const wavBlock = '<div id="wavcolor"></div>' 
 
   if(btc < 1){ 
-    stack.push(btcBlock) 
+    stack.push(glassBlock) 
   } else {
     for(let i = 0;i<btc;i++){
        stack.push(btcBlock)
     }
   }
   if(eth < 1){ 
-    stack.push(ethBlock) 
+    stack.push(glassBlock) 
   } else {
     for(let i = 0;i<btc;i++){
        stack.push(ethBlock)
     }
   }
   if(neo < 1){ 
-    stack.push(neoBlock) 
+    stack.push(glassBlock) 
   } else {
     for(let i = 0;i<neo;i++){
        stack.push(neoBlock)
     }
   }
   if(lsk < 1){ 
-    stack.push(lskBlock) 
+    stack.push(glassBlock) 
   } else {
     for(let i = 0;i<lsk;i++){
        stack.push(lskBlock)
     }
   }
   if(wav < 1){ 
-    stack.push(wavBlock) 
+    stack.push(glassBlock) 
   } else {
     for(let i = 0;i<wav;i++){
        stack.push(wavBlock)

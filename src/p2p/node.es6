@@ -353,9 +353,10 @@ export class PeerNode {
                 const type = '0008W01'
                 const msg = type + protocolBits[type] + latestBlock.serializeBinary()
 
+
                 conn.on('data', (data) => {
+                    console.log('\r<< STREAM ' + data.length + '>>        ')
                     /* eslint-disable */
-                    process.stdout.write('<< STREAM ' + data.length + '>>                           ')
                     if(!data && this._ds[address] !== false){
                          const remaining = "" + this._ds[address]
                          this._ds[address] = false
