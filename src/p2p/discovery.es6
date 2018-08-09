@@ -107,7 +107,6 @@ Discovery.prototype = {
     }
 
     this.dht.getPeerByHost = (query) => {
-      let found = false
       let list = this.dht.connections.filter((a) => {
         if (a.remoteHost === query.remoteHost && a.remotePort === query.remotePort) {
           return a
@@ -115,7 +114,7 @@ Discovery.prototype = {
       })
 
       if (list.length < 1 && query._utp !== undefined) {
-        list.push(query._utp)
+        list.push(query)
         this.dht.connections.push(query)
         return list
       }
