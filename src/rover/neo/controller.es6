@@ -161,7 +161,7 @@ export default class Controller {
             this._pendingRequests.push([requestTime + 5, block.index + 1])
             cycle()
           }).catch(err => {
-            this._logger.warn(`Unable to start roving, could not get block count, err: ${err.message}`)
+            this._logger.debug(`unable to start roving, could not get block count, err: ${err.message}`)
             cycle()
           })
           return
@@ -191,7 +191,7 @@ export default class Controller {
           }, reason => {
             throw new Error(reason)
           }).catch(err => {
-            this._logger.warn(`Error while getting new block height: ${requestBlockHeight}, err: ${errToString(err)}`)
+            this._logger.debug(`error while getting new block height: ${requestBlockHeight}, err: ${errToString(err)}`)
             // postpone remaining requests
             this._pendingRequests = this._pendingRequests.map(([ts, height]) => [ts + 10, height])
             // prepend currentrequest back but schedule to try it in [now, now + 10s]

@@ -7,10 +7,14 @@
  * @flow
  */
 
+import Parser from 'html-react-parser'
 import React, { Component } from 'react'
+
 import moment from 'moment'
 
 import { Ellipsis } from '../components'
+
+const previous = []
 
 const BlockLink = (props: Object) => {
   const block = props.block
@@ -34,6 +38,7 @@ const BlockLink = (props: Object) => {
   )
 }
 
+
 class BlocksTable extends Component<*> {
   render () {
     let i = 0
@@ -50,6 +55,15 @@ class BlocksTable extends Component<*> {
       const fixedStyle = {
         fontFamily: 'monospace'
       }
+      // let wrongPrevHash = false
+      if (this.props.blocks[idx]) {
+
+         const a = this.props.blocks[idx]
+         console.log(a)
+         //const b = this.props.blocks[idx].previousHash
+         //wrongPrevHash = (a !== b)
+       }
+      // { wrongPrevHash && <i style={{paddingLeft: 3, filter: 'invert(100%)', color: 'red'}} className='fas fa-exclamation-circle' /> }
 
       // let wrongPrevHash = false
       // if (this.props.blocks[idx + 1]) {
@@ -57,14 +71,71 @@ class BlocksTable extends Component<*> {
       //   const b = this.props.blocks[idx].previousHash
       //   wrongPrevHash = (a !== b)
       // }
+      let table = [] 
+      let list = []
+      if (this.props.blocks[idx + 1]) {
+        Object.keys(this.props.blocks[idx].blockchainHeaders).map((k) => {
+          const c = this.props.blocks[idx + 1].blockchainHeaders[k]
+          const b = this.props.blocks[idx].blockchainHeaders[k]
+          const diffs = c.reduce((all, option) => {
+            let store = true 
+            b.map((s) => {
+               if(s.hash === option.hash){
+                  store = false
+               }
+            })
+            all.push(option) 
+            return all
+          }, [])
+            
+          if(diffs.length > 0) {
+            diffs.map((d) => {
+              table.push({ conf: d.blockchainConfirmationsInParentCount, data: '<div id="' + k + '">' + d.blockchainConfirmationsInParentCount
+                         + '</div>'}) 
+            })
+          } else {
+            b.map((s) => {
+            table.push({ conf: s.blockchainConfirmationsInParentCount, data: '<div id="glassList">' + s.blockchainConfirmationsInParentCount
+                       + '</div>'}) 
+                       
+             })
+          }
+        })
+      }
       // { wrongPrevHash && <i style={{paddingLeft: 3, filter: 'invert(100%)', color: 'red'}} className='fas fa-exclamation-circle' /> }
+      const sorted = table.sort((a, b) => {
+        if(a.blockchainConfirmationsInParentCount > b.blockchainConfirmationsInParentCount){
+          return -1
+        } 
+        if(a.blockchainConfirmationsInParentCount < b.blockchainConfirmationsInParentCount){
+          return 1
+        } 
+        return 0
+      })
+
+      const oneOnly = sorted.reduce((all, b) => {
+        if(b.conf > 1){
+          all.push(b.data) 
+        } 
+        return all
+      }, [])
+
+      if(oneOnly.length === 0){
+        for(let i = 0; 5-oneOnly.length; i++){
+          oneOnly.push('')
+        }
+      } else {
+        for(let i = 0; 5-oneOnly.length; i++){
+          oneOnly.push('<div id="glassList">+</div>')
+        }
+      }
 
       return (
         <tr key={block.hash}>
-          <th scope='row'>{i++}</th>
           <td>
             <BlockLink block={block} onClick={this.props.onClick}>{block.height}</BlockLink>
           </td>
+          <th>{Parser(oneOnly.join(""))}</th>
           <td>
             <BlockLink block={block} onClick={this.props.onClick} >
               <Ellipsis text={block.hash} />
@@ -92,8 +163,8 @@ class BlocksTable extends Component<*> {
         <table className='table table-light table-striped '>
           <thead className='thead-light'>
             <tr>
-              <th scope='col'>#</th>
               <th scope='col'>Height</th>
+              <th scope='col'>Confirmations</th>
               <th scope='col'>Hash</th>
               <th scope='col'>Previous Hash</th>
               <th scope='col'>Miner</th>

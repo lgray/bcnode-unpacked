@@ -161,32 +161,6 @@ export class PeerManager {
 
   checkPeerSchedule (): void {
     const now = Math.floor(Date.now() * 0.001)
-    const keys = Object.keys(this._peerBookSchedule)
-    if (keys.length < 1) {
-      return false
-    }
-
-    const expiredPeers = keys.filter((k) => {
-      if (now >= k) {
-        return k
-      }
-    })
-
-    if (expiredPeers.length < 1) {
-      return false
-    }
-
-    this._logger.info(expiredPeers.length + ' peers -> schedule accepted')
-
-    const expiredCount = expiredPeers.reduce((all, key) => {
-      this._peerBookSchedule[key].map((peer, i) => {
-        this.removePeer(peer)
-        all++
-      })
-      delete this._peerBookSchedule[key]
-      return all
-    }, 0)
-    this._logger.info('peers cycled: ' + expiredCount)
     return true
   }
 
@@ -222,16 +196,6 @@ export class PeerManager {
       this.peerBookDiscovered.put(peer)
       debug(`adding newly discovered peer '${peerId}' to discoveredPeerBook, count: ${this.peerBookDiscovered.getPeersCount()}`)
       debug(`discovered peer ${peerId} already in discoveredPeerBook`)
-      const now = Math.floor(Date.now() * 0.001)
-      const bound = Math.floor(Math.random() * 500)
-      const l = now + bound
-      this._logger.info('peer scheduled bound ' + bound)
-
-      if (this._peerBookSchedule[l] === undefined) {
-        this._peerBookSchedule[l] = []
-      }
-      this._peerBookSchedule[l].push(peer)
-
       disconnectPeer()
       return Promise.resolve(false)
     } else if (this.peerBookConnected.getPeersCount() >= QUORUM_SIZE) {
@@ -271,15 +235,6 @@ export class PeerManager {
         }
       })
     }
-    const now = Math.floor(Date.now() * 0.001)
-    const bound = Math.floor(Math.random() * 400)
-    const l = now + bound
-    this._logger.info('peer scheduled bound ' + bound)
-
-    if (this._peerBookSchedule[l] === undefined) {
-      this._peerBookSchedule[l] = []
-    }
-    this._peerBookSchedule[l].push(peer)
     return Promise.resolve(false)
   }
 

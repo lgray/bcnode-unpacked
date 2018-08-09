@@ -195,7 +195,7 @@ export default class Controller {
     network.connect()
 
     setInterval(() => {
-      this._logger.info(`Peer count pool: ${pool.numberConnected()} dp: ${network.discoveredPeers}, sp: ${network.satoshiPeers}, q: ${network.hasQuorum()}, bh: ${network.bestHeight}`)
+      this._logger.info(`peer count pool: ${pool.numberConnected()} dp: ${network.discoveredPeers}, sp: ${network.satoshiPeers}, q: ${network.hasQuorum()}, bh: ${network.bestHeight}`)
     }, 3 * 1000)
   }
 

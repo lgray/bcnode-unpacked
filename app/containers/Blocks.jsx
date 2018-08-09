@@ -42,10 +42,10 @@ export class BlocksContainer extends Component<*> {
     return (
       <div className='d-flex flex-wrap flex-row'>
         <Helmet>
-          <title>Blocks</title>
+          <title>BLOCKS</title>
         </Helmet>
-        <h2 className='col-md-12 text-center' style={{marginTop: '16px', marginBottom: '16px'}}>
-          Blocks
+        <h2 className='col-md-12 text-center' style={{marginTop: '16px', marginBottom: '9px'}}>
+          BLOCKS
         </h2>
 
         { this.props.blocks[0] && <nav aria-label='Blocks pagination'>

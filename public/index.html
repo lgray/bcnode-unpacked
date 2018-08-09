@@ -2,7 +2,14 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Block Collider: Blocks</title>
+    <link type="text/css" rel="stylesheet" href="https://bootswatch.com/4/slate/bootstrap.min.css">
+    <link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet">
+    <!-- link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.0/css/bootstrap.min.css" integrity="sha384-9gVQ4dYFwwWSjIDZnLEWnxCjeSWFphJiwGPXr1jddIhOegiu1FwO5qRGvFXOdJZ4" crossorigin="anonymous" -->
+    <link rel='icon' type='image/png' href='/icon.png'>
+    <link href="https://fonts.googleapis.com/css?family=Lato" rel="stylesheet">
+
+
+
 
 
     <link type="text/css" rel="stylesheet" href="https://bootswatch.com/4/slate/bootstrap.min.css">
@@ -17,10 +24,6 @@
 }
 
 
-.table {
-  filter: invert(100%);
-}
-
 pre {
   color: white
 }
@@ -28,7 +31,7 @@ pre {
 .navbar {
   background: black !important;
   color: white !important;
-  border-bottom: 2px
+  border-bottom: 1.2px
   border-color: white 
 }
 
@@ -50,12 +53,88 @@ h2 {
 .card-text {
   color:white;
 }
-
+.table tr,th,td{
+  background-color: black;
+  color: white;
+}
+#btcList { 
+  float: left;
+  border: 1px solid orange;
+  font-size: 8pt;
+  margin: 2px;
+  text-align: center;
+  width: 23px; 
+}
+#ethList { 
+  float: left;
+  border: 1px solid #9400D3;
+  font-size: 8pt;
+  margin: 2px;
+  text-align: center;
+  width: 23px; 
+}
+#neoList { 
+  float: left;
+  border: 1px solid green; 
+  font-size: 8pt;
+  margin: 2px;
+  text-align: center;
+  width: 23px; 
+}
+#lskList { 
+  float: left;
+  border: 1px solid blue; 
+  font-size: 8pt;
+  margin: 2px;
+  text-align: center;
+  width: 23px; 
+}
+#wavList { 
+  float: left;
+  border: 1px solid lightblue; 
+  font-size: 8pt;
+  margin: 2px;
+  text-align: center;
+  width: 23px; 
+}
+#glassList { 
+  float: left;
+  border: 1px solid white;
+  font-size: 8pt;
+  margin: 2px;
+  text-align: center;
+  width: 23px; 
+}
+pre {
+  color: white !important;
+}
+.nav-item a {
+  color: white !important;
+}
+.navbar-brand a {
+  color: white !important;
+}
+td,tr,th a {
+  font-color: white !important;
+}
+a {
+  color: white !important;
+}
+h2 {
+  color:white;
+}
+.card-text {
+  color:white;
+}
+.card-text {
+  color:white;
+}
+a {
+  color: white; !important;
+}
 .bg-light {
   background : black !important;
 }
-
-
 body {
   min-height:100%;
   font-family: 'Lato', sans-serif;
@@ -63,17 +142,19 @@ body {
   padding: 0;
   background-image:linear-gradient(#000, #333);
   width: 10wh;
-  color: #000;
+  color: #fff;
+	background: #536976;  /* fallback for old browsers */
+	background: -webkit-linear-gradient(to right, #536976, #fff, #666666);  /* Chrome 10-25, Safari 5.1-6 */
+	background: linear-gradient(to right, #000, #536976, #000); /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
 }
-
 #content{
   /* position:absolute; */
   background-color: transparent;
+  color: white;
   background-image:       linear-gradient(0deg, transparent 24%, rgba(255, 255, 255, .05) 25%, rgba(255, 255, 255, .05) 26%, transparent 27%, transparent 74%, rgba(255, 255, 255, .05) 75%, rgba(255, 255, 255, .05) 76%, transparent 77%, transparent), linear-gradient(90deg, transparent 24%, rgba(255, 255, 255, .05) 25%, rgba(255, 255, 255, .05) 26%, transparent 27%, transparent 74%, rgba(255, 255, 255, .05) 75%, rgba(255, 255, 255, .05) 56%, transparent 77%, transparent);
   min-height:100%;
   background-size:15px 15px;
 }
-
 
     </style>
 </head>

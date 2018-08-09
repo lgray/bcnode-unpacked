@@ -195,12 +195,12 @@ export default class Controller {
     this._logger.debug('Initialized')
 
     process.on('disconnect', () => {
-      this._logger.info('Parent exited')
+      this._logger.info('parent exited')
       process.exit()
     })
 
     process.on('uncaughtException', (e) => {
-      this._logger.error(`Uncaught exception: ${errToString(e)}`)
+      this._logger.error(`uncaught exception: ${errToString(e)}`)
       process.exit(3)
     })
 
@@ -208,7 +208,7 @@ export default class Controller {
 
     const cycle = () => {
       this._timeoutDescriptor = setTimeout(() => {
-        this._logger.debug(`Pending requests: ${inspect(this._pendingRequests)}, pending fibers: ${inspect(this._pendingFibers.map(([ts, b]) => { return [ts, b.toObject()] }))}`)
+        this._logger.debug(`pending requests: ${inspect(this._pendingRequests)}, pending fibers: ${inspect(this._pendingFibers.map(([ts, b]) => { return [ts, b.toObject()] }))}`)
 
         if (isEmpty(this._pendingRequests)) {
           getLastHeight().then(({ height, timestamp }) => {
@@ -219,7 +219,7 @@ export default class Controller {
             this._pendingRequests.push([requestTime + randRange(5, 15), height - 3])
             cycle()
           }).catch(err => {
-            this._logger.warn(`Unable to start roving, could not get block count, err: ${err.message}`)
+            this._logger.debug(`unable to start roving, could not get block count, err: ${err.message}`)
             cycle()
           })
           return
@@ -250,7 +250,7 @@ export default class Controller {
           }, reason => {
             throw new Error(reason)
           }).catch(err => {
-            this._logger.warn(`Error while getting new block height: ${requestBlockHeight}, err: ${errToString(err)}`)
+            this._logger.debug(`error while getting new block height: ${requestBlockHeight}, err: ${errToString(err)}`)
             const moveBySeconds = Math.ceil(this._backoff.duration() / 1000)
             // postpone remaining requests
             this._pendingRequests = this._pendingRequests.map(([ts, height]) => [ts + moveBySeconds, height])
@@ -268,24 +268,24 @@ export default class Controller {
 
     const checkFibers = () => {
       if (isEmpty(this._pendingFibers)) {
-        this._logger.debug(`No fiber ready, waiting: ${inspect(
+        this._logger.debug(`no fiber ready, waiting: ${inspect(
           this._pendingFibers.map(([ts, b]) => ([ts, b.getHash()]))
         )}`)
         return
       }
-      this._logger.debug(`Fibers count ${this._pendingFibers.length}`)
+      this._logger.debug(`fibers count ${this._pendingFibers.length}`)
       const fiberTs = this._pendingFibers[0][0]
       if (fiberTs + dfBound < ts.nowSeconds()) {
         const [, fiberBlock] = this._pendingFibers.shift()
         this._logger.debug('WAV Fiber is ready, going to call this._rpc.rover.collectBlock()')
 
         if (this._config.isStandalone) {
-          this._logger.debug(`Would publish block: ${inspect(fiberBlock.toObject())}`)
+          this._logger.debug(`would publish block: ${inspect(fiberBlock.toObject())}`)
           return
         }
 
         if (fiberTs + dfVoid < ts.nowSeconds()) {
-          this._logger.debug(`Would publish block: ${inspect(fiberBlock.toObject())}`)
+          this._logger.debug(`would publish block: ${inspect(fiberBlock.toObject())}`)
           process.exit(ROVER_DF_VOID_EXIT_CODE)
         }
 

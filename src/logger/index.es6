@@ -15,14 +15,13 @@ require('winston-daily-rotate-file')
 
 const LOG_DIR = resolve(__dirname, '..', '..', '_logs')
 const logPath = `${LOG_DIR}/bcnode`
-const tsFormat = () => new Date().toISOString()
+const tsFormat = () => Math.floor(Date.now() * 0.001)
 
 const LOG_LEVEL = process.env.BC_LOG || 'info'
-
 const formatTemplate = options => {
   const ts = (options.timestamp) ? `${options.timestamp()} ` : ''
   const level = options.level.toUpperCase()
-  const msg = undefined !== options.message ? options.message : ' '
+  const msg = undefined !== options.message ? ' ' + options.message : ''
   const meta =
     options.meta && Object.keys(options.meta).length
       ? '\n\t' + JSON.stringify(options.meta, null, 2)
@@ -30,7 +29,6 @@ const formatTemplate = options => {
 
   return `${ts}${level}\t${msg} ${meta}`
 }
-
 const logger = new winston.Logger({
   transports: [
     // Console
@@ -77,7 +75,7 @@ const logger = new winston.Logger({
       }
     })
   ],
-  exitOnError: false
+  exitOnError: true
 })
 
 const pathToLogPrefix = (path, topLevelDir = 'lib') => {

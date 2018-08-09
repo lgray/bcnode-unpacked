@@ -232,9 +232,14 @@ export class Multiverse {
       return Promise.resolve(true)
     }
 
+    if (newBlock.getHeight() === 1 || newBlock.getHeight() === '1') {
+      // block being sent is genesis block
+      return Promise.resolve(false)
+    }
+
     // FAIL
     // case fails over into the resync
-    if (newBlock.getHeight() - 12 > currentHighestBlock.getHeight()) {
+    if (newBlock.getHeight() - 7 > currentHighestBlock.getHeight()) {
       return Promise.resolve(false)
     }
 
@@ -316,7 +321,7 @@ export class Multiverse {
     try {
       const synclock = await this.persistence.get('synclock')
 
-      if (synclock.getHeight() !== 1 && (synclock.getTimestamp() + 369) < Math.floor(Date.now() * 0.001)) {
+      if (synclock.getHeight() !== 1 && (synclock.getTimestamp() + 969) < Math.floor(Date.now() * 0.001)) {
         this._logger.warn('sync lock is stale resetting')
         return Promise.resolve(false)
       } else if (synclock.getHeight() === 1) {
@@ -358,25 +363,25 @@ export class Multiverse {
     // }
 
     if (this._chain.length === 0) {
-      this._logger.info('passed sync req: currentHighestBlock is null')
+      this._logger.info('passed sync req <- currentHighestBlock not set')
       return Promise.resolve(true)
     }
 
     // pass if no highest block exists go with current
     if (currentHighestBlock === null) {
-      this._logger.info('passed resync req: currentHighestBlock is null')
+      this._logger.info('passed resync req <- currentHighestBlock not set')
       return Promise.resolve(true)
     }
 
     // only block is the genesis block
     if (currentHighestBlock.getHeight() === 1 && newBlock.getHeight() > 1) {
-      this._logger.info('passed resync req: new block was above genesis')
+      this._logger.info('passed resync req <- new block above genesis')
       return Promise.resolve(true)
     }
 
     // Fail is the block hashes are identical
     if (newBlock.getHash() === currentHighestBlock.getHash()) {
-      this._logger.info('failed resync req: newBlock hash matches')
+      this._logger.info('failed resync req <- newBlock non-unique hash')
       return Promise.resolve(false)
     }
 
@@ -387,8 +392,8 @@ export class Multiverse {
     }
 
     // PASS if current highest block is older than 300 seconds from local time
-    if (currentHighestBlock.getTimestamp() + 300 < Math.floor(Date.now() * 0.001)) {
-      this._logger.info('current on a stale chain')
+    if (currentHighestBlock.getTimestamp() + 61 < Math.floor(Date.now() * 0.001)) {
+      this._logger.info('current chain is stale chain')
       return Promise.resolve(true)
     }
 
@@ -411,6 +416,7 @@ export class Multiverse {
       this._logger.info('failed resync req: new block distance is lower than highest block')
       return Promise.resolve(false)
     }
+
     // make sure that blocks that are added reference child chains
     return this.validateRoveredBlocks(newBlock).then(areAllChildrenRovered => {
       if (!areAllChildrenRovered) {

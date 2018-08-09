@@ -28,11 +28,11 @@ export class MinerContainer extends Component<*> {
     return (
       <div className='d-flex flex-wrap flex-row'>
         <Helmet>
-          <title>Miner</title>
+          <title>MINER</title>
         </Helmet>
 
-        <h2 className='col-md-12 text-center' style={{marginTop: '16px', marginBottom: '16px'}}>
-          Mined blocks (last {Math.min(this.props.blocks.capacity(), this.props.blocksCount)} of {this.props.blocksCount})
+        <h2 className='col-md-12 text-center' style={{marginTop: '16px', marginBottom: '9px'}}>
+          MINED BLOCKS (last {Math.min(this.props.blocks.capacity(), this.props.blocksCount)} of {this.props.blocksCount})
         </h2>
         <BlocksTable blocks={this.props.blocks.toarray()} extraCols={extraCols} onClick={this.props.actions.showBlock} />
       </div>

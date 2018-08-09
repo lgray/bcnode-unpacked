@@ -7,33 +7,55 @@
  * @flow
  */
 
+/* eslint no-console: ["error", { allow: ["warn", "error", "log", "trace"  ] }] */
+
 import type { Engine } from '../engine'
 
 const { inspect } = require('util')
 
+const Url = require('url')
 const PeerInfo = require('peer-info')
-const waterfall = require('async/waterfall')
+const queue = require('async/queue')
 const multiaddr = require('multiaddr')
 const pull = require('pull-stream')
-// const { uniqBy } = require('ramda')
 
+const LRUCache = require('lru-cache')
 const debug = require('debug')('bcnode:p2p:node')
 const { config } = require('../config')
-// const { toObject } = require('../helper/debug')
 const { getVersion } = require('../helper/version')
 const logging = require('../logger')
 
 const { BcBlock } = require('../protos/core_pb')
 const { ManagedPeerBook } = require('./book')
 const Bundle = require('./bundle').default
+const Discovery = require('./discovery')
 const Signaling = require('./signaling').websocket
 const { PeerManager, DATETIME_STARTED_AT, QUORUM_SIZE } = require('./manager/manager')
-// const { validateBlockSequence } = require('../bc/validation')
 const { Multiverse } = require('../bc/multiverse')
 const { BlockPool } = require('../bc/blockpool')
-// const { blockByTotalDistanceSorter } = require('../engine/helper')
 
 const { PROTOCOL_PREFIX, NETWORK_ID } = require('./protocol/version')
+const LOW_HEALTH_NET = process.env.LOW_HEALTH_NET === 'true'
+const USER_QUORUM = process.env.USER_QUORUM || config.bc.quorum
+
+const { range, max } = require('ramda')
+const { protocolBits, anyDns } = require('../engine/helper')
+// const waterfall = require('async/waterfall')
+// const { toObject } = require('../helper/debug')
+// const { validateBlockSequence } = require('../bc/validation')
+
+// function toBuffer (str) {
+//  if (Buffer.isBuffer(str)) return str
+//  if (ArrayBuffer.isView(str)) return Buffer.from(str.buffer, str.byteOffset, str.byteLength)
+//  if (typeof str === 'string') return Buffer.from(str, 'hex')
+//  throw new Error('Pass a buffer or a string')
+// }
+//
+process.on('uncaughtError', (err) => {
+  /* eslint-disable */
+  console.trace(err)
+  /* eslint-enable */
+})
 
 // const { PEER_QUORUM_SIZE } = require('./quorum')
 
@@ -44,19 +66,50 @@ export class PeerNode {
   _bundle: Bundle // eslint-disable-line no-undef
   _manager: PeerManager // eslint-disable-line no-undef
   _peer: PeerInfo // eslint-disable-line no-undef
-  _multiverse: Multiverse
-  _blockPool: BlockPool
+  _seededPeers: Object // eslint-disable-line no-undef
+  _multiverse: Multiverse // eslint-disable-line no-undef
+  _blockPool: BlockPool // eslint-disable-line no-undef
+  _identity: string // eslint-disable-line no-undef
+  _scanner: Object // eslint-disable-line no-undef
+  _externalIP: string // eslint-disable-line no-undef
+  _ds: Object // eslint-disable-line no-undef
+  _p2p: Object // eslint-disable-line no-undef
+  _queue: Object // eslint-disable-line no-undef
 
   constructor (engine: Engine) {
     this._engine = engine
     this._multiverse = new Multiverse(engine.persistence) /// !important this is a (nonselective) multiverse
     this._blockPool = new BlockPool(engine.persistence, engine._pubsub)
     this._logger = logging.getLogger(__filename)
+    this._p2p = {
+      givenHostName: false
+    }
     this._manager = new PeerManager(this)
+    this._ds = {}
+    this._seededPeers = LRUCache({
+      max: 1000
+    })
+    this._queue = queue((task, cb) => {
+      if (task.constructor === Array) {
+        this._engine.persistence.getBulk(task).then((res) => {
+          cb(null, res)
+        })
+          .catch((err) => {
+            cb(err)
+          })
+      } else {
+        this._engine.persistence.get(task).then((res) => {
+          cb(null, res)
+        })
+          .catch((err) => {
+            cb(err)
+          })
+      }
+    })
 
     if (config.p2p.stats.enabled) {
       this._interval = setInterval(() => {
-        debug(`Peers count ${this.manager.peerBookConnected.getPeersCount()}`)
+        debug(`peers count ${this.manager.peerBookConnected.getPeersCount()}`)
       }, config.p2p.stats.interval * 1000)
     }
   }
@@ -99,14 +152,14 @@ export class PeerNode {
     return [
       // Create PeerInfo for local node
       (cb: Function) => {
-        this._logger.info('Generating peer info')
+        this._logger.info('generating peer info')
         PeerInfo.create(cb)
       },
 
       // Join p2p network
       (peerInfo: PeerInfo, cb: Function) => {
         const peerId = peerInfo.id.toB58String()
-        this._logger.info(`Registering addresses for ${peerId}`)
+        this._logger.info(`registering addresses for ${peerId}`)
 
         peerInfo.multiaddrs.add(multiaddr('/p2p-websocket-star'))
 
@@ -134,7 +187,8 @@ export class PeerNode {
 
       // Create node
       (peerInfo: PeerInfo, cb: Function) => {
-        this._logger.info('Creating P2P node')
+        this._logger.info('creating P2P node')
+
         const opts = {
           signaling: Signaling.initialize(peerInfo),
           relay: false
@@ -143,10 +197,8 @@ export class PeerNode {
 
         cb(null, this._bundle)
       },
-
-      // Start node
       (bundle: Object, cb: Function) => {
-        this._logger.info('Starting P2P node')
+        this._logger.info('starting P2P node')
 
         bundle.start((err) => {
           if (err) {
@@ -158,12 +210,12 @@ export class PeerNode {
 
       // Register event handlers
       (bundle: Object, cb: Function) => {
-        this._logger.info('Registering event handlers')
+        this._logger.info('registering event handlers')
 
         this.bundle.on('peer:discovery', (peer) => {
           return this.manager.onPeerDiscovery(peer).then(() => {
             if (this._shouldStopDiscovery()) {
-              debug(`peer:discovery - Quorum of ${QUORUM_SIZE} reached, if testnet stopping discovery`)
+              debug(`peer:discovery - quorum of ${QUORUM_SIZE} reached, if testnet stopping discovery`)
               // return Promise.resolve(true)
               return this.stopDiscovery()
             }
@@ -173,7 +225,7 @@ export class PeerNode {
         this.bundle.on('peer:connect', (peer) => {
           return this.manager.onPeerConnect(peer)
             .then((header) => {
-              if (header !== undefined && header.getHeight !== undefined) {
+              if (header !== undefined && header.getHeight() !== undefined) {
                 const highestBlock = this._engine.multiverse.getHighestBlock()
                 if (highestBlock !== undefined) {
                   if (header.getHeight() + 2 < highestBlock.getHeight()) {
@@ -208,23 +260,501 @@ export class PeerNode {
       // Register protocols
       (cb: Function) => {
         this._logger.info('Registering protocols')
-        this.manager.registerProtocols(this.bundle)
-        cb(null)
+        try {
+          this.manager.registerProtocols(this.bundle)
+          cb(null)
+        } catch (err) {
+          cb(err)
+        }
       }
     ]
   }
 
-  start () {
-    waterfall(this._pipelineStartNode(), (err) => {
-      if (err) {
-        this._logger.error(err)
-        throw err
-      }
+  async start (nodeId) {
+    // waterfall(this._pipelineStartNode(), (err) => {
+    //  if (err) {
+    //    this._logger.error(err)
+    //    throw err
+    //  }
+    // })
 
-      this._logger.info('P2P node started')
+    /* eslint-disable */
+    const discovery = new Discovery(nodeId)
+		anyDns().then((ip) => {
+
+    this._p2p = discovery.start()
+    this._p2p.join(this._p2p.hash, this._p2p.port, (data) => {
+		this._p2p.ip = ip
+    //const waypoint = setInterval(() => {
+    //  this._p2p.announce(this._p2p.hash, this._p2p.port, function() {
+    //    this._logger.info('confirmed waypoint key')
+    //  })
+    //}, 15000)
+
+    this._engine._emitter.on('sendblock', (msg) => {
+      return this._p2p.qsend(msg.connection, '0008W01' + '[*]' +  msg.data.serializeBinary())
     })
 
-    return true
+    this._engine._emitter.on('sendblock', (msg) => {
+      return this._p2p.qsend(msg.connection, '0008W01' + '[*]' +  msg.data.serializeBinary())
+    })
+
+    this._engine._emitter.on('announceblock', (msg) => {
+      this._logger.info('announceblock <- event')
+			if(msg.filters !== undefined && msg.filters.length > 0){
+      	this._p2p.qbroadcast('0008W01' + '[*]' +  msg.data.serializeBinary(), msg.filters)
+        .then(() => {
+        	this._logger.info('block announced!')
+				})
+				.catch((err) => {
+					this._logger.error(err)
+				})
+			} else {
+      	this._p2p.qbroadcast('0008W01' + '[*]' +  msg.data.serializeBinary())
+        .then(() => {
+        	this._logger.info('block announced!')
+				})
+				.catch((err) => {
+					this._logger.error(err)
+				})
+			}
+    })
+
+
+    this._logger.info('initialized far reaching discovery module')
+
+    this._p2p.on('connection', (conn, info) => {
+
+      (async () => {
+                // greeting reponse to connection with provided host information and connection ID
+                const address = conn.remoteAddress + ':' + conn.remotePort
+                if (this._ds[address] === undefined) {
+                    this._ds[address] = false
+                }
+
+                // get heighest block
+                const latestBlock = await this._engine.persistence.get('bc.block.latest')
+                const quorumState = await this._engine.persistence.get('bc.dht.quorum')
+                const quorum = parseInt(quorumState, 10) // coerce for Flow
+
+                if(this._p2p.totalConnections >= USER_QUORUM && quorum === 0){
+                    await this._engine.persistence.put('bc.dht.quorum', "1")
+                } else if (quorum === 0 && LOW_HEALTH_NET === true){
+                    await this._engine.persistence.put('bc.dht.quorum', "1")
+                }
+
+        //https://github.com/webtorrent/bittorrent-dht/blob/master/client.js#L579r
+                //const msg = '0000R01' + info.host + '*' + info.port + '*' + info.id.toString('hex')
+                const type = '0008W01'
+                const msg = type + protocolBits[type] + latestBlock.serializeBinary()
+
+                await this._p2p.qsend(conn, msg)
+
+                conn.on('data', (data) => {
+                    console.log('<< STREAM ' + data.length + '>>        ')
+                    /* eslint-disable */
+                    if(!data && this._ds[address] !== false){
+                         const remaining = "" + this._ds[address]
+                         this._ds[address] = false
+                         this.peerDataHandler(conn, info, remaining)
+                    } else {
+                        let chunk = data.toString()
+                        if (chunk.length === 1382 && this._ds[address] === false) {
+                            this._ds[address] = chunk
+                        } else if (chunk.length === 1382 && this._ds[address] !== false) {
+                            this._ds[address] = this._ds[address] + chunk
+                        } else if (chunk.length !== 1382 && this._ds[address] !== false) {
+                            const complete = "" + this._ds[address] + chunk
+                            this._ds[address] = false
+                            this.peerDataHandler(conn, info, complete)
+                        } else {
+                            this.peerDataHandler(conn, info, chunk)
+                        }
+                    }
+                })
+
+      })().catch(err => {
+                        this._logger.error(err);
+                })
+            })
+
+            /* eslint-disable */
+
+            this._p2p.on('connection-closed', (conn, info) => {
+             // this.peerClosedConnectionHandler(conn, info)
+             this._logger.info('------- CONNECTION CLOSED ------')
+             //console.log(conn)
+             //console.log(info)
+             console.log("^^^^^^^^^^^^^^^^^^^^^^^^")
+            })
+            this._p2p.on('error', (err) => {
+             this._logger.info('------- ERROR ------')
+             console.trace(err)
+             console.log("^^^^^^^^^^^^^^^^^^^^^^^^")
+            })
+
+            this._p2p.on('redundant-connection', (conn, info) => {
+             this._logger.info('------- REDUNDANT CONNECTION ------')
+             console.log("^^^^^^^^^^^^^^^^^^^^^^^^")
+            })
+
+            this._p2p.on('peer', (channel) => {
+             this._logger.info('-------  PEER DISCOVERED ------')
+             //console.log(channel)
+             console.log("^^^^^^^^^^^^^^^^^^^^^^^^")
+            })
+
+            this._p2p.on('drop', (peer, type) => {
+             this._logger.info('------- PEER DROPPED ------')
+               // console.log(peer)
+               // console.log(type)
+             console.log("^^^^^^^^^^^^^^^^^^^^^^^^")
+            })
+
+            this._p2p.on('peer-banned', (peer, type) => {
+             this._logger.info('------- PEER BANNED ------')
+             //console.log(peer)
+             //console.log(type)
+             console.log("^^^^^^^^^^^^^^^^^^^^^^^^")
+            })
+
+            this._p2p.on('connect-failed', (next, timeout) => {
+             this._logger.info('------- CONNECT FAILED ------')
+             //console.log(next)
+             //console.log(timeout)
+             console.log("^^^^^^^^^^^^^^^^^^^^^^^^")
+            })
+
+            this._p2p.on('handshake-timeout', (conn, timeout) => {
+             this._logger.info('------- HANDSHAKE TIMEOUT ------')
+             //console.log(timeout)
+             //console.log("^^^^^^^^^^^^^^^^^^^^^^^^")
+            })
+
+            this._p2p.on('peer-rejected', (peer, type) => {
+             this._logger.warn('peer rejected ')
+             //console.log(peer)
+             //console.log(type)
+              this._logger.info("::::::::::::::::::::::::" + type)
+             console.log("^^^^^^^^^^^^^^^^^^^^^^^^")
+            })
+
+            this._p2p._discovery.on('peer', (data) => {
+                console.log(data)
+            })
+
+            this._engine._emitter.on('getmultiverse', (obj) => {
+
+							console.log('bone art event get multiverse not fired <----------------')
+
+              const type = '0009R01' // read selective block list (multiverse)
+              const split = protocolBits[type]
+              const low = obj.data.low
+              const high = obj.data.high
+              const msg = type + split + low + split + high
+              console.log('>>>>>>>>>>>>>>>>>>>>>>>>> CONNECTION ')
+              console.log(obj)
+              this._p2p.qsend(obj.connection, msg)
+                .then((res) => {
+                  if (res) {
+                    this._logger.info(res.length + ' delivered')
+                  }
+                })
+                .catch((err) => {
+                  this._logger.error(new Error('critical write to peer socket failed'))
+                  this._logger.error(err)
+                })
+            })
+
+          this._engine._emitter.on('putmultiverse', (msg) => {
+            console.log('getblocklist event requests')
+            console.log(msg)
+            this._engine.getMultiverseHandler(msg, msg.data)
+            .then((res) => {
+              this._logger.info(res)
+            })
+            .catch((err) => {
+                this._logger.error(err)
+            })
+          })
+
+          this._engine._emitter.on('getblocklist', (request) => {
+            this._logger.info('GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG')
+            const type = '0006R01'
+            const split = protocolBits[type]
+            const low = request.low
+            const high = request.high
+            const msg = type + split + low + split + high
+            this._p2p.qsend(request.connection, msg).then((res) => {
+              if (res !== undefined && res.length > 0) {
+                return Promise.resolve(true)
+              }
+              return Promise.resolve(false)
+            })
+              .catch((err) => {
+                this._logger.error(err)
+                return Promise.resolve(false)
+              })
+          })
+
+          this._engine._emitter.on('putblocklist', (msg) => {
+            this._engine.stepSyncHandler(msg)
+              .then(() => {
+                this._logger.debug('stepSync complete sent')
+              })
+              .catch((err) => {
+                this._logger.error(err)
+              })
+          })
+
+          this._engine._emitter.on('putblock', (msg) => {
+            this._logger.info('candidate block ' + msg.data.getHeight() + ' recieved')
+            this._engine.blockFromPeer(msg, msg.data)
+          })
+
+            /*
+             * PEER SEEDER
+             */
+					this._p2p._seeder = discovery.seeder()
+					this._p2p._seeder.on('update', (data) => {
+						console.log(' ----> UPDATE ' )
+					})
+
+          this._p2p._seeder.on('peer', (peer) => {
+
+          if(this._seededPeers.get(peer)) {
+             return
+          }
+
+          this._seededPeers.set(peer, 1)
+
+                 const channel = this._p2p.hash
+                 const url = Url.parse(peer)
+                 const h = url.href.split(':')
+                 const obj = {
+                     //id: crypto.createHash('sha1').update(peer).digest('hex'),
+                     host: h[0],
+                     port: Number(h[1]) + 1, // seeder broadcasts listen on one port below the peers address
+                     retries: 0,
+                     channel: Buffer.from(channel),
+                 }
+                 obj.id = obj.host + ':' + obj.port
+                 obj.remotePort = obj.port
+                 obj.remoteHost = obj.host
+
+					if(this._p2p.ip === obj.host) return
+          //  this._p2p.add(obj)
+          //this._p2p._onconnection( ,'utp')
+                 // the host name as described by external peers
+                 // first one is always the immediate response to current peer
+                       console.log('--------------> PEER FROM SEEDER ' )
+                       // add seen protection
+                       try {
+                           const name = obj.host + ':' + obj.port + this._p2p.hash
+                           console.log(obj)
+                           console.log("local hash: " + this._p2p.hash)
+                           console.log("local port: " + this._p2p.port)
+                           //this._p2p._discovery.dht.emit('announce', obj, toBuffer(this._p2p.hash), { host: obj.host, port: obj.port })
+                           this._p2p._discovery.emit('peer', name, obj, 'utp')
+
+                       } catch (err) {
+                           console.log('unable to reuse server')
+                       }
+                       //this._p2p.addPeer(this._p2p.hash, obj)
+                       //this._p2p.add(obj, () => {
+                       //   this._logger.info('adding peer: ' + peer)
+                       //     console.log('connected peers: ' + this._p2p.totalConnections)
+                       //})
+
+            })
+
+      			this._p2p._seeder.start()
+            this._manager._p2p = this._p2p
+            this._engine._p2p = this._p2p
+
+
+      this._logger.info('joined waypoint table')
+            setInterval(() => {
+                this._logger.info('active waypoints:  ' + this._p2p.totalConnections)
+                this._engine._emitter.emit('peerCount' + this._p2p.totalConnections)
+            }, 5000)
+
+            setTimeout(() => {
+                this._p2p._seeder.complete()
+            }, 10000)
+
+   })
+		})
+		.catch((err) => {
+
+		})
+     return Promise.resolve(true)
+            /* eslint-enable */
+  }
+
+  // const protocolBits = {
+  //   '0000R01': '[*]', // introduction
+  //   '0001R01': '[*]', // reserved
+  //   '0002W01': '[*]', // reserved
+  //   '0003R01': '[*]', // reserved
+  //   '0004W01': '[*]', // reserved
+  //   '0005R01': '[*]', // list services
+  //   '0006R01': '[*]', // read block heights
+  //   '0007W01': '[*]', // write block heights
+  //   '0008R01': '[*]', // read highest block
+  //   '0008W01': '[*]', // write highest block
+  //   '0009R01': '[*]', // read multiverse (selective sync)
+  //   '0010W01': '[*]'  // write multiverse (selective sync)
+  // }
+  peerDataHandler (conn: Object, info: Object, str: ?string) {
+    (async () => {
+      if (str === undefined) { return }
+      if (str.length < 8) { return }
+
+      // TODO: add lz4 compression for things larger than 1000 characters
+      const type = str.slice(0, 7)
+      console.log('  <<<<<<<<<<<<<<<< ' + type)
+
+      if (protocolBits[type] === undefined) {
+        return
+      }
+
+      this._logger.info('peerDataHandler <- ' + type)
+      // Peer Sent Highest Block
+      if (type === '0007W01') {
+        this._logger.info('::::::::::::::::::::::::' + type)
+        const parts = str.split(protocolBits[type])
+        const rawUint = parts[1]
+        const raw = new Uint8Array(rawUint.split(','))
+        const block = BcBlock.deserializeBinary(raw)
+
+        /* eslint-disable */
+        this._engine._emitter.emit('putblock', {
+          data: block,
+          connection: conn
+        })
+
+      // Peer Requests Highest Block
+      } else if (type === '0008R01') {
+        this._logger.info("::::::::::::::::::::::::" + type)
+        const latestBlock = await this._engine.persistence.get('bc.block.latest')
+        const msg = '0008W01' + protocolBits[type] + latestBlock.serializeBinary()
+        const results = await this._p2p.qsend(conn, msg)
+
+        if (results && results.length > 0) {
+          this._logger.info('successful update sent to peer')
+        }
+
+      // Peer Requests Block Range
+      } else if (type === '0006R01' || type === '0009R01') {
+
+        this._logger.info("::::::::::::::::::::::::" + type)
+        const parts = str.split(protocolBits[type])
+        const low = parts[1]
+        const high = parts[2]
+
+        let outboundType = '0007W01'
+        if (type === '0009R01') {
+          outboundType = '0010W01'
+        }
+
+        this._logger.info(outboundType)
+
+        try {
+          const query = range(max(2, low), (high + 1)).map((n) => {
+            return 'bc.block.' + n
+          })
+
+          console.log(query)
+          this._logger.info(query.length + ' blocks requested by peer: ' + conn.remoteHost)
+          this._queue.push(query, (err, res) => {
+
+            this._logger.info(3333333333333)
+            if (err) {
+              this._logger.warn(err)
+            } else {
+              const split = protocolBits[outboundType]
+              const msg = [outboundType, res.map((r) => {
+                return r.serializeBinary()
+              })].join(split)
+              this._logger.info(4444444444444)
+              this._p2p.qsend(conn, msg).then(() => {
+                this._logger.info('sent message of length: ' + msg.length)
+              })
+                .catch((err) => {
+                  this._logger.error(err)
+                })
+            }
+          })
+        } catch (err) {
+          this._logger.error(err)
+        }
+
+      // Peer Sends New Block
+      } else if (type === '0008W01') {
+        this._logger.info("::::::::::::::::::::::::" + type)
+        const parts = str.split(protocolBits[type])
+        const rawUint = parts[1]
+        const raw = new Uint8Array(rawUint.split(','))
+        const block = BcBlock.deserializeBinary(raw)
+
+        this._engine._emitter.emit('putblock', {
+          data: block,
+          connection: conn
+        })
+
+      // Peer Sends Block List 0007 // Peer Sends Multiverse 001
+      } else if (type === '0007W01' || type === '0010W01') {
+        const parts = str.split(protocolBits[type])
+        this._logger.info("::::::::::::::::::::::::" + type)
+
+        try {
+
+          this._logger.info(6666666666666666666)
+          const list = parts.split(protocolBits[type]).reduce((all, rawBlock) => {
+            const raw = new Uint8Array(rawBlock.split(','))
+            all.push(BcBlock.deserializeBinary(raw))
+            return all
+          }, [])
+
+          const sorted = list.sort((a, b) => {
+            if (a.getHeight() > b.getHeight()) {
+              return -1 // move block forward
+            }
+            if (a.getHeight() < b.getHeight()) {
+              return 1 // move block forward
+            }
+            return 0
+          })
+
+          this._logger.info(77777777777777777777777)
+          if (type === '0007W01') {
+        this._logger.info("::::::::::::::::::::::::" + type)
+            this._engine._emitter.emit('putblocklist', {
+              data: {
+                low: sorted[sorted.length - 1], // lowest block
+                high: sorted[0] // highest block
+              },
+              connection: conn
+            })
+          } else if (type === '0010W01') {
+        this._logger.info("::::::::::::::::::::::::" + type)
+            this._engine._emitter.emit('putmultiverse', {
+              data: sorted,
+              connection: conn
+            })
+          }
+        } catch (err) {
+          this._logger.error('unable to parse: ' + type + ' from peer ')
+        }
+      } else {
+        this._logger.info('unable to parse: ' + type)
+      }
+
+      return Promise.resolve(true)
+    })().catch(err => {
+      this._logger.error(err)
+    })
   }
 
   /**
@@ -335,27 +865,39 @@ export class PeerNode {
     })
   }
 
-  broadcastNewBlock (block: BcBlock, withoutPeerId: ?string) {
-    this._logger.debug(`Broadcasting msg to peers, ${inspect(block.toObject())}`)
+  broadcastNewBlock (block: BcBlock, withoutPeerId: ?Object) {
+    this._logger.debug(`broadcasting msg to peers, ${inspect(block.toObject())}`)
 
     // this.bundle.pubsub.publish('newBlock', Buffer.from(JSON.stringify(block.toObject())), () => {})
-    const url = `${PROTOCOL_PREFIX}/newblock`
-    this.manager.peerBookConnected.getAllArray().map(peer => {
-      this._logger.debug(`Sending to peer ${peer}`)
-      const peerId = peer.id.toB58String()
-      if (withoutPeerId === undefined || peerId !== withoutPeerId) {
-        this.bundle.dialProtocol(peer, url, (err, conn) => {
-          if (err) {
-            this._logger.error('Error sending message to peer', peer.id.toB58String(), err)
-            this._logger.error(err)
-            return err
-          }
+    // const raw = block.serializeBinary()
 
-          // TODO JSON.stringify?
-          pull(pull.values([block.serializeBinary()]), conn)
-        })
+    let filters = []
+    if (withoutPeerId !== undefined) {
+      if (withoutPeerId.constructor === Array) {
+        filters = withoutPeerId
+      } else {
+        filters.push(withoutPeerId)
       }
-    })
+    }
+    this._engine._emitter.emit('announceblock', { data: block, filters: filters })
+
+    // const url = `${PROTOCOL_PREFIX}/newblock`
+    // this.manager.peerBookConnected.getAllArray().map(peer => {
+    //  this._logger.debug(`Sending to peer ${peer}`)
+    //  const peerId = peer.id.toB58String()
+    //  if (withoutPeerId === undefined || peerId !== withoutPeerId) {
+    //    this.bundle.dialProtocol(peer, url, (err, conn) => {
+    //      if (err) {
+    //        this._logger.error('error sending message to peer', peer.id.toB58String(), err)
+    //        this._logger.error(err)
+    //        return err
+    //      }
+
+    //      // TODO JSON.stringify?
+    //      pull(pull.values([block.serializeBinary()]), conn)
+    //    })
+    //  }
+    // })
   }
 
   // get the best multiverse from all peers

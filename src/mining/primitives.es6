@@ -101,27 +101,27 @@ export function getExpFactorDiff (calculatedDifficulty: BN, parentBlockHeight: n
  *
  * @param currentBlockTime
  * @param previousBlockTime
- * @param previousDistance
+ * @param previousDifficulty
  * @param minimalDifficulty
  * @param newBlockCount
  * @returns
  */
-export function getDiff (currentBlockTime: number, previousBlockTime: number, previousDistance: string, minimalDifficulty: number, newBlockCount: number): BN {
+export function getDiff (currentBlockTime: number, previousBlockTime: number, previousDifficulty: string, minimalDifficulty: number, newBlockCount: number): BN {
   // https://github.com/ethereum/EIPs/blob/master/EIPS/eip-2.md
 
   let bigMinimalDifficulty = new BN(minimalDifficulty, 16)
 
   const bigPreviousBlockTime = new BN(previousBlockTime)
-  const bigPreviousDistance = new BN(previousDistance)
+  const bigPreviousDifficulty = new BN(previousDifficulty)
   const bigCurentBlockTime = new BN(currentBlockTime)
   const bigMinus99 = new BN(-99)
   const big1 = new BN(1)
   const big0 = new BN(0)
-  const bigTargetTimeWindow = new BN(6)
+  const bigTargetTimeWindow = new BN(7)
   let elapsedTime = bigCurentBlockTime.sub(bigPreviousBlockTime)
 
   // elapsedTime + ((elapsedTime - 4) * newBlocks)
-  const elapsedTimeBonus = elapsedTime.add(elapsedTime.sub(new BN(4)).mul(new BN(newBlockCount)))
+  const elapsedTimeBonus = elapsedTime.add(elapsedTime.sub(new BN(5)).mul(new BN(newBlockCount)))
 
   if (elapsedTimeBonus.gt(big0)) {
     elapsedTime = elapsedTimeBonus
@@ -136,12 +136,12 @@ export function getDiff (currentBlockTime: number, previousBlockTime: number, pr
     x = bigMinus99
   }
 
-  // y = bigPreviousDifficulty -> SPECTRUM: 10062600 // AT: 1615520 // BT: (1024 * 160) + 20 = 163860
-  y = bigPreviousDistance.div(new BN(163860))
+  // y = bigPreviousDifficulty -> SPECTRUM: 10062600 // AT: 1615520 // BT: (32 * 16) + 20 = 532
+  y = bigPreviousDifficulty.div(new BN(532))
   // x = x * y
   x = x.mul(y)
-  // x = x + previousDistance
-  x = x.add(bigPreviousDistance)
+  // x = x + previousDifficulty
+  x = x.add(bigPreviousDifficulty)
 
   // x < minimalDifficulty
   if (x.lt(bigMinimalDifficulty)) {
@@ -288,7 +288,7 @@ export function mine (currentTimestamp: number, work: string, miner: string, mer
   const tsEnd = ts.now()
   const tsDiff = tsEnd - tsStart
   if (res === null) {
-    throw Error(`Mining took more than 30s, iterations: ${iterations}, tsDiff: ${tsDiff} ending...`)
+    throw Error(`Mining took more than ${MAX_TIMEOUT_SECONDS}s, iterations: ${iterations}, tsDiff: ${tsDiff} ending...`)
   }
 
   return res
@@ -540,6 +540,8 @@ export function prepareNewBlock (currentTimestamp: number, lastPreviousBlock: Bc
   const newChainRoot = getChildrenRootHash(blockHashes)
   const newBlockCount = getNewBlockCount(lastPreviousBlock.getBlockchainHeaders(), childBlockHeaders)
 
+  logger.info('number of new blocks: ' + newBlockCount)
+
   const preExpDiff = getNewPreExpDifficulty(
     currentTimestamp,
     lastPreviousBlock,
@@ -564,7 +566,11 @@ export function prepareNewBlock (currentTimestamp: number, lastPreviousBlock: Bc
     ]
   ]))
 
-  // nonce, distance, timestamp and difficulty are set to proper values after successful mining of this block
+  let chainWeight = 0
+  if (new BN(lastPreviousBlock.getHeight()).gt(2) === true) {
+    chainWeight = new BN(lastPreviousBlock.getDistance()).sub(new BN(lastPreviousBlock.getDifficulty())).divRound(new BN(4)).toString()
+  }
+
   const newBlock = new BcBlock()
   newBlock.setHash(blake2bl(lastPreviousBlock.getHash() + newMerkleRoot))
   newBlock.setPreviousHash(lastPreviousBlock.getHash())
@@ -575,15 +581,15 @@ export function prepareNewBlock (currentTimestamp: number, lastPreviousBlock: Bc
   newBlock.setDifficulty(finalDifficulty)
   newBlock.setMerkleRoot(newMerkleRoot)
   newBlock.setChainRoot(blake2bl(newChainRoot.toString()))
-  newBlock.setDistance('') // is set to proper value after successful mining
+  newBlock.setDistance(chainWeight) // is set to proper value after successful mining
   newBlock.setTotalDistance(lastPreviousBlock.getTotalDistance()) // distance from mining solution will be added to this after mining
   newBlock.setNrgGrant(GENESIS_DATA.nrgGrant)
   newBlock.setTargetHash(GENESIS_DATA.targetHash)
   newBlock.setTargetHeight(GENESIS_DATA.targetHeight)
   newBlock.setTargetMiner(GENESIS_DATA.targetMiner)
   newBlock.setTargetSignature(GENESIS_DATA.targetSignature)
-  newBlock.setTwn(GENESIS_DATA.twn)
-  newBlock.setTwsList(GENESIS_DATA.twsList)
+  newBlock.setTwn(GENESIS_DATA.twn) // Overline
+  newBlock.setTwsList(GENESIS_DATA.twsList) // Overline
   newBlock.setEmblemWeight(GENESIS_DATA.emblemWeight)
   newBlock.setEmblemChainBlockHash(GENESIS_DATA.emblemChainBlockHash)
   newBlock.setEmblemChainFingerprintRoot(GENESIS_DATA.emblemChainFingerprintRoot)
