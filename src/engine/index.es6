@@ -1278,7 +1278,7 @@ export class Engine {
         } else {
           this._logger.warn('local mined block ' + newBlock.getHeight() + ' does not stack on multiverse height ' + this.multiverse.getHighestBlock().getHeight())
           this._logger.warn('mined block ' + newBlock.getHeight() + ' cannot go on top of multiverse block ' + this.multiverse.getHighestBlock().getHash())
-          //return Promise.resolve(true)
+          return Promise.resolve(true)
           //this.miningOfficer._cleanUnfinishedBlock()
           //return this.miningOfficer.rebaseMiner()
           //  .then((res) => {

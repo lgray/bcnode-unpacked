@@ -72,6 +72,7 @@ export class PeerNode {
   _identity: string // eslint-disable-line no-undef
   _scanner: Object // eslint-disable-line no-undef
   _externalIP: string // eslint-disable-line no-undef
+  _knownBlocks: Object // eslint-disable-line no-undef
   _ds: Object // eslint-disable-line no-undef
   _p2p: Object // eslint-disable-line no-undef
   _queue: Object // eslint-disable-line no-undef
@@ -86,6 +87,9 @@ export class PeerNode {
     }
     this._manager = new PeerManager(this)
     this._ds = {}
+    this._knownBlocks = LRUCache({
+      max: 1000
+    })
     this._seededPeers = LRUCache({
       max: 1000
     })
@@ -295,14 +299,10 @@ export class PeerNode {
       return this._p2p.qsend(msg.connection, '0008W01' + '[*]' +  msg.data.serializeBinary())
     })
 
-    this._engine._emitter.on('sendblock', (msg) => {
-      return this._p2p.qsend(msg.connection, '0008W01' + '[*]' +  msg.data.serializeBinary())
-    })
-
     this._engine._emitter.on('announceblock', (msg) => {
       this._logger.info('announceblock <- event')
 			if(msg.filters !== undefined && msg.filters.length > 0){
-      	this._p2p.qbroadcast('0008W01' + '[*]' +  msg.data.serializeBinary(), msg.filters)
+      	this._p2p.qbroadcast('0008W01' + '[*]' +  msg.data.serializeBinary())
         .then(() => {
         	this._logger.info('block announced!')
 				})
@@ -350,7 +350,6 @@ export class PeerNode {
                 await this._p2p.qsend(conn, msg)
 
                 conn.on('data', (data) => {
-                    console.log('<< STREAM ' + data.length + '>>        ')
                     /* eslint-disable */
                     if(!data && this._ds[address] !== false){
                          const remaining = "" + this._ds[address]
