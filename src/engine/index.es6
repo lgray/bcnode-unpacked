@@ -819,13 +819,12 @@ export class Engine {
     await this.persistence.put('synclock', data.low)
 
     const high = max(3, data.low.getHeight())
-    const low = max(2, high - 50)
+    const low = max(2, high - 500)
     obj.data = {
       low: low,
       high: high
     }
     if (cancelSync === false) {
-      this._logger.info(obj)
       this._emitter.emit('getblocklist', obj)
     }
   }
@@ -992,9 +991,16 @@ export class Engine {
                       remotePort: port
                     }
                 }
-                console.log(obj)
                 this._logger.info('aaaaaaaaaaaaaaaaaaaaaaaaa')
                 // parent headers do not form a chain
+                console.log(obj)
+                console.log(obj)
+                console.log(obj)
+                console.log(obj)
+                console.log(obj)
+                console.log(obj)
+                console.log(obj)
+                console.log(obj)
                 console.log(obj)
                 this.node._engine._emitter.emit('getmultiverse', obj)
 
@@ -1109,10 +1115,13 @@ export class Engine {
                         }
 
                         this._emitter.emit('getblocklist', {
-                          low: max(2, newBlock.getHeight() - 500),
-                          high: max(3, newBlock.getHeight()),
+                          data: {
+                            low: max(2, newBlock.getHeight() - 500),
+                            high: max(3, newBlock.getHeight())
+                          },
                           connection: conn
                         })
+
                         return Promise.resolve(true)
                       })
                       .catch((e) => {
@@ -1285,9 +1294,9 @@ export class Engine {
           this._logger.warn('local mined block ' + newBlock.getHeight() + ' does not stack on multiverse height ' + this.multiverse.getHighestBlock().getHeight())
           this._logger.warn('mined block ' + newBlock.getHeight() + ' cannot go on top of multiverse block ' + this.multiverse.getHighestBlock().getHash())
           //return Promise.resolve(true)
+          this.miningOfficer._cleanUnfinishedBlock()
           return this.miningOfficer.rebaseMiner()
             .then((res) => {
-              this._cleanUnfinishedBlock()
               this._logger.info(res)
             })
             .catch((e) => {

@@ -292,17 +292,7 @@ export class PeerNode {
     //}, 15000)
 
     this._engine._emitter.on('sendblock', (msg) => {
-      this._logger.info('sendBlock event triggered')
-      (async () => {
-        // check required fields
-        if(!msg || msg.data === undefined || msg.connection === undefined){
-          return
-        }
-        await this._p2p.qsend(msg.connection, '0008W01' + '[*]' +  msg.data.serializeBinary())
-      }
-            )().catch(err => {
-                    this._logger.error(err)
-            })
+      return this._p2p.qsend(msg.connection, '0008W01' + '[*]' +  msg.data.serializeBinary())
     })
 
     this._engine._emitter.on('announceblock', (msg) => {
@@ -460,11 +450,11 @@ export class PeerNode {
               const low = obj.data.low
               const high = obj.data.high
               const msg = type + split + low + split + high
-              console.log(obj)
-              console.log(obj)
-              console.log(obj)
-              console.log(obj)
               console.log('>>>>>>>>>>>>>>>>>>>>>>>>> CONNECTION ')
+              console.log(obj)
+              console.log(obj)
+              console.log(obj)
+              console.log(obj)
               this._p2p.qsend(obj.connection, msg)
                 .then((res) => {
                   if (res) {
@@ -478,14 +468,12 @@ export class PeerNode {
             })
 
           this._engine._emitter.on('putmultiverse', (msg) => {
-            this._logger.info('getblocklist event requests')
+            console.log('getblocklist event requests')
+            console.log(msg)
             this._engine.getMultiverseHandler(msg, msg.data)
           })
+
           this._engine._emitter.on('getblocklist', (request) => {
-            this._logger.info('getblocklist event requests')
-            if (!request || request.low === undefined || request.high === undefined || request.connection === undefined) {
-              return
-            }
             this._logger.info('GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG')
             const type = '0006R01'
             const split = protocolBits[type]
@@ -569,16 +557,6 @@ export class PeerNode {
                          //this._p2p._discovery.dht.emit('announce', obj, toBuffer(this._p2p.hash), { host: obj.host, port: obj.port })
 
                          this._p2p._discovery.emit('peer', name, obj, 'utp')
-
-                         //conn.once('connection', (c) => {
-                         //  this._p2p._onconnection(c, 'utp')
-                         //})
-                         //conn.once('close', conn.destroy)
-                         //conn.once('exit', conn.destroy)
-                         //conn.once('error', conn.destroy)
-
-                         //this._logger.info('peer from seeder: ' + url.href)
-                         //this._p2p._discovery.emit('peer', this._p2p.hash, obj)
 
                      } catch (err) {
                          console.log('unable to reuse server')
