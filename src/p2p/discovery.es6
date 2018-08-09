@@ -107,15 +107,30 @@ Discovery.prototype = {
     }
 
     this.dht.getPeerByHost = (query) => {
-      return this.dht.connections.filter((a) => {
+      let found = false
+      let list = this.dht.connections.filter((a) => {
         if (a.remoteHost === query.remoteHost && a.remotePort === query.remotePort) {
           return a
         }
       })
+
+      if (list.length < 1 && query._utp !== undefined) {
+        list.push(query._utp)
+        this.dht.connections.push(query)
+        return list
+      }
+      return list
     }
 
     this.dht.qsend = async (conn, msg) => {
+      /* eslint-disable */
+      console.log('xxxxxxxxxxxxxxxxxxxxxxxxxx')
+      console.log(conn)
+      console.log('what connections do we have')
       const list = this.dht.getPeerByHost(conn)
+      console.log(list)
+      console.log('999999999999999999999999999999999999999999999')
+      console.log(this.dht)
       this._logger.info('peers to write: ' + list.length)
       if (list.length < 1) { return Promise.resolve(false) }
       const tasks = list.reduce((all, conn) => {
