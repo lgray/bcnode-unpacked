@@ -164,7 +164,7 @@ class BlocksTable extends Component<*> {
           <thead className='thead-light'>
             <tr>
               <th scope='col'>Height</th>
-              <th scope='col'>Block Confirmations</th>
+              <th scope='col'>Confirmations</th>
               <th scope='col'>Hash</th>
               <th scope='col'>Previous Hash</th>
               <th scope='col'>Miner</th>
