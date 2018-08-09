@@ -1289,6 +1289,7 @@ export class Engine {
         if (isNextBlock === true) {
           this.pubsub.publish('update.block.latest', { key: 'bc.block.latest', data: newBlock, mined: true })
           this._server._wsBroadcastMultiverse(this.multiverse)
+          // check if we know the peer
           return Promise.resolve(true)
         } else {
           this._logger.warn('local mined block ' + newBlock.getHeight() + ' does not stack on multiverse height ' + this.multiverse.getHighestBlock().getHeight())
