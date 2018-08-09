@@ -326,7 +326,6 @@ export class PeerNode {
     this._p2p.on('connection', (conn, info) => {
 
       conn.bidirectional = true
-      conn.setKeepAlive(true, 9999)
 
       (async () => {
                 // greeting reponse to connection with provided host information and connection ID
@@ -374,6 +373,11 @@ export class PeerNode {
                             this.peerDataHandler(conn, info, chunk)
                         }
                     }
+                })
+                conn.on('close', (res) => {
+
+                  console.log('closed')
+
                 })
 
       })().catch(err => {
@@ -531,6 +535,7 @@ export class PeerNode {
 
           this._seededPeers.set(peer, 1)
 
+          return
 
                  const channel = Buffer.from(this._p2p.hash)
                  const url = Url.parse(peer)
