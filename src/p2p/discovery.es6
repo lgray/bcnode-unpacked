@@ -38,7 +38,6 @@ function Discovery (nodeId) {
     // nodeId: nodeId,
     maxConnections: 126,
     port: port,
-    tcp: false,
     utp: true,
     dns: false,
     dht: {
@@ -138,11 +137,20 @@ Discovery.prototype = {
       const tasks = list.reduce((all, conn) => {
         const a = new Promise((resolve, reject) => {
           try {
-            conn.write(msg)
-            return resolve({
-              address: conn.remoteAddress + ':' + conn.remotePort,
-              success: true,
-              message: 'success'
+            conn.write(msg, (err, a){
+              if(err) {
+                return resolve({
+                  address: conn.remoteAddress + ':' + conn.remotePort,
+                  success: false,
+                  message: err.message
+                })
+              } else {
+              return resolve({
+                address: conn.remoteAddress + ':' + conn.remotePort,
+                success: true,
+                message: 'success'
+              })
+              }
             })
           } catch (err) {
             return resolve({
