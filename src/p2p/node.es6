@@ -519,6 +519,7 @@ export class PeerNode {
 
           this._engine._emitter.on('putblock', (msg) => {
             this._logger.info('candidate block ' + msg.data.getHeight() + ' recieved')
+            console.log(msg.data.toObject())
             this._engine.blockFromPeer(msg, msg.data)
           })
 

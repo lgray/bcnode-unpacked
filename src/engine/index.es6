@@ -959,6 +959,7 @@ export class Engine {
       // after target adds weighted fusion positioning to also evaluate block  -> (X1,Y1) = D1/D1 + D2 * (X1,Y1) + D2 / D1 + D2 * (X2, Y2)
       // encourages grouped transactions from one tower to be more likely to enter a winning block in batch due to lowest distance
 
+      this._logger.info('purposed block peer ' + newBlock.getHeight())
       return this.multiverse.addNextBlock(newBlock).then((isNextBlock) => {
         if (isNextBlock === true) {
           if (this.multiverse._chain.length > 1) {

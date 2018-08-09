@@ -7,10 +7,14 @@
  * @flow
  */
 
+import Parser from 'html-react-parser'
 import React, { Component } from 'react'
+
 import moment from 'moment'
 
 import { Ellipsis } from '../components'
+
+const previous = []
 
 const BlockLink = (props: Object) => {
   const block = props.block
@@ -34,6 +38,113 @@ const BlockLink = (props: Object) => {
   )
 }
 
+const BlockColor = (block: Object) => {
+
+  const next = {
+    btcList: [],
+    ethList: [],
+    neoList: [],
+    lskList: [],
+    wavList: []
+  }
+
+  let old = next 
+
+  if(previous.length > 0) {
+    old = previous[previous.length - 1]
+  }
+
+  const btc = block.blockchainHeaders.btcList.reduce((all, b) => {
+    if(old.btcList.indexOf(b.hash) > -1){
+      all = all + 1 
+    }
+    next.btcList.push(b.hash)
+    return all
+  }, 0)
+  const eth = block.blockchainHeaders.ethList.reduce((all, b) => {
+    if(old.ethList.indexOf(b.hash) > -1){
+      all = all + 1 
+    }
+    next.ethList.push(b.hash)
+    return all
+  }, 0)
+  const neo = block.blockchainHeaders.neoList.reduce((all, b) => {
+    if(old.neoList.indexOf(b.hash) > -1){
+      all = all + 1 
+    }
+    next.neoList.push(b.hash)
+    return all
+  }, 0)
+  const lsk = block.blockchainHeaders.lskList.reduce((all, b) => {
+    if(old.lskList.indexOf(b.hash) > -1){
+      all = all + 1 
+    }
+    next.lskList.push(b.hash)
+    return all
+  }, 0)
+  const wav = block.blockchainHeaders.wavList.reduce((all, b) => {
+    if(old.wavList.indexOf(b.hash) > -1){
+      all = all + 1 
+    }
+    next.wavList.push(b.hash)
+    return all
+  }, 0)
+
+  previous.push(next)
+  const stack = []
+  const whiteBlock = '<div style="background-color: white,height:20px,width:20px">' 
+
+  const btcBlock = '<div style="background-color: orange,height:20px,width:20px">BTC</div>' 
+  const ethBlock = '<div style="background-color: purple,height:20px,width:20px">ETH</div>' 
+  const neoBlock = '<div style="background-color: green,height:20px,width:20px">NEO</div>' 
+  const lskBlock = '<div style="background-color: blue,height:20px,width:20px">LSK</div>' 
+  const wavBlock = '<div style="background-color: gray,height:20px,width:20px">WAV</div>' 
+
+  if(btc < 1){ 
+    stack.push(whiteBlock + 'BTC</div>') 
+  } else {
+    for(let i = 0;i<btc;i++){
+       stack.push(btcBlock)
+    }
+  }
+  if(eth < 1){ 
+    stack.push(whiteBlock + 'ETH</div>') 
+  } else {
+    for(let i = 0;i<btc;i++){
+       stack.push(ethBlock)
+    }
+  }
+  if(neo < 1){ 
+    stack.push(whiteBlock + 'NEO</div>') 
+  } else {
+    for(let i = 0;i<neo;i++){
+       stack.push(neoBlock)
+    }
+  }
+  if(lsk < 1){ 
+    stack.push(whiteBlock + 'LSK</div>') 
+  } else {
+    for(let i = 0;i<lsk;i++){
+       stack.push(lskBlock)
+    }
+  }
+  if(wav < 1){ 
+    stack.push(whiteBlock + 'WAV</div>') 
+  } else {
+    for(let i = 0;i<wav;i++){
+       stack.push(wavBlock)
+    }
+  }
+
+  const total = Object.keys(block.blockchainHeaders).reduce((all, k) => {
+     all = all + block.blockchainHeaders[k].length
+     return all
+  }, 0)
+
+  return stack.join("")
+
+}
+
 class BlocksTable extends Component<*> {
   render () {
     let i = 0
@@ -50,6 +161,15 @@ class BlocksTable extends Component<*> {
       const fixedStyle = {
         fontFamily: 'monospace'
       }
+      // let wrongPrevHash = false
+      if (this.props.blocks[idx]) {
+
+         const a = this.props.blocks[idx]
+         console.log(a)
+         //const b = this.props.blocks[idx].previousHash
+         //wrongPrevHash = (a !== b)
+       }
+      // { wrongPrevHash && <i style={{paddingLeft: 3, filter: 'invert(100%)', color: 'red'}} className='fas fa-exclamation-circle' /> }
 
       // let wrongPrevHash = false
       // if (this.props.blocks[idx + 1]) {
@@ -76,6 +196,7 @@ class BlocksTable extends Component<*> {
           <td>
             <Ellipsis text={block.miner} />
           </td>
+          <td>{Parser(BlockColor(block))}</td>
           <td style={fixedStyle}>{block.difficulty}</td>
           <td style={fixedStyle}>{block.distance}</td>
           <td>{block.nonce}</td>
@@ -97,6 +218,7 @@ class BlocksTable extends Component<*> {
               <th scope='col'>Hash</th>
               <th scope='col'>Previous Hash</th>
               <th scope='col'>Miner</th>
+              <th scope='col'>Structure</th>
               <th scope='col'>Difficulty</th>
               <th scope='col'>Distance</th>
               <th scope='col'>Nonce</th>
