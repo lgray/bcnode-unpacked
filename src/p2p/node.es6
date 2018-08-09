@@ -15,6 +15,7 @@ const { inspect } = require('util')
 
 const Url = require('url')
 const PeerInfo = require('peer-info')
+const utp = require('utp-native')
 const queue = require('async/queue')
 const multiaddr = require('multiaddr')
 const pull = require('pull-stream')
@@ -327,6 +328,16 @@ export class PeerNode {
 
       conn.bidirectional = true
 
+      conn.on('close', (dt) => {
+          console.log('close')
+          console.log(dt)
+      })
+
+      conn.on('timeout', (dt) => {
+          console.log('timeout')
+          console.log(dt)
+      })
+
       (async () => {
                 // greeting reponse to connection with provided host information and connection ID
                 const address = conn.remoteAddress + ':' + conn.remotePort
@@ -353,7 +364,7 @@ export class PeerNode {
                 await this._p2p.qsend(conn, msg)
 
                 conn.on('data', (data) => {
-                    console.log('\r<< STREAM ' + data.length + '>>        ')
+                    process.stdout.write('\r<< STREAM ' + data.length + '>>        ')
                     /* eslint-disable */
                     if(!data && this._ds[address] !== false){
                          const remaining = "" + this._ds[address]
@@ -374,11 +385,6 @@ export class PeerNode {
                         }
                     }
                 })
-                conn.on('close', (res) => {
-
-                  console.log('closed')
-
-                })
 
       })().catch(err => {
                         this._logger.error(err);
@@ -390,8 +396,8 @@ export class PeerNode {
             this._p2p.on('connection-closed', (conn, info) => {
              // this.peerClosedConnectionHandler(conn, info)
              this._logger.info('------- CONNECTION CLOSED ------')
-             //console.log(conn)
-             //console.log(info)
+             console.log(conn)
+             console.log(info)
              console.log("^^^^^^^^^^^^^^^^^^^^^^^^")
             })
             this._p2p.on('error', (err) => {
@@ -535,8 +541,6 @@ export class PeerNode {
 
           this._seededPeers.set(peer, 1)
 
-          return
-
                  const channel = Buffer.from(this._p2p.hash)
                  const url = Url.parse(peer)
                  const h = url.href.split(':')
@@ -552,9 +556,9 @@ export class PeerNode {
                  obj.remoteHost = obj.host
 
 					if(this._p2p.ip === obj.host) return
-
-            this._p2p.add(obj)
-
+          //  this._p2p.add(obj)
+          //this._p2p._onconnection( ,'utp')
+          utp().on('connection', this._p2p.onconnection)
          // the host name as described by external peers
          // first one is always the immediate response to current peer
 
@@ -647,8 +651,7 @@ export class PeerNode {
         /* eslint-disable */
         this._engine._emitter.emit('putblock', {
           data: block,
-          remoteHost: conn.remoteHost || conn.remoteAddress,
-          remotePort: conn.remotePort
+          connection: conn
         })
 
       // Peer Requests Highest Block
