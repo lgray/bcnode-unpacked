@@ -980,6 +980,7 @@ export class Engine {
                 const host = conn.remoteHost || conn.remoteAddress
                 const port = conn.remotePort || conn.port
 
+
                 /* eslint-disable */
                   /////////// MULTIVERSE PROOF //////////////
                   const obj = {
@@ -993,18 +994,18 @@ export class Engine {
                     }
                 }
                 console.log(obj)
-                this._emitter.emit('getmultiverse', obj)
                 this._logger.info('aaaaaaaaaaaaaaaaaaaaaaaaa')
+                console.log(obj)
+                this.node._engine._emitter.emit('getmultiverse', obj)
 
-                // note the local machine does not broadcast this block update until the multiverse has been proven
-                this.pubsub.publish('update.block.latest', { key: 'bc.block.latest', data: newBlock, force: true })
+                this.persistence.putChildHeaders(block).then(() =>
+                  // note the local machine does not broadcast this block update until the multiverse has been proven
+                  this.pubsub.publish('update.block.latest', { key: 'bc.block.latest', data: newBlock, force: true })
+                })
+                .catch((err) => {
+                  this._logger.error(err)
+                })
 
-                this._logger.info('bbbbbbbbbbbbbbbbbbbbbbbbb')
-                // the above triggers for the sync
-                // mining will only remaining 'stopped' until a new block shows up
-                // if the claimed peer hopes to convert this node it must send evidence
-                // otherwise the miner wil continue forward with it's current multiverse
-                // this.getMultiverseHandler(conn, newBlock)
               } else {
                 // this means the local peer has a better version of the chain and
                 // therefore pushing it to the outside peer

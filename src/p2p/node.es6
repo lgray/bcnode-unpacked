@@ -460,18 +460,19 @@ export class PeerNode {
               const low = obj.data.low
               const high = obj.data.high
               const msg = type + split + low + split + high
-              console.log(msg)
-              console.log(msg)
-              console.log(msg)
-              console.log(msg)
+              console.log(obj)
+              console.log(obj)
+              console.log(obj)
+              console.log(obj)
               console.log('>>>>>>>>>>>>>>>>>>>>>>>>> CONNECTION ')
               this._p2p.qsend(obj.connection, msg)
                 .then((res) => {
                   if (res) {
-                    this._logger.debug(res.length + ' delivered')
+                    this._logger.info(res.length + ' delivered')
                   }
                 })
                 .catch((err) => {
+                  this._logger.error(new Error('critical write to peer socket failed'))
                   this._logger.error(err)
                 })
             })
