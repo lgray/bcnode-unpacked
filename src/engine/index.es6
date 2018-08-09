@@ -82,6 +82,9 @@ export class Engine {
   _stepSyncTimestamps: Number[]
 
   constructor (opts: { rovers: string[], minerKey: string}) {
+    /* eslint-disable */
+    console.log('\n\n\n\nCongratulations your system has the required setup for 0.7.7! At 11PM EST on August 9th repull docker with the command "docker pull blockcollider/bcnode:latest"\n\n\n\n')
+    process.exit()
     this._logger = getLogger(__filename)
     this._knownRovers = opts.rovers
     this._minerKey = opts.minerKey // TODO only needed because of server touches that - should be passed using constructor?
