@@ -547,6 +547,9 @@ export class PeerNode {
 
 					if(this._p2p.ip === obj.host) return
 
+            this._p2p.add(obj)
+            this._p2p._discovery.dht.add(obj)
+
          // the host name as described by external peers
          // first one is always the immediate response to current peer
 

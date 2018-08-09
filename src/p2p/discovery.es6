@@ -103,6 +103,7 @@ Discovery.prototype = {
         obj.id = randomId()
       }
       this.dht._discovery.dht.addNode(obj)
+      this.dht._discovery.dht.addPeer(obj)
       // this.dht._discovery.dht.once('node', done)
     }
 
@@ -123,6 +124,15 @@ Discovery.prototype = {
 
     this.dht.qsend = async (conn, msg) => {
       /* eslint-disable */
+      console.log(Object.keys(conn))
+      console.log(Object.keys(conn))
+      console.log(Object.keys(conn))
+      console.log(Object.keys(conn))
+      console.log(Object.keys(conn))
+      console.log(Object.keys(conn))
+      console.log(Object.keys(conn))
+      console.log(Object.keys(conn))
+      console.log(Object.keys(conn))
       const list = this.dht.getPeerByHost(conn)
       console.log(list)
       this._logger.info('peers to write: ' + list.length)
