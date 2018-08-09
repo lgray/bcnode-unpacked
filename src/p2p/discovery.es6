@@ -103,7 +103,7 @@ Discovery.prototype = {
         obj.id = randomId()
       }
       this.dht._discovery.dht.addNode(obj)
-      this.dht._discovery.dht.addPeer(obj)
+      this.dht._discovery.addPeer(obj)
       // this.dht._discovery.dht.once('node', done)
     }
 
