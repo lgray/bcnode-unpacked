@@ -40,7 +40,7 @@ function Discovery (nodeId) {
     maxConnections: 80,
     port: port,
     utp: true,
-    // tcp: false,
+    tcp: false,
     dns: false,
     dht: {
       // nodeId: nodeId,
