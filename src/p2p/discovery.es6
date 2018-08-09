@@ -30,6 +30,7 @@ function random (range) {
 
 function Discovery (nodeId) {
   seeds.unshift('udp://tds.blockcollider.org:16060/announce')
+  seeds.unshift('udp://18.210.15.44:16060/announce')
   const hash = crypto.createHash('sha1').update('bcbt002' + config.blockchainFingerprintsHash).digest('hex') // 68cb1ee15af08755204674752ef9aee13db93bb7
   const seederPort = 16060
   const port = 16061
@@ -44,7 +45,7 @@ function Discovery (nodeId) {
     dht: {
       // nodeId: nodeId,
       bootstrap: ['udp://tds.blockcollider.org:16060'],
-      interval: 40000 + random(1000),
+      interval: 30000 + random(1000),
       maxConnections: 80,
       concurrency: 80,
       host: 'tds.blockcollider.org:16060'
@@ -129,10 +130,12 @@ Discovery.prototype = {
         const a = new Promise((resolve, reject) => {
           try {
                 conn.write(msg)
-                return resolve({
-                  address: conn.remoteAddress + ':' + conn.remotePort,
-                  success: true,
-                  message: err.message
+                conn.on('close', () => {
+                  return resolve({
+                    address: conn.remoteAddress + ':' + conn.remotePort,
+                    success: true,
+                    message: err.message
+                  })
                 })
           } catch (err) {
             return resolve({
