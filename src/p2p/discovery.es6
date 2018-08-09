@@ -36,7 +36,7 @@ function Discovery (nodeId) {
   this.options = {
     // id: nodeId,
     // nodeId: nodeId,
-    maxConnections: 126,
+    maxConnections: 80,
     port: port,
     utp: true,
     // tcp: false,
