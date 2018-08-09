@@ -353,33 +353,27 @@ export class PeerNode {
 
                 await this._p2p.qsend(conn, msg)
 
-                //conn.on('data', (data) => {
-                //    console.log('\r<< STREAM ' + data.length + '>>        ')
-                //    /* eslint-disable */
-                //    if(!data && this._ds[address] !== false){
-                //         const remaining = "" + this._ds[address]
-                //         this._ds[address] = false
-                //         this.peerDataHandler(conn, info, remaining)
-                //    } else {
-                //        let chunk = data.toString()
-                //        if (chunk.length === 1382 && this._ds[address] === false) {
-                //            this._ds[address] = chunk
-                //        } else if (chunk.length === 1382 && this._ds[address] !== false) {
-                //            this._ds[address] = this._ds[address] + chunk
-                //        } else if (chunk.length !== 1382 && this._ds[address] !== false) {
-                //            const complete = "" + this._ds[address] + chunk
-                //            this._ds[address] = false
-                //            this.peerDataHandler(conn, info, complete)
-                //        } else {
-                //            this.peerDataHandler(conn, info, chunk)
-                //        }
-                //    }
-                //})
-
-                conn.on('message', (msg) => {
-
-                  console.log(msg)
-
+                conn.on('data', (data) => {
+                    console.log('\r<< STREAM ' + data.length + '>>        ')
+                    /* eslint-disable */
+                    if(!data && this._ds[address] !== false){
+                         const remaining = "" + this._ds[address]
+                         this._ds[address] = false
+                         this.peerDataHandler(conn, info, remaining)
+                    } else {
+                        let chunk = data.toString()
+                        if (chunk.length === 1382 && this._ds[address] === false) {
+                            this._ds[address] = chunk
+                        } else if (chunk.length === 1382 && this._ds[address] !== false) {
+                            this._ds[address] = this._ds[address] + chunk
+                        } else if (chunk.length !== 1382 && this._ds[address] !== false) {
+                            const complete = "" + this._ds[address] + chunk
+                            this._ds[address] = false
+                            this.peerDataHandler(conn, info, complete)
+                        } else {
+                            this.peerDataHandler(conn, info, chunk)
+                        }
+                    }
                 })
 
       })().catch(err => {
