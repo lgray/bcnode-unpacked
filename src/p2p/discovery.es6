@@ -24,9 +24,9 @@ function random (range) {
   return Math.floor(Math.random() * range)
 }
 
-function randomId () {
-  return crypto.randomBytes(20)
-}
+// function randomId () {
+//  return crypto.randomBytes(20)
+// }
 
 function Discovery (nodeId) {
   seeds.unshift('udp://tds.blockcollider.org:16060/announce')
