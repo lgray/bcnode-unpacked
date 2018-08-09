@@ -103,9 +103,9 @@ Discovery.prototype = {
         obj.id = randomId()
       }
       this.dht._discovery.dht.addNode(obj)
-      this.dht._discovery.dht._addPeer(obj, {host: obj.host, port: obj.port })
-      // this.dht._discovery.addPeer(obj)
-      // this.dht._discovery.dht.once('node', done)
+      this.dht._discovery.dht._addPeer(obj,
+        obj.id,
+        obj)
     }
 
     this.dht.getPeerByHost = (query) => {
