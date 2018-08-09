@@ -137,21 +137,12 @@ Discovery.prototype = {
       const tasks = list.reduce((all, conn) => {
         const a = new Promise((resolve, reject) => {
           try {
-            conn.write(msg, (err, a){
-              if(err) {
+                conn.write(msg)
                 return resolve({
                   address: conn.remoteAddress + ':' + conn.remotePort,
-                  success: false,
+                  success: true,
                   message: err.message
                 })
-              } else {
-              return resolve({
-                address: conn.remoteAddress + ':' + conn.remotePort,
-                success: true,
-                message: 'success'
-              })
-              }
-            })
           } catch (err) {
             return resolve({
               address: conn.remoteAddress + ':' + conn.remotePort,
