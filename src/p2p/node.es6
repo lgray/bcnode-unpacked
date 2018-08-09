@@ -339,7 +339,7 @@ export class PeerNode {
 
                 if(this._p2p.totalConnections >= USER_QUORUM && quorum === 0){
                     await this._engine.persistence.put('bc.dht.quorum', "1")
-                } else if (quorum === 0 && LOW_HEALTH_NET !== false){
+                } else if (quorum === 0 && LOW_HEALTH_NET === true){
                     await this._engine.persistence.put('bc.dht.quorum', "1")
                 }
 
