@@ -558,33 +558,30 @@ export class PeerNode {
 					if(this._p2p.ip === obj.host) return
           //  this._p2p.add(obj)
           //this._p2p._onconnection( ,'utp')
-          utp().on('connection', this._p2p.onconnection)
-         // the host name as described by external peers
-         // first one is always the immediate response to current peer
+                utp.connect(obj.port, obj.host).on('connection', (connection) => {
+                 // the host name as described by external peers
+                  console.log(connection)
+                 // first one is always the immediate response to current peer
+                       console.log('--------------> PEER FROM SEEDER ' )
+                       // add seen protection
+                       try {
+                           const name = obj.host + ':' + obj.port + this._p2p.hash
+                           console.log(obj)
+                           console.log("local hash: " + this._p2p.hash)
+                           console.log("local port: " + this._p2p.port)
+                           //this._p2p._discovery.dht.emit('announce', obj, toBuffer(this._p2p.hash), { host: obj.host, port: obj.port })
+                           this._p2p._discovery.emit('peer', name, obj, 'utp')
 
-                 console.log('--------------> PEER FROM SEEDER ' )
-                 // add seen protection
+                       } catch (err) {
+                           console.log('unable to reuse server')
+                       }
+                       //this._p2p.addPeer(this._p2p.hash, obj)
+                       //this._p2p.add(obj, () => {
+                       //   this._logger.info('adding peer: ' + peer)
+                       //     console.log('connected peers: ' + this._p2p.totalConnections)
+                       //})
 
-                 try {
-
-                         const name = obj.host + ':' + obj.port + this._p2p.hash
-                         console.log(obj)
-                         console.log("local hash: " + this._p2p.hash)
-                         console.log("local port: " + this._p2p.port)
-
-                         //this._p2p._discovery.dht.emit('announce', obj, toBuffer(this._p2p.hash), { host: obj.host, port: obj.port })
-
-                         this._p2p._discovery.emit('peer', name, obj, 'utp')
-
-                     } catch (err) {
-                         console.log('unable to reuse server')
-                     }
-                     //this._p2p.addPeer(this._p2p.hash, obj)
-                     //this._p2p.add(obj, () => {
-                     //   this._logger.info('adding peer: ' + peer)
-                     //     console.log('connected peers: ' + this._p2p.totalConnections)
-                     //})
-
+                })
 
             })
 
