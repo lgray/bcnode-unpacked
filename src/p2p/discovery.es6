@@ -34,19 +34,20 @@ function Discovery (nodeId) {
   const seederPort = 16060
   const port = 16061
   this.options = {
-    id: nodeId,
-    nodeId: nodeId,
+    // id: nodeId,
+    // nodeId: nodeId,
     maxConnections: 126,
     port: port,
     tcp: false,
     utp: true,
     dns: false,
     dht: {
-      nodeId: nodeId,
+      // nodeId: nodeId,
       bootstrap: [],
       interval: 40000 + random(1000),
       maxConnections: 126,
-      concurrency: 80
+      concurrency: 80,
+      host: 'tds.blockcollider.org:16060'
     }
   }
   this.streamOptions = {

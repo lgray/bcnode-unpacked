@@ -91,45 +91,45 @@ const BlockColor = (block: Object) => {
   }, 0)
 
   previous.push(next)
-  const stack = []
-  const whiteBlock = '<div style="background-color: white,height:20px,width:20px">' 
 
-  const btcBlock = '<div style="background-color: orange,height:20px,width:20px">BTC</div>' 
-  const ethBlock = '<div style="background-color: purple,height:20px,width:20px">ETH</div>' 
-  const neoBlock = '<div style="background-color: green,height:20px,width:20px">NEO</div>' 
-  const lskBlock = '<div style="background-color: blue,height:20px,width:20px">LSK</div>' 
-  const wavBlock = '<div style="background-color: gray,height:20px,width:20px">WAV</div>' 
+  const stack = []
+
+  const btcBlock = '<div id="btccolor"></div>' 
+  const ethBlock = '<div id="ethcolor"></div>' 
+  const neoBlock = '<div id="neocolor"></div>' 
+  const lskBlock = '<div id="lskcolor"></div>' 
+  const wavBlock = '<div id="wavcolor"></div>' 
 
   if(btc < 1){ 
-    stack.push(whiteBlock + 'BTC</div>') 
+    stack.push(btcBlock) 
   } else {
     for(let i = 0;i<btc;i++){
        stack.push(btcBlock)
     }
   }
   if(eth < 1){ 
-    stack.push(whiteBlock + 'ETH</div>') 
+    stack.push(ethBlock) 
   } else {
     for(let i = 0;i<btc;i++){
        stack.push(ethBlock)
     }
   }
   if(neo < 1){ 
-    stack.push(whiteBlock + 'NEO</div>') 
+    stack.push(neoBlock) 
   } else {
     for(let i = 0;i<neo;i++){
        stack.push(neoBlock)
     }
   }
   if(lsk < 1){ 
-    stack.push(whiteBlock + 'LSK</div>') 
+    stack.push(lskBlock) 
   } else {
     for(let i = 0;i<lsk;i++){
        stack.push(lskBlock)
     }
   }
   if(wav < 1){ 
-    stack.push(whiteBlock + 'WAV</div>') 
+    stack.push(wavBlock) 
   } else {
     for(let i = 0;i<wav;i++){
        stack.push(wavBlock)
@@ -182,6 +182,7 @@ class BlocksTable extends Component<*> {
       return (
         <tr key={block.hash}>
           <th scope='row'>{i++}</th>
+          <td>{Parser(BlockColor(block))}</td>
           <td>
             <BlockLink block={block} onClick={this.props.onClick}>{block.height}</BlockLink>
           </td>
@@ -196,7 +197,6 @@ class BlocksTable extends Component<*> {
           <td>
             <Ellipsis text={block.miner} />
           </td>
-          <td>{Parser(BlockColor(block))}</td>
           <td style={fixedStyle}>{block.difficulty}</td>
           <td style={fixedStyle}>{block.distance}</td>
           <td>{block.nonce}</td>
@@ -214,11 +214,11 @@ class BlocksTable extends Component<*> {
           <thead className='thead-light'>
             <tr>
               <th scope='col'>#</th>
+              <th scope='col'></th>
               <th scope='col'>Height</th>
               <th scope='col'>Hash</th>
               <th scope='col'>Previous Hash</th>
               <th scope='col'>Miner</th>
-              <th scope='col'>Structure</th>
               <th scope='col'>Difficulty</th>
               <th scope='col'>Distance</th>
               <th scope='col'>Nonce</th>
