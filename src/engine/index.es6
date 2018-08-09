@@ -991,7 +991,6 @@ export class Engine {
                 this._logger.info('aaaaaaaaaaaaaaaaaaaaaaaaa')
                 // parent headers do not form a chain
                 this.node._engine._emitter.emit('getmultiverse', obj)
-
                 this.persistence.putChildHeaders(newBlock).then(() => {
                   // note the local machine does not broadcast this block update until the multiverse has been proven
                   this.pubsub.publish('update.block.latest', {

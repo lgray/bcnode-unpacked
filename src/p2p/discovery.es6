@@ -128,7 +128,7 @@ Discovery.prototype = {
       const tasks = list.reduce((all, conn) => {
         const a = new Promise((resolve, reject) => {
           try {
-                conn.write(Buffer.from(msg))
+                conn.write(msg)
                 return resolve({
                   address: conn.remoteAddress + ':' + conn.remotePort,
                   success: true,

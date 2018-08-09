@@ -528,7 +528,7 @@ export class PeerNode {
 
           this._seededPeers.set(peer, 1)
 
-                 const channel = Buffer.from(this._p2p.hash)
+                 const channel = this._p2p.hash
                  const url = Url.parse(peer)
                  const h = url.href.split(':')
                  const obj = {
