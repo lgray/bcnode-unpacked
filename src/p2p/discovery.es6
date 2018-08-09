@@ -122,17 +122,7 @@ Discovery.prototype = {
 
     this.dht.qsend = async (conn, msg) => {
       /* eslint-disable */
-      console.log(Object.keys(conn))
-      console.log(Object.keys(conn))
-      console.log(Object.keys(conn))
-      console.log(Object.keys(conn))
-      console.log(Object.keys(conn))
-      console.log(Object.keys(conn))
-      console.log(Object.keys(conn))
-      console.log(Object.keys(conn))
-      console.log(Object.keys(conn))
       const list = this.dht.getPeerByHost(conn)
-      console.log(list)
       this._logger.info('peers to write: ' + list.length)
       if (list.length < 1) { return Promise.resolve(false) }
       const tasks = list.reduce((all, conn) => {
