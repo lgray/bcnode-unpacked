@@ -992,7 +992,7 @@ export class Engine {
                       remotePort: port
                     }
                 }
-                this._logger.info(obj)
+                console.log(obj)
                 this._emitter.emit('getmultiverse', obj)
                 this._logger.info('aaaaaaaaaaaaaaaaaaaaaaaaa')
 

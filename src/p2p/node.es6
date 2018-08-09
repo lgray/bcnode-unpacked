@@ -451,34 +451,29 @@ export class PeerNode {
                 console.log(data)
             })
 
-            this._engine._emitter.on('getmultiverse', (request) => {
+            this._engine._emitter.on('getmultiverse', (obj) => {
 
 							console.log('bone art event get multiverse not fired <----------------')
-              // check required fields
-              if (!request || request.low === undefined || request.high === undefined || request.connection === undefined) {
-                return
-              }
 
               const type = '0009R01' // read selective block list (multiverse)
               const split = protocolBits[type]
-              const low = request.low
-              const high = request.high
+              const low = obj.data.low
+              const high = obj.data.high
               const msg = type + split + low + split + high
               console.log(msg)
               console.log(msg)
               console.log(msg)
               console.log(msg)
               console.log('>>>>>>>>>>>>>>>>>>>>>>>>> CONNECTION ')
-              console.log(request)
-              //this._p2p.qsend(request.connection, msg)
-              //  .then((res) => {
-              //    if (res) {
-              //      this._logger.debug(res.length + ' delivered')
-              //    }
-              //  })
-              //  .catch((err) => {
-              //    this._logger.error(err)
-              //  })
+              this._p2p.qsend(obj.connection, msg)
+                .then((res) => {
+                  if (res) {
+                    this._logger.debug(res.length + ' delivered')
+                  }
+                })
+                .catch((err) => {
+                  this._logger.error(err)
+                })
             })
 
           this._engine._emitter.on('putmultiverse', (msg) => {
@@ -520,7 +515,6 @@ export class PeerNode {
 
           this._engine._emitter.on('putblock', (msg) => {
             this._logger.info('candidate block ' + msg.data.getHeight() + ' recieved')
-            console.log(msg.data.toObject())
             this._engine.blockFromPeer(msg, msg.data)
           })
 
@@ -678,6 +672,7 @@ export class PeerNode {
       // Peer Requests Block Range
       } else if (type === '0006R01' || type === '0009R01') {
 
+        this._logger.info("::::::::::::::::::::::::" + type)
         const parts = str.split(protocolBits[type])
         const low = parts[1]
         const high = parts[2]
@@ -693,17 +688,8 @@ export class PeerNode {
           const query = range(max(2, low), (high + 1)).map((n) => {
             return 'bc.block.' + n
           })
-          this._logger.info(query)
-          this._logger.info(query)
-          this._logger.info(query)
-          this._logger.info(query)
-          this._logger.info(query)
-          this._logger.info(query)
-          this._logger.info(query)
-          this._logger.info(query)
-          this._logger.info(query)
-          this._logger.info(query)
-          this._logger.info(query)
+
+          console.log(query)
           this._logger.info(query.length + ' blocks requested by peer: ' + conn.remoteHost)
           this._queue.push(query, (err, res) => {
 
@@ -748,6 +734,7 @@ export class PeerNode {
         this._logger.info("::::::::::::::::::::::::" + type)
 
         try {
+
           this._logger.info(6666666666666666666)
           const list = parts.split(protocolBits[type]).reduce((all, rawBlock) => {
             const raw = new Uint8Array(rawBlock.split(','))
