@@ -132,10 +132,10 @@ export class MiningOfficer {
           this._canMine = false
           return Promise.resolve(false)
         }
-        if (parent.getHeight() === 1) {
-          this._logger.warn('cannot mine over the genesis block without enabling low health network.')
-          this._canMine = false
-        }
+        // if (parent.getHeight() === 1) {
+        //  this._logger.warn('cannot mine over the genesis block without enabling low health network.')
+        //  this._canMine = false
+        // }
       } catch (err) {
         this._canMine = false
         this._logger.error('unable to assert parent block of highest block')
