@@ -383,8 +383,8 @@ export class PeerNode {
             this._p2p.on('connection-closed', (conn, info) => {
              // this.peerClosedConnectionHandler(conn, info)
              this._logger.info('------- CONNECTION CLOSED ------')
-             console.log(conn)
-             console.log(info)
+             //console.log(conn)
+             //console.log(info)
              console.log("^^^^^^^^^^^^^^^^^^^^^^^^")
             })
             this._p2p.on('error', (err) => {
@@ -400,41 +400,41 @@ export class PeerNode {
 
             this._p2p.on('peer', (channel) => {
              this._logger.info('-------  PEER DISCOVERED ------')
-             console.log(channel)
+             //console.log(channel)
              console.log("^^^^^^^^^^^^^^^^^^^^^^^^")
             })
 
             this._p2p.on('drop', (peer, type) => {
              this._logger.info('------- PEER DROPPED ------')
-                console.log(peer)
-                console.log(type)
+               // console.log(peer)
+               // console.log(type)
              console.log("^^^^^^^^^^^^^^^^^^^^^^^^")
             })
 
             this._p2p.on('peer-banned', (peer, type) => {
              this._logger.info('------- PEER BANNED ------')
-             console.log(peer)
-             console.log(type)
+             //console.log(peer)
+             //console.log(type)
              console.log("^^^^^^^^^^^^^^^^^^^^^^^^")
             })
 
             this._p2p.on('connect-failed', (next, timeout) => {
              this._logger.info('------- CONNECT FAILED ------')
-             console.log(next)
-             console.log(timeout)
+             //console.log(next)
+             //console.log(timeout)
              console.log("^^^^^^^^^^^^^^^^^^^^^^^^")
             })
 
             this._p2p.on('handshake-timeout', (conn, timeout) => {
              this._logger.info('------- HANDSHAKE TIMEOUT ------')
-             console.log(timeout)
-             console.log("^^^^^^^^^^^^^^^^^^^^^^^^")
+             //console.log(timeout)
+             //console.log("^^^^^^^^^^^^^^^^^^^^^^^^")
             })
 
             this._p2p.on('peer-rejected', (peer, type) => {
              this._logger.warn('peer rejected ')
-             console.log(peer)
-             console.log(type)
+             //console.log(peer)
+             //console.log(type)
               this._logger.info("::::::::::::::::::::::::" + type)
              console.log("^^^^^^^^^^^^^^^^^^^^^^^^")
             })
