@@ -351,7 +351,7 @@ export class PeerNode {
                 await this._p2p.qsend(conn, msg)
 
                 conn.on('data', (data) => {
-                    process.stdout.write('\r<< STREAM ' + data.length + '>>        ')
+                    console.log('<< STREAM ' + data.length + '>>        ')
                     /* eslint-disable */
                     if(!data && this._ds[address] !== false){
                          const remaining = "" + this._ds[address]
