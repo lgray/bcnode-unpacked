@@ -38,130 +38,6 @@ const BlockLink = (props: Object) => {
   )
 }
 
-const BlockColor = (block: Object) => {
-
-  const next = {
-    btcList: [],
-    ethList: [],
-    neoList: [],
-    lskList: [],
-    wavList: []
-  }
-
-  let old = next 
-
-  if(previous.length > 5){
-    previous.shift()
-  }
-
-  if(previous.length > 0) {
-    old = previous[previous.length - 1]
-  } else {
-    previous.push(Object.keys(block.blockchainHeaders).reduce((all, k)=> {
-      all[k] = block.blockchainHeaders[k].map((a) => {
-        return a.hash
-      })
-      return all
-    }, {}))
-    return "" 
-  }
-
-  const btc = old.btcList.reduce((all, b) => {
-    block.blockchainHeaders.btcList.map((a) => {
-      if(b !== a.hash){
-        all = all + 1 
-      }
-    })
-    return all
-  }, 0)
-  const eth = old.ethList.reduce((all, b) => {
-    block.blockchainHeaders.ethList.map((a) => {
-      if(b !== a.hash){
-        all = all + 1 
-      }
-    })
-    return all
-  }, 0)
-  const neo = old.neoList.reduce((all, b) => {
-    block.blockchainHeaders.neoList.map((a) => {
-      if(b !== a.hash){
-        all = all + 1 
-      }
-    })
-    return all
-  }, 0)
-  const lsk = old.lskList.reduce((all, b) => {
-    block.blockchainHeaders.lskList.map((a) => {
-      if(b !== a.hash){
-        all = all + 1 
-      }
-    })
-    return all
-  }, 0)
-  const wav = old.wavList.reduce((all, b) => {
-    block.blockchainHeaders.wavList.map((a) => {
-      if(b !== a.hash){
-        all = all + 1 
-      }
-    })
-    return all
-  }, 0)
-
-  previous.push(next)
-
-  const stack = []
-
-  const glassBlock = '<div id="glasscolor"></div>' 
-  const btcBlock = '<div id="btccolor"></div>' 
-  const ethBlock = '<div id="ethcolor"></div>' 
-  const neoBlock = '<div id="neocolor"></div>' 
-  const lskBlock = '<div id="lskcolor"></div>' 
-  const wavBlock = '<div id="wavcolor"></div>' 
-
-  if(btc < 1){ 
-    stack.push(glassBlock) 
-  } else {
-    for(let i = 0;i<btc;i++){
-       stack.push(btcBlock)
-    }
-  }
-  if(eth < 1){ 
-    stack.push(glassBlock) 
-  } else {
-    for(let i = 0;i<btc;i++){
-       stack.push(ethBlock)
-    }
-  }
-  if(neo < 1){ 
-    stack.push(glassBlock) 
-  } else {
-    for(let i = 0;i<neo;i++){
-       stack.push(neoBlock)
-    }
-  }
-  if(lsk < 1){ 
-    stack.push(glassBlock) 
-  } else {
-    for(let i = 0;i<lsk;i++){
-       stack.push(lskBlock)
-    }
-  }
-  if(wav < 1){ 
-    stack.push(glassBlock) 
-  } else {
-    for(let i = 0;i<wav;i++){
-       stack.push(wavBlock)
-    }
-  }
-
-  const total = Object.keys(block.blockchainHeaders).reduce((all, k) => {
-     all = all + block.blockchainHeaders[k].length
-     return all
-  }, 0)
-
-  return stack.join("")
-
-}
 
 class BlocksTable extends Component<*> {
   render () {
@@ -196,26 +72,70 @@ class BlocksTable extends Component<*> {
       //   wrongPrevHash = (a !== b)
       // }
       let table = [] 
+      let list = []
       if (this.props.blocks[idx + 1]) {
         Object.keys(this.props.blocks[idx].blockchainHeaders).map((k) => {
-          const a = this.props.blocks[idx + 1].blockchainHeaders[k].map((a) => { return a.hash }).join('')
-          const b = this.props.blocks[idx].blockchainHeaders[k].map((a) => { return a.hash }).join('')
-          if(a !== b) {
-            table.push('<div id="' + k + '"></div>') 
+          const c = this.props.blocks[idx + 1].blockchainHeaders[k]
+          const b = this.props.blocks[idx].blockchainHeaders[k]
+          const diffs = c.reduce((all, option) => {
+            let store = true 
+            b.map((s) => {
+               if(s.hash === option.hash){
+                  store = false
+               }
+            })
+            all.push(option) 
+            return all
+          }, [])
+            
+          if(diffs.length > 0) {
+            diffs.map((d) => {
+              table.push({ conf: d.blockchainConfirmationsInParentCount, data: '<div id="' + k + '">' + d.blockchainConfirmationsInParentCount
+                         + '</div>'}) 
+            })
           } else {
-            table.push('<div id="glassList"></div>') 
+            b.map((s) => {
+            table.push({ conf: s.blockchainConfirmationsInParentCount, data: '<div id="glassList">' + s.blockchainConfirmationsInParentCount
+                       + '</div>'}) 
+                       
+             })
           }
         })
       }
       // { wrongPrevHash && <i style={{paddingLeft: 3, filter: 'invert(100%)', color: 'red'}} className='fas fa-exclamation-circle' /> }
+      const sorted = table.sort((a, b) => {
+        if(a.blockchainConfirmationsInParentCount > b.blockchainConfirmationsInParentCount){
+          return -1
+        } 
+        if(a.blockchainConfirmationsInParentCount < b.blockchainConfirmationsInParentCount){
+          return 1
+        } 
+        return 0
+      })
+
+      const oneOnly = sorted.reduce((all, b) => {
+        if(b.conf > 1){
+          all.push(b.data) 
+        } 
+        return all
+      }, [])
+
+      if(oneOnly.length === 0){
+        for(let i = 0; 5-oneOnly.length; i++){
+          oneOnly.push('')
+        }
+      } else {
+        for(let i = 0; 5-oneOnly.length; i++){
+          oneOnly.push('<div id="glassList">+</div>')
+        }
+      }
 
       return (
         <tr key={block.hash}>
-          <th scope='row'>{i++}</th>
-          <td>{Parser(table.join(""))}</td>
           <td>
             <BlockLink block={block} onClick={this.props.onClick}>{block.height}</BlockLink>
           </td>
+          <th>{Parser(oneOnly.join(""))}</th>
           <td>
             <BlockLink block={block} onClick={this.props.onClick} >
               <Ellipsis text={block.hash} />
@@ -243,9 +163,8 @@ class BlocksTable extends Component<*> {
         <table className='table table-light table-striped '>
           <thead className='thead-light'>
             <tr>
-              <th scope='col'>#</th>
-              <th scope='col'></th>
               <th scope='col'>Height</th>
+              <th scope='col'>Block Confirmations</th>
               <th scope='col'>Hash</th>
               <th scope='col'>Previous Hash</th>
               <th scope='col'>Miner</th>

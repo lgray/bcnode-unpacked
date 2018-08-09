@@ -1,0 +1,391 @@
+(node:54916) Warning: N-API is an experimental feature and could change at any time.
+1533785111 INFO	 utils.time Starting NTP time sync 
+1533785111 INFO	 engine.index stored rovers to persistence 
+1533785111 INFO	 engine.index stored appversion to persistence 
+1533785111 INFO	 engine.index genesis block saved to disk a8212d5a65f579c2018b19172be34e4422a93c8437f8e7c19ddc8cad15353862 
+1533785111 INFO	 engine.index starting P2P node 
+1533785111 INFO	 engine.index starting rovers 'btc,eth,lsk,neo,wav' 
+1533785111 INFO	 rover.manager Starting rover 'btc' using '/Users/mtxodus1/Documents/GitHub/private/lib/rover/btc/rover.js' 
+1533785111 INFO	 rover.manager Rover started 'btc' 
+1533785111 INFO	 rover.manager Starting rover 'eth' using '/Users/mtxodus1/Documents/GitHub/private/lib/rover/eth/rover.js' 
+1533785111 INFO	 rover.manager Rover started 'eth' 
+1533785111 INFO	 rover.manager Starting rover 'lsk' using '/Users/mtxodus1/Documents/GitHub/private/lib/rover/lsk/rover.js' 
+1533785111 INFO	 rover.manager Rover started 'lsk' 
+1533785111 INFO	 rover.manager Starting rover 'neo' using '/Users/mtxodus1/Documents/GitHub/private/lib/rover/neo/rover.js' 
+1533785111 INFO	 rover.manager Rover started 'neo' 
+1533785111 INFO	 rover.manager Starting rover 'wav' using '/Users/mtxodus1/Documents/GitHub/private/lib/rover/wav/rover.js' 
+1533785111 INFO	 rover.manager Rover started 'wav' 
+1533785111 INFO	 server.index Server available at http://0.0.0.0:3000 
+1533785111 WARN	 engine.index key needs to be set 
+1533785111 INFO	 engine.index asssigned node key <- 2802e84a8347039618491e69c7658230284c1d83 
+1533785111 INFO	 p2p.discovery assigned edge <- 68cb1ee15af08755204674752ef9aee13db93bb7 
+1533785111 INFO	 engine.index 2802e84a8347039618491e69c7658230284c1d83 
+1533785111 INFO	 cli.cmd.start client initialized 
+1533785111 INFO	 p2p.discovery initializing far reach discovery from 16061@68cb1ee15af08755204674752ef9aee13db93bb7 
+1533785111 INFO	 p2p.node initialized far reaching discovery module 
+1533785111 INFO	 p2p.node joined waypoint table 
+ ----> UPDATE 
+--------------> PEER FROM SEEDER 
+{ host: '52.71.82.17',
+  port: 16061,
+  retries: 0,
+  channel: <Buffer 36 38 63 62 31 65 65 31 35 61 66 30 38 37 35 35 32 30 34 36 37 34 37 35 32 65 66 39 61 65 65 31 33 64 62 39 33 62 62 37>,
+  id: '52.71.82.17:16061',
+  remotePort: 16061,
+  remoteHost: '52.71.82.17' }
+local hash: 68cb1ee15af08755204674752ef9aee13db93bb7
+local port: 16061
+1533785111 INFO	 p2p.node -------  PEER DISCOVERED ------ 
+{ host: '52.71.82.17',
+  port: 16061,
+  retries: 0,
+  channel: '52.71.82.17:1606168cb1ee15af08755204674752ef9aee13db93bb7',
+  id: '52.71.82.17:16061@52.71.82.17:1606168cb1ee15af08755204674752ef9aee13db93bb7',
+  remotePort: 16061,
+  remoteHost: '52.71.82.17' }
+^^^^^^^^^^^^^^^^^^^^^^^^
+52.71.82.17:1606168cb1ee15af08755204674752ef9aee13db93bb7
+1533785111 INFO	 p2p.discovery peers to write: 1 
+<< STREAM 1382>>        
+<< STREAM 1382>>        
+<< STREAM 1382>>        
+<< STREAM 1382>>        
+<< STREAM 1382>>        
+<< STREAM 1382>>        
+<< STREAM 935>>        
+  <<<<<<<<<<<<<<<< 0008W01
+1533785111 INFO	 p2p.node peerDataHandler <- 0008W01 
+1533785111 INFO	 p2p.node ::::::::::::::::::::::::0008W01 
+1533785111 INFO	 p2p.node candidate block 1180 recieved 
+{ hash: '351f57787b96c216711c73723ad034e69d5f906aea33da7504834b9d97102a5b',
+  previousHash: '672c9f21c8cdae35c45513f7191bc3c6c7f884a16c924d38a126a790ea522c28',
+  version: 1,
+  schemaVersion: 1,
+  height: 1180,
+  miner: '0x213fc05f9dd75f18054462449f2005b4ed40934f',
+  difficulty: '293304833765817',
+  timestamp: 1533785095,
+  merkleRoot: '86971f208193587f47cd44f5dbac03df9460042d31a21eee699a29c497ad4798',
+  chainRoot: '895b0d4a72ce68e35ae29d5980b101445b6cc3f59dcfe11916d6cf1dc3d97e2b',
+  distance: '293642884956770',
+  totalDistance: '341311629986196132',
+  nonce: '1296592842',
+  nrgGrant: 1600000000,
+  targetHash: '6f641871680978619176212f0000a40d8d0ae784ad35918ce677a5111a776cf9',
+  targetHeight: 1800066,
+  targetMiner: '0x028d3af888e08aa8380e5866b6ed068bd60e7b19',
+  targetSignature: '',
+  twn: 0,
+  twsList: [],
+  emblemWeight: 0,
+  emblemChainBlockHash: '',
+  emblemChainFingerprintRoot: '87b2bc3f12e3ded808c6d4b9b528381fa2a7e95ff2368ba93191a9495daa7f50',
+  emblemChainAddress: '',
+  txCount: 0,
+  txsList: [],
+  txFeeBase: 0,
+  txDistanceSumLimit: 0,
+  blockchainHeadersCount: 9,
+  blockchainHeaders: 
+   { btcList: [ [Object] ],
+     ethList: [ [Object], [Object] ],
+     lskList: [ [Object], [Object], [Object], [Object] ],
+     neoList: [ [Object], [Object] ],
+     wavList: [ [Object] ] },
+  blockchainFingerprintsRoot: 'd65ffda8a561b53c09377ef7d3ee9ebbf18a618c603faf2631c1bbb7d66a03ac' }
+1533785111 INFO	 engine.index Received new block from peer 1180 
+1533785111 INFO	 bc.validation theBlockChainFingerPrintMatchGenesisBlock validation running 
+1533785111 INFO	 bc.validation numberOfBlockchainsNeededMatchesChildBlock validation running 
+1533785111 INFO	 bc.validation ifMoreThanOneHeaderPerBlockchainAreTheyOrdered validation running 
+1533785111 INFO	 bc.validation ifMoreThanOneHeaderPerBlockchainAreTheyOrdered all chain conditions: [ true, true, true, true, true ] 
+1533785111 INFO	 bc.validation isChainRootCorrectlyCalculated validation running 
+1533785111 INFO	 bc.validation isFieldLengthBounded validation running 
+1533785111 INFO	 bc.validation isMerkleRootCorrectlyCalculated validation running 
+1533785111 INFO	 engine.index purposed block peer 1180 
+1533785111 INFO	 engine.index block from peer 1180 is NOT next in multiverse block -> evaluating as sync candidate. 
+1533785111 INFO	 bc.multiverse.ed56b929-ce86-e01c-3934-381d07b11947 passed resync req <- new block above genesis 
+1533785111 INFO	 engine.index 351f57787b96c216711c73723ad034e69d5f906aea33da7504834b9d97102a5b <- new block: 1180 should sync request approved 
+1533785111 INFO	 engine.index [object Object] 
+bone art event get multiverse not fired <----------------
+1533785111 INFO	 engine.index aaaaaaaaaaaaaaaaaaaaaaaaa 
+1533785111 INFO	 mining.officer mining rebase approved 
+1533785111 INFO	 engine.index store block: 1180 351f57787b96c216711c73723ad034e69d5f906aea33da7504834b9d97102a5b 
+1533785111 INFO	 engine.index bbbbbbbbbbbbbbbbbbbbbbbbb 
+1533785111 INFO	 persistence synchronized child headers: 10 
+1533785111 INFO	 engine.index determining if rovered headers include new child blocks 
+(node:54919) Warning: N-API is an experimental feature and could change at any time.
+(node:54922) Warning: N-API is an experimental feature and could change at any time.
+(node:54918) Warning: N-API is an experimental feature and could change at any time.
+(node:54920) Warning: N-API is an experimental feature and could change at any time.
+1533785113 INFO	 utils.time Starting NTP time sync 
+(node:54921) Warning: N-API is an experimental feature and could change at any time.
+1533785116 INFO	 rover.btc.controller peer count pool: 50 dp: 37, sp: 37, q: true, bh: 535879 
+1533785116 INFO	 rover.helper unified block built from lsk 17820961 
+1533785116 INFO	 mining.officer [] <- [] rovered lsk block 6726154 17820961300777810284 
+1533785116 INFO	 mining.officer persisted block height: 1180 
+1533785116 INFO	 mining.officer latestBlockHeadersHeights: { btc: 535879,
+  eth: 6114137,
+  lsk: 6726154,
+  neo: 2598433,
+  wav: 1119021 } 
+1533785116 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 1180, btc ln: 535880, 535879 
+1533785116 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 1180, eth ln: 6114138, 6114137 
+1533785116 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 1180, lsk ln: 6726153, 6726154 
+1533785116 INFO	 mining.officer chain: lskfrom: 6726153 to: 6726154 
+1533785116 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 1180, neo ln: 2598434, 2598433 
+1533785116 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 1180, wav ln: 1119022, 1119021 
+1533785116 INFO	 mining.officer preparing new block 
+1533785116 INFO	 mining.primitives number of new blocks: 0 
+1533785116 INFO	 mining.officer worker <- calculated difficulty threshold 292202184014819 
+1533785116 INFO	 mining.officer mining cycle initiated 
+1533785116 INFO	 engine.index collectBlock handler: sent to miner: 54925 
+1533785116 INFO	 utils.time NTP offset resolved 
+1533785116 INFO	 p2p.node active waypoints:  1 
+1533785118 INFO	 mining.worker solution found: {
+  "distance": "295483890209801",
+  "nonce": "444681567",
+  "timestamp": 1533785118,
+  "difficulty": "292202184014819",
+  "iterations": 171290,
+  "timeDiff": 2123
+} 
+1533785118 INFO	 mining.officer The calculated block difficulty was 292202184014819, actual mining difficulty was 292202184014819 
+1533785118 INFO	 bc.validation theBlockChainFingerPrintMatchGenesisBlock validation running 
+1533785118 INFO	 bc.validation numberOfBlockchainsNeededMatchesChildBlock validation running 
+1533785118 INFO	 bc.validation ifMoreThanOneHeaderPerBlockchainAreTheyOrdered validation running 
+1533785118 INFO	 bc.validation ifMoreThanOneHeaderPerBlockchainAreTheyOrdered all chain conditions: [ true, true, true, true, true ] 
+1533785118 INFO	 bc.validation isChainRootCorrectlyCalculated validation running 
+1533785118 INFO	 bc.validation isFieldLengthBounded validation running 
+1533785118 INFO	 bc.validation isMerkleRootCorrectlyCalculated validation running 
+1533785118 INFO	 engine.index submitting mined block to current multiverse 
+1533785118 INFO	 mining.officer mining rebase approved 
+1533785118 INFO	 engine.index accepted multiverse addition: true 
+1533785118 INFO	 engine.index multiverse coverage: 2 
+1533785118 INFO	 mining.officer mining rebase approved 
+1533785118 INFO	 engine.index store block: 1181 8dccf2bcd4c69dc111c66644c57a2963ed607ecd1aac6e033c6de25f7f76dc0a 
+1533785118 INFO	 engine.index broadcasting block challenge 8dccf2bcd4c69dc111c66644c57a2963ed607ecd1aac6e033c6de25f7f76dc0a -> considered next block in current multiverse 
+1533785118 INFO	 p2p.node announceblock <- event 
+1533785118 INFO	 p2p.discovery peers to write: 1 
+1533785118 INFO	 engine.index broadcasted mined block true 
+1533785118 INFO	 p2p.node block announced! 
+1533785118 INFO	 persistence synchronized child headers: 5 
+1533785118 INFO	 engine.index latest block 1181 has been updated 
+<< STREAM 1382>>        
+<< STREAM 1382>>        
+<< STREAM 1382>>        
+<< STREAM 1382>>        
+<< STREAM 408>>        
+  <<<<<<<<<<<<<<<< 0008W01
+1533785118 INFO	 p2p.node peerDataHandler <- 0008W01 
+1533785118 INFO	 p2p.node ::::::::::::::::::::::::0008W01 
+1533785118 INFO	 p2p.node candidate block 1181 recieved 
+{ hash: '8dccf2bcd4c69dc111c66644c57a2963ed607ecd1aac6e033c6de25f7f76dc0a',
+  previousHash: '351f57787b96c216711c73723ad034e69d5f906aea33da7504834b9d97102a5b',
+  version: 1,
+  schemaVersion: 1,
+  height: 1181,
+  miner: '0x12ae6e9e36c8bf75b8707d07856abffca40e10db',
+  difficulty: '292202184014819',
+  timestamp: 1533785118,
+  merkleRoot: 'bd4f93eae0ed8258507a96ad4a29689ea7d7beab6ecda06bffa7099bb362ed2d',
+  chainRoot: 'a95a82e4eb4c7e228c788d6afcf43ff5c4fb34862cd62f78186fd8b886872dbb',
+  distance: '295483890209801',
+  totalDistance: '341603916683008689',
+  nonce: '444681567',
+  nrgGrant: 1600000000,
+  targetHash: '6f641871680978619176212f0000a40d8d0ae784ad35918ce677a5111a776cf9',
+  targetHeight: 1800066,
+  targetMiner: '0x028d3af888e08aa8380e5866b6ed068bd60e7b19',
+  targetSignature: '',
+  twn: 0,
+  twsList: [],
+  emblemWeight: 0,
+  emblemChainBlockHash: '',
+  emblemChainFingerprintRoot: '87b2bc3f12e3ded808c6d4b9b528381fa2a7e95ff2368ba93191a9495daa7f50',
+  emblemChainAddress: '',
+  txCount: 0,
+  txsList: [],
+  txFeeBase: 0,
+  txDistanceSumLimit: 0,
+  blockchainHeadersCount: 1,
+  blockchainHeaders: 
+   { btcList: [ [Object] ],
+     ethList: [ [Object] ],
+     lskList: [ [Object] ],
+     neoList: [ [Object] ],
+     wavList: [ [Object] ] },
+  blockchainFingerprintsRoot: 'd65ffda8a561b53c09377ef7d3ee9ebbf18a618c603faf2631c1bbb7d66a03ac' }
+1533785119 INFO	 rover.btc.controller peer count pool: 50 dp: 37, sp: 37, q: true, bh: 535879 
+1533785121 INFO	 p2p.node active waypoints:  1 
+ ----> UPDATE 
+1533785122 INFO	 rover.helper unified block built from lsk 11889747 
+1533785122 INFO	 mining.officer [] <- [] rovered lsk block 6726155 11889747335258328931 
+1533785122 INFO	 mining.officer persisted block height: 1181 
+1533785122 INFO	 mining.officer latestBlockHeadersHeights: { btc: 535879,
+  eth: 6114137,
+  lsk: 6726155,
+  neo: 2598433,
+  wav: 1119021 } 
+1533785122 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 1181, btc ln: 535880, 535879 
+1533785122 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 1181, eth ln: 6114138, 6114137 
+1533785122 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 1181, lsk ln: 6726155, 6726155 
+1533785122 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 1181, neo ln: 2598434, 2598433 
+1533785122 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 1181, wav ln: 1119022, 1119021 
+1533785122 INFO	 mining.officer preparing new block 
+1533785122 INFO	 mining.primitives number of new blocks: 0 
+1533785122 INFO	 mining.officer worker <- calculated difficulty threshold 292751436240410 
+1533785122 INFO	 mining.officer mining cycle initiated 
+1533785122 INFO	 engine.index collectBlock handler: sent to miner: 54931 
+1533785122 INFO	 rover.btc.controller peer count pool: 50 dp: 37, sp: 37, q: true, bh: 535879 
+1533785122 INFO	 utils.time NTP offset resolved 
+<< STREAM 1382>>        
+<< STREAM 1382>>        
+<< STREAM 1382>>        
+<< STREAM 1382>>        
+<< STREAM 1129>>        
+  <<<<<<<<<<<<<<<< 0008W01
+1533785124 INFO	 p2p.node peerDataHandler <- 0008W01 
+1533785124 INFO	 p2p.node ::::::::::::::::::::::::0008W01 
+1533785124 INFO	 p2p.node candidate block 1182 recieved 
+{ hash: 'bcc11a464119d28f2977fd557765c21432f56c38d68346f336550bcb10414f4d',
+  previousHash: '8dccf2bcd4c69dc111c66644c57a2963ed607ecd1aac6e033c6de25f7f76dc0a',
+  version: 1,
+  schemaVersion: 1,
+  height: 1182,
+  miner: '0x213fc05f9dd75f18054462449f2005b4ed40934f',
+  difficulty: '292751436240410',
+  timestamp: 1533785124,
+  merkleRoot: '7c3d942833fabde1d5bdd2493acf75d9cbe2624cd275cdbcd566fdb49fe0a776',
+  chainRoot: 'c3bd78239568a24c6976c69c097e4a372ad6a9e55149d6b4fa26702cac9447f8',
+  distance: '292874405864057',
+  totalDistance: '341897488545797845',
+  nonce: '1253645961',
+  nrgGrant: 1600000000,
+  targetHash: '6f641871680978619176212f0000a40d8d0ae784ad35918ce677a5111a776cf9',
+  targetHeight: 1800066,
+  targetMiner: '0x028d3af888e08aa8380e5866b6ed068bd60e7b19',
+  targetSignature: '',
+  twn: 0,
+  twsList: [],
+  emblemWeight: 0,
+  emblemChainBlockHash: '',
+  emblemChainFingerprintRoot: '87b2bc3f12e3ded808c6d4b9b528381fa2a7e95ff2368ba93191a9495daa7f50',
+  emblemChainAddress: '',
+  txCount: 0,
+  txsList: [],
+  txFeeBase: 0,
+  txDistanceSumLimit: 0,
+  blockchainHeadersCount: 5,
+  blockchainHeaders: 
+   { btcList: [ [Object] ],
+     ethList: [ [Object], [Object] ],
+     lskList: [ [Object] ],
+     neoList: [ [Object] ],
+     wavList: [ [Object] ] },
+  blockchainFingerprintsRoot: 'd65ffda8a561b53c09377ef7d3ee9ebbf18a618c603faf2631c1bbb7d66a03ac' }
+1533785124 INFO	 engine.index Received new block from peer 1182 
+1533785124 INFO	 bc.validation theBlockChainFingerPrintMatchGenesisBlock validation running 
+1533785124 INFO	 bc.validation numberOfBlockchainsNeededMatchesChildBlock validation running 
+1533785124 INFO	 bc.validation ifMoreThanOneHeaderPerBlockchainAreTheyOrdered validation running 
+1533785124 INFO	 bc.validation ifMoreThanOneHeaderPerBlockchainAreTheyOrdered all chain conditions: [ true, true, true, true, true ] 
+1533785124 INFO	 bc.validation isChainRootCorrectlyCalculated validation running 
+1533785124 INFO	 bc.validation isFieldLengthBounded validation running 
+1533785124 INFO	 bc.validation isMerkleRootCorrectlyCalculated validation running 
+1533785124 INFO	 engine.index purposed block peer 1182 
+1533785124 INFO	 engine.index new block bcc11a464119d28f2977fd557765c21432f56c38d68346f336550bcb10414f4d references previous Block 8dccf2bcd4c69dc111c66644c57a2963ed607ecd1aac6e033c6de25f7f76dc0a for block 8dccf2bcd4c69dc111c66644c57a2963ed607ecd1aac6e033c6de25f7f76dc0a 
+1533785124 INFO	 engine.index block 1182 considered next block in current multiverse  
+1533785124 INFO	 mining.officer mining rebase approved 
+1533785124 INFO	 engine.index store block: 1182 bcc11a464119d28f2977fd557765c21432f56c38d68346f336550bcb10414f4d 
+1533785124 INFO	 p2p.node announceblock <- event 
+1533785124 INFO	 p2p.discovery peers to write: 1 
+1533785124 INFO	 p2p.node block announced! 
+1533785124 INFO	 persistence synchronized child headers: 6 
+1533785125 INFO	 rover.btc.controller peer count pool: 50 dp: 37, sp: 37, q: true, bh: 535879 
+1533785125 INFO	 server.socket.msg.blocks requesting block height from server 
+1533785126 INFO	 p2p.node active waypoints:  1 
+1533785128 INFO	 rover.btc.controller peer count pool: 50 dp: 37, sp: 37, q: true, bh: 535879 
+1533785131 INFO	 rover.btc.controller peer count pool: 50 dp: 37, sp: 37, q: true, bh: 535879 
+1533785131 INFO	 p2p.node active waypoints:  1 
+1533785132 INFO	 rover.helper unified block built from lsk 13131187 
+1533785132 INFO	 mining.officer [] <- [] rovered lsk block 6726156 13131187670421480629 
+1533785132 INFO	 mining.officer persisted block height: 1182 
+1533785132 INFO	 mining.officer latestBlockHeadersHeights: { btc: 535879,
+  eth: 6114139,
+  lsk: 6726156,
+  neo: 2598434,
+  wav: 1119022 } 
+1533785132 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 1182, btc ln: 535880, 535879 
+1533785132 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 1182, eth ln: 6114140, 6114139 
+1533785132 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 1182, lsk ln: 6726156, 6726156 
+1533785132 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 1182, neo ln: 2598435, 2598434 
+1533785132 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 1182, wav ln: 1119023, 1119022 
+1533785132 INFO	 mining.officer preparing new block 
+1533785132 INFO	 mining.primitives number of new blocks: 0 
+1533785132 INFO	 mining.officer worker <- calculated difficulty threshold 292751436240410 
+1533785132 INFO	 mining.officer mining cycle initiated 
+1533785132 INFO	 engine.index collectBlock handler: sent to miner: 54935 
+1533785132 INFO	 utils.time NTP offset resolved 
+<< STREAM 1382>>        
+<< STREAM 1382>>        
+<< STREAM 1382>>        
+<< STREAM 1382>>        
+<< STREAM 412>>        
+  <<<<<<<<<<<<<<<< 0008W01
+1533785132 INFO	 p2p.node peerDataHandler <- 0008W01 
+1533785132 INFO	 p2p.node ::::::::::::::::::::::::0008W01 
+1533785132 INFO	 p2p.node candidate block 1183 recieved 
+{ hash: 'c26cfb0a568a8fa910ea062b5ecd154b38f86244a7ff6ee7c9c573118953cfde',
+  previousHash: 'bcc11a464119d28f2977fd557765c21432f56c38d68346f336550bcb10414f4d',
+  version: 1,
+  schemaVersion: 1,
+  height: 1183,
+  miner: '0x213fc05f9dd75f18054462449f2005b4ed40934f',
+  difficulty: '292751436240410',
+  timestamp: 1533785132,
+  merkleRoot: '977b939fe04cac77f8ebf60f723ad4e09e76ebb8056c796ef90e09fb0021c0f5',
+  chainRoot: '99541c3516205311bf5d46120685272b1427fd21f2b600c24855397042ef0003',
+  distance: '292893435762485',
+  totalDistance: '342190270724444167',
+  nonce: '589799084',
+  nrgGrant: 1600000000,
+  targetHash: '6f641871680978619176212f0000a40d8d0ae784ad35918ce677a5111a776cf9',
+  targetHeight: 1800066,
+  targetMiner: '0x028d3af888e08aa8380e5866b6ed068bd60e7b19',
+  targetSignature: '',
+  twn: 0,
+  twsList: [],
+  emblemWeight: 0,
+  emblemChainBlockHash: '',
+  emblemChainFingerprintRoot: '87b2bc3f12e3ded808c6d4b9b528381fa2a7e95ff2368ba93191a9495daa7f50',
+  emblemChainAddress: '',
+  txCount: 0,
+  txsList: [],
+  txFeeBase: 0,
+  txDistanceSumLimit: 0,
+  blockchainHeadersCount: 2,
+  blockchainHeaders: 
+   { btcList: [ [Object] ],
+     ethList: [ [Object] ],
+     lskList: [ [Object] ],
+     neoList: [ [Object] ],
+     wavList: [ [Object] ] },
+  blockchainFingerprintsRoot: 'd65ffda8a561b53c09377ef7d3ee9ebbf18a618c603faf2631c1bbb7d66a03ac' }
+1533785132 INFO	 engine.index Received new block from peer 1183 
+1533785132 INFO	 bc.validation theBlockChainFingerPrintMatchGenesisBlock validation running 
+1533785132 INFO	 bc.validation numberOfBlockchainsNeededMatchesChildBlock validation running 
+1533785132 INFO	 bc.validation ifMoreThanOneHeaderPerBlockchainAreTheyOrdered validation running 
+1533785132 INFO	 bc.validation ifMoreThanOneHeaderPerBlockchainAreTheyOrdered all chain conditions: [ true, true, true, true, true ] 
+1533785132 INFO	 bc.validation isChainRootCorrectlyCalculated validation running 
+1533785132 INFO	 bc.validation isFieldLengthBounded validation running 
+1533785132 INFO	 bc.validation isMerkleRootCorrectlyCalculated validation running 
+1533785132 INFO	 engine.index purposed block peer 1183 
+1533785132 INFO	 engine.index new block c26cfb0a568a8fa910ea062b5ecd154b38f86244a7ff6ee7c9c573118953cfde references previous Block bcc11a464119d28f2977fd557765c21432f56c38d68346f336550bcb10414f4d for block bcc11a464119d28f2977fd557765c21432f56c38d68346f336550bcb10414f4d 
+1533785132 INFO	 engine.index block 1183 considered next block in current multiverse  
+1533785132 INFO	 mining.officer mining rebase approved 
+1533785132 INFO	 engine.index store block: 1183 c26cfb0a568a8fa910ea062b5ecd154b38f86244a7ff6ee7c9c573118953cfde 
+1533785132 INFO	 p2p.node announceblock <- event 
+1533785132 INFO	 p2p.discovery peers to write: 1 
+1533785132 INFO	 p2p.node block announced! 
+1533785132 INFO	 persistence synchronized child headers: 5 
+1533785133 INFO	 server.socket.msg.blocks requesting block height from server 
+1533785134 INFO	 rover.btc.controller peer count pool: 50 dp: 37, sp: 37, q: true, bh: 535879 
