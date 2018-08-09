@@ -327,16 +327,6 @@ export class PeerNode {
 
       conn.bidirectional = true
 
-      conn.on('close', (dt) => {
-          console.log('close')
-          console.log(dt)
-      })
-
-      conn.on('timeout', (dt) => {
-          console.log('timeout')
-          console.log(dt)
-      })
-
       (async () => {
                 // greeting reponse to connection with provided host information and connection ID
                 const address = conn.remoteAddress + ':' + conn.remotePort
