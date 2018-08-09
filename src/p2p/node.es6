@@ -320,12 +320,9 @@ export class PeerNode {
 			}
     })
 
-
     this._logger.info('initialized far reaching discovery module')
 
     this._p2p.on('connection', (conn, info) => {
-
-      conn.setEncoding('utf8')
 
       (async () => {
                 // greeting reponse to connection with provided host information and connection ID
