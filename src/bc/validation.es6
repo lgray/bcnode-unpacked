@@ -50,10 +50,10 @@ export function isValidBlock (newBlock: BcBlock, type: number = 0): bool {
   if (newBlock === undefined) {
     return false
   }
-  if (!theBlockChainFingerPrintMatchGenesisBlock(newBlock)) {
-    logger.warn('failed: theBlockChainFingerPrintMatchGenesisBlock')
-    return false
-  }
+  // if (!theBlockChainFingerPrintMatchGenesisBlock(newBlock)) {
+  //  logger.warn('failed: theBlockChainFingerPrintMatchGenesisBlock')
+  //  return false
+  // } // DISABLED UNTIL AT
   if (!numberOfBlockchainsNeededMatchesChildBlock(newBlock)) {
     logger.warn('failed: numberOfBlockchainsNeededMatchesChildBlock')
     return false
