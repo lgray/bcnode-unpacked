@@ -31,6 +31,7 @@ function random (range) {
 function Discovery (nodeId) {
   seeds.unshift('udp://tds.blockcollider.org:16060/announce')
   seeds.unshift('udp://18.210.15.44:16060/announce')
+  seeds.unshift('udp://tds-r3.blockcollider.org:16060/announce')
   if (process.env.BC_SEED !== undefined) {
     seeds.unshift(process.env.BC_SEED)
   }
@@ -141,7 +142,7 @@ Discovery.prototype = {
                 return resolve({
                   address: conn.remoteAddress + ':' + conn.remotePort,
                   success: true,
-                  message: err.message
+                  message: "success"
                 })
           } catch (err) {
             if(err) {

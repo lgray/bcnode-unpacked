@@ -17,7 +17,7 @@
     "lint:flow": "flow || true",
     "proto": "./node_modules/grpc-tools/bin/protoc.js --proto_path=protos --js_out=import_style=commonjs,binary:src/protos protos/*.proto --grpc_out=src/protos --plugin=protoc-gen-grpc=./node_modules/grpc-tools/bin/grpc_node_plugin && yarn run proto-fix",
     "proto-fix": "./scripts/proto-fix.sh",
-    "version:generate": "node ./scripts/version-generate.js",    
+    "version:generate": "node ./scripts/version-generate.js",
     "transpile": "babel src --source-maps=true --config-file ./.babelrc --out-dir lib --ignore ./lib/,./node_modules,./.babelrc,./package.json,./npm-debug.log",
     "test": "jest",
     "build-native": "neon build",

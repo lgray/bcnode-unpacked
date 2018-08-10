@@ -14,6 +14,7 @@ import type PersistenceRocksDb from '../persistence/rocksdb'
 const BN = require('bn.js')
 const { all, flatten, zip } = require('ramda')
 
+const { getGenesisBlock } = require('./genesis')
 const { validateRoveredSequences, validateBlockSequence, childrenHeightSum } = require('./validation')
 const { standardId } = require('./helper')
 const { getLogger } = require('../logger')
@@ -345,23 +346,16 @@ export class Multiverse {
     const currentParentHighestBlock = this.getParentHighestBlock()
 
     const currentHighestBlock = await this.persistence.get('bc.block.latest')
+    const syncLock = await this.persistence.get('synclock')
 
-    // this._logger.debug(syncLock.getTimestamp(), syncLock.getHeight())
-
-    // if (syncLock.getHeight() !== 1 && (syncLock.getTimestamp() + 369) < Math.floor(Date.now() * 0.001)) {
-    //  this._logger.warn('sync lock is stale resetting')
-    //  await this.persistence.put('synclock', getGenesisBlock())
-    // } else if (syncLock.getHeight() !== 1) {
-    //  this._logger.warn('sync lock is active')
-    //  return Promise.resolve(false)
-    // } else {
-    //  this._logger.warn('sync lock is not active')
-    // }
-
-    // if (syncLock.getHeight() !== 1) {
-    //  this._logger.warn('sync lock is active')
-    //  return Promise.resolve(false)
-    // }
+    // give a client 16 seconds while in a synclock
+    if (syncLock.getHeight() !== 1 && (syncLock.getTimestamp() + 18) < Math.floor(Date.now() * 0.001)) {
+      this._logger.warn('sync lock is stale <- reset approved')
+      await this.persistence.put('synclock', getGenesisBlock())
+    } else if (syncLock.getHeight() !== 1) {
+      this._logger.warn('sync lock is active')
+      return Promise.resolve(false)
+    }
 
     if (this._chain.length === 0) {
       this._logger.info('passed sync req <- currentHighestBlock not set')
@@ -392,7 +386,7 @@ export class Multiverse {
       return Promise.resolve(false)
     }
 
-    // PASS if current highest block is older than 300 seconds from local time
+    // PASS if current highest block is older than 61 seconds from local time
     if (currentHighestBlock.getTimestamp() + 61 < Math.floor(Date.now() * 0.001)) {
       this._logger.info('current chain is stale chain')
       return Promise.resolve(true)

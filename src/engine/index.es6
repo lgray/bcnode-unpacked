@@ -383,30 +383,41 @@ export class Engine {
     this._logger.info('store block: ' + block.getHeight() + ' ' + block.getHash())
     try {
       const previousLatest = await this.persistence.get('bc.block.latest')
+      const parent = await this.persistence.get('bc.block.parent')
+      const synclock = await this.persistence.get('synclock')
 
-      if (previousLatest.getHash() === block.getPreviousHash()) {
+      if (previousLatest.getHash() === block.getPreviousHash() &&
+          new BN(block.getTimestamp()).gt(new BN(parent.getTimestamp())) === true) {
         await this.persistence.put('bc.block.parent', previousLatest)
         await this.persistence.put('bc.block.latest', block)
         await this.persistence.put('bc.block.' + block.getHeight(), block)
         await this.persistence.putChildHeaders(block)
-      } else if (msg.force === true || previousLatest.getHeight() === 1) {
+      } else if (previousLatest.getHeight() === 1) {
         await this.persistence.put('bc.block.parent', previousLatest)
+        await this.persistence.put('bc.block.latest', block)
+        await this.persistence.put('bc.block.' + block.getHeight(), block)
+        await this.persistence.putChildHeaders(block)
+      } else if ((msg.force === true && msg.multiverse !== undefined && msg.data.constructor === Array.constructor) ||
+                (msg.force === true && synclock.getHeight() === 1)) {
+        const oldest = msg.multiverse[msg.multiverse - 1]
+        // get the block before the oldest available block
+        const grandparent = await this.persistence.get('bc.block.' + oldest.getHeight() - 1)
+
+        if (oldest.getPreviousHash() !== grandparent.getHash()) {
+          // this is a new chain branch and we must sync for it
+          await this.persistence.put('synclock', oldest)
+        }
+        await this.persistence.put('bc.block.parent', msg.multiverse[1])
+        await this.persistence.put('bc.block.latest', block)
+        await this.persistence.put('bc.block.' + block.getHeight(), block)
+        await this.persistence.putChildHeaders(block)
+      } else if (parent.getHash() === block.previousHash()) {
+        await this.persistence.put('bc.block.parent', msg.multiverse[1])
         await this.persistence.put('bc.block.latest', block)
         await this.persistence.put('bc.block.' + block.getHeight(), block)
         await this.persistence.putChildHeaders(block)
       } else {
         this._logger.error('failed to set block ' + block.getHeight() + ' ' + block.getHash() + ' as latest block, wrong previous hash')
-      }
-
-      if (this.miningOfficer._canMine === false) {
-        this._logger.info('determining if rovered headers include new child blocks')
-        const latestRoveredHeadersKeys: string[] = this.miningOfficer._knownRovers.map(chain => `${chain}.block.latest`)
-        const latestBlockHeaders = await this.persistence.getBulk(latestRoveredHeadersKeys)
-        latestBlockHeaders.map((r) => {
-          if (this.miningOfficer._collectedBlocks[r.getBlockchain()] < 1) {
-            this.miningOfficer._collectedBlocks[r.getBlockchain()]++
-          }
-        })
       }
 
       if (msg.multiverse !== undefined) {
@@ -419,6 +430,17 @@ export class Engine {
           }
         }
         return Promise.resolve(true)
+      }
+
+      if (this.miningOfficer._canMine === false) {
+        this._logger.info('determining if rovered headers include new child blocks')
+        const latestRoveredHeadersKeys: string[] = this.miningOfficer._knownRovers.map(chain => `${chain}.block.latest`)
+        const latestBlockHeaders = await this.persistence.getBulk(latestRoveredHeadersKeys)
+        latestBlockHeaders.map((r) => {
+          if (this.miningOfficer._collectedBlocks[r.getBlockchain()] < 1) {
+            this.miningOfficer._collectedBlocks[r.getBlockchain()]++
+          }
+        })
       }
       return Promise.resolve(true)
     } catch (err) {
