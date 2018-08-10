@@ -111,7 +111,7 @@ export function getDiff (currentBlockTime: number, previousBlockTime: number, pr
 
   let bigMinimalDifficulty = new BN(minimalDifficulty, 16)
 
-  logger.info('number of new blocks: ' + newBlockCount)
+  logger.debug('number of new blocks: ' + newBlockCount)
 
   const bigPreviousBlockTime = new BN(previousBlockTime)
   const bigPreviousDifficulty = new BN(previousDifficulty)
