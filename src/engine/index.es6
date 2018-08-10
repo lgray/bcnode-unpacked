@@ -1265,6 +1265,7 @@ export class Engine {
       .then((isNextBlock) => {
         // $FlowFixMe
         this._logger.info('accepted multiverse addition: ' + isNextBlock)
+        this._logger.info('local mined block ' + newBlock.getHeight() + ' does not stack on multiverse height ' + this.multiverse.getHighestBlock().getHeight())
         // if (isNextBlock) {
         // TODO: this will break now that _blocks is not used in multiverse
         // if (this.multiverse.getHighestBlock() !== undefined &&
@@ -1278,8 +1279,7 @@ export class Engine {
         } else {
           this._logger.warn('local mined block ' + newBlock.getHeight() + ' does not stack on multiverse height ' + this.multiverse.getHighestBlock().getHeight())
           this._logger.warn('mined block ' + newBlock.getHeight() + ' cannot go on top of multiverse block ' + this.multiverse.getHighestBlock().getHash())
-          return Promise.resolve(true)
-          //this.miningOfficer._cleanUnfinishedBlock()
+          return Promises.resolve(false)
           //return this.miningOfficer.rebaseMiner()
           //  .then((res) => {
           //    this._logger.info(res)

@@ -216,6 +216,7 @@ export class Multiverse {
   async addNextBlock (newBlock: BcBlock, type: Number = 0): Promise<?boolean> {
     // return false for empty block
     if (newBlock === undefined || newBlock === null) {
+      this._logger.warn('no block was given to evaluate')
       return Promise.resolve(false)
     }
     // if there are no blocks in the multiverse this block is the highest
