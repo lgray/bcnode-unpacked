@@ -510,7 +510,7 @@ export class PeerNode {
           })
 
           this._engine._emitter.on('putblock', (msg) => {
-            this._logger.info('candidate block ' + msg.data.getHeight() + ' recieved')
+            this._logger.debug('candidate block ' + msg.data.getHeight() + ' recieved')
             this._engine.blockFromPeer(msg, msg.data)
           })
 
@@ -625,7 +625,7 @@ export class PeerNode {
           return
         }
 
-        this._logger.info('peerDataHandler <- ' + type)
+        this._logger.debug('peerDataHandler <- ' + type)
         // Peer Sent Highest Block
         if (type === '0007W01') {
         // this._logger.info('::::::::::::::::::::::::' + type)

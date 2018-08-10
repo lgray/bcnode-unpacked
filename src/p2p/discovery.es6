@@ -130,7 +130,7 @@ Discovery.prototype = {
     this.dht.qsend = async (conn, msg) => {
       /* eslint-disable */
       const list = this.dht.getPeerByHost(conn)
-      this._logger.info('peers to write: ' + list.length)
+      this._logger.debug('peers to write: ' + list.length)
       if (list.length < 1) { return Promise.resolve(false) }
       const tasks = list.reduce((all, conn) => {
         const a = new Promise((resolve, reject) => {
