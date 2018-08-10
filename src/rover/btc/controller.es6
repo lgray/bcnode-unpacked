@@ -57,13 +57,13 @@ export default class Controller {
         peer.disconnect()
       }
     } catch (err) {
-      this._logger.error(`Could not disconnect from peer, err: ${errToString(err)}`)
+      this._logger.debug(`could not disconnect from peer, err: ${errToString(err)}`)
     }
 
     try {
       this.network.removePeer(peer)
     } catch (e) {
-      this._logger.warn(`Error while removing peer ${peer.host} from network, err: ${errToString(e)}`)
+      this._logger.debug(`error while removing peer ${peer.host} from network, err: ${errToString(e)}`)
     }
   }
 
@@ -94,7 +94,7 @@ export default class Controller {
           network.updateBestHeight()
           network.addPeer(peer)
         } catch (err) {
-          this._logger.error('Error in peerready cb', err)
+          this._logger.debug('Error in peerready cb', err)
         }
       } else if (!network.hasQuorum() && isSatoshiPeer(peer)) {
         try {
@@ -140,7 +140,7 @@ export default class Controller {
             var peerMessage = new Messages().GetData(message.inventory)
             peer.sendMessage(peerMessage)
           } catch (err) {
-            this._logger.error('Error sending message', err)
+            this._logger.debug('Error sending message', err)
             this._tryDisconnectPeer(peer)
           }
         }

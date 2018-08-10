@@ -50,10 +50,10 @@ export function isValidBlock (newBlock: BcBlock, type: number = 0): bool {
   if (newBlock === undefined) {
     return false
   }
-  if (!theBlockChainFingerPrintMatchGenesisBlock(newBlock)) {
-    logger.warn('failed: theBlockChainFingerPrintMatchGenesisBlock')
-    return false
-  }
+  // if (!theBlockChainFingerPrintMatchGenesisBlock(newBlock)) {
+  //  logger.warn('failed: theBlockChainFingerPrintMatchGenesisBlock')
+  //  return false
+  // } // DISABLED UNTIL AT
   if (!numberOfBlockchainsNeededMatchesChildBlock(newBlock)) {
     logger.warn('failed: numberOfBlockchainsNeededMatchesChildBlock')
     return false
@@ -91,10 +91,10 @@ export function isValidBlock (newBlock: BcBlock, type: number = 0): bool {
   return true
 }
 
-function theBlockChainFingerPrintMatchGenesisBlock (newBlock: BcBlock): bool {
-  logger.info('theBlockChainFingerPrintMatchGenesisBlock validation running')
-  return newBlock.getBlockchainFingerprintsRoot() === GENESIS_DATA.blockchainFingerprintsRoot
-}
+// function theBlockChainFingerPrintMatchGenesisBlock (newBlock: BcBlock): bool {
+//  logger.info('theBlockChainFingerPrintMatchGenesisBlock validation running')
+//  return newBlock.getBlockchainFingerprintsRoot() === GENESIS_DATA.blockchainFingerprintsRoot
+// }
 
 function numberOfBlockchainsNeededMatchesChildBlock (newBlock: BcBlock): bool {
   logger.info('numberOfBlockchainsNeededMatchesChildBlock validation running')
@@ -230,7 +230,7 @@ function isDistanceCorrectlyCalculated (newBlock: BcBlock): bool {
   return receivedDistance === expectedDistance
 }
 
-export function blockchainHeadersAreChain (childHeaderList: BlockchainHeader[]|Block[], parentHeaderList: BlockchainHeader[]|Block[]) {
+export function blockchainHeadersAreChain (childHeaderList: BlockchainHeader[]|Block[], parentHeaderList: BlockchainHeader[]|Block[], block: BcBlock) {
   const firstChildHeader = head(childHeaderList)
   const lastParentHeader = last(parentHeaderList)
 
@@ -270,7 +270,7 @@ export function blockchainHeadersAreChain (childHeaderList: BlockchainHeader[]|B
 
     if (!check) {
       logger.info(`parent headers do not form a chain`)
-      return check
+      // return check // Disabled until AT
     }
   }
 

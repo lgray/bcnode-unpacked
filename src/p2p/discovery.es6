@@ -30,23 +30,28 @@ function random (range) {
 
 function Discovery (nodeId) {
   seeds.unshift('udp://tds.blockcollider.org:16060/announce')
+  seeds.unshift('udp://18.210.15.44:16060/announce')
+  if (process.env.BC_SEED !== undefined) {
+    seeds.unshift(process.env.BC_SEED)
+  }
   const hash = crypto.createHash('sha1').update('bcbt002' + config.blockchainFingerprintsHash).digest('hex') // 68cb1ee15af08755204674752ef9aee13db93bb7
-  const seederPort = 16060
-  const port = 16061
+  const maxConnections = process.env.BC_MAX_CONNECTIONS || 80
+  const seederPort = process.env.BC_SEEDER_PORT || 16060
+  const port = process.env.BC_DISCOVERY_PORT || 16061
   this.options = {
     // id: nodeId,
     // nodeId: nodeId,
-    maxConnections: 80,
+    maxConnections: maxConnections,
     port: port,
-    utp: true,
-    // tcp: false,
-    dns: false,
+    utp: process.env.BC_DISCOVERY_UTP || true,
+    tcp: process.env.BC_DISCOVERY_TCP === 'true',
+    dns: process.env.BC_DISCOVERY_MDNS === 'true',
     dht: {
       // nodeId: nodeId,
-      bootstrap: ['udp://tds.blockcollider.org:16060'],
-      interval: 40000 + random(1000),
-      maxConnections: 80,
-      concurrency: 80,
+      bootstrap: ['18.210.15.44:16060'],
+      interval: 30000 + random(1000),
+      maxConnections: maxConnections,
+      concurrency: maxConnections,
       host: 'tds.blockcollider.org:16060'
     }
   }
@@ -54,7 +59,9 @@ function Discovery (nodeId) {
     infoHash: hash,
     peerId: nodeId,
     port: seederPort,
-    announce: seeds
+    announce: seeds,
+    quiet: true,
+    log: false
   }
   this.port = port
   this.seederPort = seederPort
@@ -70,11 +77,11 @@ Discovery.prototype = {
     const self = this
     const client = new Client(self.streamOptions)
     client.on('error', (err) => {
-      self._logger.error(err.message)
+      self._logger.debug(err.message)
     })
 
     client.on('warning', function (err) {
-      self._logger.warn(err.message)
+      self._logger.debug(err.message)
     })
 
     // start getting peers from the tracker
@@ -128,18 +135,27 @@ Discovery.prototype = {
       const tasks = list.reduce((all, conn) => {
         const a = new Promise((resolve, reject) => {
           try {
+                conn.resume()
                 conn.write(msg)
+                conn.close()
                 return resolve({
                   address: conn.remoteAddress + ':' + conn.remotePort,
                   success: true,
                   message: err.message
                 })
           } catch (err) {
-            return resolve({
-              address: conn.remoteAddress + ':' + conn.remotePort,
-              success: false,
-              message: err.message
-            })
+            if(err) {
+              return resolve({
+                address: conn.remoteAddress + ':' + conn.remotePort,
+                success: false,
+                message: err.message
+              })
+            }
+              return resolve({
+                address: conn.remoteAddress + ':' + conn.remotePort,
+                success: false,
+                message: 'connection lost'
+              })
           }
         })
         all.push(a)
