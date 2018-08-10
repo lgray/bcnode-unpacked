@@ -21,7 +21,9 @@ const FIELD_STYLE = {
   color: 'black'
 }
 
-const linkGithub = `https://github.com/blockcollider/bcnode/tree/${VERSION.git.short}`
+const VERSION = require('../../.version.json')
+
+const linkGithub = `https://github.com/blockcollider/bcnode/tree/0.7.7`
 
 export class Brand extends Component<*> {
   render () {
