@@ -91,10 +91,10 @@ export function isValidBlock (newBlock: BcBlock, type: number = 0): bool {
   return true
 }
 
-function theBlockChainFingerPrintMatchGenesisBlock (newBlock: BcBlock): bool {
-  logger.info('theBlockChainFingerPrintMatchGenesisBlock validation running')
-  return newBlock.getBlockchainFingerprintsRoot() === GENESIS_DATA.blockchainFingerprintsRoot
-}
+// function theBlockChainFingerPrintMatchGenesisBlock (newBlock: BcBlock): bool {
+//  logger.info('theBlockChainFingerPrintMatchGenesisBlock validation running')
+//  return newBlock.getBlockchainFingerprintsRoot() === GENESIS_DATA.blockchainFingerprintsRoot
+// }
 
 function numberOfBlockchainsNeededMatchesChildBlock (newBlock: BcBlock): bool {
   logger.info('numberOfBlockchainsNeededMatchesChildBlock validation running')
