@@ -447,7 +447,7 @@ export class PeerNode {
 
             this._engine._emitter.on('getmultiverse', (obj) => {
 
-							console.log('bone art event get multiverse not fired <----------------')
+							//console.log('bone art event get multiverse not fired <----------------')
 
               const type = '0009R01' // read selective block list (multiverse)
               const split = protocolBits[type]
@@ -469,8 +469,8 @@ export class PeerNode {
             })
 
           this._engine._emitter.on('putmultiverse', (msg) => {
-            console.log('getblocklist event requests')
-            console.log(msg)
+            //console.log('getblocklist event requests')
+            //console.log(msg)
             this._engine.getMultiverseHandler(msg, msg.data)
             .then((res) => {
               this._logger.info(res)
@@ -518,10 +518,6 @@ export class PeerNode {
           * PEER SEEDER
           */
 					this._p2p._seeder = discovery.seeder()
-					this._p2p._seeder.on('update', (data) => {
-						console.log(' ----> UPDATE ' )
-
-					})
 
           this._p2p._seeder.on('peer', (peer) => {
 
@@ -550,18 +546,17 @@ export class PeerNode {
           //this._p2p._onconnection( ,'utp')
                  // the host name as described by external peers
                  // first one is always the immediate response to current peer
-                       console.log('--------------> PEER FROM SEEDER ' )
                        // add seen protection
                        try {
                            const name = obj.host + ':' + obj.port + this._p2p.hash
-                           console.log(obj)
-                           console.log("local hash: " + this._p2p.hash)
-                           console.log("local port: " + this._p2p.port)
-                           //this._p2p._discovery.dht.emit('announce', obj, toBuffer(this._p2p.hash), { host: obj.host, port: obj.port })
+                           //console.log(obj)
+                           //console.log("local hash: " + this._p2p.hash)
+                           //console.log("local port: " + this._p2p.port)
+                           ////this._p2p._discovery.dht.emit('announce', obj, toBuffer(this._p2p.hash), { host: obj.host, port: obj.port })
                            this._p2p._discovery.emit('peer', name, obj, 'utp')
 
                        } catch (err) {
-                           console.log('unable to reuse server')
+                           console.log('')
                        }
                        //this._p2p.addPeer(this._p2p.hash, obj)
                        //this._p2p.add(obj, () => {
@@ -584,7 +579,7 @@ export class PeerNode {
 
             setTimeout(() => {
                 this._p2p._seeder.complete()
-            }, 10000)
+            }, 120000)
 
    })
 		})
@@ -610,21 +605,21 @@ export class PeerNode {
   //   '0010W01': '[*]'  // write multiverse (selective sync)
   // }
   peerDataHandler (conn: Object, info: Object, str: ?string) {
-    if (this._greetingRegistery[info.id] === undefined) {
-      this._greetingRegistery[info.id] = 1
+    if (this._greetingRegister[info.id] === undefined) {
+      this._greetingRegister[info.id] = 1
       return
     } else {
-      this._greetingRegistery[info.id]++
+      this._greetingRegister[info.id]++
     }
 
-    if (this._greetingRegistery[info.id] > 2) {
+    if (this._greetingRegister[info.id] > 2) {
       (async () => {
         if (str === undefined) { return }
         if (str.length < 8) { return }
 
         // TODO: add lz4 compression for things larger than 1000 characters
         const type = str.slice(0, 7)
-        console.log('  <<<<<<<<<<<<<<<< ' + type)
+        // console.log('  <<<<<<<<<<<<<<<< ' + type)
 
         if (protocolBits[type] === undefined) {
           return
@@ -676,7 +671,7 @@ export class PeerNode {
             return 'bc.block.' + n
           })
 
-          console.log(query)
+          //console.log(query)
           this._logger.info(query.length + ' blocks requested by peer: ' + conn.remoteHost)
           this._queue.push(query, (err, res) => {
 
