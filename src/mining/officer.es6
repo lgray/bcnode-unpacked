@@ -132,10 +132,10 @@ export class MiningOfficer {
           this._canMine = false
           return Promise.resolve(false)
         }
-        // if (parent.getHeight() === 1) {
-        //  this._logger.warn('cannot mine over the genesis block without enabling low health network.')
-        //  this._canMine = false
-        // }
+        if (parent.getHeight() === '1') {
+          this._logger.warn('cannot mine over the genesis block without enabling low health network.')
+          this._canMine = false
+        }
       } catch (err) {
         this._canMine = false
         this._logger.error('unable to assert parent block of highest block')
@@ -379,7 +379,7 @@ export class MiningOfficer {
 
   stopMining (): bool {
     debug('stop mining')
-    this._logger.info('mining rebase approved')
+    this._logger.info('petioning new mining work')
 
     const process = this._workerProcess
     if (!process) {

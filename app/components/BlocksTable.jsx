@@ -132,10 +132,10 @@ class BlocksTable extends Component<*> {
 
       return (
         <tr key={block.hash}>
+          <th>{Parser(oneOnly.join(""))}</th>
           <td>
             <BlockLink block={block} onClick={this.props.onClick}>{block.height}</BlockLink>
           </td>
-          <th>{Parser(oneOnly.join(""))}</th>
           <td>
             <BlockLink block={block} onClick={this.props.onClick} >
               <Ellipsis text={block.hash} />
@@ -163,8 +163,8 @@ class BlocksTable extends Component<*> {
         <table className='table table-light table-striped '>
           <thead className='thead-light'>
             <tr>
+              <th scope='col'>Multichain</th>
               <th scope='col'>Height</th>
-              <th scope='col'>Confirmations</th>
               <th scope='col'>Hash</th>
               <th scope='col'>Previous Hash</th>
               <th scope='col'>Miner</th>

@@ -64,6 +64,7 @@ export class Engine {
   _logger: Logger
   _monitor: Monitor
   _knownBlocksCache: LRUCache<string, BcBlock>
+  _knownEvaluationsCache: LRUCache<string, BcBlock>
   _rawBlocks: LRUCache<number, Block>
   _node: Node
   // _nodep2p2: NodeP2P2
@@ -106,6 +107,10 @@ export class Engine {
     })
     process.on('uncaughtError', function (err) {
       this._logger.error(err)
+    })
+
+    this._knownEvaluationsCache = LRUCache({
+      max: config.engine.knownBlocksCache.max
     })
 
     this._knownBlocksCache = LRUCache({
@@ -268,8 +273,8 @@ export class Engine {
 
     this.pubsub.subscribe('update.block.latest', '<engine>', (msg) => {
       try {
-        if (!this._knownBlocksCache.has(msg.data.getHash())) {
-          this._knownBlocksCache.set(msg.data.getHash(), 1)
+        if (!this._knownEvaluationsCache.has(msg.data.getHash())) {
+          this._knownEvaluationsCache.set(msg.data.getHash(), 1)
           this.miningOfficer.stopMining()
           this.updateLatestAndStore(msg)
             .then((res) => {
@@ -991,14 +996,15 @@ export class Engine {
                 // parent headers do not form a chain
                 this.node._engine._emitter.emit('getmultiverse', obj)
 
+                this.pubsub.publish('update.block.latest', {
+                   key: 'bc.block.latest',
+                   data: newBlock,
+                   force: true,
+                   mined: false
+                })
+
                 this.persistence.putChildHeaders(newBlock).then(() => {
                   // note the local machine does not broadcast this block update until the multiverse has been proven
-                  this.pubsub.publish('update.block.latest', {
-                    key: 'bc.block.latest',
-                    data: newBlock,
-                    force: true,
-                    mined: false
-                  })
                 })
                 .catch((err) => {
                   this._logger.error(err)
@@ -1264,22 +1270,20 @@ export class Engine {
     return this.multiverse.addNextBlock(newBlock)
       .then((isNextBlock) => {
         // $FlowFixMe
-        this._logger.info('accepted multiverse addition: ' + isNextBlock)
-        this._logger.info('local mined block ' + newBlock.getHeight() + ' does not stack on multiverse height ' + this.multiverse.getHighestBlock().getHeight())
         // if (isNextBlock) {
         // TODO: this will break now that _blocks is not used in multiverse
         // if (this.multiverse.getHighestBlock() !== undefined &&
         //    this.multiverse.validateBlockSequenceInline([this.multiverse.getHighestBlock(), newBlock]) === true) {
-        this._logger.info('multiverse coverage: ' + this.multiverse._chain.length)
         if (isNextBlock === true) {
           this.pubsub.publish('update.block.latest', { key: 'bc.block.latest', data: newBlock, mined: true })
           this._server._wsBroadcastMultiverse(this.multiverse)
+          this._logger.info('multiverse coverage: ' + this.multiverse._chain.length)
           // check if we know the peer
           return Promise.resolve(true)
         } else {
           this._logger.warn('local mined block ' + newBlock.getHeight() + ' does not stack on multiverse height ' + this.multiverse.getHighestBlock().getHeight())
           this._logger.warn('mined block ' + newBlock.getHeight() + ' cannot go on top of multiverse block ' + this.multiverse.getHighestBlock().getHash())
-          return Promises.resolve(false)
+          return Promise.resolve(false)
           //return this.miningOfficer.rebaseMiner()
           //  .then((res) => {
           //    this._logger.info(res)

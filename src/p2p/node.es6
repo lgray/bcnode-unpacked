@@ -336,7 +336,9 @@ export class PeerNode {
                 const quorumState = await this._engine.persistence.get('bc.dht.quorum')
                 const quorum = parseInt(quorumState, 10) // coerce for Flow
 
-                if(this._p2p.totalConnections >= USER_QUORUM && quorum === 0){
+                if(this._p2p.totalConnections < USER_QUORUM && quorum === 1 && LOW_HEALTH_NET === false){
+                    await this._engine.persistence.put('bc.dht.quorum', "0")
+                } else if(this._p2p.totalConnections >= USER_QUORUM && quorum === 0){
                     await this._engine.persistence.put('bc.dht.quorum', "1")
                 } else if (quorum === 0 && LOW_HEALTH_NET === true){
                     await this._engine.persistence.put('bc.dht.quorum', "1")

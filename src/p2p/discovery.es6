@@ -44,7 +44,7 @@ function Discovery (nodeId) {
     dns: false,
     dht: {
       // nodeId: nodeId,
-      bootstrap: ['udp://tds.blockcollider.org:16060'],
+      bootstrap: ['18.210.15.44:16060'],
       interval: 30000 + random(1000),
       maxConnections: 80,
       concurrency: 80,
@@ -55,7 +55,9 @@ function Discovery (nodeId) {
     infoHash: hash,
     peerId: nodeId,
     port: seederPort,
-    announce: seeds
+    announce: seeds,
+    quiet: true,
+    log: false
   }
   this.port = port
   this.seederPort = seederPort

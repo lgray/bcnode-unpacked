@@ -55,7 +55,7 @@ const { Block, BcBlock, BcTransaction, BlockchainHeader, BlockchainHeaders } = r
 const ts = require('../utils/time').default // ES6 default export
 const GENESIS_DATA = require('../bc/genesis.raw')
 
-const MINIMUM_DIFFICULTY = new BN(260112262029012, 16)
+const MINIMUM_DIFFICULTY = new BN(290112262029012, 16)
 // testnet: 11801972029393
 const MAX_TIMEOUT_SECONDS = 300
 
@@ -111,13 +111,15 @@ export function getDiff (currentBlockTime: number, previousBlockTime: number, pr
 
   let bigMinimalDifficulty = new BN(minimalDifficulty, 16)
 
+  logger.info('number of new blocks: ' + newBlockCount)
+
   const bigPreviousBlockTime = new BN(previousBlockTime)
   const bigPreviousDifficulty = new BN(previousDifficulty)
   const bigCurentBlockTime = new BN(currentBlockTime)
   const bigMinus99 = new BN(-99)
   const big1 = new BN(1)
   const big0 = new BN(0)
-  const bigTargetTimeWindow = new BN(7)
+  const bigTargetTimeWindow = new BN(8)
   let elapsedTime = bigCurentBlockTime.sub(bigPreviousBlockTime)
 
   // elapsedTime + ((elapsedTime - 4) * newBlocks)
@@ -464,11 +466,28 @@ function prepareChildBlockHeadersMap (previousBlock: BcBlock, newChildBlock: Blo
  */
 export function getNewBlockCount (previousBlockHeaders: BlockchainHeaders, currentBlockHeaders: BlockchainHeaders) {
   // $FlowFixMe - protbuf toObject is not typed
-  const headersToHashes = (headers: BlockchainHeaders) => Object.values(currentBlockHeaders.toObject()).reduce((acc, curr) => acc.concat(curr), []).map(headerObj => headerObj.hash)
-  const previousHashes = headersToHashes(previousBlockHeaders)
-  const currentHashes = headersToHashes(currentBlockHeaders)
+  return getChildBlockDiff(previousBlockHeaders, currentBlockHeaders)
+  // const headersToHashes = (headers: BlockchainHeaders) => Object.values(currentBlockHeaders.toObject()).reduce((acc, curr) => acc.concat(curr), []).map(headerObj => headerObj.hash)
+  // const previousHashes = headersToHashes(previousBlockHeaders)
+  // const currentHashes = headersToHashes(currentBlockHeaders)
 
-  return difference(currentHashes, previousHashes).length
+  // return difference(currentHashes, previousHashes).length
+}
+
+/**
+ * How many new child blocks are between previousBlockHeaders and currentBlockHeaders
+ */
+export function getChildBlockDiff (previousBlockHeaders: BlockchainHeaders, currentBlockHeaders: BlockchainHeaders) {
+  // $FlowFixMe - protbuf toObject is not typed
+  const a = previousBlockHeaders.toObject()
+  const b = currentBlockHeaders.toObject()
+
+  return Object.keys(b).reduce((total, key) => {
+    const sa = a[key].map((header) => { return header.hash })
+    const sb = b[key].map((header) => { return header.hash })
+    total = total + difference(sa, sb).length
+    return total
+  }, 0)
 }
 
 /**
@@ -539,8 +558,7 @@ export function prepareNewBlock (currentTimestamp: number, lastPreviousBlock: Bc
   const blockHashes = getChildrenBlocksHashes(blockchainMapToList(childBlockHeaders))
   const newChainRoot = getChildrenRootHash(blockHashes)
   const newBlockCount = getNewBlockCount(lastPreviousBlock.getBlockchainHeaders(), childBlockHeaders)
-
-  logger.info('number of new blocks: ' + newBlockCount)
+  // const newBlockCount = getUniqueBlocks(lastPreviousBlock.getBlockchainHeaders(), childBlockHeaders).length
 
   const preExpDiff = getNewPreExpDifficulty(
     currentTimestamp,
