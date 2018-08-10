@@ -23,6 +23,7 @@ const { writeFileSync } = require('fs')
 const { max } = require('ramda')
 const LRUCache = require('lru-cache')
 const BN = require('bn.js')
+const semver = require('semver')
 const request = require('request')
 
 const { config } = require('../config')
@@ -33,6 +34,7 @@ const { Monitor } = require('../monitor')
 const { Node } = require('../p2p')
 // const { NodeP2P2 } = require('../p2p2')
 const { RoverManager } = require('../rover/manager')
+const rovers = require('../rover/manager').rovers
 const { Server } = require('../server/index')
 const PersistenceRocksDb = require('../persistence').RocksDb
 const { PubSub } = require('./pubsub')
@@ -42,11 +44,13 @@ const { BlockPool } = require('../bc/blockpool')
 const { isValidBlock } = require('../bc/validation')
 const { Block } = require('../protos/core_pb')
 const { errToString } = require('../helper/error')
+const { getVersion } = require('../helper/version')
 const { MiningOfficer } = require('../mining/officer')
 const ts = require('../utils/time').default // ES6 default export
 
 const DATA_DIR = process.env.BC_DATA_DIR || config.persistence.path
 const MONITOR_ENABLED = process.env.BC_MONITOR === 'true'
+const BC_CHECK = process.env.BC_CHECK === 'true'
 const PERSIST_ROVER_DATA = process.env.PERSIST_ROVER_DATA === 'true'
 
 process.on('uncaughtError', (err) => {
@@ -82,9 +86,6 @@ export class Engine {
   _stepSyncTimestamps: Number[]
 
   constructor (opts: { rovers: string[], minerKey: string}) {
-    /* eslint-disable */
-    console.log('\n\n\n\nCongratulations your system has the required setup for 0.7.7! At 11PM EST on August 9th repull docker with the command "docker pull blockcollider/bcnode:latest"\n\n\n\n')
-    process.exit()
     this._logger = getLogger(__filename)
     this._knownRovers = opts.rovers
     this._minerKey = opts.minerKey // TODO only needed because of server touches that - should be passed using constructor?
@@ -168,18 +169,79 @@ export class Engine {
    * - Store name of available rovers
    */
   async init () {
-    request('https://www.blockcollider.org/testnet.txt', (err, res, body) => {
-      if (err || crypto.createHash('sha1').update(body).digest('hex') === '1ec558a60b5dda24597816c924776716018caf8b') {
-        this._logger.info('Congratulations your system has the required setup for 0.7.7! At 11PM EST on August 9th repull docker with the command "docker pull blockcollider/bcnode:latest"')
-        process.exit()
-      } else {
-        // TODO get from CLI / config
-
-        if (MONITOR_ENABLED) {
-          this._monitor.start()
+    const roverNames = Object.keys(rovers)
+    const { npm, git: { long } } = getVersion()
+    const newGenesisBlock = getGenesisBlock()
+    const versionData = {
+      version: npm,
+      commit: long,
+      db_version: 1
+    }
+    const engineQueue = queue((fn, cb) => {
+      return fn.then((res) => { cb(null, res) }).catch((err) => { cb(err) })
+    })
+    const DB_LOCATION = resolve(`${__dirname}/../../${this.persistence._db.location}`)
+    const DELETE_MESSAGE = `Your DB version is old, please delete data folder '${DB_LOCATION}' and run bcnode again`
+    // TODO get from CLI / config
+    try {
+      await this._persistence.open()
+      try {
+        let version = await this.persistence.get('appversion')
+        if (semver.lt(version.version, '0.7.7')) { // GENESIS BLOCK 0.9
+          this._logger.warn(DELETE_MESSAGE)
+          process.exit(8)
+        }
+      } catch (_) {
+        // silently continue - the version is not present so
+        // a) very old db
+        // b) user just remove database so let's store it
+      }
+      let res = await this.persistence.put('rovers', roverNames)
+      if (res) {
+        this._logger.info('stored rovers to persistence')
+      }
+      res = await this.persistence.put('appversion', versionData)
+      if (res) {
+        this._logger.info('stored appversion to persistence')
+      }
+      try {
+        const latestBlock = await this.persistence.get('bc.block.latest')
+        await this.multiverse.addNextBlock(latestBlock)
+        await this.persistence.put('synclock', newGenesisBlock)
+        await this.persistence.put('bc.block.oldest', newGenesisBlock)
+        await this.persistence.put('bc.block.parent', newGenesisBlock)
+        await this.persistence.get('bc.block.1')
+        await this.persistence.put('bc.dht.quorum', '0')
+        this._logger.info('highest block height on disk ' + latestBlock.getHeight())
+      } catch (_) { // genesis block not found
+        try {
+          await this.persistence.put('synclock', newGenesisBlock)
+          await this.persistence.put('bc.block.1', newGenesisBlock)
+          await this.persistence.put('bc.block.latest', newGenesisBlock)
+          await this.persistence.put('bc.block.parent', newGenesisBlock)
+          await this.persistence.put('bc.block.oldest', newGenesisBlock)
+          await this.persistence.put('bc.block.checkpoint', newGenesisBlock)
+          await this.persistence.put('bc.dht.quorum', '0')
+          await this.persistence.put('bc.depth', 2)
+          await this.multiverse.addNextBlock(newGenesisBlock)
+          this._logger.info('genesis block saved to disk ' + newGenesisBlock.getHash())
+        } catch (e) {
+          this._logger.error(`error while creating genesis block ${e.message}`)
+          this.requestExit()
+          process.exit(1)
         }
       }
-    })
+    } catch (e) {
+      this._logger.warn(`could not store rovers to persistence, reason ${e.message}`)
+    }
+
+    if (BC_CHECK === true) {
+      await this.integrityCheck()
+    }
+
+    if (MONITOR_ENABLED) {
+      this._monitor.start()
+    }
 
     this.pubsub.subscribe('state.block.height', '<engine>', (msg) => {
       this.storeHeight(msg).then((res) => {
@@ -198,6 +260,11 @@ export class Engine {
     this.pubsub.subscribe('state.resync.failed', '<engine>', (msg) => {
       this._logger.info('pausing mining to reestablish multiverse')
       this._peerIsResyncing = true
+      engineQueue.push(this.blockpool.purge(msg.data), (err) => {
+        if (err) {
+          this._logger.error(`Queued task failed, reason: ${err.message}`)
+        }
+      })
     })
 
     this.pubsub.subscribe('state.checkpoint.end', '<engine>', (msg) => {
@@ -517,7 +584,7 @@ export class Engine {
 
       // TEST IF THIS SHOULD BE DONE
       process.nextTick(() => {
-g       let promise = null
+        let promise = null
 
         if (config.bc.council.enabled) {
           promise = new Promise((resolve, reject) => {
@@ -925,6 +992,7 @@ g       let promise = null
                     },
                     connection: conn
                 }
+                this._logger.info('aaaaaaaaaaaaaaaaaaaaaaaaa')
                 // parent headers do not form a chain
                 this.node._engine._emitter.emit('getmultiverse', obj)
 
@@ -945,6 +1013,7 @@ g       let promise = null
               } else {
                 // this means the local peer has a better version of the chain and
                 // therefore pushing it to the outside peer
+                this._logger.info('ccccccccccccccccccccccccc')
                 this._emitter.emit('sendblock', {
                   data: newBlock,
                   connection: conn
