@@ -3,11 +3,10 @@ const Client = require('bittorrent-tracker')
 const swarm = require('discovery-swarm')
 // const avon = require('avon')
 const crypto = require('crypto')
-const R = require('ramda')
 const { config } = require('../config')
 // const bootstrap = require('../utils/templates/bootstrap')
 // const seeds = require('../utils/templates/seed')
-const bootstrap = R.shuffle(require('../utils/dns'))
+const bootstrap = require('../utils/templates/collocation.json')
 const seeds = []
 const logging = require('../logger')
 // load
@@ -29,11 +28,18 @@ function random (range) {
 // function randomId () {
 //  return crypto.randomBytes(20)
 // }
+function randomIndex (items, last) {
+  const d = items[Math.floor(Math.random() * items.length)]
+  if (last !== undefined && last === d) {
+    return randomIndex(items, last)
+  }
+  return d
+}
 
 function Discovery (nodeId) {
   // bootstrap from two randomly selected nodes
-  seeds.unshift(bootstrap[Math.floor((Math.random() * 4) - 1)])
-  seeds.unshift(bootstrap[Math.floor((Math.random() * 4) - 1)])
+  seeds.unshift(randomIndex(bootstrap))
+  seeds.unshift(randomIndex(bootstrap, seeds[0]))
 
   if (process.env.BC_SEED !== undefined) {
     seeds.unshift(process.env.BC_SEED)
@@ -87,19 +93,6 @@ Discovery.prototype = {
     client.on('warning', function (err) {
       self._logger.debug(err.message)
     })
-
-    // start getting peers from the tracker
-    // client.on('update', function (data) {
-    //  console.log('got an announce response from tracker: ' + data.announce)
-    //  console.log('number of seeders in the swarm: ' + data.complete)
-    //  console.log('number of leechers in the swarm: ' + data.incomplete)
-    // })
-
-    // client.on('peer', function (addr) {
-    //  console.log('found a peer: ' + addr) // 85.10.239.191:48623
-    // })
-    // client.start()
-
     return client
   },
 
@@ -109,12 +102,6 @@ Discovery.prototype = {
     this.dht.hash = this.hash
     this.dht.port = this.port
     this.dht.listen(this.port)
-    this.dht.add = (obj, done) => {
-      if (obj.id === undefined) {
-        // obj.id = new Uint8Array(Buffer.from(randomId()))
-      }
-      // this.dht._discovery.dht.addNode(obj)
-    }
 
     this.dht.getPeerByHost = (query) => {
       let list = this.dht.connections.filter((a) => {

@@ -11,9 +11,7 @@ import type { Logger } from 'winston'
 import type { PubSub } from '../engine/pubsub'
 import type { RocksDb } from '../persistence'
 
-const { fork, ChildProcess } = require('child_process')
 const { writeFileSync } = require('fs')
-const { resolve } = require('path')
 const { inspect } = require('util')
 
 const BN = require('bn.js')
@@ -26,9 +24,9 @@ const { Block, BcBlock, BlockchainHeaders } = require('../protos/core_pb')
 const { isDebugEnabled, ensureDebugPath } = require('../debug')
 const { validateRoveredSequences, isValidBlock } = require('../bc/validation')
 const { getBlockchainsBlocksCount } = require('../bc/helper')
+const { WorkerPool } = require('./pool')
 const ts = require('../utils/time').default // ES6 default export
 
-const MINER_WORKER_PATH = resolve(__filename, '..', '..', 'mining', 'worker.js')
 const LOW_HEALTH_NET = process.env.LOW_HEALTH_NET === 'true'
 
 type UnfinishedBlockData = {
@@ -55,7 +53,7 @@ export class MiningOfficer {
 
   _collectedBlocks: { [blockchain: string]: number }
   _canMine: bool
-  _workerProcess: ?ChildProcess
+  _workerPool: WorkerPool
   _unfinishedBlock: ?BcBlock
   _unfinishedBlockData: ?UnfinishedBlockData
   _paused: bool
@@ -67,6 +65,7 @@ export class MiningOfficer {
     this._pubsub = pubsub
     this._persistence = persistence
     this._knownRovers = opts.rovers
+    this._workerPool = new WorkerPool(pubsub, persistence, opts)
 
     this._speedResults = []
     this._collectedBlocks = {}
@@ -95,6 +94,15 @@ export class MiningOfficer {
 
   set paused (paused: bool) {
     this._paused = paused
+  }
+
+  async simMining (): Promise<*> {
+    const wp = this._workerPool
+    if (!wp.initialized) {
+      await this._workerPool.init()
+      await wp.allRise()
+      this._logger.info('worker pool initialized')
+    }
   }
 
   async newRoveredBlock (rovers: string[], block: Block): Promise<number|false> {
@@ -223,6 +231,11 @@ export class MiningOfficer {
   async startMining (rovers: string[], block: Block): Promise<bool|number> {
     // get latest block from each child blockchain
     try {
+      if (!this._workerPool.initialized) {
+        await this._workerPool.init()
+        await this._workerPool.allRise()
+        this._logger.info('worker pool initialized')
+      }
       const lastPreviousBlock = await this.persistence.get('bc.block.latest')
       this._logger.info(`persisted block height: ${lastPreviousBlock.getHeight()}`)
       // [eth.block.latest,btc.block.latest,neo.block.latest...]
@@ -308,44 +321,48 @@ export class MiningOfficer {
 
         // if blockchains block count === 5 we will create a block with 6 blockchain blocks (which gets bonus)
         // if it's more, do not restart mining and start with new ones
-        if (this._workerProcess) {
-          this._logger.info(`new rovered block -> accepted`)
-          this.stopMining()
-        }
+        // if (this._workerProcess) {
+        //  this._logger.info(`new rovered block -> accepted`)
+        //  this.stopMining()
+        // }
 
-        this._logger.debug(`starting miner process with work: "${work}", difficulty: ${newBlock.getDifficulty()}, ${JSON.stringify(this._collectedBlocks, null, 2)}`)
-        const proc: ChildProcess = fork(MINER_WORKER_PATH)
-        this._workerProcess = proc
-        if (this._workerProcess !== null) {
-          // $FlowFixMe - Flow can't find out that ChildProcess is extended form EventEmitter
-          this._workerProcess.on('message', this._handleWorkerFinishedMessage.bind(this))
-
-          // $FlowFixMe - Flow can't find out that ChildProcess is extended form EventEmitter
-          this._workerProcess.on('error', this._handleWorkerError.bind(this))
-
-          // $FlowFixMe - Flow can't find out that ChildProcess is extended form EventEmitter
-          this._workerProcess.on('exit', this._handleWorkerExit.bind(this))
-
-          this._logger.info('worker <- calculated difficulty threshold ' + newBlock.getDifficulty())
-          this.startTimer('w1')
-          // $FlowFixMe - Flow can't find out that ChildProcess is extended form EventEmitter
-          this._workerProcess.send({
+        const update = {
+          currentTimestamp,
+          offset: ts.offset,
+          work,
+          minerKey: this._minerKey,
+          merkleRoot: newBlock.getMerkleRoot(),
+          difficulty: newBlock.getDifficulty(),
+          difficultyData: {
             currentTimestamp,
-            offset: ts.offset,
-            work,
-            minerKey: this._minerKey,
-            merkleRoot: newBlock.getMerkleRoot(),
-            difficulty: newBlock.getDifficulty(),
-            difficultyData: {
-              currentTimestamp,
-              lastPreviousBlock: lastPreviousBlock.serializeBinary(),
-              // $FlowFixMe
-              newBlockHeaders: newBlock.getBlockchainHeaders().serializeBinary()
-            }})
-
-          // $FlowFixMe - Flow can't properly find worker pid
-          return Promise.resolve(this._workerProcess.pid)
+            lastPreviousBlock: lastPreviousBlock.serializeBinary(),
+            // $FlowFixMe
+            newBlockHeaders: newBlock.getBlockchainHeaders().serializeBinary()
+          }
         }
+
+        await this._workerPool.updateWorkers({ type: 'work', data: update })
+
+        // this._logger.debug(`starting miner process with work: "${work}", difficulty: ${newBlock.getDifficulty()}, ${JSON.stringify(this._collectedBlocks, null, 2)}`)
+        // const proc: ChildProcess = fork(MINER_WORKER_PATH)
+        // this._workerProcess = proc
+        // if (this._workerProcess !== null) {
+        //  // $FlowFixMe - Flow can't find out that ChildProcess is extended form EventEmitter
+        //  this._workerProcess.on('message', this._handleWorkerFinishedMessage.bind(this))
+
+        //  // $FlowFixMe - Flow can't find out that ChildProcess is extended form EventEmitter
+        //  this._workerProcess.on('error', this._handleWorkerError.bind(this))
+
+        //  // $FlowFixMe - Flow can't find out that ChildProcess is extended form EventEmitter
+        //  this._workerProcess.on('exit', this._handleWorkerExit.bind(this))
+
+        //  this._logger.info('worker <- calculated difficulty threshold ' + newBlock.getDifficulty())
+        //  this.startTimer('w1')
+        //  // $FlowFixMe - Flow can't find out that ChildProcess is extended form EventEmitter
+
+        //  // $FlowFixMe - Flow can't properly find worker pid
+        //  return Promise.resolve(this._workerProcess.pid)
+        // }
       } catch (err) {
         this._logger.error(err)
         this._logger.warn(`Error while getting last previous BC block, reason: ${err.message}`)
@@ -381,35 +398,39 @@ export class MiningOfficer {
     debug('stop mining')
     this._logger.info('petioning new mining work')
 
-    const process = this._workerProcess
-    if (!process) {
-      return true
-    }
+    this._workerPool.allDismissed().then(() => {
+      this._logger.info('workers dismissed')
+    })
 
-    if (process.connected) {
-      try {
-        process.disconnect()
-      } catch (err) {
-        this._logger.info(`unable to disconnect workerProcess, reason: ${err.message}`)
-      }
-    }
+    // const process = this._workerProcess
+    // if (!process) {
+    //  return true
+    // }
 
-    try {
-      process.removeAllListeners()
-    } catch (err) {
-      this._logger.info(`unable to remove workerProcess listeners, reason: ${err.message}`)
-    }
+    // if (process.connected) {
+    //  try {
+    //    process.disconnect()
+    //  } catch (err) {
+    //    this._logger.info(`unable to disconnect workerProcess, reason: ${err.message}`)
+    //  }
+    // }
 
-    // $FlowFixMe
-    if (process.killed !== true) {
-      try {
-        process.kill()
-      } catch (err) {
-        this._logger.info(`Unable to kill workerProcess, reason: ${err.message}`)
-      }
-    }
+    // try {
+    //  process.removeAllListeners()
+    // } catch (err) {
+    //  this._logger.info(`unable to remove workerProcess listeners, reason: ${err.message}`)
+    // }
 
-    this._workerProcess = undefined
+    /// / $FlowFixMe
+    // if (process.killed !== true) {
+    //  try {
+    //    process.kill()
+    //  } catch (err) {
+    //    this._logger.info(`Unable to kill workerProcess, reason: ${err.message}`)
+    //  }
+    // }
+
+    // this._workerProcess = undefined
 
     return true
 
@@ -569,11 +590,6 @@ export class MiningOfficer {
     this._logger.warn(`Mining worker process errored, reason: ${error.message}`)
     this._cleanUnfinishedBlock()
 
-    // $FlowFixMe - Flow can't properly type subproccess
-    if (!this._workerProcess) {
-      return Promise.resolve(false)
-    }
-
     return this.stopMining()
   }
 
@@ -587,8 +603,6 @@ export class MiningOfficer {
         this._logger.warn(`Mining worker process exited with code ${code}, signal ${signal}`)
         this._cleanUnfinishedBlock()
       }
-
-      this._workerProcess = undefined
     })
       .catch((e) => {
         this._logger.erorr(e)

@@ -235,6 +235,8 @@ export class Engine {
       this._logger.warn(`could not store rovers to persistence, reason ${e.message}`)
     }
 
+    await this.miningOfficer.simMining()
+
     if (BC_CHECK === true) {
       await this.integrityCheck()
     }
@@ -399,11 +401,11 @@ export class Engine {
         await this.persistence.putChildHeaders(block)
       } else if (msg.force === true &&
                  msg.multiverse !== undefined &&
-                   (msg.data.constructor === Array.constructor || msg.force === true && synclock.getHeight() === 1)) {
+                 msg.multiverse.constructor === Array.constructor &&
+                 synclock.getHeight() === 1) {
         const oldest = msg.multiverse[msg.multiverse - 1]
         // get the block before the oldest available block
         const grandparent = await this.persistence.get('bc.block.' + oldest.getHeight() - 1)
-
         if (oldest.getPreviousHash() !== grandparent.getHash()) {
           // this is a new chain branch and we must sync for it
           await this.persistence.put('synclock', oldest)

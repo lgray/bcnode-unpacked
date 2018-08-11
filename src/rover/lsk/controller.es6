@@ -122,7 +122,7 @@ export default class Controller {
     this._config = config
     this._logger = logging.getLogger(__filename)
     this._blockCache = new LRUCache({
-      max: 500,
+      max: 200,
       maxAge: 1000 * 60 * 60
     })
     this._otherCache = new LRUCache({ max: 50 })
@@ -184,7 +184,7 @@ export default class Controller {
       cycle().then(() => {
         this._logger.debug('tick')
       })
-    }, 2000)
+    }, 4000)
 
     // setInterval(function () {
     //  lisk.api(liskOptions).getPeersList({}, function (error, success, response) {

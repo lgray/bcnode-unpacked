@@ -12,7 +12,6 @@ const process = require('process')
 const { getExpFactorDiff, getNewPreExpDifficulty, getNewBlockCount, mine } = require('./primitives')
 const { BlockchainHeaders, BlockchainHeader, BcBlock } = require('../protos/core_pb')
 const ts = require('../utils/time').default // ES6 default export
-
 const logging = require('../logger')
 
 const globalLog: Logger = logging.getLogger(__filename)
