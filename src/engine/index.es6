@@ -235,8 +235,6 @@ export class Engine {
       this._logger.warn(`could not store rovers to persistence, reason ${e.message}`)
     }
 
-    await this.miningOfficer.simMining()
-
     if (BC_CHECK === true) {
       await this.integrityCheck()
     }
