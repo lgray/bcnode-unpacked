@@ -294,6 +294,7 @@ export class WorkerPool {
       // definately throw and likely exit
     } else if (msg.type === 'solution') {
       // handle block
+			this._emitter.emit('mined', msg.data)
 
     } else if (msg.type === 'heartbeat') {
 
@@ -320,11 +321,17 @@ export class WorkerPool {
   }
 
   _handleWorkerError (msg: Object) {
-
+		this._logger.error(msg)
   }
 
   _handleWorkerExit (exitCode: Object) {
 		// worker ahs exited
+    const worker: ChildProcess = fork(MINER_WORKER_PATH)
+    worker.on('message', this._handleWorkerMessage.bind(this))
+    worker.on('error', this._handleWorkerError.bind(this))
+    worker.on('exit', this._handleWorkerExit.bind(this))
+    table[worker.pid] = worker
+    return table
   }
 
   sortBlocks (list: Object[]): Object[] {
