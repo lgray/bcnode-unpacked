@@ -25,7 +25,7 @@ const FileAsync = require('lowdb/adapters/FileAsync')
 const BN = require('bn.js')
 const debug = require('debug')('bcnode:mining:officer')
 const crypto = require('crypto')
-const { repeat, mean, all, equals, flatten, fromPairs, last, range, values } = require('ramda')
+const { repeat, mean, all, equals, flatten, fromPairs, last, range, values, min } = require('ramda')
 
 const { prepareWork, prepareNewBlock, getUniqueBlocks } = require('./primitives')
 const { getLogger } = require('../logger')
@@ -84,7 +84,7 @@ export class WorkerPool {
     this._persistence = persistence
     this._knownRovers = opts.rovers
     this._poolGuardPath = opts.poolguard || procGuardPathGlobalBase + '/worker_pool_guard.json'
-    this._maxWorkers = maxWorkers
+    this._maxWorkers = min(1, maxWorkers - 1)
     this._emitter = new EventEmitter()
     this._startupCheck = false
     this._heartbeat = {}

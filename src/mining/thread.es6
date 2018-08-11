@@ -15,6 +15,7 @@ const { BlockchainHeaders, BlockchainHeader, BcBlock } = require('../protos/core
 const ts = require('../utils/time').default // ES6 default export
 const cluster = require('cluster')
 const logging = require('../logger')
+const fs = require('fs')
 
 const globalLog: Logger = logging.getLogger(__filename)
 // setup logging of unhandled rejections
@@ -39,6 +40,7 @@ if (cluster.isMaster) {
     w.on('message', (msg) => {
       process.send({ pid: process.pid, type: 'solution', data: msg})
     })
+		fs.writeFileSync('.mutex_claim', 'override:'+process.pid)
     return w
   }
   process.on('message', (data) => {
@@ -98,6 +100,11 @@ if (cluster.isMaster) {
       // Deserialize buffers from parent process, buffer will be serialized as object of this shape { <idx>: byte } - so use Object.values on it
       const deserialize = (buffer: { [string]: number }, clazz: BcBlock|BlockchainHeader|BlockchainHeaders) => clazz.deserializeBinary(new Uint8Array(Object.values(buffer).map(n => parseInt(n, 10))))
 
+			let marker = merkleRoot
+
+			if(marker.constructor !== merkleRoot.constructor){
+				marker = merkleRoot.toString()
+			}
       // function with all difficultyData closed in scope and
       // send it to mine with all arguments except of timestamp and use it
       // each 1s tick with new timestamp
@@ -135,8 +142,18 @@ if (cluster.isMaster) {
         // send solution and exit
 
         globalLog.info(`solution found: ${JSON.stringify(solution, null, 2)}`)
-        process.send(solution)
-        process.exit(0)
+
+				fs.readFileSync('.mutex_claim', 'utf8', (err, data) {
+					if(err) {
+        		globalLog.info(err.message)
+					} else {
+						if(marker !== data){
+        		  globalLog.info('no claim')
+							process.send(solution)
+						}
+					}
+				  process.exit(0)
+				})
       } catch (e) {
         globalLog.warn(`Mining failed with reason: ${e.message}, stack ${e.stack}`)
         process.exit(1)
