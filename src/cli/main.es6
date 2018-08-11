@@ -27,6 +27,7 @@ const uncaughtExceptionHandler = (err) => {
   console.log(err)
 }
 
+process.env.UV_THREADPOOL_SIZE = 64
 process.on('uncaughtException', uncaughtExceptionHandler)
 
 const { config } = require('../config')

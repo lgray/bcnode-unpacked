@@ -7,7 +7,7 @@ const R = require('ramda')
 const { config } = require('../config')
 // const bootstrap = require('../utils/templates/bootstrap')
 // const seeds = require('../utils/templates/seed')
-const bootstrap = R.shuffle(require('../utils/dns')
+const bootstrap = R.shuffle(require('../utils/dns'))
 const seeds = []
 const logging = require('../logger')
 // load
@@ -32,8 +32,8 @@ function random (range) {
 
 function Discovery (nodeId) {
   // bootstrap from two randomly selected nodes
-  seeds.unshift(bootstrap[Math.floor((Math.random() * 4) -1)])
-  seeds.unshift(bootstrap[Math.floor((Math.random() * 4) -1)])
+  seeds.unshift(bootstrap[Math.floor((Math.random() * 4) - 1)])
+  seeds.unshift(bootstrap[Math.floor((Math.random() * 4) - 1)])
 
   if (process.env.BC_SEED !== undefined) {
     seeds.unshift(process.env.BC_SEED)
