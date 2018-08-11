@@ -40,6 +40,7 @@ function Discovery (nodeId) {
   // bootstrap from two randomly selected nodes
   seeds.unshift(randomIndex(bootstrap))
   seeds.unshift(randomIndex(bootstrap, seeds[0]))
+  seeds.unshift(randomIndex(bootstrap, seeds[1]))
 
   if (process.env.BC_SEED !== undefined) {
     seeds.unshift(process.env.BC_SEED)

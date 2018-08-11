@@ -287,8 +287,8 @@ export class WorkerPool {
     worker.on('message', this._handleWorkerMessage.bind(this))
     worker.on('error', this._handleWorkerError.bind(this))
     worker.on('exit', this._handleWorkerExit.bind(this))
-    table[worker.pid] = worker
-    return table
+    this._workers[worker.pid] = worker
+    return true
   }
 
   _handleWorkerMessage (msg: Object) {
@@ -333,8 +333,8 @@ export class WorkerPool {
     worker.on('message', this._handleWorkerMessage.bind(this))
     worker.on('error', this._handleWorkerError.bind(this))
     worker.on('exit', this._handleWorkerExit.bind(this))
-    table[worker.pid] = worker
-    return table
+    this._workers[worker.pid] = worker
+    return true
   }
 
   sortBlocks (list: Object[]): Object[] {

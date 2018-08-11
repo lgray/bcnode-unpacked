@@ -23,7 +23,7 @@ const FIELD_STYLE = {
 
 const VERSION = require('../../.version.json')
 
-const linkGithub = `https://github.com/blockcollider/bcnode/tree/0.7.7`
+const linkGithub = `https://github.com/blockcollider/bcnode/tree/${VERSION.git.short}`
 
 export class Brand extends Component<*> {
   render () {
@@ -36,7 +36,7 @@ export class Brand extends Component<*> {
           BLOCK COLLIDER 
         </a>
         <a style={FIELD_STYLE} href={linkGithub}>
-          0.7.6/PREINSTALL
+        {VERSION.npm}/{VERSION.git.short}
         </a>
 
         {this.props.children}

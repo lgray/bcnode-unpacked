@@ -18,6 +18,7 @@ const PeerInfo = require('peer-info')
 const queue = require('async/queue')
 const multiaddr = require('multiaddr')
 const pull = require('pull-stream')
+// const toPull = require('stream-to-pull-stream')
 
 const LRUCache = require('lru-cache')
 const debug = require('debug')('bcnode:p2p:node')
@@ -369,6 +370,23 @@ export class PeerNode {
                 const type = '0008W01'
                 const msg = type + protocolBits[type] + latestBlock.serializeBinary()
                 await this._p2p.qsend(conn, msg)
+
+                //const { source, sink } = toPull.duplex(conn)
+
+                //pull(
+                //  pull.values([msg]),
+                //  sink,
+                //)
+
+                //pull(
+                //  source,
+                //  pull.collect((err, data) => {
+                //    //debug(err)
+                //    //debug(data)
+                //    this.peerDataHandler(conn, info, data)
+                //  })
+                //)
+
                 conn.on('data', (data) => {
                     /* eslint-disable */
                     if(!data && this._ds[address] !== false){
@@ -376,6 +394,13 @@ export class PeerNode {
                          this._ds[address] = false
                          this.peerDataHandler(conn, info, remaining)
                     } else {
+												if(data.length > 95000) {
+													 return
+												}
+												if(this._ds[address] !== undefined && this._ds[address] !== false && this._ds[address].length > 95000) {
+													 this._ds[address] = false
+													 return
+												}
                         let chunk = data.toString()
                         if (chunk.length === 1382 && this._ds[address] === false) {
                             this._ds[address] = chunk
@@ -626,6 +651,7 @@ export class PeerNode {
     (async () => {
       if (str === undefined) { return }
       if (str.length < 8) { return }
+      if (str.length > 95000) { return }
 
       // TODO: add lz4 compression for things larger than 1000 characters
       const type = str.slice(0, 7)
