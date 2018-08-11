@@ -100,7 +100,9 @@ export class MiningOfficer {
     try {
       await this._workerPool.init()
       await this._workerPool.allRise()
-      this._workerPool._emitter.on('mined', this._handleWorkerFinishedMessage.bind(this))
+      this._workerPool._emitter.on('mined', (data) => {
+        this._handleWorkerFinishedMessage(data)
+      })
       this._logger.info('worker pool initialized')
     } catch (err) {
       this._logger.error(err)
@@ -575,7 +577,6 @@ export class MiningOfficer {
       this._writeMiningData(unfinishedBlock, solution)
     }
 
-    this.stopTimer('w1')
     this._cleanUnfinishedBlock()
     this.pubsub.publish('miner.block.new', { unfinishedBlock, solution })
     return this.stopMining()
