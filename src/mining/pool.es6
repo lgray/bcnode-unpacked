@@ -319,7 +319,7 @@ export class WorkerPool {
 
 		  if(this._startupCheck === false){
 
-				if(Object.keys(this._heartbeat).length === this._maxWorkers){
+				if(Object.keys(this._heartbeat).length > 0){
 					this._startupCheck = true
           this._emitter.emit('ready')
 			  }

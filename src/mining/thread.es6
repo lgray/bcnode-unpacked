@@ -105,6 +105,7 @@ if (cluster.isMaster) {
 			if(marker.constructor !== merkleRoot.constructor){
 				marker = merkleRoot.toString()
 			}
+			globalLog.info(marker)
       // function with all difficultyData closed in scope and
       // send it to mine with all arguments except of timestamp and use it
       // each 1s tick with new timestamp
@@ -144,14 +145,10 @@ if (cluster.isMaster) {
         globalLog.info(`solution found: ${JSON.stringify(solution, null, 2)}`)
 
 				fs.readFileSync('.mutex_claim', 'utf8', (err, data) => {
-					if(err) {
-        		globalLog.info(err.message)
-					} else {
 						if(marker !== data){
         		  globalLog.info('no claim')
 							process.send(solution)
 						}
-					}
 				  process.exit(0)
 				})
       } catch (e) {

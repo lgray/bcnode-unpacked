@@ -78,6 +78,16 @@ export class MiningOfficer {
     this._unfinishedBlockData = { block: undefined, lastPreviousBlock: undefined, currentBlocks: {}, timeDiff: undefined, iterations: undefined }
     this._paused = false
     this._blockTemplates = []
+    (async () => {
+      try {
+        await this._workerPool.init()
+        const ready = await this._workerPool.allRise()
+        this._workerPool._emitter.on('mined', this._handleWorkerFinishedMessage.bind(this))
+        this._logger.info('worker pool initialized')
+      } catch (err) {
+        this._logger.error(err)
+      }
+    })
   }
 
   get persistence (): RocksDb {
@@ -230,164 +240,154 @@ export class MiningOfficer {
 
   async startMining (rovers: string[], block: Block): Promise<bool|number> {
     // get latest block from each child blockchain
+    const lastPreviousBlock = await this.persistence.get('bc.block.latest')
+    this._logger.info(`persisted block height: ${lastPreviousBlock.getHeight()}`)
+    // [eth.block.latest,btc.block.latest,neo.block.latest...]
+    const latestRoveredHeadersKeys: string[] = this._knownRovers.map(chain => `${chain}.block.latest`)
+    const latestBlockHeaders = await this.persistence.getBulk(latestRoveredHeadersKeys)
+    // { eth: 200303, btc:2389, neo:933 }
+    const latestBlockHeadersHeights = fromPairs(latestBlockHeaders.map(header => [header.getBlockchain(), header.getHeight()]))
+    this._logger.info(`latestBlockHeadersHeights: ${inspect(latestBlockHeadersHeights)}`)
+
+    // prepare a list of keys of headers to pull from persistence
+    const newBlockHeadersKeys = flatten(Object.keys(lastPreviousBlock.getBlockchainHeaders().toObject()).map(listKey => {
+      this._logger.debug('assembling minimum heights for ' + listKey)
+      const chain = keyOrMethodToChain(listKey)
+      const lastHeaderInPreviousBlock = last(lastPreviousBlock.getBlockchainHeaders()[chainToGet(chain)]())
+
+      let from
+      let to
+      if (lastPreviousBlock.getHeight() === 1) { // genesis
+        // just pick the last known block for genesis
+        from = latestBlockHeadersHeights[chain]// TODO check, seems correct
+        to = from
+      } else {
+        if (!lastHeaderInPreviousBlock) {
+          throw new Error(`previous NRG block ${lastPreviousBlock.getHeight()} failed minimum "${chain}" state changes`)
+        }
+        from = lastHeaderInPreviousBlock.getHeight() + 1
+        to = latestBlockHeadersHeights[chain]
+      }
+
+      this._logger.info(`newBlockHeadersKeys, heights nrg: ${lastPreviousBlock.getHeight()}, ${chain} ln: ${from}, ${to}`)
+
+      if (from === to) {
+        return [`${chain}.block.${from}`]
+      }
+
+      if (from > to) {
+        return []
+      }
+
+      if (to === undefined) {
+        to = from - 1
+      }
+
+      this._logger.info('chain: ' + chain + 'from: ' + from + ' to: ' + to)
+
+      return [range(from, to + 1).map(height => `${chain}.block.${height}`)]
+    }))
+
+    this._logger.debug(`loading ${inspect(newBlockHeadersKeys)}`)
+
+    const currentBlocks = await this.persistence.getBulk(newBlockHeadersKeys)
+
+    // get latest known BC block
     try {
-      if (!this._workerPool.initialized) {
-        await this._workerPool.init()
-        const ready = await this._workerPool.allRise()
-        if (ready === true) {
-          this._workerPool._emitter.on('mined', this._handleWorkerFinishedMessage.bind(this))
-        }
-        this._logger.info('worker pool initialized')
+      this._logger.info(`preparing new block`)
+      const currentTimestamp = ts.nowSeconds()
+      if (this._unfinishedBlock !== undefined && getBlockchainsBlocksCount(this._unfinishedBlock) >= 6) {
+        this._cleanUnfinishedBlock()
       }
-      const lastPreviousBlock = await this.persistence.get('bc.block.latest')
-      this._logger.info(`persisted block height: ${lastPreviousBlock.getHeight()}`)
-      // [eth.block.latest,btc.block.latest,neo.block.latest...]
-      const latestRoveredHeadersKeys: string[] = this._knownRovers.map(chain => `${chain}.block.latest`)
-      const latestBlockHeaders = await this.persistence.getBulk(latestRoveredHeadersKeys)
-      // { eth: 200303, btc:2389, neo:933 }
-      const latestBlockHeadersHeights = fromPairs(latestBlockHeaders.map(header => [header.getBlockchain(), header.getHeight()]))
-      this._logger.info(`latestBlockHeadersHeights: ${inspect(latestBlockHeadersHeights)}`)
 
-      // prepare a list of keys of headers to pull from persistence
-      const newBlockHeadersKeys = flatten(Object.keys(lastPreviousBlock.getBlockchainHeaders().toObject()).map(listKey => {
-        this._logger.debug('assembling minimum heights for ' + listKey)
-        const chain = keyOrMethodToChain(listKey)
-        const lastHeaderInPreviousBlock = last(lastPreviousBlock.getBlockchainHeaders()[chainToGet(chain)]())
+      const [newBlock, finalTimestamp] = prepareNewBlock(
+        currentTimestamp,
+        lastPreviousBlock,
+        currentBlocks,
+        block,
+        [], // TODO: Transactions added here for AT period
+        this._minerKey,
+        this._unfinishedBlock
+      )
 
-        let from
-        let to
-        if (lastPreviousBlock.getHeight() === 1) { // genesis
-          // just pick the last known block for genesis
-          from = latestBlockHeadersHeights[chain]// TODO check, seems correct
-          to = from
-        } else {
-          if (!lastHeaderInPreviousBlock) {
-            throw new Error(`previous NRG block ${lastPreviousBlock.getHeight()} failed minimum "${chain}" state changes`)
-          }
-          from = lastHeaderInPreviousBlock.getHeight() + 1
-          to = latestBlockHeadersHeights[chain]
-        }
-
-        this._logger.info(`newBlockHeadersKeys, heights nrg: ${lastPreviousBlock.getHeight()}, ${chain} ln: ${from}, ${to}`)
-
-        if (from === to) {
-          return [`${chain}.block.${from}`]
-        }
-
-        if (from > to) {
-          return []
-        }
-
-        if (to === undefined) {
-          to = from - 1
-        }
-
-        this._logger.info('chain: ' + chain + 'from: ' + from + ' to: ' + to)
-
-        return [range(from, to + 1).map(height => `${chain}.block.${height}`)]
-      }))
-
-      this._logger.debug(`loading ${inspect(newBlockHeadersKeys)}`)
-
-      const currentBlocks = await this.persistence.getBulk(newBlockHeadersKeys)
-
-      // get latest known BC block
-      try {
-        this._logger.info(`preparing new block`)
-        const currentTimestamp = ts.nowSeconds()
-        if (this._unfinishedBlock !== undefined && getBlockchainsBlocksCount(this._unfinishedBlock) >= 6) {
-          this._cleanUnfinishedBlock()
-        }
-
-        const [newBlock, finalTimestamp] = prepareNewBlock(
-          currentTimestamp,
-          lastPreviousBlock,
-          currentBlocks,
-          block,
-          [], // TODO: Transactions added here for AT period
-          this._minerKey,
-          this._unfinishedBlock
-        )
-
-        const work = prepareWork(lastPreviousBlock.getHash(), newBlock.getBlockchainHeaders())
-        newBlock.setTimestamp(finalTimestamp)
-        this._unfinishedBlock = newBlock
-        this._unfinishedBlockData = {
-          lastPreviousBlock,
-          currentBlocks: newBlock.getBlockchainHeaders(),
-          block,
-          iterations: undefined,
-          timeDiff: undefined
-        }
-
-        this.setCurrentMiningHeaders(newBlock.getBlockchainHeaders())
-
-        // if blockchains block count === 5 we will create a block with 6 blockchain blocks (which gets bonus)
-        // if it's more, do not restart mining and start with new ones
-        // if (this._workerProcess) {
-        //  this._logger.info(`new rovered block -> accepted`)
-        //  this.stopMining()
-        // }
-
-        const update = {
-          currentTimestamp,
-          offset: ts.offset,
-          work,
-          minerKey: this._minerKey,
-          merkleRoot: newBlock.getMerkleRoot(),
-          difficulty: newBlock.getDifficulty(),
-          difficultyData: {
-            currentTimestamp,
-            lastPreviousBlock: lastPreviousBlock.serializeBinary(),
-            // $FlowFixMe
-            newBlockHeaders: newBlock.getBlockchainHeaders().serializeBinary()
-          }
-        }
-
-        await this._workerPool.updateWorkers({ type: 'work', data: update })
-
-        // this._logger.debug(`starting miner process with work: "${work}", difficulty: ${newBlock.getDifficulty()}, ${JSON.stringify(this._collectedBlocks, null, 2)}`)
-        // const proc: ChildProcess = fork(MINER_WORKER_PATH)
-        // this._workerProcess = proc
-        // if (this._workerProcess !== null) {
-        //  // $FlowFixMe - Flow can't find out that ChildProcess is extended form EventEmitter
-        //  this._workerProcess.on('message', this._handleWorkerFinishedMessage.bind(this))
-
-        //  // $FlowFixMe - Flow can't find out that ChildProcess is extended form EventEmitter
-        //  this._workerProcess.on('error', this._handleWorkerError.bind(this))
-
-        //  // $FlowFixMe - Flow can't find out that ChildProcess is extended form EventEmitter
-        //  this._workerProcess.on('exit', this._handleWorkerExit.bind(this))
-
-        //  this._logger.info('worker <- calculated difficulty threshold ' + newBlock.getDifficulty())
-        //  this.startTimer('w1')
-        //  // $FlowFixMe - Flow can't find out that ChildProcess is extended form EventEmitter
-
-        //  // $FlowFixMe - Flow can't properly find worker pid
-        //  return Promise.resolve(this._workerProcess.pid)
-        // }
-      } catch (err) {
-        this._logger.error(err)
-        this._logger.warn(`Error while getting last previous BC block, reason: ${err.message}`)
-        return Promise.reject(err)
+      const work = prepareWork(lastPreviousBlock.getHash(), newBlock.getBlockchainHeaders())
+      newBlock.setTimestamp(finalTimestamp)
+      this._unfinishedBlock = newBlock
+      this._unfinishedBlockData = {
+        lastPreviousBlock,
+        currentBlocks: newBlock.getBlockchainHeaders(),
+        block,
+        iterations: undefined,
+        timeDiff: undefined
       }
+
+      this.setCurrentMiningHeaders(newBlock.getBlockchainHeaders())
+
+      // if blockchains block count === 5 we will create a block with 6 blockchain blocks (which gets bonus)
+      // if it's more, do not restart mining and start with new ones
+      // if (this._workerProcess) {
+      //  this._logger.info(`new rovered block -> accepted`)
+      //  this.stopMining()
+      // }
+
+      const update = {
+        currentTimestamp,
+        offset: ts.offset,
+        work,
+        minerKey: this._minerKey,
+        merkleRoot: newBlock.getMerkleRoot(),
+        difficulty: newBlock.getDifficulty(),
+        difficultyData: {
+          currentTimestamp,
+          lastPreviousBlock: lastPreviousBlock.serializeBinary(),
+          // $FlowFixMe
+          newBlockHeaders: newBlock.getBlockchainHeaders().serializeBinary()
+        }
+      }
+
+      await this._workerPool.updateWorkers({ type: 'work', data: update })
+
+      // this._logger.debug(`starting miner process with work: "${work}", difficulty: ${newBlock.getDifficulty()}, ${JSON.stringify(this._collectedBlocks, null, 2)}`)
+      // const proc: ChildProcess = fork(MINER_WORKER_PATH)
+      // this._workerProcess = proc
+      // if (this._workerProcess !== null) {
+      //  // $FlowFixMe - Flow can't find out that ChildProcess is extended form EventEmitter
+      //  this._workerProcess.on('message', this._handleWorkerFinishedMessage.bind(this))
+
+      //  // $FlowFixMe - Flow can't find out that ChildProcess is extended form EventEmitter
+      //  this._workerProcess.on('error', this._handleWorkerError.bind(this))
+
+      //  // $FlowFixMe - Flow can't find out that ChildProcess is extended form EventEmitter
+      //  this._workerProcess.on('exit', this._handleWorkerExit.bind(this))
+
+      //  this._logger.info('worker <- calculated difficulty threshold ' + newBlock.getDifficulty())
+      //  this.startTimer('w1')
+      //  // $FlowFixMe - Flow can't find out that ChildProcess is extended form EventEmitter
+
+      //  // $FlowFixMe - Flow can't properly find worker pid
+      //  return Promise.resolve(this._workerProcess.pid)
+      // }
     } catch (err) {
       this._logger.error(err)
-      this._logger.warn(`Error while getting current blocks, reason: ${err.message}`)
+      this._logger.warn(`Error while getting last previous BC block, reason: ${err.message}`)
       return Promise.reject(err)
     }
+  } catch (err) {
+    this._logger.error(err)
+    this._logger.warn(`Error while getting current blocks, reason: ${err.message}`)
+    return Promise.reject(err)
   }
 
-  /**
-  * Manages the current most recent block template used by the miner
-  * @param blockTemplate
-  */
-  setCurrentMiningHeaders (blockTemplate: BlockchainHeaders): void {
-    if (this._blockTemplates.length > 0) {
-      this._blockTemplates.pop()
-    }
-    this._blockTemplates.push(blockTemplate)
-  }
+  /// **
+  //* Manages the current most recent block template used by the miner
+  //* @param blockTemplate
+  //* /
+  // setCurrentMiningHeaders (blockTemplate: BlockchainHeaders): void {
+  //  if (this._blockTemplates.length > 0) {
+  //    this._blockTemplates.pop()
+  //  }
+  //  this._blockTemplates.push(blockTemplate)
+  // }
 
   /**
   * Accessor for block templates
