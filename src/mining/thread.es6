@@ -143,7 +143,7 @@ if (cluster.isMaster) {
 
         globalLog.info(`solution found: ${JSON.stringify(solution, null, 2)}`)
 
-				fs.readFileSync('.mutex_claim', 'utf8', (err, data) {
+				fs.readFileSync('.mutex_claim', 'utf8', (err, data) => {
 					if(err) {
         		globalLog.info(err.message)
 					} else {
