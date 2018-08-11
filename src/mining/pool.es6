@@ -104,12 +104,12 @@ export class WorkerPool {
     const db = new FileAsync(this._poolGuardPath)
     this._db = await low(db)
     const state = await this._db.getState()
-    if(state !== undefined && state.workers !== undefined) {
-      this._logger.info('cleaning previous work pool session ' + state.session + ' created on ' + state.timestamp)
-      if(Object.keys(state.workers).length > 0){
-        await this._closeWaywardWorkers(state.workers)
-      }
-    }
+    //if(state !== undefined && state.workers !== undefined) {
+    //  this._logger.info('cleaning previous work pool session ' + state.session + ' created on ' + state.timestamp)
+    //  if(Object.keys(state.workers).length > 0){
+    //    await this._closeWaywardWorkers(state.workers)
+    //  }
+    //}
     const newState = {
       session: this._session,
       timestamp: new Date(),
@@ -127,7 +127,10 @@ export class WorkerPool {
    */
   async allRise (): boolean {
     if (this._db === undefined || this._initialized === false) { throw new Error('pool must initialize before calling rise') }
-    if (Object.keys(this._workers).length > 0) { throw new Error('unable to launch new worker pool if workers already exist') }
+    if (Object.keys(this._workers).length > 0) {
+			this._logger.warn('unable to launch new worker pool if workers already exist')
+			return false
+		 }
 
     for (let i = 0; i < this._maxWorkers; i++){
       const worker: ChildProcess = fork(MINER_WORKER_PATH)

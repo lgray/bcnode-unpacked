@@ -233,8 +233,10 @@ export class MiningOfficer {
     try {
       if (!this._workerPool.initialized) {
         await this._workerPool.init()
-        await this._workerPool.allRise()
-        this._workerPool._emitter.on('mined', this._handleWorkerFinishedMessage.bind(this))
+        const ready = await this._workerPool.allRise()
+        if (ready === true) {
+          this._workerPool._emitter.on('mined', this._handleWorkerFinishedMessage.bind(this))
+        }
         this._logger.info('worker pool initialized')
       }
       const lastPreviousBlock = await this.persistence.get('bc.block.latest')

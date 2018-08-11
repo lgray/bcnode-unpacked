@@ -276,7 +276,6 @@ export class Server {
 
   _transformPeerToWire (peer: Object) {
     /* eslint-disable */
-    console.log('peer', peer)
     // return {
     //  id: ""peer.id.toB58String(),
     //  meta: peer.meta,
