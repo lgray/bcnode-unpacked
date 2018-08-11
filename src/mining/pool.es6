@@ -25,7 +25,7 @@ const FileAsync = require('lowdb/adapters/FileAsync')
 const BN = require('bn.js')
 const debug = require('debug')('bcnode:mining:officer')
 const crypto = require('crypto')
-const { repeat, mean, all, equals, flatten, fromPairs, last, range, values, min } = require('ramda')
+const { repeat, mean, all, equals, flatten, fromPairs, last, range, values, max } = require('ramda')
 
 const { prepareWork, prepareNewBlock, getUniqueBlocks } = require('./primitives')
 const { getLogger } = require('../logger')
@@ -84,7 +84,7 @@ export class WorkerPool {
     this._persistence = persistence
     this._knownRovers = opts.rovers
     this._poolGuardPath = opts.poolguard || procGuardPathGlobalBase + '/worker_pool_guard.json'
-    this._maxWorkers = min(1, maxWorkers - 1)
+    this._maxWorkers = max(1, maxWorkers - 1)
     this._emitter = new EventEmitter()
     this._startupCheck = false
     this._heartbeat = {}
@@ -188,6 +188,17 @@ export class WorkerPool {
           return proces
        }, []))
   }
+  _sendMessage (pid: number, msg: Object): boolean {
+
+    try {
+      this._workers[pid].send(msg)
+    } catch (err) {
+			this._logger.info(err.message)
+			delete this._workers[pid]
+    }
+		return true
+
+	}
 
   _sendMessageAsync (pid: number, msg: Object): Promise<*> {
 
@@ -196,7 +207,8 @@ export class WorkerPool {
     try {
       this._workers[pid].send(msg)
     } catch (err) {
-      return Promise.reject(err)
+			this._logger.info(err.message)
+			delete this._workers[pid]
     }
 
     const deferredPromise = new Promise((resolve, reject) => {
@@ -216,7 +228,7 @@ export class WorkerPool {
 
   updateWorkers (msg: Object): void {
 		Object.keys(this._workers).map((pid) => {
-			 this._workers[pid].send(msg)
+			 return this._sendMessage(pid, msg)
 		})
   }
 
