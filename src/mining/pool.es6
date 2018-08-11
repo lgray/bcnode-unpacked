@@ -12,6 +12,7 @@ import type { Logger } from 'winston'
 import type { PubSub } from '../engine/pubsub'
 import type { RocksDb } from '../persistence'
 
+const os = require('os')
 const { fork, ChildProcess } = require('child_process')
 const { writeFileSync } = require('fs')
 const { resolve } = require('path')
@@ -71,6 +72,10 @@ export class WorkerPool {
 
   constructor (pubsub: PubSub, persistence: RocksDb, opts: { minerKey: string, rovers: string[] }) {
     const procGuardPathGlobalBase = process.env.BC_DATA_DIR || config.persistence.path
+    let maxWorkers = os.cpus().length
+		if(opts.maxWorkers !== undefined){
+			maxWorkers = opts.maxWorkers
+		}
     this._initialized = false
     this._logger = getLogger(__filename)
     this._session = crypto.randomBytes(32).toString('hex')
@@ -79,7 +84,7 @@ export class WorkerPool {
     this._persistence = persistence
     this._knownRovers = opts.rovers
     this._poolGuardPath = opts.poolguard || procGuardPathGlobalBase + '/worker_pool_guard.json'
-    this._maxWorkers = opts.maxWorkers || require('os').cpus().length
+    this._maxWorkers = maxWorkers
     this._emitter = new EventEmitter()
     this._startupCheck = false
     this._heartbeat = {}
