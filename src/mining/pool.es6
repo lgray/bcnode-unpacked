@@ -193,8 +193,8 @@ export class WorkerPool {
     try {
       this._workers[pid].send(msg)
     } catch (err) {
-			this._logger.info(err.message)
 			delete this._workers[pid]
+			this._logger.info(Object.keys(this._workers))
     }
 		return true
 

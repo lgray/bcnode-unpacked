@@ -412,7 +412,7 @@ export class Engine {
         await this.persistence.put('bc.block.latest', block)
         await this.persistence.put('bc.block.' + block.getHeight(), block)
         await this.persistence.putChildHeaders(block)
-      } else if (parent.getHash() === block.previousHash()) {
+      } else if (parent.getHash() === block.getPreviousHash()) {
         await this.persistence.put('bc.block.parent', msg.multiverse[1])
         await this.persistence.put('bc.block.latest', block)
         await this.persistence.put('bc.block.' + block.getHeight(), block)
