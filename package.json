@@ -99,7 +99,7 @@
     "ascii-text-generator": "^1.0.5",
     "async": "^2.6.1",
     "atob": "2.1.1",
-    "avon": "korczis/avon#master",
+    "avon": "mmpmm/avon#master",
     "axios": "^0.18.0",
     "babel-plugin-transform-object-rest-spread": "^6.26.0",
     "backo": "1.1.0",

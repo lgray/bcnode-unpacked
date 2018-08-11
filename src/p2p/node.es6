@@ -297,14 +297,32 @@ export class PeerNode {
     //  })
     //}, 15000)
 
+    this._engine._emitter.on('sendblockcontext', (msg) => {
+      if(msg.data.constructor === Array.constructor) return
+      const type = '0008W01'
+      const sort = msg.data.sort((a,b) => {
+        if(new BN(a.getHeight()).gt(new BN(b.getHeight())) === true){
+          return -1
+        }
+        if(new BN(a.getHeight()).lt(new BN(b.getHeight())) === true){
+          return -1
+        }
+        return 0
+      })
+      return this._p2p.qsend(msg.connection, '0008W01' + '[*]' +  msg.data.serializeBinary())
+    })
+
     this._engine._emitter.on('sendblock', (msg) => {
       return this._p2p.qsend(msg.connection, '0008W01' + '[*]' +  msg.data.serializeBinary())
     })
 
     this._engine._emitter.on('announceblock', (msg) => {
+      const type = '0008W01'
       this._logger.info('announceblock <- event')
 			if(msg.filters !== undefined && msg.filters.length > 0){
-      	this._p2p.qbroadcast('0008W01' + '[*]' +  msg.data.serializeBinary())
+      	this._p2p.qbroadcast(type +
+                             protocolBits[type] +
+                             msg.data.serializeBinary())
         .then(() => {
         	this._logger.info('block announced!')
 				})
@@ -346,13 +364,11 @@ export class PeerNode {
                     await this._engine.persistence.put('bc.dht.quorum', "1")
                 }
 
-        //https://github.com/webtorrent/bittorrent-dht/blob/master/client.js#L579r
+                //https://github.com/webtorrent/bittorrent-dht/blob/master/client.js#L579r
                 //const msg = '0000R01' + info.host + '*' + info.port + '*' + info.id.toString('hex')
                 const type = '0008W01'
                 const msg = type + protocolBits[type] + latestBlock.serializeBinary()
-
                 await this._p2p.qsend(conn, msg)
-
                 conn.on('data', (data) => {
                     /* eslint-disable */
                     if(!data && this._ds[address] !== false){
@@ -481,7 +497,6 @@ export class PeerNode {
           })
 
           this._engine._emitter.on('getblocklist', (request) => {
-            this._logger.info('GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG')
             const type = '0006R01'
             const split = protocolBits[type]
             const low = request.low
@@ -574,13 +589,8 @@ export class PeerNode {
       this._logger.info('joined waypoint table')
             setInterval(() => {
                 this._logger.info('active waypoints:  ' + this._p2p.totalConnections)
-                this._engine._emitter.emit('peerCount' + this._p2p.totalConnections)
+                this._engine._emitter.emit('peerCount', this._p2p.totalConnections)
             }, 5000)
-
-            setTimeout(() => {
-                this._p2p._seeder.complete()
-            }, 120000)
-
    })
 		})
 		.catch((err) => {
@@ -675,7 +685,6 @@ export class PeerNode {
           this._logger.info(query.length + ' blocks requested by peer: ' + conn.remoteHost)
           this._queue.push(query, (err, res) => {
 
-            this._logger.info(3333333333333)
             if (err) {
               this._logger.warn(err)
             } else {
@@ -683,7 +692,6 @@ export class PeerNode {
               const msg = [outboundType, res.map((r) => {
                 return r.serializeBinary()
               })].join(split)
-              this._logger.info(4444444444444)
               this._p2p.qsend(conn, msg).then(() => {
                 this._logger.info('sent message of length: ' + msg.length)
               })
@@ -716,7 +724,6 @@ export class PeerNode {
 
         try {
 
-          //this._logger.info(6666666666666666666)
           const list = parts.split(protocolBits[type]).reduce((all, rawBlock) => {
             const raw = new Uint8Array(rawBlock.split(','))
             all.push(BcBlock.deserializeBinary(raw))

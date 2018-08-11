@@ -397,8 +397,9 @@ export class Engine {
         await this.persistence.put('bc.block.latest', block)
         await this.persistence.put('bc.block.' + block.getHeight(), block)
         await this.persistence.putChildHeaders(block)
-      } else if ((msg.force === true && msg.multiverse !== undefined && msg.data.constructor === Array.constructor) ||
-                (msg.force === true && synclock.getHeight() === 1)) {
+      } else if (msg.force === true &&
+                 msg.multiverse !== undefined &&
+                   (msg.data.constructor === Array.constructor || msg.force === true && synclock.getHeight() === 1)) {
         const oldest = msg.multiverse[msg.multiverse - 1]
         // get the block before the oldest available block
         const grandparent = await this.persistence.get('bc.block.' + oldest.getHeight() - 1)
@@ -1014,7 +1015,6 @@ export class Engine {
                     },
                     connection: conn
                 }
-                this._logger.info('aaaaaaaaaaaaaaaaaaaaaaaaa')
                 // parent headers do not form a chain
                 this.node._engine._emitter.emit('getmultiverse', obj)
 
@@ -1035,7 +1035,6 @@ export class Engine {
               } else {
                 // this means the local peer has a better version of the chain and
                 // therefore pushing it to the outside peer
-                this._logger.info('ccccccccccccccccccccccccc')
                 this._emitter.emit('sendblock', {
                   data: newBlock,
                   connection: conn

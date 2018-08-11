@@ -3,9 +3,11 @@ const Client = require('bittorrent-tracker')
 const swarm = require('discovery-swarm')
 // const avon = require('avon')
 const crypto = require('crypto')
+const R = require('ramda')
 const { config } = require('../config')
 // const bootstrap = require('../utils/templates/bootstrap')
 // const seeds = require('../utils/templates/seed')
+const bootstrap = R.shuffle(require('../utils/dns')
 const seeds = []
 const logging = require('../logger')
 // load
@@ -29,9 +31,10 @@ function random (range) {
 // }
 
 function Discovery (nodeId) {
-  seeds.unshift('udp://tds.blockcollider.org:16060/announce')
-  seeds.unshift('udp://18.210.15.44:16060/announce')
-  seeds.unshift('udp://tds-r3.blockcollider.org:16060/announce')
+  // bootstrap from two randomly selected nodes
+  seeds.unshift(bootstrap[Math.floor((Math.random() * 4) -1)])
+  seeds.unshift(bootstrap[Math.floor((Math.random() * 4) -1)])
+
   if (process.env.BC_SEED !== undefined) {
     seeds.unshift(process.env.BC_SEED)
   }
