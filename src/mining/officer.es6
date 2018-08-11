@@ -78,16 +78,6 @@ export class MiningOfficer {
     this._unfinishedBlockData = { block: undefined, lastPreviousBlock: undefined, currentBlocks: {}, timeDiff: undefined, iterations: undefined }
     this._paused = false
     this._blockTemplates = []
-    (async () => {
-      try {
-        await this._workerPool.init()
-        const ready = await this._workerPool.allRise()
-        this._workerPool._emitter.on('mined', this._handleWorkerFinishedMessage.bind(this))
-        this._logger.info('worker pool initialized')
-      } catch (err) {
-        this._logger.error(err)
-      }
-    })
   }
 
   get persistence (): RocksDb {
@@ -107,11 +97,13 @@ export class MiningOfficer {
   }
 
   async simMining (): Promise<*> {
-    const wp = this._workerPool
-    if (!wp.initialized) {
+    try {
       await this._workerPool.init()
-      await wp.allRise()
+      await this._workerPool.allRise()
+      this._workerPool._emitter.on('mined', this._handleWorkerFinishedMessage.bind(this))
       this._logger.info('worker pool initialized')
+    } catch (err) {
+      this._logger.error(err)
     }
   }
 
