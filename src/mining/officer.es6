@@ -105,6 +105,7 @@ export class MiningOfficer {
     } catch (err) {
       this._logger.error(err)
     }
+    return Promise.resolve(true)
   }
 
   async newRoveredBlock (rovers: string[], block: Block): Promise<number|false> {

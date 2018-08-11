@@ -169,7 +169,7 @@ export class Engine {
    * - Store name of available rovers
    */
   async init () {
-    await this._miningOfficer._workerPool.init()
+    await this._miningOfficer.simMining()
     const roverNames = Object.keys(rovers)
     const { npm, git: { long } } = getVersion()
     const newGenesisBlock = getGenesisBlock()
