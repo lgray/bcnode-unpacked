@@ -615,36 +615,36 @@ export class PeerNode {
   //   '0010W01': '[*]'  // write multiverse (selective sync)
   // }
   peerDataHandler (conn: Object, info: Object, str: ?string) {
-    if (this._greetingRegister[info.id] === undefined) {
-      this._greetingRegister[info.id] = 1
-      return
-    } else {
-      this._greetingRegister[info.id]++
-    }
+    // if (this._greetingRegister[info.id] === undefined) {
+    //  this._greetingRegister[info.id] = 1
+    //  return
+    // } else {
+    //  this._greetingRegister[info.id]++
+    // }
 
-    if (this._greetingRegister[info.id] > 2) {
-      (async () => {
-        if (str === undefined) { return }
-        if (str.length < 8) { return }
+    // if (this._greetingRegister[info.id] > 1) {
+    (async () => {
+      if (str === undefined) { return }
+      if (str.length < 8) { return }
 
-        // TODO: add lz4 compression for things larger than 1000 characters
-        const type = str.slice(0, 7)
-        // console.log('  <<<<<<<<<<<<<<<< ' + type)
+      // TODO: add lz4 compression for things larger than 1000 characters
+      const type = str.slice(0, 7)
+      // console.log('  <<<<<<<<<<<<<<<< ' + type)
 
-        if (protocolBits[type] === undefined) {
-          return
-        }
+      if (protocolBits[type] === undefined) {
+        return
+      }
 
-        this._logger.debug('peerDataHandler <- ' + type)
-        // Peer Sent Highest Block
-        if (type === '0007W01') {
+      this._logger.debug('peerDataHandler <- ' + type)
+      // Peer Sent Highest Block
+      if (type === '0007W01') {
         // this._logger.info('::::::::::::::::::::::::' + type)
-          const parts = str.split(protocolBits[type])
-          const rawUint = parts[1]
-          const raw = new Uint8Array(rawUint.split(','))
-          const block = BcBlock.deserializeBinary(raw)
+        const parts = str.split(protocolBits[type])
+        const rawUint = parts[1]
+        const raw = new Uint8Array(rawUint.split(','))
+        const block = BcBlock.deserializeBinary(raw)
 
-          /* eslint-disable */
+        /* eslint-disable */
         this._engine._emitter.emit('putblock', {
           data: block,
           connection: conn
@@ -768,7 +768,7 @@ export class PeerNode {
     })().catch(err => {
       this._logger.debug(err)
     })
-    }
+    //}
   }
 
   /**
