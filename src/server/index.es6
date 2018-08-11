@@ -275,12 +275,18 @@ export class Server {
   }
 
   _transformPeerToWire (peer: Object) {
-    // console.log('peer', peer)
+    console.log('peer', peer)
+    // return {
+    //  id: ""peer.id.toB58String(),
+    //  meta: peer.meta,
+    //  addrs: peer.multiaddrs._multiaddrs.map((addr) => addr.toString()),
+    //  addr: peer._connectedMultiaddr && peer._connectedMultiaddr.toString()
+    // }
     return {
-      id: peer.id.toB58String(),
-      meta: peer.meta,
-      addrs: peer.multiaddrs._multiaddrs.map((addr) => addr.toString()),
-      addr: peer._connectedMultiaddr && peer._connectedMultiaddr.toString()
+      id: '',
+      meta: '',
+      addrs: '',
+      addr: ''
     }
   }
 
