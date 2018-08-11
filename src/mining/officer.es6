@@ -375,12 +375,12 @@ export class MiningOfficer {
   //* Manages the current most recent block template used by the miner
   //* @param blockTemplate
   //* /
-  // setCurrentMiningHeaders (blockTemplate: BlockchainHeaders): void {
-  //  if (this._blockTemplates.length > 0) {
-  //    this._blockTemplates.pop()
-  //  }
-  //  this._blockTemplates.push(blockTemplate)
-  // }
+  setCurrentMiningHeaders (blockTemplate: BlockchainHeaders): void {
+    if (this._blockTemplates.length > 0) {
+      this._blockTemplates.pop()
+    }
+    this._blockTemplates.push(blockTemplate)
+  }
 
   /**
   * Accessor for block templates
