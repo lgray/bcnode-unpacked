@@ -1,0 +1,1881 @@
+(node:28302) Warning: N-API is an experimental feature and could change at any time.
+1533873079 INFO	 utils.time Starting NTP time sync 
+1533873079 INFO	 engine.index stored rovers to persistence 
+1533873079 INFO	 engine.index stored appversion to persistence 
+1533873079 INFO	 engine.index genesis block saved to disk a8212d5a65f579c2018b19172be34e4422a93c8437f8e7c19ddc8cad15353862 
+1533873079 INFO	 engine.index starting P2P node 
+1533873079 INFO	 engine.index starting rovers 'btc,eth,lsk,neo,wav' 
+1533873079 INFO	 rover.manager Starting rover 'btc' using '/Users/mtxodus1/Documents/GitHub/private/lib/rover/btc/rover.js' 
+1533873079 INFO	 rover.manager Rover started 'btc' 
+1533873079 INFO	 rover.manager Starting rover 'eth' using '/Users/mtxodus1/Documents/GitHub/private/lib/rover/eth/rover.js' 
+1533873079 INFO	 rover.manager Rover started 'eth' 
+1533873079 INFO	 rover.manager Starting rover 'lsk' using '/Users/mtxodus1/Documents/GitHub/private/lib/rover/lsk/rover.js' 
+1533873079 INFO	 rover.manager Rover started 'lsk' 
+1533873079 INFO	 rover.manager Starting rover 'neo' using '/Users/mtxodus1/Documents/GitHub/private/lib/rover/neo/rover.js' 
+1533873079 INFO	 rover.manager Rover started 'neo' 
+1533873079 INFO	 rover.manager Starting rover 'wav' using '/Users/mtxodus1/Documents/GitHub/private/lib/rover/wav/rover.js' 
+1533873079 INFO	 rover.manager Rover started 'wav' 
+1533873079 INFO	 server.index Server available at http://0.0.0.0:3000 
+1533873079 WARN	 engine.index key needs to be set 
+1533873079 INFO	 engine.index asssigned node key <- 142e32d0d29d4a730c4c568399d4313ce1c9d3c1 
+1533873079 INFO	 p2p.discovery assigned edge <- 68cb1ee15af08755204674752ef9aee13db93bb7 
+1533873079 INFO	 engine.index 142e32d0d29d4a730c4c568399d4313ce1c9d3c1 
+1533873079 INFO	 cli.cmd.start client initialized 
+1533873079 INFO	 p2p.discovery initializing far reach discovery from 16061@68cb1ee15af08755204674752ef9aee13db93bb7 
+(node:28306) Warning: N-API is an experimental feature and could change at any time.
+(node:28305) Warning: N-API is an experimental feature and could change at any time.
+(node:28309) Warning: N-API is an experimental feature and could change at any time.
+1533873082 INFO	 p2p.node initialized far reaching discovery module 
+1533873082 INFO	 p2p.node joined waypoint table 
+(node:28307) Warning: N-API is an experimental feature and could change at any time.
+1533873082 INFO	 utils.time Starting NTP time sync 
+(node:28308) Warning: N-API is an experimental feature and could change at any time.
+1533873085 INFO	 rover.btc.controller peer count pool: 0 dp: 0, sp: 0, q: false, bh: null 
+1533873085 INFO	 p2p.discovery peers to write: 2 
+1533873085 INFO	 p2p.discovery peers to write: 2 
+1533873087 INFO	 p2p.node active waypoints:  3 
+1533873088 INFO	 rover.helper unified block built from lsk 34486279 
+1533873088 INFO	 mining.officer [] <- [] rovered lsk block 6734950 3448627978398090210 
+1533873088 INFO	 mining.officer constructing multiverse with blockchains [btc:0 eth:0 lsk:1 neo:0 wav:0] 
+1533873088 INFO	 mining.officer multiverse depth 1 
+1533873088 INFO	 rover.btc.controller peer count pool: 50 dp: 41, sp: 41, q: true, bh: 536033 
+1533873091 INFO	 rover.btc.controller peer count pool: 50 dp: 41, sp: 41, q: true, bh: 536033 
+1533873092 INFO	 p2p.node active waypoints:  2 
+1533873092 INFO	 rover.helper unified block built from lsk 67145086 
+1533873092 INFO	 mining.officer [] <- [] rovered lsk block 6734951 6714508676440100385 
+1533873092 INFO	 mining.officer constructing multiverse with blockchains [btc:0 eth:0 lsk:2 neo:0 wav:0] 
+1533873092 INFO	 mining.officer multiverse depth 2 
+1533873094 INFO	 rover.btc.controller peer count pool: 50 dp: 41, sp: 41, q: true, bh: 536033 
+1533873095 INFO	 rover.helper unified block built from eth 0x51e765 
+1533873095 INFO	 mining.officer [] <- [] rovered eth block 6120163 0x51e7653946b17f8f54f6f1eba8dc1cfa035d3f519ea429d21360223fe13701d3 
+1533873095 INFO	 mining.officer constructing multiverse with blockchains [btc:0 eth:1 lsk:2 neo:0 wav:0] 
+1533873095 INFO	 mining.officer multiverse depth 3 
+1533873095 INFO	 rover.helper unified block built from eth 0x2a7a78 
+1533873095 INFO	 mining.officer [] <- [] rovered eth block 6120163 0x2a7a78412a053d0c79603442cb86f9c37d5568dc988a1db425c5d224a9324df1 
+1533873095 INFO	 mining.officer constructing multiverse with blockchains [btc:0 eth:2 lsk:2 neo:0 wav:0] 
+1533873095 INFO	 mining.officer multiverse depth 4 
+1533873097 INFO	 rover.btc.controller peer count pool: 50 dp: 41, sp: 41, q: true, bh: 536033 
+1533873097 INFO	 p2p.node active waypoints:  2 
+1533873098 INFO	 p2p.node peerDataHandler <- 0008W01 
+1533873098 INFO	 p2p.node candidate block 383 recieved 
+1533873098 INFO	 engine.index Received new block from peer 383 
+1533873098 INFO	 bc.validation numberOfBlockchainsNeededMatchesChildBlock validation running 
+1533873098 INFO	 bc.validation ifMoreThanOneHeaderPerBlockchainAreTheyOrdered validation running 
+1533873098 INFO	 bc.validation ifMoreThanOneHeaderPerBlockchainAreTheyOrdered all chain conditions: [ true, true, true, true, true ] 
+1533873098 INFO	 bc.validation isChainRootCorrectlyCalculated validation running 
+1533873098 INFO	 bc.validation isFieldLengthBounded validation running 
+1533873098 INFO	 bc.validation isMerkleRootCorrectlyCalculated validation running 
+1533873098 INFO	 engine.index purposed block peer 383 
+1533873098 INFO	 engine.index block from peer 383 is NOT next in multiverse block -> evaluating as sync candidate. 
+1533873098 INFO	 bc.multiverse.1d3bb0e4-e7ce-026d-61fb-662c5aa45dcb passed resync req <- new block above genesis 
+1533873098 INFO	 engine.index 001b19c04f24f4d2c043de15afe653cd6a791e47ca59b974a791ef794e73b95c <- new block: 383 should sync request approved 
+1533873098 INFO	 engine.index aaaaaaaaaaaaaaaaaaaaaaaaa 
+1533873098 INFO	 p2p.discovery peers to write: 0 
+1533873098 INFO	 mining.officer petioning new mining work 
+1533873098 INFO	 engine.index store block: 383 001b19c04f24f4d2c043de15afe653cd6a791e47ca59b974a791ef794e73b95c 
+1533873098 INFO	 persistence synchronized child headers: 5 
+1533873098 INFO	 persistence synchronized child headers: 5 
+1533873098 INFO	 engine.index determining if rovered headers include new child blocks 
+1533873098 INFO	 p2p.node peerDataHandler <- 0008W01 
+1533873098 INFO	 p2p.node candidate block 383 recieved 
+1533873100 INFO	 rover.btc.controller peer count pool: 50 dp: 41, sp: 41, q: true, bh: 536033 
+1533873102 INFO	 p2p.node active waypoints:  3 
+1533873103 INFO	 rover.helper unified block built from lsk 10744694 
+1533873103 INFO	 mining.officer [] <- [] rovered lsk block 6734952 10744694670103903459 
+1533873103 INFO	 mining.officer persisted block height: 383 
+1533873103 INFO	 mining.officer latestBlockHeadersHeights: { btc: 536033,
+  eth: 6120163,
+  lsk: 6734952,
+  neo: 2601838,
+  wav: 1120486 } 
+1533873103 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 383, btc ln: 536034, 536033 
+1533873103 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 383, eth ln: 6120164, 6120163 
+1533873103 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 383, lsk ln: 6734952, 6734952 
+1533873103 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 383, neo ln: 2601839, 2601838 
+1533873103 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 383, wav ln: 1120487, 1120486 
+1533873103 INFO	 mining.officer preparing new block 
+1533873103 INFO	 mining.officer worker <- calculated difficulty threshold 292836695310587 
+1533873103 INFO	 mining.officer mining cycle initiated 
+1533873103 INFO	 engine.index collectBlock handler: sent to miner: 28318 
+1533873103 INFO	 rover.btc.controller peer count pool: 50 dp: 41, sp: 41, q: true, bh: 536033 
+1533873103 INFO	 utils.time NTP offset resolved 
+1533873103 INFO	 rover.helper unified block built from eth 0x1a383d 
+1533873103 INFO	 mining.officer [] <- [] rovered eth block 6120164 0x1a383d57b6bb72c71e535574ccbb45d7cb74c0b77f8e6b123de3acbbe664097d 
+1533873103 INFO	 mining.officer persisted block height: 383 
+1533873103 INFO	 mining.officer latestBlockHeadersHeights: { btc: 536033,
+  eth: 6120164,
+  lsk: 6734952,
+  neo: 2601838,
+  wav: 1120486 } 
+1533873103 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 383, btc ln: 536034, 536033 
+1533873103 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 383, eth ln: 6120164, 6120164 
+1533873103 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 383, lsk ln: 6734952, 6734952 
+1533873103 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 383, neo ln: 2601839, 2601838 
+1533873103 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 383, wav ln: 1120487, 1120486 
+1533873103 INFO	 mining.officer preparing new block 
+1533873103 INFO	 mining.officer new rovered block -> accepted 
+1533873103 INFO	 mining.officer petioning new mining work 
+1533873103 INFO	 mining.officer worker <- calculated difficulty threshold 292836695310587 
+1533873103 INFO	 mining.officer mining cycle initiated 
+1533873103 INFO	 engine.index collectBlock handler: sent to miner: 28319 
+1533873103 INFO	 utils.time NTP offset resolved 
+1533873105 INFO	 p2p.node peerDataHandler <- 0008W01 
+1533873105 INFO	 p2p.node candidate block 384 recieved 
+1533873105 INFO	 engine.index Received new block from peer 384 
+1533873105 INFO	 bc.validation numberOfBlockchainsNeededMatchesChildBlock validation running 
+1533873105 INFO	 bc.validation ifMoreThanOneHeaderPerBlockchainAreTheyOrdered validation running 
+1533873105 INFO	 bc.validation ifMoreThanOneHeaderPerBlockchainAreTheyOrdered all chain conditions: [ true, true, true, true, true ] 
+1533873105 INFO	 bc.validation isChainRootCorrectlyCalculated validation running 
+1533873105 INFO	 bc.validation isFieldLengthBounded validation running 
+1533873105 INFO	 bc.validation isMerkleRootCorrectlyCalculated validation running 
+1533873105 INFO	 engine.index purposed block peer 384 
+1533873105 INFO	 engine.index new block cdbea51f4cdf96309908403c1895f81bc9933afbc551cb49b49e449420ba0739 references previous Block 001b19c04f24f4d2c043de15afe653cd6a791e47ca59b974a791ef794e73b95c for block a8212d5a65f579c2018b19172be34e4422a93c8437f8e7c19ddc8cad15353862 
+1533873105 INFO	 engine.index block 384 considered next block in current multiverse  
+1533873105 INFO	 mining.officer petioning new mining work 
+1533873105 INFO	 engine.index store block: 384 cdbea51f4cdf96309908403c1895f81bc9933afbc551cb49b49e449420ba0739 
+1533873105 INFO	 p2p.node announceblock <- event 
+1533873105 INFO	 p2p.discovery peers to write: 2 
+1533873105 INFO	 p2p.discovery peers to write: 2 
+1533873105 INFO	 p2p.node block announced! 
+1533873105 INFO	 persistence synchronized child headers: 5 
+1533873105 INFO	 p2p.node peerDataHandler <- 0008W01 
+1533873105 INFO	 p2p.node candidate block 384 recieved 
+1533873106 INFO	 rover.btc.controller peer count pool: 50 dp: 41, sp: 41, q: true, bh: 536033 
+1533873107 INFO	 rover.helper unified block built from eth 0x6a2590 
+1533873107 INFO	 mining.officer [] <- [] rovered eth block 6120165 0x6a259067a1eb47491c3a6d1d551dd338151c80032ca0ff578fa9361cfc3c2027 
+1533873107 INFO	 mining.officer persisted block height: 384 
+1533873107 INFO	 mining.officer latestBlockHeadersHeights: { btc: 536033,
+  eth: 6120165,
+  lsk: 6734952,
+  neo: 2601838,
+  wav: 1120486 } 
+1533873107 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 384, btc ln: 536034, 536033 
+1533873107 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 384, eth ln: 6120165, 6120165 
+1533873107 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 384, lsk ln: 6734953, 6734952 
+1533873107 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 384, neo ln: 2601839, 2601838 
+1533873107 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 384, wav ln: 1120487, 1120486 
+1533873107 INFO	 mining.officer preparing new block 
+1533873107 INFO	 mining.officer worker <- calculated difficulty threshold 293387140226584 
+1533873107 INFO	 mining.officer mining cycle initiated 
+1533873107 INFO	 engine.index collectBlock handler: sent to miner: 28321 
+1533873107 INFO	 p2p.node active waypoints:  2 
+1533873107 INFO	 utils.time NTP offset resolved 
+1533873109 INFO	 rover.btc.controller peer count pool: 50 dp: 41, sp: 41, q: true, bh: 536033 
+1533873110 INFO	 rover.helper unified block built from eth 0xac3e65 
+1533873110 INFO	 mining.officer [] <- [] rovered eth block 6120166 0xac3e658a707c5544788820c602fe7530db5ddbd98b7a8548afd795514ad54460 
+1533873110 INFO	 mining.officer persisted block height: 384 
+1533873110 INFO	 mining.officer latestBlockHeadersHeights: { btc: 536033,
+  eth: 6120166,
+  lsk: 6734952,
+  neo: 2601838,
+  wav: 1120486 } 
+1533873110 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 384, btc ln: 536034, 536033 
+1533873110 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 384, eth ln: 6120165, 6120166 
+1533873110 INFO	 mining.officer chain: ethfrom: 6120165 to: 6120166 
+1533873110 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 384, lsk ln: 6734953, 6734952 
+1533873110 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 384, neo ln: 2601839, 2601838 
+1533873110 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 384, wav ln: 1120487, 1120486 
+1533873110 INFO	 mining.officer preparing new block 
+1533873110 INFO	 mining.officer new rovered block -> accepted 
+1533873110 INFO	 mining.officer petioning new mining work 
+1533873110 INFO	 mining.officer worker <- calculated difficulty threshold 293387140226584 
+1533873110 INFO	 mining.officer mining cycle initiated 
+1533873110 INFO	 engine.index collectBlock handler: sent to miner: 28324 
+1533873110 INFO	 utils.time NTP offset resolved 
+1533873111 INFO	 rover.helper unified block built from eth 0xc03497 
+1533873111 INFO	 mining.officer [] <- [] rovered eth block 6120165 0xc034970003461afd1a899a88f9a673da7feb4e3fe03c7899f3c6f34a93fd056f 
+1533873111 INFO	 mining.officer persisted block height: 384 
+1533873111 INFO	 mining.officer latestBlockHeadersHeights: { btc: 536033,
+  eth: 6120165,
+  lsk: 6734952,
+  neo: 2601838,
+  wav: 1120486 } 
+1533873111 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 384, btc ln: 536034, 536033 
+1533873111 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 384, eth ln: 6120165, 6120165 
+1533873111 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 384, lsk ln: 6734953, 6734952 
+1533873111 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 384, neo ln: 2601839, 2601838 
+1533873111 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 384, wav ln: 1120487, 1120486 
+1533873111 INFO	 mining.officer preparing new block 
+1533873111 INFO	 mining.officer new rovered block -> accepted 
+1533873111 INFO	 mining.officer petioning new mining work 
+1533873111 INFO	 mining.officer worker <- calculated difficulty threshold 293387140226584 
+1533873111 INFO	 mining.officer mining cycle initiated 
+1533873111 INFO	 engine.index collectBlock handler: sent to miner: 28325 
+1533873111 INFO	 utils.time NTP offset resolved 
+1533873111 INFO	 p2p.node peerDataHandler <- 0008W01 
+1533873111 INFO	 p2p.node candidate block 384 recieved 
+1533873112 INFO	 rover.btc.controller peer count pool: 50 dp: 41, sp: 41, q: true, bh: 536033 
+1533873112 INFO	 p2p.node active waypoints:  2 
+1533873112 INFO	 rover.helper unified block built from lsk 14908623 
+1533873112 INFO	 mining.officer [] <- [] rovered lsk block 6734953 14908623017479149343 
+1533873112 INFO	 mining.officer persisted block height: 384 
+1533873112 INFO	 mining.officer latestBlockHeadersHeights: { btc: 536033,
+  eth: 6120165,
+  lsk: 6734953,
+  neo: 2601838,
+  wav: 1120486 } 
+1533873112 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 384, btc ln: 536034, 536033 
+1533873112 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 384, eth ln: 6120165, 6120165 
+1533873112 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 384, lsk ln: 6734953, 6734953 
+1533873112 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 384, neo ln: 2601839, 2601838 
+1533873112 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 384, wav ln: 1120487, 1120486 
+1533873112 INFO	 mining.officer preparing new block 
+1533873112 INFO	 mining.officer new rovered block -> accepted 
+1533873112 INFO	 mining.officer petioning new mining work 
+1533873112 INFO	 mining.officer worker <- calculated difficulty threshold 292836695310587 
+1533873112 INFO	 mining.officer mining cycle initiated 
+1533873112 INFO	 engine.index collectBlock handler: sent to miner: 28327 
+1533873112 INFO	 p2p.node peerDataHandler <- 0008W01 
+1533873112 INFO	 p2p.node candidate block 385 recieved 
+1533873112 INFO	 engine.index Received new block from peer 385 
+1533873112 INFO	 bc.validation numberOfBlockchainsNeededMatchesChildBlock validation running 
+1533873112 INFO	 bc.validation ifMoreThanOneHeaderPerBlockchainAreTheyOrdered validation running 
+1533873112 INFO	 bc.validation ifMoreThanOneHeaderPerBlockchainAreTheyOrdered all chain conditions: [ true, true, true, true, true ] 
+1533873112 INFO	 bc.validation isChainRootCorrectlyCalculated validation running 
+1533873112 INFO	 bc.validation isFieldLengthBounded validation running 
+1533873112 INFO	 bc.validation isMerkleRootCorrectlyCalculated validation running 
+1533873112 INFO	 engine.index purposed block peer 385 
+1533873112 INFO	 engine.index new block b7c67ccf830b26304f06b017e0cd787f64c62b2db688139f84caafae9e736c38 references previous Block cdbea51f4cdf96309908403c1895f81bc9933afbc551cb49b49e449420ba0739 for block cdbea51f4cdf96309908403c1895f81bc9933afbc551cb49b49e449420ba0739 
+1533873112 INFO	 engine.index block 385 considered next block in current multiverse  
+1533873112 INFO	 mining.officer petioning new mining work 
+1533873112 INFO	 engine.index store block: 385 b7c67ccf830b26304f06b017e0cd787f64c62b2db688139f84caafae9e736c38 
+1533873112 INFO	 p2p.node announceblock <- event 
+1533873112 INFO	 p2p.discovery peers to write: 2 
+1533873112 INFO	 p2p.discovery peers to write: 2 
+1533873112 INFO	 p2p.node block announced! 
+1533873112 INFO	 p2p.node peerDataHandler <- 0008W01 
+1533873112 INFO	 p2p.node candidate block 385 recieved 
+1533873112 INFO	 persistence synchronized child headers: 5 
+1533873115 INFO	 rover.btc.controller peer count pool: 50 dp: 41, sp: 41, q: true, bh: 536033 
+1533873117 INFO	 p2p.node active waypoints:  2 
+1533873118 INFO	 rover.btc.controller peer count pool: 50 dp: 41, sp: 41, q: true, bh: 536033 
+1533873119 INFO	 rover.helper unified block built from eth 0x142d49 
+1533873119 INFO	 mining.officer [] <- [] rovered eth block 6120167 0x142d49f8abe7710639255cb3d04ef066ff053134ce089519946b9ef7b6c1aca7 
+1533873119 INFO	 mining.officer persisted block height: 385 
+1533873119 INFO	 mining.officer latestBlockHeadersHeights: { btc: 536033,
+  eth: 6120167,
+  lsk: 6734953,
+  neo: 2601838,
+  wav: 1120486 } 
+1533873119 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 385, btc ln: 536034, 536033 
+1533873119 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 385, eth ln: 6120166, 6120167 
+1533873119 INFO	 mining.officer chain: ethfrom: 6120166 to: 6120167 
+1533873119 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 385, lsk ln: 6734954, 6734953 
+1533873119 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 385, neo ln: 2601839, 2601838 
+1533873119 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 385, wav ln: 1120487, 1120486 
+1533873119 INFO	 mining.officer preparing new block 
+1533873119 INFO	 mining.officer worker <- calculated difficulty threshold 293387140226584 
+1533873119 INFO	 mining.officer mining cycle initiated 
+1533873119 INFO	 engine.index collectBlock handler: sent to miner: 28330 
+1533873119 INFO	 utils.time NTP offset resolved 
+1533873121 INFO	 rover.btc.controller peer count pool: 50 dp: 41, sp: 41, q: true, bh: 536033 
+1533873122 INFO	 p2p.node active waypoints:  2 
+1533873122 INFO	 rover.helper unified block built from lsk 39485506 
+1533873122 INFO	 mining.officer [] <- [] rovered lsk block 6734954 3948550697198498318 
+1533873122 INFO	 mining.officer persisted block height: 385 
+1533873122 INFO	 mining.officer latestBlockHeadersHeights: { btc: 536033,
+  eth: 6120167,
+  lsk: 6734954,
+  neo: 2601838,
+  wav: 1120486 } 
+1533873122 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 385, btc ln: 536034, 536033 
+1533873122 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 385, eth ln: 6120166, 6120167 
+1533873122 INFO	 mining.officer chain: ethfrom: 6120166 to: 6120167 
+1533873122 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 385, lsk ln: 6734954, 6734954 
+1533873122 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 385, neo ln: 2601839, 2601838 
+1533873122 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 385, wav ln: 1120487, 1120486 
+1533873122 INFO	 mining.officer preparing new block 
+1533873122 INFO	 mining.officer new rovered block -> accepted 
+1533873122 INFO	 mining.officer petioning new mining work 
+1533873122 INFO	 mining.officer worker <- calculated difficulty threshold 292835660639692 
+1533873122 INFO	 mining.officer mining cycle initiated 
+1533873122 INFO	 engine.index collectBlock handler: sent to miner: 28332 
+1533873123 INFO	 utils.time NTP offset resolved 
+1533873124 INFO	 rover.btc.controller peer count pool: 50 dp: 41, sp: 41, q: true, bh: 536033 
+1533873124 INFO	 rover.helper unified block built from eth 0xd878ae 
+1533873124 INFO	 mining.officer [] <- [] rovered eth block 6120168 0xd878ae29d0b23ec4c72ab21be2917a8c2bcb01debed2d709eceb72c41f7728be 
+1533873124 INFO	 mining.officer persisted block height: 385 
+1533873124 INFO	 mining.officer latestBlockHeadersHeights: { btc: 536033,
+  eth: 6120168,
+  lsk: 6734954,
+  neo: 2601838,
+  wav: 1120486 } 
+1533873124 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 385, btc ln: 536034, 536033 
+1533873124 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 385, eth ln: 6120166, 6120168 
+1533873124 INFO	 mining.officer chain: ethfrom: 6120166 to: 6120168 
+1533873124 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 385, lsk ln: 6734954, 6734954 
+1533873124 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 385, neo ln: 2601839, 2601838 
+1533873124 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 385, wav ln: 1120487, 1120486 
+1533873124 INFO	 mining.officer preparing new block 
+1533873124 INFO	 mining.officer new rovered block -> accepted 
+1533873124 INFO	 mining.officer petioning new mining work 
+1533873124 INFO	 mining.officer worker <- calculated difficulty threshold 292284181052800 
+1533873124 INFO	 mining.officer mining cycle initiated 
+1533873124 INFO	 engine.index collectBlock handler: sent to miner: 28334 
+1533873124 INFO	 utils.time NTP offset resolved 
+1533873127 INFO	 rover.btc.controller peer count pool: 50 dp: 41, sp: 41, q: true, bh: 536033 
+1533873127 INFO	 p2p.node active waypoints:  2 
+1533873130 INFO	 rover.btc.controller peer count pool: 50 dp: 41, sp: 41, q: true, bh: 536033 
+1533873132 INFO	 p2p.node active waypoints:  2 
+1533873132 INFO	 mining.worker solution found: {
+  "distance": "293453983407177",
+  "nonce": "550656057",
+  "timestamp": 1533873132,
+  "difficulty": "290629742292124",
+  "iterations": 510492,
+  "timeDiff": 7784
+} 
+1533873132 INFO	 mining.officer The calculated block difficulty was 292284181052800, actual mining difficulty was 290629742292124 
+1533873132 INFO	 bc.validation numberOfBlockchainsNeededMatchesChildBlock validation running 
+1533873132 INFO	 bc.validation ifMoreThanOneHeaderPerBlockchainAreTheyOrdered validation running 
+1533873132 INFO	 bc.validation ifMoreThanOneHeaderPerBlockchainAreTheyOrdered all chain conditions: [ true, true, true, true, true ] 
+1533873132 INFO	 bc.validation isChainRootCorrectlyCalculated validation running 
+1533873132 INFO	 bc.validation isFieldLengthBounded validation running 
+1533873132 INFO	 bc.validation isMerkleRootCorrectlyCalculated validation running 
+1533873132 INFO	 engine.index submitting mined block to current multiverse 
+1533873132 INFO	 mining.officer petioning new mining work 
+1533873132 INFO	 mining.officer petioning new mining work 
+1533873132 INFO	 engine.index store block: 386 134434c27167465a70392105e851f8af648215087a4bc664a524f2b8e601c291 
+1533873132 INFO	 engine.index multiverse coverage: 4 
+1533873132 INFO	 engine.index broadcasting block challenge 134434c27167465a70392105e851f8af648215087a4bc664a524f2b8e601c291 -> considered next block in current multiverse 
+1533873132 INFO	 p2p.node announceblock <- event 
+1533873132 INFO	 p2p.discovery peers to write: 2 
+1533873132 INFO	 engine.index broadcasted mined block true 
+1533873132 INFO	 p2p.discovery peers to write: 2 
+1533873132 INFO	 p2p.node block announced! 
+1533873132 INFO	 persistence synchronized child headers: 7 
+1533873132 INFO	 engine.index latest block 386 has been updated 
+1533873132 INFO	 p2p.node peerDataHandler <- 0008W01 
+1533873132 INFO	 p2p.node candidate block 386 recieved 
+1533873132 INFO	 p2p.node peerDataHandler <- 0008W01 
+1533873132 INFO	 p2p.node candidate block 386 recieved 
+1533873133 INFO	 rover.btc.controller peer count pool: 50 dp: 41, sp: 41, q: true, bh: 536033 
+1533873134 INFO	 p2p.node peerDataHandler <- 0008W01 
+1533873134 INFO	 p2p.node candidate block 387 recieved 
+1533873134 INFO	 engine.index Received new block from peer 387 
+1533873134 INFO	 bc.validation numberOfBlockchainsNeededMatchesChildBlock validation running 
+1533873134 INFO	 bc.validation ifMoreThanOneHeaderPerBlockchainAreTheyOrdered validation running 
+1533873134 INFO	 bc.validation ifMoreThanOneHeaderPerBlockchainAreTheyOrdered all chain conditions: [ true, true, true, true, true ] 
+1533873134 INFO	 bc.validation isChainRootCorrectlyCalculated validation running 
+1533873134 INFO	 bc.validation isFieldLengthBounded validation running 
+1533873134 INFO	 bc.validation isMerkleRootCorrectlyCalculated validation running 
+1533873134 INFO	 engine.index purposed block peer 387 
+1533873134 INFO	 engine.index new block bbbbedce652c7708a6b7c404b61fffb4c93d3329826cea7989df8cfd84e49bb1 references previous Block 134434c27167465a70392105e851f8af648215087a4bc664a524f2b8e601c291 for block 134434c27167465a70392105e851f8af648215087a4bc664a524f2b8e601c291 
+1533873134 INFO	 engine.index block 387 considered next block in current multiverse  
+1533873134 INFO	 mining.officer petioning new mining work 
+1533873134 INFO	 engine.index store block: 387 bbbbedce652c7708a6b7c404b61fffb4c93d3329826cea7989df8cfd84e49bb1 
+1533873134 INFO	 p2p.node announceblock <- event 
+1533873134 INFO	 p2p.discovery peers to write: 2 
+1533873134 INFO	 p2p.discovery peers to write: 2 
+1533873134 INFO	 p2p.node block announced! 
+1533873134 INFO	 persistence synchronized child headers: 5 
+1533873134 INFO	 p2p.node peerDataHandler <- 0008W01 
+1533873134 INFO	 p2p.node candidate block 387 recieved 
+1533873134 INFO	 rover.helper unified block built from lsk 13056450 
+1533873134 INFO	 mining.officer [] <- [] rovered lsk block 6734955 13056450347548766334 
+1533873134 INFO	 mining.officer persisted block height: 387 
+1533873134 INFO	 mining.officer latestBlockHeadersHeights: { btc: 536033,
+  eth: 6120168,
+  lsk: 6734955,
+  neo: 2601839,
+  wav: 1120487 } 
+1533873134 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 387, btc ln: 536034, 536033 
+1533873134 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 387, eth ln: 6120169, 6120168 
+1533873134 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 387, lsk ln: 6734956, 6734955 
+1533873134 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 387, neo ln: 2601840, 2601839 
+1533873134 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 387, wav ln: 1120488, 1120487 
+1533873134 INFO	 mining.officer preparing new block 
+1533873134 INFO	 mining.officer worker <- calculated difficulty threshold 293384026482237 
+1533873134 INFO	 mining.officer mining cycle initiated 
+1533873134 INFO	 engine.index collectBlock handler: sent to miner: 28338 
+1533873135 INFO	 utils.time NTP offset resolved 
+1533873135 INFO	 mining.worker solution found: {
+  "distance": "294908186444524",
+  "nonce": "1189350721",
+  "timestamp": 1533873135,
+  "difficulty": "293384026482237",
+  "iterations": 41146,
+  "timeDiff": 657
+} 
+1533873135 INFO	 mining.officer The calculated block difficulty was 293384026482237, actual mining difficulty was 293384026482237 
+1533873135 INFO	 bc.validation numberOfBlockchainsNeededMatchesChildBlock validation running 
+1533873135 INFO	 bc.validation ifMoreThanOneHeaderPerBlockchainAreTheyOrdered validation running 
+1533873135 INFO	 bc.validation ifMoreThanOneHeaderPerBlockchainAreTheyOrdered all chain conditions: [ true, true, true, true, true ] 
+1533873135 INFO	 bc.validation isChainRootCorrectlyCalculated validation running 
+1533873135 INFO	 bc.validation isFieldLengthBounded validation running 
+1533873135 INFO	 bc.validation isMerkleRootCorrectlyCalculated validation running 
+1533873135 INFO	 engine.index submitting mined block to current multiverse 
+1533873135 INFO	 mining.officer petioning new mining work 
+1533873135 INFO	 mining.officer petioning new mining work 
+1533873135 INFO	 engine.index store block: 388 e34fe42b0b1c0c44d3e4cab206b6d4de4e70dd835df35d8c79d3f61a224cc7fb 
+1533873135 INFO	 engine.index multiverse coverage: 6 
+1533873135 INFO	 engine.index broadcasting block challenge e34fe42b0b1c0c44d3e4cab206b6d4de4e70dd835df35d8c79d3f61a224cc7fb -> considered next block in current multiverse 
+1533873135 INFO	 p2p.node announceblock <- event 
+1533873135 INFO	 p2p.discovery peers to write: 2 
+1533873135 INFO	 engine.index broadcasted mined block true 
+1533873135 INFO	 p2p.discovery peers to write: 2 
+1533873135 INFO	 p2p.node block announced! 
+1533873135 INFO	 persistence synchronized child headers: 5 
+1533873135 INFO	 engine.index latest block 388 has been updated 
+1533873135 INFO	 p2p.node peerDataHandler <- 0008W01 
+1533873135 INFO	 p2p.node candidate block 388 recieved 
+1533873135 INFO	 p2p.node peerDataHandler <- 0008W01 
+1533873135 INFO	 p2p.node candidate block 388 recieved 
+1533873135 INFO	 rover.helper unified block built from eth 0xabd0fc 
+1533873135 INFO	 mining.officer [] <- [] rovered eth block 6120169 0xabd0fc3589b8cb0c7c451f35c8b2b30eb12b4ee0250a0f234ae4f48f4f059ed8 
+1533873135 INFO	 mining.officer persisted block height: 388 
+1533873135 INFO	 mining.officer latestBlockHeadersHeights: { btc: 536033,
+  eth: 6120169,
+  lsk: 6734955,
+  neo: 2601839,
+  wav: 1120487 } 
+1533873135 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 388, btc ln: 536034, 536033 
+1533873135 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 388, eth ln: 6120169, 6120169 
+1533873135 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 388, lsk ln: 6734956, 6734955 
+1533873135 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 388, neo ln: 2601840, 2601839 
+1533873135 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 388, wav ln: 1120488, 1120487 
+1533873135 INFO	 mining.officer preparing new block 
+1533873135 INFO	 mining.officer worker <- calculated difficulty threshold 293935500216226 
+1533873135 INFO	 mining.officer mining cycle initiated 
+1533873135 INFO	 engine.index collectBlock handler: sent to miner: 28340 
+1533873136 INFO	 utils.time NTP offset resolved 
+1533873136 INFO	 rover.btc.controller peer count pool: 50 dp: 41, sp: 41, q: true, bh: 536033 
+1533873136 INFO	 mining.worker solution found: {
+  "distance": "296093623433105",
+  "nonce": "979571431",
+  "timestamp": 1533873136,
+  "difficulty": "293935500216226",
+  "iterations": 24177,
+  "timeDiff": 412
+} 
+1533873136 INFO	 mining.officer The calculated block difficulty was 293935500216226, actual mining difficulty was 293935500216226 
+1533873136 INFO	 bc.validation numberOfBlockchainsNeededMatchesChildBlock validation running 
+1533873136 INFO	 bc.validation ifMoreThanOneHeaderPerBlockchainAreTheyOrdered validation running 
+1533873136 INFO	 bc.validation ifMoreThanOneHeaderPerBlockchainAreTheyOrdered all chain conditions: [ true, true, true, true, true ] 
+1533873136 INFO	 bc.validation isChainRootCorrectlyCalculated validation running 
+1533873136 INFO	 bc.validation isFieldLengthBounded validation running 
+1533873136 INFO	 bc.validation isMerkleRootCorrectlyCalculated validation running 
+1533873136 INFO	 engine.index submitting mined block to current multiverse 
+1533873136 INFO	 mining.officer petioning new mining work 
+1533873136 INFO	 mining.officer petioning new mining work 
+1533873136 INFO	 engine.index store block: 389 b3fb640cdb62500dac64e875a1dce1a80b266cc63d53fc7287a7d69b411a2b1a 
+1533873136 INFO	 engine.index multiverse coverage: 7 
+1533873136 INFO	 engine.index broadcasting block challenge b3fb640cdb62500dac64e875a1dce1a80b266cc63d53fc7287a7d69b411a2b1a -> considered next block in current multiverse 
+1533873136 INFO	 p2p.node announceblock <- event 
+1533873136 INFO	 p2p.discovery peers to write: 2 
+1533873136 INFO	 engine.index broadcasted mined block true 
+1533873136 INFO	 p2p.discovery peers to write: 2 
+1533873136 INFO	 p2p.node block announced! 
+1533873136 INFO	 persistence synchronized child headers: 5 
+1533873136 INFO	 engine.index latest block 389 has been updated 
+1533873136 INFO	 p2p.node peerDataHandler <- 0008W01 
+1533873136 INFO	 p2p.node candidate block 389 recieved 
+1533873136 INFO	 p2p.node peerDataHandler <- 0008W01 
+1533873136 INFO	 p2p.node candidate block 389 recieved 
+1533873137 INFO	 p2p.node active waypoints:  2 
+1533873139 INFO	 rover.btc.controller peer count pool: 50 dp: 41, sp: 41, q: true, bh: 536033 
+1533873142 INFO	 rover.btc.controller peer count pool: 50 dp: 41, sp: 41, q: true, bh: 536033 
+1533873142 INFO	 p2p.node active waypoints:  2 
+1533873142 INFO	 rover.helper unified block built from lsk 29064578 
+1533873142 INFO	 mining.officer [] <- [] rovered lsk block 6734956 2906457885084412545 
+1533873142 INFO	 mining.officer persisted block height: 389 
+1533873142 INFO	 mining.officer latestBlockHeadersHeights: { btc: 536033,
+  eth: 6120169,
+  lsk: 6734956,
+  neo: 2601839,
+  wav: 1120487 } 
+1533873142 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 389, btc ln: 536034, 536033 
+1533873142 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 389, eth ln: 6120170, 6120169 
+1533873142 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 389, lsk ln: 6734956, 6734956 
+1533873142 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 389, neo ln: 2601840, 2601839 
+1533873142 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 389, wav ln: 1120488, 1120487 
+1533873142 INFO	 mining.officer preparing new block 
+1533873142 INFO	 rover.helper unified block built from eth 0x82af5a 
+1533873142 INFO	 mining.officer worker <- calculated difficulty threshold 294488010554978 
+1533873142 INFO	 mining.officer mining cycle initiated 
+1533873142 INFO	 engine.index collectBlock handler: sent to miner: 28343 
+1533873142 INFO	 mining.officer [] <- [] rovered eth block 6120170 0x82af5a947df6acb6a5d6a687f35879aeffcc6988fb5086b47251aa034bcc19fb 
+1533873142 INFO	 mining.officer persisted block height: 389 
+1533873142 INFO	 mining.officer latestBlockHeadersHeights: { btc: 536033,
+  eth: 6120170,
+  lsk: 6734956,
+  neo: 2601839,
+  wav: 1120487 } 
+1533873142 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 389, btc ln: 536034, 536033 
+1533873142 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 389, eth ln: 6120170, 6120170 
+1533873142 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 389, lsk ln: 6734956, 6734956 
+1533873142 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 389, neo ln: 2601840, 2601839 
+1533873142 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 389, wav ln: 1120488, 1120487 
+1533873142 INFO	 mining.officer preparing new block 
+1533873142 INFO	 mining.officer new rovered block -> accepted 
+1533873142 INFO	 mining.officer petioning new mining work 
+1533873142 INFO	 mining.officer worker <- calculated difficulty threshold 293935500216226 
+1533873142 INFO	 mining.officer mining cycle initiated 
+1533873142 INFO	 engine.index collectBlock handler: sent to miner: 28344 
+1533873142 INFO	 rover.helper unified block built from eth 0x7d5d66 
+1533873142 INFO	 mining.officer [] <- [] rovered eth block 6120170 0x7d5d665fefcfe0b5ae9c64fa67d3eaa9996272e4bcb6db31af61c0eb68acf3ad 
+1533873142 INFO	 mining.officer persisted block height: 389 
+1533873142 INFO	 mining.officer latestBlockHeadersHeights: { btc: 536033,
+  eth: 6120170,
+  lsk: 6734956,
+  neo: 2601839,
+  wav: 1120487 } 
+1533873142 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 389, btc ln: 536034, 536033 
+1533873142 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 389, eth ln: 6120170, 6120170 
+1533873142 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 389, lsk ln: 6734956, 6734956 
+1533873142 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 389, neo ln: 2601840, 2601839 
+1533873142 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 389, wav ln: 1120488, 1120487 
+1533873142 INFO	 mining.officer preparing new block 
+1533873142 INFO	 mining.officer new rovered block -> accepted 
+1533873142 INFO	 mining.officer petioning new mining work 
+1533873142 INFO	 mining.officer worker <- calculated difficulty threshold 293935500216226 
+1533873142 INFO	 mining.officer mining cycle initiated 
+1533873142 INFO	 engine.index collectBlock handler: sent to miner: 28345 
+1533873143 INFO	 utils.time NTP offset resolved 
+1533873145 INFO	 rover.btc.controller peer count pool: 50 dp: 41, sp: 41, q: true, bh: 536033 
+1533873147 INFO	 p2p.node active waypoints:  2 
+1533873147 INFO	 p2p.node peerDataHandler <- 0008W01 
+1533873147 INFO	 p2p.node candidate block 390 recieved 
+1533873147 INFO	 engine.index Received new block from peer 390 
+1533873147 INFO	 bc.validation numberOfBlockchainsNeededMatchesChildBlock validation running 
+1533873147 INFO	 bc.validation ifMoreThanOneHeaderPerBlockchainAreTheyOrdered validation running 
+1533873147 INFO	 bc.validation ifMoreThanOneHeaderPerBlockchainAreTheyOrdered all chain conditions: [ true, true, true, true, true ] 
+1533873147 INFO	 bc.validation isChainRootCorrectlyCalculated validation running 
+1533873147 INFO	 bc.validation isFieldLengthBounded validation running 
+1533873147 INFO	 bc.validation isMerkleRootCorrectlyCalculated validation running 
+1533873147 INFO	 engine.index purposed block peer 390 
+1533873147 INFO	 engine.index new block 968a160112a6902555491eb0d5bb7efad34a5adf6642e4e8746de5fd8946eef9 references previous Block b3fb640cdb62500dac64e875a1dce1a80b266cc63d53fc7287a7d69b411a2b1a for block b3fb640cdb62500dac64e875a1dce1a80b266cc63d53fc7287a7d69b411a2b1a 
+1533873147 INFO	 engine.index block 390 considered next block in current multiverse  
+1533873147 INFO	 mining.officer petioning new mining work 
+1533873147 INFO	 engine.index store block: 390 968a160112a6902555491eb0d5bb7efad34a5adf6642e4e8746de5fd8946eef9 
+1533873147 INFO	 p2p.node announceblock <- event 
+1533873147 INFO	 p2p.discovery peers to write: 2 
+1533873147 INFO	 p2p.discovery peers to write: 2 
+1533873147 INFO	 p2p.node block announced! 
+1533873147 INFO	 persistence synchronized child headers: 5 
+1533873147 INFO	 p2p.node peerDataHandler <- 0008W01 
+1533873147 INFO	 p2p.node candidate block 390 recieved 
+1533873148 INFO	 rover.btc.controller peer count pool: 50 dp: 41, sp: 41, q: true, bh: 536033 
+1533873151 INFO	 rover.helper unified block built from eth 0x41bde0 
+1533873151 INFO	 mining.officer [] <- [] rovered eth block 6120148 0x41bde0860517d3b52336baf36b8ae4eb3f324b55086362baae52c27eec44d4c8 
+1533873151 INFO	 mining.officer persisted block height: 390 
+1533873151 INFO	 mining.officer latestBlockHeadersHeights: { btc: 536033,
+  eth: 6120148,
+  lsk: 6734956,
+  neo: 2601840,
+  wav: 1120487 } 
+1533873151 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 390, btc ln: 536034, 536033 
+1533873151 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 390, eth ln: 6120171, 6120148 
+1533873151 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 390, lsk ln: 6734957, 6734956 
+1533873151 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 390, neo ln: 2601841, 2601840 
+1533873151 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 390, wav ln: 1120488, 1120487 
+1533873151 INFO	 mining.officer preparing new block 
+1533873151 INFO	 mining.officer worker <- calculated difficulty threshold 293934461662957 
+1533873151 INFO	 mining.officer mining cycle initiated 
+1533873151 INFO	 engine.index collectBlock handler: sent to miner: 28349 
+1533873151 INFO	 rover.btc.controller peer count pool: 50 dp: 41, sp: 41, q: true, bh: 536033 
+1533873151 INFO	 utils.time NTP offset resolved 
+1533873152 INFO	 rover.helper unified block built from eth 0xc799b9 
+1533873152 INFO	 mining.officer [] <- [] rovered eth block 6120171 0xc799b9d1f5ba7209286db100e0bd6c78ef693680cdcbba4a7db93913753ba8fa 
+1533873152 INFO	 mining.officer persisted block height: 390 
+1533873152 INFO	 mining.officer latestBlockHeadersHeights: { btc: 536033,
+  eth: 6120171,
+  lsk: 6734956,
+  neo: 2601840,
+  wav: 1120487 } 
+1533873152 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 390, btc ln: 536034, 536033 
+1533873152 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 390, eth ln: 6120171, 6120171 
+1533873152 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 390, lsk ln: 6734957, 6734956 
+1533873152 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 390, neo ln: 2601841, 2601840 
+1533873152 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 390, wav ln: 1120488, 1120487 
+1533873152 INFO	 mining.officer preparing new block 
+1533873152 INFO	 mining.officer new rovered block -> accepted 
+1533873152 INFO	 mining.officer petioning new mining work 
+1533873152 INFO	 mining.officer worker <- calculated difficulty threshold 293934461662957 
+1533873152 INFO	 mining.officer mining cycle initiated 
+1533873152 INFO	 engine.index collectBlock handler: sent to miner: 28350 
+1533873152 INFO	 p2p.node active waypoints:  2 
+1533873152 INFO	 utils.time NTP offset resolved 
+1533873154 INFO	 rover.btc.controller peer count pool: 50 dp: 41, sp: 41, q: true, bh: 536033 
+1533873154 INFO	 rover.helper unified block built from lsk 85614117 
+1533873154 INFO	 mining.officer [] <- [] rovered lsk block 6734957 8561411791306895571 
+1533873154 INFO	 mining.officer persisted block height: 390 
+1533873154 INFO	 mining.officer latestBlockHeadersHeights: { btc: 536033,
+  eth: 6120171,
+  lsk: 6734957,
+  neo: 2601840,
+  wav: 1120487 } 
+1533873154 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 390, btc ln: 536034, 536033 
+1533873154 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 390, eth ln: 6120171, 6120171 
+1533873154 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 390, lsk ln: 6734957, 6734957 
+1533873154 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 390, neo ln: 2601841, 2601840 
+1533873154 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 390, wav ln: 1120488, 1120487 
+1533873154 INFO	 mining.officer preparing new block 
+1533873154 INFO	 mining.officer new rovered block -> accepted 
+1533873154 INFO	 mining.officer petioning new mining work 
+1533873154 INFO	 mining.officer worker <- calculated difficulty threshold 293382989877474 
+1533873154 INFO	 mining.officer mining cycle initiated 
+1533873154 INFO	 engine.index collectBlock handler: sent to miner: 28352 
+1533873155 INFO	 utils.time NTP offset resolved 
+1533873155 INFO	 mining.worker solution found: {
+  "distance": "303714302430945",
+  "nonce": "800795680",
+  "timestamp": 1533873155,
+  "difficulty": "292831518091991",
+  "iterations": 453,
+  "timeDiff": 25
+} 
+1533873155 INFO	 mining.officer The calculated block difficulty was 293382989877474, actual mining difficulty was 292831518091991 
+1533873155 INFO	 bc.validation numberOfBlockchainsNeededMatchesChildBlock validation running 
+1533873155 INFO	 bc.validation ifMoreThanOneHeaderPerBlockchainAreTheyOrdered validation running 
+1533873155 INFO	 bc.validation ifMoreThanOneHeaderPerBlockchainAreTheyOrdered all chain conditions: [ true, true, true, true, true ] 
+1533873155 INFO	 bc.validation isChainRootCorrectlyCalculated validation running 
+1533873155 INFO	 bc.validation isFieldLengthBounded validation running 
+1533873155 INFO	 bc.validation isMerkleRootCorrectlyCalculated validation running 
+1533873155 INFO	 engine.index submitting mined block to current multiverse 
+1533873155 INFO	 mining.officer petioning new mining work 
+1533873155 INFO	 mining.officer petioning new mining work 
+1533873155 INFO	 engine.index store block: 391 96aa5cacc83d166f6ab664a77d4d3c80f868f179e42709aebefea377ff3faf6b 
+1533873155 INFO	 engine.index multiverse coverage: 7 
+1533873155 INFO	 engine.index broadcasting block challenge 96aa5cacc83d166f6ab664a77d4d3c80f868f179e42709aebefea377ff3faf6b -> considered next block in current multiverse 
+1533873155 INFO	 p2p.node announceblock <- event 
+1533873155 INFO	 p2p.discovery peers to write: 2 
+1533873155 INFO	 engine.index broadcasted mined block true 
+1533873155 INFO	 p2p.discovery peers to write: 2 
+1533873155 INFO	 p2p.node block announced! 
+1533873155 INFO	 persistence synchronized child headers: 5 
+1533873155 INFO	 engine.index latest block 391 has been updated 
+1533873155 INFO	 p2p.node peerDataHandler <- 0008W01 
+1533873155 INFO	 p2p.node candidate block 391 recieved 
+1533873155 INFO	 p2p.node peerDataHandler <- 0008W01 
+1533873155 INFO	 p2p.node candidate block 391 recieved 
+1533873157 INFO	 rover.btc.controller peer count pool: 50 dp: 41, sp: 41, q: true, bh: 536033 
+1533873157 INFO	 p2p.node active waypoints:  2 
+1533873157 INFO	 rover.helper unified block built from eth 0xecea82 
+1533873157 INFO	 mining.officer [] <- [] rovered eth block 6120172 0xecea82a03b9aed6b39516e20b16a7ef8c5716e2a2cca12e93e3979cfdd99477f 
+1533873157 INFO	 mining.officer persisted block height: 391 
+1533873157 INFO	 mining.officer latestBlockHeadersHeights: { btc: 536033,
+  eth: 6120172,
+  lsk: 6734957,
+  neo: 2601840,
+  wav: 1120487 } 
+1533873157 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 391, btc ln: 536034, 536033 
+1533873157 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 391, eth ln: 6120172, 6120172 
+1533873157 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 391, lsk ln: 6734958, 6734957 
+1533873157 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 391, neo ln: 2601840, 2601840 
+1533873157 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 391, wav ln: 1120488, 1120487 
+1533873157 INFO	 mining.officer preparing new block 
+1533873157 INFO	 mining.officer worker <- calculated difficulty threshold 293934461662957 
+1533873157 INFO	 mining.officer mining cycle initiated 
+1533873157 INFO	 engine.index collectBlock handler: sent to miner: 28361 
+1533873157 INFO	 p2p.node peerDataHandler <- 0008W01 
+1533873157 INFO	 p2p.node candidate block 392 recieved 
+1533873157 INFO	 engine.index Received new block from peer 392 
+1533873157 INFO	 bc.validation numberOfBlockchainsNeededMatchesChildBlock validation running 
+1533873157 INFO	 bc.validation ifMoreThanOneHeaderPerBlockchainAreTheyOrdered validation running 
+1533873157 INFO	 bc.validation ifMoreThanOneHeaderPerBlockchainAreTheyOrdered all chain conditions: [ true, true, true, true, true ] 
+1533873157 INFO	 bc.validation isChainRootCorrectlyCalculated validation running 
+1533873157 INFO	 bc.validation isFieldLengthBounded validation running 
+1533873157 INFO	 bc.validation isMerkleRootCorrectlyCalculated validation running 
+1533873157 INFO	 engine.index purposed block peer 392 
+1533873157 INFO	 engine.index new block a202f9e17935add54617840e714aae981806b1e57496ff8aa903eef353cdc4d1 references previous Block 96aa5cacc83d166f6ab664a77d4d3c80f868f179e42709aebefea377ff3faf6b for block 96aa5cacc83d166f6ab664a77d4d3c80f868f179e42709aebefea377ff3faf6b 
+1533873157 INFO	 engine.index block 392 considered next block in current multiverse  
+1533873157 INFO	 mining.officer petioning new mining work 
+1533873157 INFO	 engine.index store block: 392 a202f9e17935add54617840e714aae981806b1e57496ff8aa903eef353cdc4d1 
+1533873157 INFO	 p2p.node announceblock <- event 
+1533873157 INFO	 p2p.discovery peers to write: 2 
+1533873157 INFO	 p2p.discovery peers to write: 2 
+1533873157 INFO	 p2p.node block announced! 
+1533873157 INFO	 persistence synchronized child headers: 5 
+1533873157 INFO	 p2p.node peerDataHandler <- 0008W01 
+1533873157 INFO	 p2p.node candidate block 392 recieved 
+1533873157 INFO	 p2p.node peerDataHandler <- 0008W01 
+1533873157 INFO	 p2p.node candidate block 392 recieved 
+1533873160 INFO	 rover.btc.controller peer count pool: 50 dp: 41, sp: 41, q: true, bh: 536033 
+1533873162 INFO	 p2p.node active waypoints:  2 
+1533873163 INFO	 rover.btc.controller peer count pool: 50 dp: 41, sp: 41, q: true, bh: 536033 
+1533873165 INFO	 rover.helper unified block built from eth 0x9574bc 
+1533873165 INFO	 mining.officer [] <- [] rovered eth block 6120151 0x9574bc2dc81dbca664d8b08cb6613446b5c665c74a4ffc8188d220c6b0a8c2ec 
+1533873165 INFO	 mining.officer persisted block height: 392 
+1533873165 INFO	 mining.officer latestBlockHeadersHeights: { btc: 536033,
+  eth: 6120151,
+  lsk: 6734957,
+  neo: 2601840,
+  wav: 1120487 } 
+1533873165 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 392, btc ln: 536034, 536033 
+1533873165 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 392, eth ln: 6120173, 6120151 
+1533873165 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 392, lsk ln: 6734958, 6734957 
+1533873165 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 392, neo ln: 2601841, 2601840 
+1533873165 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 392, wav ln: 1120488, 1120487 
+1533873165 INFO	 mining.officer preparing new block 
+1533873165 INFO	 mining.officer worker <- calculated difficulty threshold 294486970049541 
+1533873165 INFO	 mining.officer mining cycle initiated 
+1533873165 INFO	 engine.index collectBlock handler: sent to miner: 28364 
+1533873165 INFO	 utils.time NTP offset resolved 
+1533873165 INFO	 rover.helper unified block built from eth 0x3f4c56 
+1533873165 INFO	 mining.officer [] <- [] rovered eth block 6120173 0x3f4c564148db14bf9ddd1e22ca65845a64904b57df8362bb944f7fe432128967 
+1533873165 INFO	 mining.officer persisted block height: 392 
+1533873165 INFO	 mining.officer latestBlockHeadersHeights: { btc: 536033,
+  eth: 6120173,
+  lsk: 6734957,
+  neo: 2601840,
+  wav: 1120487 } 
+1533873165 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 392, btc ln: 536034, 536033 
+1533873165 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 392, eth ln: 6120173, 6120173 
+1533873165 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 392, lsk ln: 6734958, 6734957 
+1533873165 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 392, neo ln: 2601841, 2601840 
+1533873165 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 392, wav ln: 1120488, 1120487 
+1533873165 INFO	 mining.officer preparing new block 
+1533873165 INFO	 mining.officer new rovered block -> accepted 
+1533873165 INFO	 mining.officer petioning new mining work 
+1533873165 INFO	 mining.officer worker <- calculated difficulty threshold 293934461662957 
+1533873165 INFO	 mining.officer mining cycle initiated 
+1533873165 INFO	 engine.index collectBlock handler: sent to miner: 28366 
+1533873165 INFO	 utils.time NTP offset resolved 
+1533873166 INFO	 rover.btc.controller peer count pool: 50 dp: 50, sp: 50, q: true, bh: 536033 
+1533873166 INFO	 mining.worker solution found: {
+  "distance": "303310020640437",
+  "nonce": "930357615",
+  "timestamp": 1533873166,
+  "difficulty": "293934461662957",
+  "iterations": 67475,
+  "timeDiff": 915
+} 
+1533873166 INFO	 mining.officer The calculated block difficulty was 293934461662957, actual mining difficulty was 293934461662957 
+1533873166 INFO	 bc.validation numberOfBlockchainsNeededMatchesChildBlock validation running 
+1533873166 INFO	 bc.validation ifMoreThanOneHeaderPerBlockchainAreTheyOrdered validation running 
+1533873166 INFO	 bc.validation ifMoreThanOneHeaderPerBlockchainAreTheyOrdered all chain conditions: [ true, true, true, true, true ] 
+1533873166 INFO	 bc.validation isChainRootCorrectlyCalculated validation running 
+1533873166 INFO	 bc.validation isFieldLengthBounded validation running 
+1533873166 INFO	 bc.validation isMerkleRootCorrectlyCalculated validation running 
+1533873166 INFO	 engine.index submitting mined block to current multiverse 
+1533873166 INFO	 mining.officer petioning new mining work 
+1533873166 INFO	 mining.officer petioning new mining work 
+1533873166 INFO	 engine.index store block: 393 53bd18bc314962d704bf2f5838b7a936f519cb73984e7bf32c5bf733f2e773ce 
+1533873166 INFO	 engine.index multiverse coverage: 7 
+1533873166 INFO	 engine.index broadcasting block challenge 53bd18bc314962d704bf2f5838b7a936f519cb73984e7bf32c5bf733f2e773ce -> considered next block in current multiverse 
+1533873166 INFO	 p2p.node announceblock <- event 
+1533873166 INFO	 p2p.discovery peers to write: 2 
+1533873166 INFO	 engine.index broadcasted mined block true 
+1533873166 INFO	 p2p.discovery peers to write: 2 
+1533873166 INFO	 p2p.node block announced! 
+1533873166 INFO	 persistence synchronized child headers: 5 
+1533873166 INFO	 engine.index latest block 393 has been updated 
+1533873166 INFO	 p2p.node peerDataHandler <- 0008W01 
+1533873166 INFO	 p2p.node candidate block 393 recieved 
+1533873166 INFO	 p2p.node peerDataHandler <- 0008W01 
+1533873166 INFO	 p2p.node candidate block 393 recieved 
+1533873167 INFO	 p2p.node active waypoints:  2 
+1533873169 INFO	 rover.helper unified block built from eth 0xaf1488 
+1533873169 INFO	 mining.officer [] <- [] rovered eth block 6120152 0xaf1488973b2cfa55c3f9299a24f803af45e1d55dff08e026eda109448fd7e2e4 
+1533873169 INFO	 mining.officer persisted block height: 393 
+1533873169 INFO	 mining.officer latestBlockHeadersHeights: { btc: 536033,
+  eth: 6120152,
+  lsk: 6734957,
+  neo: 2601840,
+  wav: 1120487 } 
+1533873169 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 393, btc ln: 536034, 536033 
+1533873169 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 393, eth ln: 6120174, 6120152 
+1533873169 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 393, lsk ln: 6734958, 6734957 
+1533873169 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 393, neo ln: 2601841, 2601840 
+1533873169 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 393, wav ln: 1120488, 1120487 
+1533873169 INFO	 mining.officer preparing new block 
+1533873169 INFO	 mining.officer worker <- calculated difficulty threshold 294486970049541 
+1533873169 INFO	 mining.officer mining cycle initiated 
+1533873169 INFO	 engine.index collectBlock handler: sent to miner: 28368 
+1533873169 INFO	 rover.btc.controller peer count pool: 50 dp: 50, sp: 50, q: true, bh: 536033 
+1533873169 INFO	 utils.time NTP offset resolved 
+1533873169 INFO	 mining.worker solution found: {
+  "distance": "297250919032712",
+  "nonce": "22715603",
+  "timestamp": 1533873169,
+  "difficulty": "294486970049541",
+  "iterations": 5573,
+  "timeDiff": 151
+} 
+1533873169 INFO	 mining.officer The calculated block difficulty was 294486970049541, actual mining difficulty was 294486970049541 
+1533873169 INFO	 bc.validation numberOfBlockchainsNeededMatchesChildBlock validation running 
+1533873169 INFO	 bc.validation ifMoreThanOneHeaderPerBlockchainAreTheyOrdered validation running 
+1533873169 INFO	 bc.validation ifMoreThanOneHeaderPerBlockchainAreTheyOrdered all chain conditions: [ true, true, true, true, true ] 
+1533873169 INFO	 bc.validation isChainRootCorrectlyCalculated validation running 
+1533873169 INFO	 bc.validation isFieldLengthBounded validation running 
+1533873169 INFO	 bc.validation isMerkleRootCorrectlyCalculated validation running 
+1533873169 INFO	 engine.index submitting mined block to current multiverse 
+1533873169 INFO	 mining.officer petioning new mining work 
+1533873169 INFO	 mining.officer petioning new mining work 
+1533873169 INFO	 engine.index store block: 394 9d31a023c747dbde333e736309be73b477e3e002910b150df25663e464739b6b 
+1533873169 INFO	 engine.index multiverse coverage: 7 
+1533873169 INFO	 engine.index broadcasting block challenge 9d31a023c747dbde333e736309be73b477e3e002910b150df25663e464739b6b -> considered next block in current multiverse 
+1533873169 INFO	 p2p.node announceblock <- event 
+1533873169 INFO	 p2p.discovery peers to write: 2 
+1533873169 INFO	 engine.index broadcasted mined block true 
+1533873169 INFO	 p2p.discovery peers to write: 2 
+1533873169 INFO	 p2p.node block announced! 
+1533873169 INFO	 persistence synchronized child headers: 5 
+1533873169 INFO	 engine.index latest block 394 has been updated 
+1533873169 INFO	 rover.helper unified block built from lsk 10796070 
+1533873169 INFO	 mining.officer [] <- [] rovered lsk block 6734958 10796070214059176678 
+1533873169 INFO	 mining.officer persisted block height: 394 
+1533873169 INFO	 mining.officer latestBlockHeadersHeights: { btc: 536033,
+  eth: 6120173,
+  lsk: 6734958,
+  neo: 2601840,
+  wav: 1120487 } 
+1533873169 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 394, btc ln: 536034, 536033 
+1533873169 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 394, eth ln: 6120174, 6120173 
+1533873169 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 394, lsk ln: 6734958, 6734958 
+1533873169 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 394, neo ln: 2601841, 2601840 
+1533873169 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 394, wav ln: 1120488, 1120487 
+1533873169 INFO	 mining.officer preparing new block 
+1533873169 INFO	 mining.officer worker <- calculated difficulty threshold 295040516985724 
+1533873169 INFO	 mining.officer mining cycle initiated 
+1533873169 INFO	 engine.index collectBlock handler: sent to miner: 28369 
+1533873169 INFO	 p2p.node peerDataHandler <- 0008W01 
+1533873169 INFO	 p2p.node candidate block 394 recieved 
+1533873169 INFO	 p2p.node peerDataHandler <- 0008W01 
+1533873169 INFO	 p2p.node candidate block 394 recieved 
+1533873169 INFO	 p2p.node peerDataHandler <- 0008W01 
+1533873169 INFO	 p2p.node candidate block 394 recieved 
+1533873169 INFO	 p2p.node peerDataHandler <- 0008W01 
+1533873169 INFO	 p2p.node candidate block 394 recieved 
+1533873169 INFO	 utils.time NTP offset resolved 
+1533873170 INFO	 p2p.node peerDataHandler <- 0008W01 
+1533873170 INFO	 p2p.node candidate block 395 recieved 
+1533873170 INFO	 engine.index Received new block from peer 395 
+1533873170 INFO	 bc.validation numberOfBlockchainsNeededMatchesChildBlock validation running 
+1533873170 INFO	 bc.validation ifMoreThanOneHeaderPerBlockchainAreTheyOrdered validation running 
+1533873170 INFO	 bc.validation ifMoreThanOneHeaderPerBlockchainAreTheyOrdered all chain conditions: [ true, true, true, true, true ] 
+1533873170 INFO	 bc.validation isChainRootCorrectlyCalculated validation running 
+1533873170 INFO	 bc.validation isFieldLengthBounded validation running 
+1533873170 INFO	 bc.validation isMerkleRootCorrectlyCalculated validation running 
+1533873170 INFO	 engine.index purposed block peer 395 
+1533873170 INFO	 engine.index new block 400648d06acd82f517557eec62ddc3582a54c8c3bac3d3c7a2cfc6701e95c0d1 references previous Block 9d31a023c747dbde333e736309be73b477e3e002910b150df25663e464739b6b for block 9d31a023c747dbde333e736309be73b477e3e002910b150df25663e464739b6b 
+1533873170 INFO	 engine.index block 395 considered next block in current multiverse  
+1533873170 INFO	 mining.officer petioning new mining work 
+1533873170 INFO	 engine.index store block: 395 400648d06acd82f517557eec62ddc3582a54c8c3bac3d3c7a2cfc6701e95c0d1 
+1533873170 INFO	 p2p.node announceblock <- event 
+1533873170 INFO	 p2p.discovery peers to write: 2 
+1533873170 INFO	 p2p.discovery peers to write: 2 
+1533873170 INFO	 p2p.node block announced! 
+1533873170 INFO	 persistence synchronized child headers: 5 
+1533873170 INFO	 p2p.node peerDataHandler <- 0008W01 
+1533873170 INFO	 p2p.node candidate block 395 recieved 
+1533873171 INFO	 rover.helper unified block built from eth 0xf39539 
+1533873171 INFO	 mining.officer [] <- [] rovered eth block 6120174 0xf39539f232d1d45ce083a10b39baf504f1479a90d99ae5dc9341a81e85c7c877 
+1533873171 INFO	 mining.officer persisted block height: 395 
+1533873171 INFO	 mining.officer latestBlockHeadersHeights: { btc: 536033,
+  eth: 6120174,
+  lsk: 6734958,
+  neo: 2601841,
+  wav: 1120488 } 
+1533873171 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 395, btc ln: 536034, 536033 
+1533873171 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 395, eth ln: 6120175, 6120174 
+1533873171 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 395, lsk ln: 6734959, 6734958 
+1533873171 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 395, neo ln: 2601842, 2601841 
+1533873171 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 395, wav ln: 1120489, 1120488 
+1533873171 INFO	 mining.officer preparing new block 
+1533873171 INFO	 mining.officer worker <- calculated difficulty threshold 295595104423667 
+1533873171 INFO	 mining.officer mining cycle initiated 
+1533873171 INFO	 engine.index collectBlock handler: sent to miner: 28370 
+1533873171 INFO	 utils.time NTP offset resolved 
+1533873172 INFO	 rover.btc.controller peer count pool: 50 dp: 50, sp: 50, q: true, bh: 536033 
+1533873172 INFO	 p2p.node active waypoints:  2 
+1533873173 INFO	 rover.helper unified block built from eth 0x64e598 
+1533873173 INFO	 mining.officer [] <- [] rovered eth block 6120153 0x64e5982c9b42a2bb2f60127cd0966608949285f4572390ffd42f366f7f4acd1e 
+1533873173 INFO	 mining.officer persisted block height: 395 
+1533873173 INFO	 mining.officer latestBlockHeadersHeights: { btc: 536033,
+  eth: 6120153,
+  lsk: 6734958,
+  neo: 2601841,
+  wav: 1120488 } 
+1533873173 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 395, btc ln: 536034, 536033 
+1533873173 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 395, eth ln: 6120175, 6120153 
+1533873173 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 395, lsk ln: 6734959, 6734958 
+1533873173 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 395, neo ln: 2601842, 2601841 
+1533873173 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 395, wav ln: 1120489, 1120488 
+1533873173 INFO	 mining.officer preparing new block 
+1533873173 INFO	 mining.officer new rovered block -> accepted 
+1533873173 INFO	 mining.officer petioning new mining work 
+1533873173 INFO	 mining.officer worker <- calculated difficulty threshold 295595104423667 
+1533873173 INFO	 mining.officer mining cycle initiated 
+1533873173 INFO	 engine.index collectBlock handler: sent to miner: 28372 
+1533873174 INFO	 utils.time NTP offset resolved 
+1533873174 INFO	 p2p.node peerDataHandler <- 0008W01 
+1533873174 INFO	 p2p.node candidate block 396 recieved 
+1533873174 INFO	 engine.index Received new block from peer 396 
+1533873174 INFO	 bc.validation numberOfBlockchainsNeededMatchesChildBlock validation running 
+1533873174 INFO	 bc.validation ifMoreThanOneHeaderPerBlockchainAreTheyOrdered validation running 
+1533873174 INFO	 bc.validation ifMoreThanOneHeaderPerBlockchainAreTheyOrdered all chain conditions: [ true, true, true, true, true ] 
+1533873174 INFO	 bc.validation isChainRootCorrectlyCalculated validation running 
+1533873174 INFO	 bc.validation isFieldLengthBounded validation running 
+1533873174 INFO	 bc.validation isMerkleRootCorrectlyCalculated validation running 
+1533873174 INFO	 engine.index purposed block peer 396 
+1533873174 INFO	 engine.index new block 6d5192a817773df8a6175aa78a17d8e465367b9a35cfb427e3c7291e92655e98 references previous Block 400648d06acd82f517557eec62ddc3582a54c8c3bac3d3c7a2cfc6701e95c0d1 for block 400648d06acd82f517557eec62ddc3582a54c8c3bac3d3c7a2cfc6701e95c0d1 
+1533873174 INFO	 engine.index block 396 considered next block in current multiverse  
+1533873174 INFO	 mining.officer petioning new mining work 
+1533873174 INFO	 engine.index store block: 396 6d5192a817773df8a6175aa78a17d8e465367b9a35cfb427e3c7291e92655e98 
+1533873174 INFO	 p2p.node announceblock <- event 
+1533873174 INFO	 p2p.discovery peers to write: 2 
+1533873174 INFO	 p2p.discovery peers to write: 2 
+1533873174 INFO	 p2p.node block announced! 
+1533873174 INFO	 p2p.node peerDataHandler <- 0008W01 
+1533873174 INFO	 p2p.node candidate block 396 recieved 
+1533873174 INFO	 persistence synchronized child headers: 5 
+1533873174 INFO	 p2p.node peerDataHandler <- 0008W01 
+1533873174 INFO	 p2p.node candidate block 396 recieved 
+1533873175 INFO	 rover.btc.controller peer count pool: 50 dp: 50, sp: 50, q: true, bh: 536033 
+1533873176 INFO	 rover.helper unified block built from lsk 92588543 
+1533873176 INFO	 mining.officer [] <- [] rovered lsk block 6734959 9258854394959979405 
+1533873176 INFO	 mining.officer persisted block height: 396 
+1533873176 INFO	 mining.officer latestBlockHeadersHeights: { btc: 536033,
+  eth: 6120174,
+  lsk: 6734959,
+  neo: 2601841,
+  wav: 1120488 } 
+1533873176 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 396, btc ln: 536034, 536033 
+1533873176 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 396, eth ln: 6120175, 6120174 
+1533873176 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 396, lsk ln: 6734960, 6734959 
+1533873176 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 396, neo ln: 2601842, 2601841 
+1533873176 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 396, wav ln: 1120489, 1120488 
+1533873176 INFO	 mining.officer preparing new block 
+1533873176 INFO	 mining.officer worker <- calculated difficulty threshold 296150734319200 
+1533873176 INFO	 mining.officer mining cycle initiated 
+1533873176 INFO	 engine.index collectBlock handler: sent to miner: 28374 
+1533873177 INFO	 rover.helper unified block built from eth 0x18dc15 
+1533873177 INFO	 mining.officer [] <- [] rovered eth block 6120154 0x18dc15db290ede905ce11048e672352d78255df7aacb073f4197e05ef3ba2ebe 
+1533873177 INFO	 mining.officer persisted block height: 396 
+1533873177 INFO	 mining.officer latestBlockHeadersHeights: { btc: 536033,
+  eth: 6120154,
+  lsk: 6734959,
+  neo: 2601841,
+  wav: 1120488 } 
+1533873177 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 396, btc ln: 536034, 536033 
+1533873177 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 396, eth ln: 6120175, 6120154 
+1533873177 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 396, lsk ln: 6734960, 6734959 
+1533873177 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 396, neo ln: 2601842, 2601841 
+1533873177 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 396, wav ln: 1120489, 1120488 
+1533873177 INFO	 mining.officer preparing new block 
+1533873177 INFO	 mining.officer new rovered block -> accepted 
+1533873177 INFO	 mining.officer petioning new mining work 
+1533873177 INFO	 mining.officer worker <- calculated difficulty threshold 296150734319200 
+1533873177 INFO	 mining.officer mining cycle initiated 
+1533873177 INFO	 engine.index collectBlock handler: sent to miner: 28375 
+1533873177 INFO	 p2p.node active waypoints:  2 
+1533873177 INFO	 utils.time NTP offset resolved 
+1533873178 INFO	 rover.btc.controller peer count pool: 50 dp: 50, sp: 50, q: true, bh: 536033 
+1533873180 INFO	 rover.helper unified block built from eth 0x6c421f 
+1533873180 INFO	 mining.officer [] <- [] rovered eth block 6120155 0x6c421f64ee1c01387910170533e3b2aea4e66d7cafd2b4ba3d31a472dc0f457d 
+1533873180 INFO	 mining.officer persisted block height: 396 
+1533873180 INFO	 mining.officer latestBlockHeadersHeights: { btc: 536033,
+  eth: 6120155,
+  lsk: 6734959,
+  neo: 2601841,
+  wav: 1120488 } 
+1533873180 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 396, btc ln: 536034, 536033 
+1533873180 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 396, eth ln: 6120175, 6120155 
+1533873180 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 396, lsk ln: 6734960, 6734959 
+1533873180 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 396, neo ln: 2601842, 2601841 
+1533873180 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 396, wav ln: 1120489, 1120488 
+1533873180 INFO	 mining.officer preparing new block 
+1533873180 INFO	 mining.officer new rovered block -> accepted 
+1533873180 INFO	 mining.officer petioning new mining work 
+1533873180 INFO	 mining.officer worker <- calculated difficulty threshold 295595104423667 
+1533873180 INFO	 mining.officer mining cycle initiated 
+1533873180 INFO	 engine.index collectBlock handler: sent to miner: 28377 
+1533873180 INFO	 utils.time NTP offset resolved 
+1533873181 INFO	 rover.btc.controller peer count pool: 50 dp: 50, sp: 50, q: true, bh: 536033 
+1533873181 INFO	 rover.helper unified block built from wav 5Kg8Z9JR 
+1533873181 INFO	 mining.officer [] <- [] rovered wav block 1120487 5Kg8Z9JRYFgbsM9NGTMoWcXJmR2RH7xswJjf2uNoUQ5BAxjJ8Ebu7Q6tCr7u8aAF8feH3f1m9aoALucmSeCVB3uE 
+1533873181 INFO	 mining.officer persisted block height: 396 
+1533873181 INFO	 mining.officer latestBlockHeadersHeights: { btc: 536033,
+  eth: 6120155,
+  lsk: 6734959,
+  neo: 2601841,
+  wav: 1120487 } 
+1533873181 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 396, btc ln: 536034, 536033 
+1533873181 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 396, eth ln: 6120175, 6120155 
+1533873181 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 396, lsk ln: 6734960, 6734959 
+1533873181 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 396, neo ln: 2601842, 2601841 
+1533873181 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 396, wav ln: 1120489, 1120487 
+1533873181 INFO	 mining.officer preparing new block 
+1533873181 INFO	 mining.officer new rovered block -> accepted 
+1533873181 INFO	 mining.officer petioning new mining work 
+1533873181 INFO	 mining.officer worker <- calculated difficulty threshold 295595104423667 
+1533873181 INFO	 mining.officer mining cycle initiated 
+1533873181 INFO	 engine.index collectBlock handler: sent to miner: 28379 
+1533873181 INFO	 utils.time NTP offset resolved 
+1533873182 INFO	 p2p.node active waypoints:  2 
+1533873182 INFO	 rover.helper unified block built from lsk 10355214 
+1533873182 INFO	 mining.officer [] <- [] rovered lsk block 6734960 10355214512328198020 
+1533873182 INFO	 mining.officer persisted block height: 396 
+1533873182 INFO	 mining.officer latestBlockHeadersHeights: { btc: 536033,
+  eth: 6120155,
+  lsk: 6734960,
+  neo: 2601841,
+  wav: 1120487 } 
+1533873182 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 396, btc ln: 536034, 536033 
+1533873182 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 396, eth ln: 6120175, 6120155 
+1533873182 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 396, lsk ln: 6734960, 6734960 
+1533873182 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 396, neo ln: 2601842, 2601841 
+1533873182 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 396, wav ln: 1120489, 1120487 
+1533873182 INFO	 mining.officer preparing new block 
+1533873182 INFO	 mining.officer new rovered block -> accepted 
+1533873182 INFO	 mining.officer petioning new mining work 
+1533873182 INFO	 mining.officer worker <- calculated difficulty threshold 295039474528134 
+1533873182 INFO	 mining.officer mining cycle initiated 
+1533873182 INFO	 engine.index collectBlock handler: sent to miner: 28380 
+1533873182 INFO	 utils.time NTP offset resolved 
+1533873184 INFO	 rover.btc.controller peer count pool: 50 dp: 50, sp: 50, q: true, bh: 536033 
+1533873184 INFO	 rover.helper unified block built from eth 0xf6512d 
+1533873184 INFO	 mining.officer [] <- [] rovered eth block 6120156 0xf6512d20e16d2410a951a0fef4343331046773ab636780c0e7b390e6b2530ab2 
+1533873184 INFO	 mining.officer persisted block height: 396 
+1533873184 INFO	 mining.officer latestBlockHeadersHeights: { btc: 536033,
+  eth: 6120156,
+  lsk: 6734960,
+  neo: 2601841,
+  wav: 1120487 } 
+1533873184 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 396, btc ln: 536034, 536033 
+1533873184 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 396, eth ln: 6120175, 6120156 
+1533873184 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 396, lsk ln: 6734960, 6734960 
+1533873184 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 396, neo ln: 2601842, 2601841 
+1533873184 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 396, wav ln: 1120489, 1120487 
+1533873184 INFO	 mining.officer preparing new block 
+1533873184 INFO	 mining.officer new rovered block -> accepted 
+1533873184 INFO	 mining.officer petioning new mining work 
+1533873184 INFO	 mining.officer worker <- calculated difficulty threshold 294483844632601 
+1533873184 INFO	 mining.officer mining cycle initiated 
+1533873184 INFO	 engine.index collectBlock handler: sent to miner: 28382 
+1533873184 INFO	 utils.time NTP offset resolved 
+1533873185 INFO	 p2p.node peerDataHandler <- 0008W01 
+1533873185 INFO	 p2p.node candidate block 397 recieved 
+1533873185 INFO	 engine.index Received new block from peer 397 
+1533873185 INFO	 bc.validation numberOfBlockchainsNeededMatchesChildBlock validation running 
+1533873185 INFO	 bc.validation ifMoreThanOneHeaderPerBlockchainAreTheyOrdered validation running 
+1533873185 INFO	 bc.validation ifMoreThanOneHeaderPerBlockchainAreTheyOrdered all chain conditions: [ true, true, true, true, true ] 
+1533873185 INFO	 bc.validation isChainRootCorrectlyCalculated validation running 
+1533873185 INFO	 bc.validation isFieldLengthBounded validation running 
+1533873185 INFO	 bc.validation isMerkleRootCorrectlyCalculated validation running 
+1533873185 INFO	 engine.index purposed block peer 397 
+1533873185 INFO	 engine.index new block 8ae6d7f2cfcd99d08d883e4465dc72446a3272806f8385b564710182afde7596 references previous Block 6d5192a817773df8a6175aa78a17d8e465367b9a35cfb427e3c7291e92655e98 for block 6d5192a817773df8a6175aa78a17d8e465367b9a35cfb427e3c7291e92655e98 
+1533873185 INFO	 engine.index block 397 considered next block in current multiverse  
+1533873185 INFO	 mining.officer petioning new mining work 
+1533873185 INFO	 engine.index store block: 397 8ae6d7f2cfcd99d08d883e4465dc72446a3272806f8385b564710182afde7596 
+1533873185 INFO	 p2p.node announceblock <- event 
+1533873185 INFO	 p2p.discovery peers to write: 2 
+1533873185 INFO	 p2p.discovery peers to write: 2 
+1533873185 INFO	 p2p.node block announced! 
+1533873185 INFO	 persistence synchronized child headers: 5 
+1533873185 INFO	 p2p.node peerDataHandler <- 0008W01 
+1533873185 INFO	 p2p.node candidate block 397 recieved 
+1533873186 INFO	 rover.helper unified block built from eth 0xaac845 
+1533873186 INFO	 mining.officer [] <- [] rovered eth block 6120157 0xaac845bdecf649a4e1769f4964db3c54888677d39f9de54e07b1ac4604a67f1c 
+1533873186 INFO	 mining.officer persisted block height: 397 
+1533873186 INFO	 mining.officer latestBlockHeadersHeights: { btc: 536033,
+  eth: 6120157,
+  lsk: 6734960,
+  neo: 2601842,
+  wav: 1120488 } 
+1533873186 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 397, btc ln: 536034, 536033 
+1533873186 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 397, eth ln: 6120175, 6120157 
+1533873186 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 397, lsk ln: 6734961, 6734960 
+1533873186 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 397, neo ln: 2601843, 2601842 
+1533873186 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 397, wav ln: 1120489, 1120488 
+1533873186 INFO	 mining.officer preparing new block 
+1533873186 INFO	 mining.officer worker <- calculated difficulty threshold 295594060006570 
+1533873186 INFO	 mining.officer mining cycle initiated 
+1533873186 INFO	 engine.index collectBlock handler: sent to miner: 28385 
+1533873187 INFO	 utils.time NTP offset resolved 
+1533873187 INFO	 rover.btc.controller peer count pool: 50 dp: 50, sp: 50, q: true, bh: 536033 
+1533873187 INFO	 p2p.node active waypoints:  2 
+1533873188 INFO	 rover.helper unified block built from eth 0x685d43 
+1533873188 INFO	 mining.officer [] <- [] rovered eth block 6120146 0x685d4318b0add3161ed75e1370d94bf4ecd690ef5529bb85fb147d52cd77d528 
+1533873188 INFO	 mining.officer persisted block height: 397 
+1533873188 INFO	 mining.officer latestBlockHeadersHeights: { btc: 536033,
+  eth: 6120146,
+  lsk: 6734960,
+  neo: 2601842,
+  wav: 1120488 } 
+1533873188 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 397, btc ln: 536034, 536033 
+1533873188 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 397, eth ln: 6120175, 6120146 
+1533873188 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 397, lsk ln: 6734961, 6734960 
+1533873188 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 397, neo ln: 2601843, 2601842 
+1533873188 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 397, wav ln: 1120489, 1120488 
+1533873188 INFO	 mining.officer preparing new block 
+1533873188 INFO	 mining.officer new rovered block -> accepted 
+1533873188 INFO	 mining.officer petioning new mining work 
+1533873188 INFO	 mining.officer worker <- calculated difficulty threshold 295594060006570 
+1533873188 INFO	 mining.officer mining cycle initiated 
+1533873188 INFO	 engine.index collectBlock handler: sent to miner: 28386 
+1533873189 INFO	 utils.time NTP offset resolved 
+1533873190 INFO	 rover.btc.controller peer count pool: 50 dp: 50, sp: 50, q: true, bh: 536033 
+1533873192 INFO	 p2p.node active waypoints:  2 
+1533873192 INFO	 rover.helper unified block built from lsk 29614277 
+1533873192 INFO	 mining.officer [] <- [] rovered lsk block 6734961 2961427783006675999 
+1533873192 INFO	 mining.officer persisted block height: 397 
+1533873192 INFO	 mining.officer latestBlockHeadersHeights: { btc: 536033,
+  eth: 6120146,
+  lsk: 6734961,
+  neo: 2601842,
+  wav: 1120488 } 
+1533873192 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 397, btc ln: 536034, 536033 
+1533873192 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 397, eth ln: 6120175, 6120146 
+1533873192 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 397, lsk ln: 6734961, 6734961 
+1533873192 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 397, neo ln: 2601843, 2601842 
+1533873192 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 397, wav ln: 1120489, 1120488 
+1533873192 INFO	 mining.officer preparing new block 
+1533873192 INFO	 mining.officer new rovered block -> accepted 
+1533873192 INFO	 mining.officer petioning new mining work 
+1533873192 INFO	 mining.officer worker <- calculated difficulty threshold 295039474528134 
+1533873192 INFO	 mining.officer mining cycle initiated 
+1533873192 INFO	 engine.index collectBlock handler: sent to miner: 28389 
+1533873192 INFO	 utils.time NTP offset resolved 
+1533873193 INFO	 rover.btc.controller peer count pool: 50 dp: 50, sp: 50, q: true, bh: 536033 
+1533873193 INFO	 rover.helper unified block built from wav 4zPLWwMA 
+1533873194 INFO	 mining.officer [] <- [] rovered wav block 1120488 4zPLWwMA6AWxzJZvExFmtKMCA5BLS2qJf3cbJf6mZyjw3YLGzVtwVQZ2GMviMzgY6zNwyYVCKwBM3xo79LGNn1Tq 
+1533873194 INFO	 mining.officer persisted block height: 397 
+1533873194 INFO	 mining.officer latestBlockHeadersHeights: { btc: 536033,
+  eth: 6120146,
+  lsk: 6734961,
+  neo: 2601842,
+  wav: 1120488 } 
+1533873194 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 397, btc ln: 536034, 536033 
+1533873194 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 397, eth ln: 6120175, 6120146 
+1533873194 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 397, lsk ln: 6734961, 6734961 
+1533873194 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 397, neo ln: 2601843, 2601842 
+1533873194 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 397, wav ln: 1120489, 1120488 
+1533873194 INFO	 mining.officer preparing new block 
+1533873194 INFO	 mining.officer new rovered block -> accepted 
+1533873194 INFO	 mining.officer petioning new mining work 
+1533873194 INFO	 mining.officer worker <- calculated difficulty threshold 294484889049698 
+1533873194 INFO	 mining.officer mining cycle initiated 
+1533873194 INFO	 engine.index collectBlock handler: sent to miner: 28390 
+1533873194 INFO	 utils.time NTP offset resolved 
+1533873195 INFO	 rover.helper unified block built from wav 3wgSFapK 
+1533873195 INFO	 p2p.node peerDataHandler <- 0008W01 
+1533873195 INFO	 p2p.node candidate block 398 recieved 
+1533873195 INFO	 engine.index Received new block from peer 398 
+1533873195 INFO	 bc.validation numberOfBlockchainsNeededMatchesChildBlock validation running 
+1533873195 INFO	 bc.validation ifMoreThanOneHeaderPerBlockchainAreTheyOrdered validation running 
+1533873195 INFO	 bc.validation ifMoreThanOneHeaderPerBlockchainAreTheyOrdered all chain conditions: [ true, true, true, true, true ] 
+1533873195 INFO	 bc.validation isChainRootCorrectlyCalculated validation running 
+1533873195 INFO	 bc.validation isFieldLengthBounded validation running 
+1533873195 INFO	 bc.validation isMerkleRootCorrectlyCalculated validation running 
+1533873195 INFO	 engine.index purposed block peer 398 
+1533873195 INFO	 engine.index new block 9c1cfc30827b4991e52bc4c34ec2f0fc42b92917828ea1c2a1cbf63488bae065 references previous Block 8ae6d7f2cfcd99d08d883e4465dc72446a3272806f8385b564710182afde7596 for block 8ae6d7f2cfcd99d08d883e4465dc72446a3272806f8385b564710182afde7596 
+1533873195 INFO	 engine.index block 398 considered next block in current multiverse  
+1533873195 INFO	 mining.officer petioning new mining work 
+1533873195 INFO	 engine.index store block: 398 9c1cfc30827b4991e52bc4c34ec2f0fc42b92917828ea1c2a1cbf63488bae065 
+1533873195 INFO	 p2p.node announceblock <- event 
+1533873195 INFO	 p2p.discovery peers to write: 2 
+1533873195 INFO	 p2p.discovery peers to write: 2 
+1533873195 INFO	 p2p.node block announced! 
+1533873195 INFO	 persistence synchronized child headers: 5 
+1533873195 INFO	 p2p.node peerDataHandler <- 0008W01 
+1533873195 INFO	 p2p.node candidate block 398 recieved 
+1533873196 INFO	 rover.btc.controller peer count pool: 50 dp: 50, sp: 50, q: true, bh: 536033 
+1533873197 INFO	 rover.helper unified block built from wav 3pNem3QA 
+1533873197 INFO	 p2p.node active waypoints:  2 
+1533873199 INFO	 rover.btc.controller peer count pool: 50 dp: 50, sp: 50, q: true, bh: 536033 
+1533873202 INFO	 rover.btc.controller peer count pool: 50 dp: 50, sp: 50, q: true, bh: 536033 
+1533873202 INFO	 p2p.node active waypoints:  2 
+1533873202 INFO	 rover.helper unified block built from lsk 63995749 
+1533873202 INFO	 mining.officer [] <- [] rovered lsk block 6734962 6399574977201658965 
+1533873202 INFO	 mining.officer persisted block height: 398 
+1533873202 INFO	 mining.officer latestBlockHeadersHeights: { btc: 536033,
+  eth: 6120174,
+  lsk: 6734962,
+  neo: 2601842,
+  wav: 1120488 } 
+1533873202 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 398, btc ln: 536034, 536033 
+1533873202 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 398, eth ln: 6120175, 6120174 
+1533873202 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 398, lsk ln: 6734962, 6734962 
+1533873202 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 398, neo ln: 2601843, 2601842 
+1533873202 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 398, wav ln: 1120489, 1120488 
+1533873202 INFO	 mining.officer preparing new block 
+1533873202 INFO	 mining.officer worker <- calculated difficulty threshold 295039474528134 
+1533873202 INFO	 mining.officer mining cycle initiated 
+1533873202 INFO	 engine.index collectBlock handler: sent to miner: 28394 
+1533873203 INFO	 utils.time NTP offset resolved 
+1533873203 INFO	 rover.helper unified block built from eth 0xfdf98a 
+1533873203 INFO	 mining.officer [] <- [] rovered eth block 6120158 0xfdf98a1cfad4473487932b60bf19f52fd7cc30d588c4f57cf69750bc65d44460 
+1533873203 INFO	 mining.officer persisted block height: 398 
+1533873203 INFO	 mining.officer latestBlockHeadersHeights: { btc: 536033,
+  eth: 6120158,
+  lsk: 6734962,
+  neo: 2601842,
+  wav: 1120488 } 
+1533873203 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 398, btc ln: 536034, 536033 
+1533873203 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 398, eth ln: 6120175, 6120158 
+1533873203 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 398, lsk ln: 6734962, 6734962 
+1533873203 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 398, neo ln: 2601843, 2601842 
+1533873203 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 398, wav ln: 1120489, 1120488 
+1533873203 INFO	 mining.officer preparing new block 
+1533873203 INFO	 mining.officer new rovered block -> accepted 
+1533873203 INFO	 mining.officer petioning new mining work 
+1533873203 INFO	 mining.officer worker <- calculated difficulty threshold 294484889049698 
+1533873203 INFO	 mining.officer mining cycle initiated 
+1533873203 INFO	 engine.index collectBlock handler: sent to miner: 28395 
+1533873203 INFO	 utils.time NTP offset resolved 
+1533873204 INFO	 mining.worker solution found: {
+  "distance": "298788136763517",
+  "nonce": "1105157287",
+  "timestamp": 1533873204,
+  "difficulty": "293930303571262",
+  "iterations": 25036,
+  "timeDiff": 443
+} 
+1533873204 INFO	 mining.officer The calculated block difficulty was 294484889049698, actual mining difficulty was 293930303571262 
+1533873204 INFO	 bc.validation numberOfBlockchainsNeededMatchesChildBlock validation running 
+1533873204 INFO	 bc.validation ifMoreThanOneHeaderPerBlockchainAreTheyOrdered validation running 
+1533873204 INFO	 bc.validation ifMoreThanOneHeaderPerBlockchainAreTheyOrdered all chain conditions: [ true, true, true, true, true ] 
+1533873204 INFO	 bc.validation isChainRootCorrectlyCalculated validation running 
+1533873204 INFO	 bc.validation isFieldLengthBounded validation running 
+1533873204 INFO	 bc.validation isMerkleRootCorrectlyCalculated validation running 
+1533873204 INFO	 engine.index submitting mined block to current multiverse 
+1533873204 INFO	 mining.officer petioning new mining work 
+1533873204 INFO	 mining.officer petioning new mining work 
+1533873204 INFO	 engine.index store block: 399 ba4de008d04b27a53e7859a01f0c6a666ae600885245cdd9dd816c24b6f60441 
+1533873204 INFO	 engine.index multiverse coverage: 7 
+1533873204 INFO	 engine.index broadcasting block challenge ba4de008d04b27a53e7859a01f0c6a666ae600885245cdd9dd816c24b6f60441 -> considered next block in current multiverse 
+1533873204 INFO	 p2p.node announceblock <- event 
+1533873204 INFO	 p2p.discovery peers to write: 2 
+1533873204 INFO	 engine.index broadcasted mined block true 
+1533873204 INFO	 p2p.discovery peers to write: 2 
+1533873204 INFO	 p2p.node block announced! 
+1533873204 INFO	 persistence synchronized child headers: 5 
+1533873204 INFO	 engine.index latest block 399 has been updated 
+1533873204 INFO	 p2p.node peerDataHandler <- 0008W01 
+1533873204 INFO	 p2p.node candidate block 399 recieved 
+1533873204 INFO	 p2p.node peerDataHandler <- 0008W01 
+1533873204 INFO	 p2p.node candidate block 399 recieved 
+1533873205 INFO	 rover.btc.controller peer count pool: 50 dp: 50, sp: 50, q: true, bh: 536033 
+1533873206 INFO	 rover.helper unified block built from eth 0x9f0f2a 
+1533873206 INFO	 mining.officer [] <- [] rovered eth block 6120159 0x9f0f2a9bca96086c2e40182263383dfba344ff89c46f5b4891ef79609062498d 
+1533873206 INFO	 mining.officer persisted block height: 399 
+1533873206 INFO	 mining.officer latestBlockHeadersHeights: { btc: 536033,
+  eth: 6120159,
+  lsk: 6734962,
+  neo: 2601842,
+  wav: 1120488 } 
+1533873206 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 399, btc ln: 536034, 536033 
+1533873206 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 399, eth ln: 6120174, 6120159 
+1533873206 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 399, lsk ln: 6734963, 6734962 
+1533873206 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 399, neo ln: 2601841, 2601842 
+1533873206 INFO	 mining.officer chain: neofrom: 2601841 to: 2601842 
+1533873206 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 399, wav ln: 1120488, 1120488 
+1533873206 INFO	 mining.officer preparing new block 
+1533873206 INFO	 mining.officer worker <- calculated difficulty threshold 295038432074227 
+1533873206 INFO	 mining.officer mining cycle initiated 
+1533873206 INFO	 engine.index collectBlock handler: sent to miner: 28397 
+1533873206 INFO	 utils.time NTP offset resolved 
+1533873207 INFO	 p2p.node active waypoints:  2 
+1533873208 INFO	 rover.helper unified block built from eth 0x85977d 
+1533873208 INFO	 mining.officer [] <- [] rovered eth block 6120160 0x85977d752ede5317d3dc7419815126f9e7911c5f62b5e312f1e3baa2cfe03c49 
+1533873208 INFO	 mining.officer persisted block height: 399 
+1533873208 INFO	 mining.officer latestBlockHeadersHeights: { btc: 536033,
+  eth: 6120160,
+  lsk: 6734962,
+  neo: 2601842,
+  wav: 1120488 } 
+1533873208 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 399, btc ln: 536034, 536033 
+1533873208 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 399, eth ln: 6120174, 6120160 
+1533873208 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 399, lsk ln: 6734963, 6734962 
+1533873208 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 399, neo ln: 2601841, 2601842 
+1533873208 INFO	 mining.officer chain: neofrom: 2601841 to: 2601842 
+1533873208 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 399, wav ln: 1120488, 1120488 
+1533873208 INFO	 mining.officer preparing new block 
+1533873208 INFO	 mining.officer new rovered block -> accepted 
+1533873208 INFO	 mining.officer petioning new mining work 
+1533873208 INFO	 mining.officer worker <- calculated difficulty threshold 295038432074227 
+1533873208 INFO	 mining.officer mining cycle initiated 
+1533873208 INFO	 engine.index collectBlock handler: sent to miner: 28399 
+1533873208 INFO	 rover.btc.controller peer count pool: 50 dp: 50, sp: 50, q: true, bh: 536033 
+1533873208 INFO	 utils.time NTP offset resolved 
+1533873211 INFO	 rover.btc.controller peer count pool: 50 dp: 50, sp: 50, q: true, bh: 536033 
+1533873212 INFO	 p2p.node active waypoints:  2 
+1533873213 INFO	 mining.worker solution found: {
+  "distance": "297366500214910",
+  "nonce": "1926408214",
+  "timestamp": 1533873213,
+  "difficulty": "293931346025169",
+  "iterations": 423852,
+  "timeDiff": 5133
+} 
+1533873213 INFO	 mining.officer The calculated block difficulty was 295038432074227, actual mining difficulty was 293931346025169 
+1533873213 INFO	 bc.validation numberOfBlockchainsNeededMatchesChildBlock validation running 
+1533873213 INFO	 bc.validation ifMoreThanOneHeaderPerBlockchainAreTheyOrdered validation running 
+1533873213 INFO	 bc.validation ifMoreThanOneHeaderPerBlockchainAreTheyOrdered all chain conditions: [ true, true, true, true, true ] 
+1533873213 INFO	 bc.validation isChainRootCorrectlyCalculated validation running 
+1533873213 INFO	 bc.validation isFieldLengthBounded validation running 
+1533873213 INFO	 bc.validation isMerkleRootCorrectlyCalculated validation running 
+1533873213 INFO	 engine.index submitting mined block to current multiverse 
+1533873213 INFO	 mining.officer petioning new mining work 
+1533873213 INFO	 mining.officer petioning new mining work 
+1533873213 INFO	 engine.index store block: 400 0706f94553db531e5c60fa38053884e1a5d0053f4e1a34f192dc03df8a5de986 
+1533873213 INFO	 engine.index multiverse coverage: 7 
+1533873213 INFO	 engine.index broadcasting block challenge 0706f94553db531e5c60fa38053884e1a5d0053f4e1a34f192dc03df8a5de986 -> considered next block in current multiverse 
+1533873213 INFO	 p2p.node announceblock <- event 
+1533873213 INFO	 p2p.discovery peers to write: 2 
+1533873213 INFO	 engine.index broadcasted mined block true 
+1533873213 INFO	 p2p.discovery peers to write: 2 
+1533873213 INFO	 p2p.node block announced! 
+1533873213 INFO	 persistence synchronized child headers: 6 
+1533873213 INFO	 engine.index latest block 400 has been updated 
+1533873213 INFO	 p2p.node peerDataHandler <- 0008W01 
+1533873213 INFO	 p2p.node candidate block 400 recieved 
+1533873213 INFO	 p2p.node peerDataHandler <- 0008W01 
+1533873213 INFO	 p2p.node candidate block 400 recieved 
+1533873214 INFO	 rover.btc.controller peer count pool: 50 dp: 50, sp: 50, q: true, bh: 536033 
+1533873214 INFO	 rover.helper unified block built from lsk 40163684 
+1533873214 INFO	 mining.officer [] <- [] rovered lsk block 6734963 4016368428783528970 
+1533873214 INFO	 mining.officer persisted block height: 400 
+1533873214 INFO	 mining.officer latestBlockHeadersHeights: { btc: 536033,
+  eth: 6120173,
+  lsk: 6734963,
+  neo: 2601842,
+  wav: 1120488 } 
+1533873214 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 400, btc ln: 536034, 536033 
+1533873214 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 400, eth ln: 6120174, 6120173 
+1533873214 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 400, lsk ln: 6734963, 6734963 
+1533873214 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 400, neo ln: 2601843, 2601842 
+1533873214 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 400, wav ln: 1120489, 1120488 
+1533873214 INFO	 mining.officer preparing new block 
+1533873214 INFO	 mining.officer worker <- calculated difficulty threshold 295593015593163 
+1533873214 INFO	 mining.officer mining cycle initiated 
+1533873214 INFO	 engine.index collectBlock handler: sent to miner: 28441 
+1533873215 INFO	 utils.time NTP offset resolved 
+1533873217 INFO	 rover.helper unified block built from eth 0x4cdc6b 
+1533873217 INFO	 mining.officer [] <- [] rovered eth block 6120175 0x4cdc6b6b467311f48c434a91251476a227684d40766bf87bf679d7306a84c4ea 
+1533873217 INFO	 mining.officer persisted block height: 400 
+1533873217 INFO	 mining.officer latestBlockHeadersHeights: { btc: 536033,
+  eth: 6120175,
+  lsk: 6734963,
+  neo: 2601842,
+  wav: 1120488 } 
+1533873217 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 400, btc ln: 536034, 536033 
+1533873217 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 400, eth ln: 6120174, 6120175 
+1533873217 INFO	 mining.officer chain: ethfrom: 6120174 to: 6120175 
+1533873217 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 400, lsk ln: 6734963, 6734963 
+1533873217 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 400, neo ln: 2601843, 2601842 
+1533873217 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 400, wav ln: 1120489, 1120488 
+1533873217 INFO	 mining.officer preparing new block 
+1533873217 INFO	 mining.officer new rovered block -> accepted 
+1533873217 INFO	 mining.officer petioning new mining work 
+1533873217 INFO	 mining.officer worker <- calculated difficulty threshold 295593015593163 
+1533873217 INFO	 mining.officer mining cycle initiated 
+1533873217 INFO	 engine.index collectBlock handler: sent to miner: 28445 
+1533873217 INFO	 rover.helper unified block built from eth 0x377bf5 
+1533873217 INFO	 mining.officer [] <- [] rovered eth block 6120161 0x377bf585e3e6670ea286774e0bad47a7215675661e87cc915ccb308a999587d7 
+1533873217 INFO	 mining.officer persisted block height: 400 
+1533873217 INFO	 mining.officer latestBlockHeadersHeights: { btc: 536033,
+  eth: 6120161,
+  lsk: 6734963,
+  neo: 2601842,
+  wav: 1120488 } 
+1533873217 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 400, btc ln: 536034, 536033 
+1533873217 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 400, eth ln: 6120174, 6120161 
+1533873217 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 400, lsk ln: 6734963, 6734963 
+1533873217 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 400, neo ln: 2601843, 2601842 
+1533873217 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 400, wav ln: 1120489, 1120488 
+1533873217 INFO	 mining.officer preparing new block 
+1533873217 INFO	 mining.officer new rovered block -> accepted 
+1533873217 INFO	 mining.officer petioning new mining work 
+1533873217 INFO	 mining.officer worker <- calculated difficulty threshold 295593015593163 
+1533873217 INFO	 mining.officer mining cycle initiated 
+1533873217 INFO	 engine.index collectBlock handler: sent to miner: 28446 
+1533873217 INFO	 rover.btc.controller peer count pool: 50 dp: 50, sp: 50, q: true, bh: 536033 
+1533873217 INFO	 p2p.node active waypoints:  2 
+1533873217 INFO	 utils.time NTP offset resolved 
+1533873217 INFO	 p2p.node peerDataHandler <- 0008W01 
+1533873217 INFO	 p2p.node candidate block 401 recieved 
+1533873217 INFO	 engine.index Received new block from peer 401 
+1533873217 INFO	 bc.validation numberOfBlockchainsNeededMatchesChildBlock validation running 
+1533873217 INFO	 bc.validation ifMoreThanOneHeaderPerBlockchainAreTheyOrdered validation running 
+1533873217 INFO	 bc.validation ifMoreThanOneHeaderPerBlockchainAreTheyOrdered all chain conditions: [ true, true, true, true, true ] 
+1533873217 INFO	 bc.validation isChainRootCorrectlyCalculated validation running 
+1533873217 INFO	 bc.validation isFieldLengthBounded validation running 
+1533873217 INFO	 bc.validation isMerkleRootCorrectlyCalculated validation running 
+1533873217 INFO	 engine.index purposed block peer 401 
+1533873217 INFO	 engine.index new block 548a5020aadcfcb1187d4a95caadf0a7511fee612bde9e21c88d9b50edbb88dc references previous Block 0706f94553db531e5c60fa38053884e1a5d0053f4e1a34f192dc03df8a5de986 for block 0706f94553db531e5c60fa38053884e1a5d0053f4e1a34f192dc03df8a5de986 
+1533873217 INFO	 engine.index block 401 considered next block in current multiverse  
+1533873217 INFO	 mining.officer petioning new mining work 
+1533873217 INFO	 engine.index store block: 401 548a5020aadcfcb1187d4a95caadf0a7511fee612bde9e21c88d9b50edbb88dc 
+1533873217 INFO	 p2p.node announceblock <- event 
+1533873217 INFO	 p2p.discovery peers to write: 2 
+1533873217 INFO	 p2p.discovery peers to write: 2 
+1533873217 INFO	 p2p.node block announced! 
+1533873217 INFO	 persistence synchronized child headers: 6 
+1533873217 INFO	 p2p.node peerDataHandler <- 0008W01 
+1533873217 INFO	 p2p.node candidate block 401 recieved 
+1533873219 INFO	 rover.helper unified block built from eth 0xc54d24 
+1533873219 INFO	 mining.officer [] <- [] rovered eth block 6120162 0xc54d24f1eb20f62a1343864df56a55a9a7f83c8e1eb8e6fa8c09fe3a7c9acc96 
+1533873219 INFO	 mining.officer persisted block height: 401 
+1533873219 INFO	 mining.officer latestBlockHeadersHeights: { btc: 536033,
+  eth: 6120162,
+  lsk: 6734963,
+  neo: 2601843,
+  wav: 1120488 } 
+1533873219 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 401, btc ln: 536034, 536033 
+1533873219 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 401, eth ln: 6120176, 6120162 
+1533873219 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 401, lsk ln: 6734964, 6734963 
+1533873219 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 401, neo ln: 2601844, 2601843 
+1533873219 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 401, wav ln: 1120489, 1120488 
+1533873219 INFO	 mining.officer preparing new block 
+1533873219 INFO	 mining.officer worker <- calculated difficulty threshold 296148641562323 
+1533873219 INFO	 mining.officer mining cycle initiated 
+1533873219 INFO	 engine.index collectBlock handler: sent to miner: 28448 
+1533873219 INFO	 utils.time NTP offset resolved 
+1533873220 INFO	 rover.btc.controller peer count pool: 50 dp: 50, sp: 50, q: true, bh: 536033 
+1533873222 INFO	 p2p.node active waypoints:  2 
+1533873222 INFO	 rover.helper unified block built from lsk 17266791 
+1533873222 INFO	 mining.officer [] <- [] rovered lsk block 6734964 17266791565490905672 
+1533873222 INFO	 mining.officer persisted block height: 401 
+1533873222 INFO	 mining.officer latestBlockHeadersHeights: { btc: 536033,
+  eth: 6120162,
+  lsk: 6734964,
+  neo: 2601843,
+  wav: 1120488 } 
+1533873222 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 401, btc ln: 536034, 536033 
+1533873222 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 401, eth ln: 6120176, 6120162 
+1533873222 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 401, lsk ln: 6734964, 6734964 
+1533873222 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 401, neo ln: 2601844, 2601843 
+1533873222 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 401, wav ln: 1120489, 1120488 
+1533873222 INFO	 mining.officer preparing new block 
+1533873222 INFO	 mining.officer new rovered block -> accepted 
+1533873222 INFO	 mining.officer petioning new mining work 
+1533873222 INFO	 mining.officer worker <- calculated difficulty threshold 295593015593163 
+1533873223 INFO	 mining.officer mining cycle initiated 
+1533873223 INFO	 engine.index collectBlock handler: sent to miner: 28451 
+1533873223 INFO	 rover.btc.controller peer count pool: 50 dp: 50, sp: 50, q: true, bh: 536033 
+1533873223 INFO	 utils.time NTP offset resolved 
+1533873225 INFO	 mining.worker solution found: {
+  "distance": "295591866519186",
+  "nonce": "1175975712",
+  "timestamp": 1533873225,
+  "difficulty": "295037389624003",
+  "iterations": 133999,
+  "timeDiff": 1859
+} 
+1533873225 INFO	 mining.officer The calculated block difficulty was 295593015593163, actual mining difficulty was 295037389624003 
+1533873225 INFO	 bc.validation numberOfBlockchainsNeededMatchesChildBlock validation running 
+1533873225 INFO	 bc.validation ifMoreThanOneHeaderPerBlockchainAreTheyOrdered validation running 
+1533873225 INFO	 bc.validation ifMoreThanOneHeaderPerBlockchainAreTheyOrdered all chain conditions: [ true, true, true, true, true ] 
+1533873225 INFO	 bc.validation isChainRootCorrectlyCalculated validation running 
+1533873225 INFO	 bc.validation isFieldLengthBounded validation running 
+1533873225 INFO	 bc.validation isMerkleRootCorrectlyCalculated validation running 
+1533873225 INFO	 engine.index submitting mined block to current multiverse 
+1533873225 INFO	 mining.officer petioning new mining work 
+1533873225 INFO	 mining.officer petioning new mining work 
+1533873225 INFO	 engine.index store block: 402 dbc3e7de57ffe8eeb63989425e688ce77059ad377016f6fc7e9001e8e4265642 
+1533873225 INFO	 engine.index multiverse coverage: 7 
+1533873225 INFO	 engine.index broadcasting block challenge dbc3e7de57ffe8eeb63989425e688ce77059ad377016f6fc7e9001e8e4265642 -> considered next block in current multiverse 
+1533873225 INFO	 p2p.node announceblock <- event 
+1533873225 INFO	 p2p.discovery peers to write: 2 
+1533873225 INFO	 engine.index broadcasted mined block true 
+1533873225 INFO	 p2p.discovery peers to write: 2 
+1533873225 INFO	 p2p.node block announced! 
+1533873225 INFO	 persistence synchronized child headers: 5 
+1533873225 INFO	 engine.index latest block 402 has been updated 
+1533873225 INFO	 p2p.node peerDataHandler <- 0008W01 
+1533873225 INFO	 p2p.node candidate block 402 recieved 
+1533873225 INFO	 p2p.node peerDataHandler <- 0008W01 
+1533873225 INFO	 p2p.node candidate block 402 recieved 
+1533873226 INFO	 rover.btc.controller peer count pool: 50 dp: 50, sp: 50, q: true, bh: 536033 
+1533873227 INFO	 p2p.node active waypoints:  2 
+1533873229 INFO	 rover.btc.controller peer count pool: 50 dp: 50, sp: 50, q: true, bh: 536033 
+1533873230 INFO	 rover.helper unified block built from neo 0x252b33 
+1533873232 INFO	 rover.btc.controller peer count pool: 50 dp: 50, sp: 50, q: true, bh: 536033 
+1533873232 INFO	 p2p.node active waypoints:  2 
+1533873234 INFO	 rover.helper unified block built from eth 0xd15efd 
+1533873234 INFO	 mining.officer [] <- [] rovered eth block 6120147 0xd15efdb7a78404701ee444bdc0319babc1757b2493f892dbe6ee7b005ece9a35 
+1533873234 INFO	 mining.officer persisted block height: 402 
+1533873234 INFO	 mining.officer latestBlockHeadersHeights: { btc: 536033,
+  eth: 6120147,
+  lsk: 6734964,
+  neo: 2601843,
+  wav: 1120488 } 
+1533873234 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 402, btc ln: 536034, 536033 
+1533873234 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 402, eth ln: 6120174, 6120147 
+1533873234 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 402, lsk ln: 6734965, 6734964 
+1533873234 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 402, neo ln: 2601843, 2601843 
+1533873234 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 402, wav ln: 1120489, 1120488 
+1533873234 INFO	 mining.officer preparing new block 
+1533873234 INFO	 mining.officer worker <- calculated difficulty threshold 295593015593163 
+1533873234 INFO	 mining.officer mining cycle initiated 
+1533873234 INFO	 engine.index collectBlock handler: sent to miner: 28492 
+1533873234 INFO	 utils.time NTP offset resolved 
+1533873235 INFO	 rover.btc.controller peer count pool: 50 dp: 49, sp: 49, q: true, bh: 536033 
+1533873235 INFO	 rover.helper unified block built from lsk 16413223 
+1533873235 INFO	 mining.officer [] <- [] rovered lsk block 6734965 16413223386654476855 
+1533873235 INFO	 mining.officer persisted block height: 402 
+1533873235 INFO	 mining.officer latestBlockHeadersHeights: { btc: 536033,
+  eth: 6120147,
+  lsk: 6734965,
+  neo: 2601843,
+  wav: 1120488 } 
+1533873235 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 402, btc ln: 536034, 536033 
+1533873235 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 402, eth ln: 6120174, 6120147 
+1533873235 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 402, lsk ln: 6734965, 6734965 
+1533873235 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 402, neo ln: 2601843, 2601843 
+1533873235 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 402, wav ln: 1120489, 1120488 
+1533873235 INFO	 mining.officer preparing new block 
+1533873235 INFO	 mining.officer new rovered block -> accepted 
+1533873235 INFO	 mining.officer petioning new mining work 
+1533873235 INFO	 mining.officer worker <- calculated difficulty threshold 295037389624003 
+1533873235 INFO	 mining.officer mining cycle initiated 
+1533873235 INFO	 engine.index collectBlock handler: sent to miner: 28494 
+1533873235 INFO	 p2p.node peerDataHandler <- 0008W01 
+1533873235 INFO	 p2p.node candidate block 403 recieved 
+1533873235 INFO	 engine.index Received new block from peer 403 
+1533873235 INFO	 bc.validation numberOfBlockchainsNeededMatchesChildBlock validation running 
+1533873235 INFO	 bc.validation ifMoreThanOneHeaderPerBlockchainAreTheyOrdered validation running 
+1533873235 INFO	 bc.validation ifMoreThanOneHeaderPerBlockchainAreTheyOrdered all chain conditions: [ true, true, true, true, true ] 
+1533873235 INFO	 bc.validation isChainRootCorrectlyCalculated validation running 
+1533873235 INFO	 bc.validation isFieldLengthBounded validation running 
+1533873235 INFO	 bc.validation isMerkleRootCorrectlyCalculated validation running 
+1533873235 INFO	 engine.index purposed block peer 403 
+1533873235 INFO	 engine.index new block 228ba3f11d561485d4f6dcc9db048d9bda616610cd88ac9c46af2f010e34ac63 references previous Block dbc3e7de57ffe8eeb63989425e688ce77059ad377016f6fc7e9001e8e4265642 for block dbc3e7de57ffe8eeb63989425e688ce77059ad377016f6fc7e9001e8e4265642 
+1533873235 INFO	 engine.index block 403 considered next block in current multiverse  
+1533873235 INFO	 mining.officer petioning new mining work 
+1533873235 INFO	 engine.index store block: 403 228ba3f11d561485d4f6dcc9db048d9bda616610cd88ac9c46af2f010e34ac63 
+1533873235 INFO	 p2p.node announceblock <- event 
+1533873235 INFO	 p2p.discovery peers to write: 2 
+1533873235 INFO	 p2p.discovery peers to write: 2 
+1533873235 INFO	 p2p.node block announced! 
+1533873235 INFO	 persistence synchronized child headers: 7 
+1533873235 INFO	 p2p.node peerDataHandler <- 0008W01 
+1533873235 INFO	 p2p.node candidate block 403 recieved 
+1533873237 INFO	 p2p.node active waypoints:  2 
+1533873237 INFO	 rover.helper unified block built from neo 0x115b74 
+1533873238 INFO	 rover.btc.controller peer count pool: 50 dp: 50, sp: 50, q: true, bh: 536033 
+1533873241 INFO	 rover.btc.controller peer count pool: 50 dp: 50, sp: 50, q: true, bh: 536033 
+1533873242 INFO	 rover.helper unified block built from eth 0x74bf7b 
+1533873242 INFO	 mining.officer [] <- [] rovered eth block 6120176 0x74bf7b3cfcaa2326c5fb36322c9cf27fab24ae7955644334e8a909c3d126b35c 
+1533873242 INFO	 mining.officer persisted block height: 403 
+1533873242 INFO	 mining.officer latestBlockHeadersHeights: { btc: 536033,
+  eth: 6120176,
+  lsk: 6734965,
+  neo: 2601844,
+  wav: 1120488 } 
+1533873242 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 403, btc ln: 536034, 536033 
+1533873242 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 403, eth ln: 6120176, 6120176 
+1533873242 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 403, lsk ln: 6734966, 6734965 
+1533873242 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 403, neo ln: 2601845, 2601844 
+1533873242 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 403, wav ln: 1120489, 1120488 
+1533873242 INFO	 mining.officer preparing new block 
+1533873242 INFO	 mining.officer worker <- calculated difficulty threshold 295593015593163 
+1533873242 INFO	 mining.officer mining cycle initiated 
+1533873242 INFO	 engine.index collectBlock handler: sent to miner: 28497 
+1533873242 INFO	 utils.time NTP offset resolved 
+1533873242 INFO	 p2p.node active waypoints:  2 
+1533873244 INFO	 rover.btc.controller peer count pool: 50 dp: 50, sp: 50, q: true, bh: 536033 
+1533873244 INFO	 rover.helper unified block built from lsk 83384522 
+1533873244 INFO	 mining.officer [] <- [] rovered lsk block 6734966 8338452232846288901 
+1533873244 INFO	 mining.officer persisted block height: 403 
+1533873244 INFO	 mining.officer latestBlockHeadersHeights: { btc: 536033,
+  eth: 6120176,
+  lsk: 6734966,
+  neo: 2601844,
+  wav: 1120488 } 
+1533873244 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 403, btc ln: 536034, 536033 
+1533873244 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 403, eth ln: 6120176, 6120176 
+1533873244 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 403, lsk ln: 6734966, 6734966 
+1533873244 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 403, neo ln: 2601845, 2601844 
+1533873244 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 403, wav ln: 1120489, 1120488 
+1533873244 INFO	 mining.officer preparing new block 
+1533873244 INFO	 mining.officer new rovered block -> accepted 
+1533873244 INFO	 mining.officer petioning new mining work 
+1533873244 INFO	 mining.officer worker <- calculated difficulty threshold 294481763654843 
+1533873244 INFO	 mining.officer mining cycle initiated 
+1533873244 INFO	 engine.index collectBlock handler: sent to miner: 28499 
+1533873245 INFO	 utils.time NTP offset resolved 
+1533873246 INFO	 rover.helper unified block built from eth 0x45116c 
+1533873246 INFO	 mining.officer [] <- [] rovered eth block 6120177 0x45116cd11a8459d64b8fa4186f8c1d4bb9f26cbb207d1a3854bee0458095da78 
+1533873246 INFO	 mining.officer persisted block height: 403 
+1533873246 INFO	 mining.officer latestBlockHeadersHeights: { btc: 536033,
+  eth: 6120177,
+  lsk: 6734966,
+  neo: 2601844,
+  wav: 1120488 } 
+1533873246 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 403, btc ln: 536034, 536033 
+1533873246 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 403, eth ln: 6120176, 6120177 
+1533873246 INFO	 mining.officer chain: ethfrom: 6120176 to: 6120177 
+1533873246 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 403, lsk ln: 6734966, 6734966 
+1533873246 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 403, neo ln: 2601845, 2601844 
+1533873246 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 403, wav ln: 1120489, 1120488 
+1533873246 INFO	 mining.officer preparing new block 
+1533873246 INFO	 mining.officer new rovered block -> accepted 
+1533873246 INFO	 mining.officer petioning new mining work 
+1533873246 INFO	 mining.officer worker <- calculated difficulty threshold 293926137685683 
+1533873246 INFO	 mining.officer mining cycle initiated 
+1533873246 INFO	 engine.index collectBlock handler: sent to miner: 28522 
+1533873246 INFO	 utils.time NTP offset resolved 
+1533873247 INFO	 rover.btc.controller peer count pool: 50 dp: 50, sp: 50, q: true, bh: 536033 
+1533873247 INFO	 p2p.node active waypoints:  2 
+1533873250 INFO	 rover.btc.controller peer count pool: 50 dp: 50, sp: 50, q: true, bh: 536033 
+1533873251 INFO	 p2p.node peerDataHandler <- 0008W01 
+1533873251 INFO	 p2p.node candidate block 404 recieved 
+1533873251 INFO	 engine.index Received new block from peer 404 
+1533873251 INFO	 bc.validation numberOfBlockchainsNeededMatchesChildBlock validation running 
+1533873251 INFO	 bc.validation ifMoreThanOneHeaderPerBlockchainAreTheyOrdered validation running 
+1533873251 INFO	 bc.validation ifMoreThanOneHeaderPerBlockchainAreTheyOrdered all chain conditions: [ true, true, true, true, true ] 
+1533873251 INFO	 bc.validation isChainRootCorrectlyCalculated validation running 
+1533873251 INFO	 bc.validation isFieldLengthBounded validation running 
+1533873251 INFO	 bc.validation isMerkleRootCorrectlyCalculated validation running 
+1533873251 INFO	 engine.index purposed block peer 404 
+1533873251 INFO	 engine.index new block 38828a07365e220184e967bbb240eb4a0a2e11a330b7bd94f83f71a835ad916f references previous Block 228ba3f11d561485d4f6dcc9db048d9bda616610cd88ac9c46af2f010e34ac63 for block 228ba3f11d561485d4f6dcc9db048d9bda616610cd88ac9c46af2f010e34ac63 
+1533873251 INFO	 engine.index block 404 considered next block in current multiverse  
+1533873251 INFO	 mining.officer petioning new mining work 
+1533873251 INFO	 engine.index store block: 404 38828a07365e220184e967bbb240eb4a0a2e11a330b7bd94f83f71a835ad916f 
+1533873251 INFO	 p2p.node announceblock <- event 
+1533873251 INFO	 p2p.discovery peers to write: 2 
+1533873251 INFO	 p2p.discovery peers to write: 2 
+1533873251 INFO	 p2p.node block announced! 
+1533873251 INFO	 persistence synchronized child headers: 6 
+1533873251 INFO	 p2p.node peerDataHandler <- 0008W01 
+1533873251 INFO	 p2p.node candidate block 404 recieved 
+1533873252 INFO	 p2p.node active waypoints:  2 
+1533873253 INFO	 rover.btc.controller peer count pool: 50 dp: 50, sp: 50, q: true, bh: 536033 
+1533873254 INFO	 rover.helper unified block built from lsk 65248094 
+1533873254 INFO	 mining.officer [] <- [] rovered lsk block 6734967 6524809423980295110 
+1533873254 INFO	 mining.officer persisted block height: 404 
+1533873254 INFO	 mining.officer latestBlockHeadersHeights: { btc: 536033,
+  eth: 6120177,
+  lsk: 6734967,
+  neo: 2601845,
+  wav: 1120488 } 
+1533873254 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 404, btc ln: 536034, 536033 
+1533873254 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 404, eth ln: 6120178, 6120177 
+1533873254 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 404, lsk ln: 6734967, 6734967 
+1533873254 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 404, neo ln: 2601846, 2601845 
+1533873254 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 404, wav ln: 1120489, 1120488 
+1533873254 INFO	 mining.officer preparing new block 
+1533873254 INFO	 mining.officer worker <- calculated difficulty threshold 294478630425693 
+1533873254 INFO	 mining.officer mining cycle initiated 
+1533873254 INFO	 engine.index collectBlock handler: sent to miner: 28556 
+1533873255 INFO	 utils.time NTP offset resolved 
+1533873255 INFO	 mining.worker solution found: {
+  "distance": "307453203203236",
+  "nonce": "1539920243",
+  "timestamp": 1533873255,
+  "difficulty": "294478630425693",
+  "iterations": 1651,
+  "timeDiff": 75
+} 
+1533873255 INFO	 mining.officer The calculated block difficulty was 294478630425693, actual mining difficulty was 294478630425693 
+1533873255 INFO	 bc.validation numberOfBlockchainsNeededMatchesChildBlock validation running 
+1533873255 INFO	 bc.validation ifMoreThanOneHeaderPerBlockchainAreTheyOrdered validation running 
+1533873255 INFO	 bc.validation ifMoreThanOneHeaderPerBlockchainAreTheyOrdered all chain conditions: [ true, true, true, true, true ] 
+1533873255 INFO	 bc.validation isChainRootCorrectlyCalculated validation running 
+1533873255 INFO	 bc.validation isFieldLengthBounded validation running 
+1533873255 INFO	 bc.validation isMerkleRootCorrectlyCalculated validation running 
+1533873255 INFO	 engine.index submitting mined block to current multiverse 
+1533873255 INFO	 mining.officer petioning new mining work 
+1533873255 INFO	 mining.officer petioning new mining work 
+1533873255 INFO	 engine.index store block: 405 e4c41646338348628696de12791878f90fcf53d33d9a9543f53c4dcbf0965173 
+1533873255 INFO	 engine.index multiverse coverage: 7 
+1533873255 INFO	 engine.index broadcasting block challenge e4c41646338348628696de12791878f90fcf53d33d9a9543f53c4dcbf0965173 -> considered next block in current multiverse 
+1533873255 INFO	 p2p.node announceblock <- event 
+1533873255 INFO	 p2p.discovery peers to write: 2 
+1533873255 INFO	 engine.index broadcasted mined block true 
+1533873255 INFO	 p2p.discovery peers to write: 2 
+1533873255 INFO	 p2p.node block announced! 
+1533873255 INFO	 persistence synchronized child headers: 5 
+1533873255 INFO	 engine.index latest block 405 has been updated 
+1533873255 INFO	 p2p.node peerDataHandler <- 0008W01 
+1533873255 INFO	 p2p.node candidate block 405 recieved 
+1533873255 INFO	 p2p.node peerDataHandler <- 0008W01 
+1533873255 INFO	 p2p.node candidate block 405 recieved 
+1533873256 INFO	 rover.btc.controller peer count pool: 50 dp: 50, sp: 50, q: true, bh: 536033 
+1533873256 INFO	 rover.helper unified block built from eth 0x502c12 
+1533873256 INFO	 mining.officer [] <- [] rovered eth block 6120148 0x502c124ae0ec2ec5f01fa3a1145af5754136f30ce50e20a80c1577a4616c1af1 
+1533873256 INFO	 mining.officer persisted block height: 405 
+1533873256 INFO	 mining.officer latestBlockHeadersHeights: { btc: 536033,
+  eth: 6120148,
+  lsk: 6734967,
+  neo: 2601845,
+  wav: 1120488 } 
+1533873256 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 405, btc ln: 536034, 536033 
+1533873256 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 405, eth ln: 6120178, 6120148 
+1533873256 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 405, lsk ln: 6734968, 6734967 
+1533873256 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 405, neo ln: 2601846, 2601845 
+1533873256 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 405, wav ln: 1120489, 1120488 
+1533873256 INFO	 mining.officer preparing new block 
+1533873256 INFO	 mining.officer worker <- calculated difficulty threshold 295032161685891 
+1533873256 INFO	 mining.officer mining cycle initiated 
+1533873256 INFO	 engine.index collectBlock handler: sent to miner: 28558 
+1533873256 INFO	 utils.time NTP offset resolved 
+1533873257 INFO	 p2p.node active waypoints:  2 
+1533873259 INFO	 rover.btc.controller peer count pool: 50 dp: 50, sp: 50, q: true, bh: 536033 
+1533873260 INFO	 rover.helper unified block built from eth 0xa7b64c 
+1533873260 INFO	 mining.officer [] <- [] rovered eth block 6120178 0xa7b64c1007bf1e879469b362f9118e944136d9d8e13ddb1a07b54ae659384ad4 
+1533873260 INFO	 mining.officer persisted block height: 405 
+1533873260 INFO	 mining.officer latestBlockHeadersHeights: { btc: 536033,
+  eth: 6120178,
+  lsk: 6734967,
+  neo: 2601845,
+  wav: 1120488 } 
+1533873260 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 405, btc ln: 536034, 536033 
+1533873260 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 405, eth ln: 6120178, 6120178 
+1533873260 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 405, lsk ln: 6734968, 6734967 
+1533873260 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 405, neo ln: 2601846, 2601845 
+1533873260 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 405, wav ln: 1120489, 1120488 
+1533873260 INFO	 mining.officer preparing new block 
+1533873260 INFO	 mining.officer new rovered block -> accepted 
+1533873260 INFO	 mining.officer petioning new mining work 
+1533873260 INFO	 mining.officer worker <- calculated difficulty threshold 295032161685891 
+1533873260 INFO	 mining.officer mining cycle initiated 
+1533873260 INFO	 engine.index collectBlock handler: sent to miner: 28560 
+1533873260 INFO	 utils.time NTP offset resolved 
+1533873261 INFO	 p2p.node peerDataHandler <- 0008W01 
+1533873261 INFO	 p2p.node candidate block 406 recieved 
+1533873261 INFO	 engine.index Received new block from peer 406 
+1533873261 INFO	 bc.validation numberOfBlockchainsNeededMatchesChildBlock validation running 
+1533873261 INFO	 bc.validation ifMoreThanOneHeaderPerBlockchainAreTheyOrdered validation running 
+1533873261 INFO	 bc.validation ifMoreThanOneHeaderPerBlockchainAreTheyOrdered all chain conditions: [ true, true, true, true, true ] 
+1533873261 INFO	 bc.validation isChainRootCorrectlyCalculated validation running 
+1533873261 INFO	 bc.validation isFieldLengthBounded validation running 
+1533873261 INFO	 bc.validation isMerkleRootCorrectlyCalculated validation running 
+1533873261 INFO	 engine.index purposed block peer 406 
+1533873261 INFO	 engine.index new block ee304a045f3051a39df56f4f07edde33a792d9f8065ff17d81ad0adab5ddd29f references previous Block e4c41646338348628696de12791878f90fcf53d33d9a9543f53c4dcbf0965173 for block e4c41646338348628696de12791878f90fcf53d33d9a9543f53c4dcbf0965173 
+1533873261 INFO	 engine.index block 406 considered next block in current multiverse  
+1533873261 INFO	 mining.officer petioning new mining work 
+1533873261 INFO	 engine.index store block: 406 ee304a045f3051a39df56f4f07edde33a792d9f8065ff17d81ad0adab5ddd29f 
+1533873261 INFO	 p2p.node announceblock <- event 
+1533873261 INFO	 p2p.discovery peers to write: 2 
+1533873261 INFO	 p2p.discovery peers to write: 2 
+1533873261 INFO	 p2p.node block announced! 
+1533873261 INFO	 persistence synchronized child headers: 5 
+1533873261 INFO	 p2p.node peerDataHandler <- 0008W01 
+1533873261 INFO	 p2p.node candidate block 406 recieved 
+1533873262 INFO	 rover.btc.controller peer count pool: 50 dp: 50, sp: 50, q: true, bh: 536033 
+1533873262 INFO	 p2p.node active waypoints:  2 
+1533873263 INFO	 p2p.node peerDataHandler <- 0008W01 
+1533873263 INFO	 p2p.node candidate block 407 recieved 
+1533873263 INFO	 engine.index Received new block from peer 407 
+1533873263 INFO	 bc.validation numberOfBlockchainsNeededMatchesChildBlock validation running 
+1533873263 INFO	 bc.validation ifMoreThanOneHeaderPerBlockchainAreTheyOrdered validation running 
+1533873263 INFO	 bc.validation ifMoreThanOneHeaderPerBlockchainAreTheyOrdered all chain conditions: [ true, true, true, true, true ] 
+1533873263 INFO	 bc.validation isChainRootCorrectlyCalculated validation running 
+1533873263 INFO	 bc.validation isFieldLengthBounded validation running 
+1533873263 INFO	 bc.validation isMerkleRootCorrectlyCalculated validation running 
+1533873263 INFO	 engine.index purposed block peer 407 
+1533873263 INFO	 engine.index new block af7e8784941684defd47f4ec3ad18f7cdc686fe399c684009839e3a73dbe9321 references previous Block ee304a045f3051a39df56f4f07edde33a792d9f8065ff17d81ad0adab5ddd29f for block ee304a045f3051a39df56f4f07edde33a792d9f8065ff17d81ad0adab5ddd29f 
+1533873263 INFO	 engine.index block 407 considered next block in current multiverse  
+1533873263 INFO	 mining.officer petioning new mining work 
+1533873263 INFO	 engine.index store block: 407 af7e8784941684defd47f4ec3ad18f7cdc686fe399c684009839e3a73dbe9321 
+1533873263 INFO	 p2p.node announceblock <- event 
+1533873263 INFO	 p2p.discovery peers to write: 2 
+1533873263 INFO	 p2p.discovery peers to write: 2 
+1533873263 INFO	 p2p.node block announced! 
+1533873263 INFO	 persistence synchronized child headers: 5 
+1533873263 INFO	 p2p.node peerDataHandler <- 0008W01 
+1533873263 INFO	 p2p.node candidate block 407 recieved 
+1533873263 INFO	 p2p.node peerDataHandler <- 0008W01 
+1533873263 INFO	 p2p.node candidate block 407 recieved 
+1533873263 INFO	 p2p.node peerDataHandler <- 0008W01 
+1533873263 INFO	 p2p.node candidate block 407 recieved 
+1533873264 INFO	 mining.officer [] <- [] rovered neo block 2601846 0x252b333026978f7712db544f7adfb392943a4418a6e5f2cbf82aeca889929978 
+1533873264 INFO	 mining.officer persisted block height: 407 
+1533873264 INFO	 mining.officer latestBlockHeadersHeights: { btc: 536033,
+  eth: 6120178,
+  lsk: 6734968,
+  neo: 2601846,
+  wav: 1120488 } 
+1533873264 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 407, btc ln: 536034, 536033 
+1533873264 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 407, eth ln: 6120179, 6120178 
+1533873264 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 407, lsk ln: 6734969, 6734968 
+1533873264 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 407, neo ln: 2601846, 2601846 
+1533873264 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 407, wav ln: 1120489, 1120488 
+1533873264 INFO	 mining.officer preparing new block 
+1533873264 INFO	 mining.officer worker <- calculated difficulty threshold 296142347578943 
+1533873264 INFO	 mining.officer mining cycle initiated 
+1533873264 INFO	 engine.index collectBlock handler: sent to miner: 28563 
+1533873265 INFO	 utils.time NTP offset resolved 
+1533873265 INFO	 rover.helper unified block built from lsk 86504880 
+1533873265 INFO	 mining.officer [] <- [] rovered lsk block 6734968 8650488061330083219 
+1533873265 INFO	 mining.officer persisted block height: 407 
+1533873265 INFO	 mining.officer latestBlockHeadersHeights: { btc: 536033,
+  eth: 6120178,
+  lsk: 6734968,
+  neo: 2601846,
+  wav: 1120488 } 
+1533873265 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 407, btc ln: 536034, 536033 
+1533873265 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 407, eth ln: 6120179, 6120178 
+1533873265 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 407, lsk ln: 6734969, 6734968 
+1533873265 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 407, neo ln: 2601846, 2601846 
+1533873265 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 407, wav ln: 1120489, 1120488 
+1533873265 INFO	 mining.officer preparing new block 
+1533873265 INFO	 mining.officer new rovered block -> accepted 
+1533873265 INFO	 mining.officer petioning new mining work 
+1533873265 INFO	 mining.officer worker <- calculated difficulty threshold 296142347578943 
+1533873265 INFO	 mining.officer mining cycle initiated 
+1533873265 INFO	 engine.index collectBlock handler: sent to miner: 28564 
+1533873265 INFO	 rover.btc.controller peer count pool: 50 dp: 50, sp: 50, q: true, bh: 536033 
+1533873265 INFO	 rover.helper unified block built from wav 2mgpcLHb 
+1533873265 INFO	 utils.time NTP offset resolved 
+1533873265 INFO	 rover.helper unified block built from neo 0xfb9e71 
+1533873267 INFO	 rover.helper unified block built from eth 0x989e10 
+1533873267 INFO	 mining.officer [] <- [] rovered eth block 6120179 0x989e1028a63639f9646b2eb4944c71a0fe8e30c18b20a6e79a616eee1c45589b 
+1533873267 INFO	 mining.officer persisted block height: 407 
+1533873267 INFO	 mining.officer latestBlockHeadersHeights: { btc: 536033,
+  eth: 6120179,
+  lsk: 6734968,
+  neo: 2601846,
+  wav: 1120488 } 
+1533873267 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 407, btc ln: 536034, 536033 
+1533873267 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 407, eth ln: 6120179, 6120179 
+1533873267 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 407, lsk ln: 6734969, 6734968 
+1533873267 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 407, neo ln: 2601846, 2601846 
+1533873267 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 407, wav ln: 1120489, 1120488 
+1533873267 INFO	 mining.officer preparing new block 
+1533873267 INFO	 mining.officer new rovered block -> accepted 
+1533873267 INFO	 mining.officer petioning new mining work 
+1533873267 INFO	 mining.officer worker <- calculated difficulty threshold 296142347578943 
+1533873267 INFO	 mining.officer mining cycle initiated 
+1533873267 INFO	 engine.index collectBlock handler: sent to miner: 28565 
+1533873267 INFO	 utils.time NTP offset resolved 
+1533873267 INFO	 p2p.node active waypoints:  2 
+1533873268 INFO	 rover.btc.controller peer count pool: 50 dp: 50, sp: 50, q: true, bh: 536033 
+1533873271 INFO	 rover.btc.controller peer count pool: 50 dp: 50, sp: 50, q: true, bh: 536033 
+1533873272 INFO	 p2p.node active waypoints:  2 
+1533873274 INFO	 rover.btc.controller peer count pool: 50 dp: 50, sp: 50, q: true, bh: 536033 
+1533873274 INFO	 rover.helper unified block built from lsk 13706644 
+1533873274 INFO	 mining.officer [] <- [] rovered lsk block 6734969 13706644547803844008 
+1533873274 INFO	 mining.officer persisted block height: 407 
+1533873274 INFO	 mining.officer latestBlockHeadersHeights: { btc: 536033,
+  eth: 6120179,
+  lsk: 6734969,
+  neo: 2601846,
+  wav: 1120488 } 
+1533873274 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 407, btc ln: 536034, 536033 
+1533873274 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 407, eth ln: 6120179, 6120179 
+1533873274 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 407, lsk ln: 6734969, 6734969 
+1533873274 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 407, neo ln: 2601846, 2601846 
+1533873274 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 407, wav ln: 1120489, 1120488 
+1533873274 INFO	 mining.officer preparing new block 
+1533873274 INFO	 mining.officer new rovered block -> accepted 
+1533873274 INFO	 mining.officer petioning new mining work 
+1533873274 INFO	 mining.officer worker <- calculated difficulty threshold 294475505097263 
+1533873274 INFO	 mining.officer mining cycle initiated 
+1533873274 INFO	 engine.index collectBlock handler: sent to miner: 28581 
+1533873275 INFO	 utils.time NTP offset resolved 
+1533873275 INFO	 mining.officer [] <- [] rovered wav block 1120489 3wgSFapKGCs1K9jisbc9DpLYvKMKnzjatS5vbQ89kY8ZtpcV3waToVhjBB7VrAbbPZktPLpzBTiZYRV9E8JjEZ3K 
+1533873275 INFO	 mining.officer persisted block height: 407 
+1533873275 INFO	 mining.officer latestBlockHeadersHeights: { btc: 536033,
+  eth: 6120179,
+  lsk: 6734969,
+  neo: 2601846,
+  wav: 1120489 } 
+1533873275 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 407, btc ln: 536034, 536033 
+1533873275 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 407, eth ln: 6120179, 6120179 
+1533873275 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 407, lsk ln: 6734969, 6734969 
+1533873275 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 407, neo ln: 2601846, 2601846 
+1533873275 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 407, wav ln: 1120489, 1120489 
+1533873275 INFO	 mining.officer preparing new block 
+1533873275 INFO	 mining.officer new rovered block -> accepted 
+1533873275 INFO	 mining.officer petioning new mining work 
+1533873275 INFO	 mining.officer worker <- calculated difficulty threshold 293919890936703 
+1533873275 INFO	 mining.officer mining cycle initiated 
+1533873275 INFO	 engine.index collectBlock handler: sent to miner: 28582 
+1533873275 INFO	 utils.time NTP offset resolved 
