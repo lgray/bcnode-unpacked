@@ -245,12 +245,6 @@ export class Multiverse {
       return Promise.resolve(false)
     }
 
-    // FAIL
-    // case fails over into the resync
-    if (newBlock.getHeight() < currentHighestBlock.getHeight()) {
-      return Promise.resolve(false)
-    }
-
     this._logger.debug(' highestBlock hash - ' + currentHighestBlock.getHash())
     this._logger.debug(' highestBlock previousHash - ' + currentHighestBlock.getPreviousHash())
     this._logger.debug(' highestBlock height - ' + currentHighestBlock.getHeight())
@@ -265,16 +259,35 @@ export class Multiverse {
     }
     // FAIL
     // if newBlock totalDifficulty < (lt) currentHighestBlock totalDifficulty
+    const currentHighestParent = await this.persistence.get('bc.block.parent')
+    if (currentHighestParent.getHash() !== currentHighestBlock.getPreviousHash() &&
+       currentHighestBlock.getHeight() === newBlock.getHeight()) {
+      if (new BN(newBlock.getTotalDistance()).gt(new BN(currentHighestBlock.getTotalDistance())) &&
+        new BN(newBlock.getTimestamp()).gte(new BN(currentHighestBlock.getTimestamp()))) {
+        this._chain.shift()
+        this._chain.unshift(newBlock)
+        return Promise.resolve(true)
+      }
+    }
+
+    // FAIL
+    // case fails over into the resync
+    if (newBlock.getHeight() < currentHighestBlock.getHeight()) {
+      return Promise.resolve(false)
+    }
+
     if (new BN(newBlock.getTotalDistance()).lt(new BN(currentHighestBlock.getTotalDistance()))) {
       this._logger.warn('new Block totalDistance ' + newBlock.getTotalDistance() + 'less than currentHighestBlock' + currentHighestBlock.getTotalDistance())
       return Promise.resolve(false)
     }
+
     // FAIL
     // if newBlock does not include additional rover blocks
     if (newBlock.getBlockchainHeadersCount() === '0') {
       this._logger.warn('new Block totalDistance ' + newBlock.getTotalDistance() + 'less than currentHighestBlock' + currentHighestBlock.getTotalDistance())
       return Promise.resolve(false)
     }
+
     // FAIL
     // if malformed timestamp referenced from previous block with five second lag
     // if (newBlock.getTimestamp() + 5 <= currentHighestBlock.getTimestamp()) {
@@ -381,7 +394,7 @@ export class Multiverse {
     }
 
     // FAIL if new block not within 61 seconds of local time
-    if (newBlock.getTimestamp() + 61 < Math.floor(Date.now() * 0.001)) {
+    if (new BN(newBlock.getHeight()).gt(50000) && newBlock.getTimestamp() + 61 < Math.floor(Date.now() * 0.001)) {
       this._logger.info('failed resync req: time below 61 seconds')
       return Promise.resolve(false)
     }

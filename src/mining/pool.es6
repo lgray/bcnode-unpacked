@@ -71,7 +71,6 @@ export class WorkerPool {
   _collectedBlocks: { [blockchain: string]: number }
 
   constructor (pubsub: PubSub, persistence: RocksDb, opts: { minerKey: string, rovers: string[] }) {
-    const procGuardPathGlobalBase = process.env.BC_DATA_DIR || config.persistence.path
     let maxWorkers = os.cpus().length
 		if(opts.maxWorkers !== undefined){
 			maxWorkers = opts.maxWorkers
@@ -83,7 +82,7 @@ export class WorkerPool {
     this._pubsub = pubsub
     this._persistence = persistence
     this._knownRovers = opts.rovers
-    this._poolGuardPath = opts.poolguard || procGuardPathGlobalBase + '/worker_pool_guard.json'
+    this._poolGuardPath = opts.poolguard || config.persistence.path + '/worker_pool_guard.json'
     this._maxWorkers = max(1, maxWorkers - 1)
     this._emitter = new EventEmitter()
     this._startupCheck = false

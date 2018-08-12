@@ -7,7 +7,7 @@ const { config } = require('../config')
 // const bootstrap = require('../utils/templates/bootstrap')
 // const seeds = require('../utils/templates/seed')
 const bootstrap = require('../utils/templates/collocation.json')
-const seeds = []
+let seeds = []
 const logging = require('../logger')
 // load
 // function blake2bl (input) {
@@ -41,6 +41,10 @@ function Discovery (nodeId) {
   seeds.unshift(randomIndex(bootstrap))
   seeds.unshift(randomIndex(bootstrap, seeds[0]))
   seeds.unshift(randomIndex(bootstrap, seeds[1]))
+
+  if (process.env.LOW_HEALTH_NETWORK === 'true') {
+    seeds = bootstrap
+  }
 
   if (process.env.BC_SEED !== undefined) {
     seeds.unshift(process.env.BC_SEED)

@@ -389,7 +389,16 @@ export class Engine {
       const parent = await this.persistence.get('bc.block.parent')
       const synclock = await this.persistence.get('synclock')
 
-      if (previousLatest.getHash() === block.getPreviousHash() &&
+      // check if there is a decision tree cycle required
+      if (parent.getHash() !== previousLatest.getPreviousHash() &&
+          new BN(block.getTotalDistance()).gt(new BN(previousLatest.getTotalDistance())) &&
+          new BN(block.getTimestamp()).gte(new BN(previousLatest.getTimestamp()))){
+          // reset to previousLatestPath
+          // behavior must be echoed in multiverse
+        await this.persistence.put('bc.block.latest', block)
+        await this.persistence.put('bc.block.' + block.getHeight(), block)
+        await this.persistence.putChildHeaders(block)
+      } else if (previousLatest.getHash() === block.getPreviousHash() &&
           new BN(block.getTimestamp()).gt(new BN(parent.getTimestamp())) === true) {
         await this.persistence.put('bc.block.parent', previousLatest)
         await this.persistence.put('bc.block.latest', block)
@@ -412,6 +421,14 @@ export class Engine {
           await this.persistence.put('synclock', oldest)
         }
         await this.persistence.put('bc.block.parent', msg.multiverse[1])
+        await this.persistence.put('bc.block.latest', block)
+        await this.persistence.put('bc.block.' + block.getHeight(), block)
+        await this.persistence.putChildHeaders(block)
+      } else if (msg.force === true &&
+                 synclock.getHeight() === 1) {
+        await this.persistence.put('synclock', block)
+        // here we set it up so that on the next cycle we can compare paths
+        await this.persistence.put('bc.block.parent', previousLatest)
         await this.persistence.put('bc.block.latest', block)
         await this.persistence.put('bc.block.' + block.getHeight(), block)
         await this.persistence.putChildHeaders(block)
