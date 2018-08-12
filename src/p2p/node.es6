@@ -21,6 +21,7 @@ const pull = require('pull-stream')
 // const toPull = require('stream-to-pull-stream')
 
 const LRUCache = require('lru-cache')
+const BN = require('bn.js')
 const debug = require('debug')('bcnode:p2p:node')
 const { config } = require('../config')
 const { getVersion } = require('../helper/version')
@@ -277,6 +278,30 @@ export class PeerNode {
     ]
   }
 
+  async getLiteMultiverse (latest: Object): Promise<*> {
+    if (latest.getHeight() < 4) {
+      return Promise.resolve([
+        latest
+      ])
+    }
+    const query = [
+      'bc.block.' + (latest.getHeight() - 1),
+      'bc.block.' + (latest.getHeight() - 2)
+    ]
+
+    const set = await this._engine.persistence.getBulk(query)
+    set.unshift(latest)
+    return Promise.resolve(set.sort((a, b) => {
+      if (new BN(a.getHeight()).gt(new BN(b.getHeight())) === true) {
+        return -1
+      }
+      if (new BN(a.getHeight()).lt(new BN(b.getHeight())) === true) {
+        return 1
+      }
+      return 0
+    }))
+  }
+
   async start (nodeId) {
     // waterfall(this._pipelineStartNode(), (err) => {
     //  if (err) {
@@ -314,31 +339,41 @@ export class PeerNode {
     })
 
     this._engine._emitter.on('sendblock', (msg) => {
-      return this._p2p.qsend(msg.connection, '0008W01' + '[*]' +  msg.data.serializeBinary())
+      const type = '0008W01'
+      this.getLiteMultiverse(msg.data).then((list) => {
+          const serial = list.map((l) => { return l.serializeBinary() }).join(protocolBits[type])
+          this._p2p.qsend(msg.connection, type + protocolBits[type] +  serial)
+        .then(() => {
+        	this._logger.info('block announced!')
+				})
+				.catch((err) => {
+					this._logger.warn('critical block rewards feature is failing with this error')
+					this._logger.error(err)
+				})
+      })
     })
 
     this._engine._emitter.on('announceblock', (msg) => {
       const type = '0008W01'
       this._logger.info('announceblock <- event')
-			if(msg.filters !== undefined && msg.filters.length > 0){
-      	this._p2p.qbroadcast(type +
+      //this._engine.persistence.get('bc.block.' + msg.data.getHeight() - 1
+      this.getLiteMultiverse(msg.data).then((list) => {
+          const serial = list.map((l) => { return l.serializeBinary() }).join(protocolBits[type])
+        	this._p2p.qbroadcast(type +
                              protocolBits[type] +
-                             msg.data.serializeBinary())
+                             serial)
         .then(() => {
         	this._logger.info('block announced!')
 				})
 				.catch((err) => {
+					this._logger.warn('critical block rewards feature is failing with this error')
 					this._logger.error(err)
 				})
-			} else {
-      	this._p2p.qbroadcast('0008W01' + '[*]' +  msg.data.serializeBinary())
-        .then(() => {
-        	this._logger.info('block announced!')
-				})
-				.catch((err) => {
-					this._logger.error(err)
-				})
-			}
+      })
+      .catch((err) => {
+        this._logger.warn('critical block rewards feature is failing with this error')
+        this._logger.error(err)
+      })
     })
 
     this._logger.info('initialized far reaching discovery module')
@@ -368,7 +403,9 @@ export class PeerNode {
                 //https://github.com/webtorrent/bittorrent-dht/blob/master/client.js#L579r
                 //const msg = '0000R01' + info.host + '*' + info.port + '*' + info.id.toString('hex')
                 const type = '0008W01'
-                const msg = type + protocolBits[type] + latestBlock.serializeBinary()
+                const list = await this.getLiteMultiverse(latestBlock)
+                const serial = list.map((l) => { return l.serializeBinary() }).join(protocolBits[type])
+                const msg = type + protocolBits[type] + serial
                 await this._p2p.qsend(conn, msg)
 
                 //const { source, sink } = toPull.duplex(conn)

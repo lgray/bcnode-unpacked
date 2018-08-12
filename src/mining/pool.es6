@@ -309,7 +309,7 @@ export class WorkerPool {
       // definately throw and likely exit
     } else if (msg.type === 'solution') {
       // handle block
-			this._emitter.emit('mined.solution', msg.data)
+			this._emitter.emit('mined', msg.data)
 
     } else if (msg.type === 'heartbeat') {
 

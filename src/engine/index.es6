@@ -205,6 +205,7 @@ export class Engine {
       if (res) {
         this._logger.info('stored appversion to persistence')
       }
+      /* eslint-disable */
       try {
         const latestBlock = await this.persistence.get('bc.block.latest')
         await this.multiverse.addNextBlock(latestBlock)
@@ -213,6 +214,7 @@ export class Engine {
         await this.persistence.put('bc.block.parent', newGenesisBlock)
         await this.persistence.get('bc.block.1')
         await this.persistence.put('bc.dht.quorum', '0')
+        /* eslint-disable */
         this._logger.info('highest block height on disk ' + latestBlock.getHeight())
       } catch (_) { // genesis block not found
         try {
