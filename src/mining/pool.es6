@@ -19,8 +19,6 @@ const { resolve } = require('path')
 const { inspect } = require('util')
 const { config } = require('../config')
 const { EventEmitter } = require('events')
-const low = require('lowdb')
-const FileAsync = require('lowdb/adapters/FileAsync')
 
 const BN = require('bn.js')
 const debug = require('debug')('bcnode:mining:officer')
@@ -101,7 +99,6 @@ export class WorkerPool {
 
   async init (): boolean {
     const db = new FileAsync(this._poolGuardPath)
-    this._db = await low(db)
     const state = await this._db.getState()
     //if(state !== undefined && state.workers !== undefined) {
     //  this._logger.info('cleaning previous work pool session ' + state.session + ' created on ' + state.timestamp)
@@ -136,22 +133,12 @@ export class WorkerPool {
       worker.on('message', this._handleWorkerMessage.bind(this))
       worker.on('error', this._handleWorkerError.bind(this))
       worker.on('exit', this._handleWorkerExit.bind(this))
+      this._logger.info('launch -> ' + worker.pid)
 			this._workers[worker.pid] = worker
-			await this._db.get('workers').push({ pid: worker.pid }).write()
-			worker.send({ id: this._messageId(worker.pid), type: 'heartbeat' })
 	  }
 
-		const dp = new Promise((resolve, reject) => {
-			const timeout = setTimeout(() => {
-				reject(new Error('unable to deploy workers in pool'))
-			}, 10000)
-			this._emitter.once('ready', () => {
-  			clearTimeout(timeout)
-			  resolve(true)
-			})
-		})
-
-		return dp
+    this._emitter.emit('ready')
+    return Promise.resolve(true)
 
   }
 
