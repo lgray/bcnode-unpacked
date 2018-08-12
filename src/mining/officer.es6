@@ -98,8 +98,8 @@ export class MiningOfficer {
 
   async simMining (): Promise<*> {
     try {
-      await this._workerPool.init()
-      await this._workerPool.allRise()
+      this._workerPool.init()
+      this._workerPool.allRise()
       this._workerPool._emitter.on('mined', (data) => {
         this._handleWorkerFinishedMessage(data)
       })
@@ -340,28 +340,8 @@ export class MiningOfficer {
         }
       }
 
-      await this._workerPool.updateWorkers({ type: 'work', data: update })
-
-      // this._logger.debug(`starting miner process with work: "${work}", difficulty: ${newBlock.getDifficulty()}, ${JSON.stringify(this._collectedBlocks, null, 2)}`)
-      // const proc: ChildProcess = fork(MINER_WORKER_PATH)
-      // this._workerProcess = proc
-      // if (this._workerProcess !== null) {
-      //  // $FlowFixMe - Flow can't find out that ChildProcess is extended form EventEmitter
-      //  this._workerProcess.on('message', this._handleWorkerFinishedMessage.bind(this))
-
-      //  // $FlowFixMe - Flow can't find out that ChildProcess is extended form EventEmitter
-      //  this._workerProcess.on('error', this._handleWorkerError.bind(this))
-
-      //  // $FlowFixMe - Flow can't find out that ChildProcess is extended form EventEmitter
-      //  this._workerProcess.on('exit', this._handleWorkerExit.bind(this))
-
-      //  this._logger.info('worker <- calculated difficulty threshold ' + newBlock.getDifficulty())
-      //  this.startTimer('w1')
-      //  // $FlowFixMe - Flow can't find out that ChildProcess is extended form EventEmitter
-
-      //  // $FlowFixMe - Flow can't properly find worker pid
-      //  return Promise.resolve(this._workerProcess.pid)
-      // }
+      this._workerPool.updateWorkers({ type: 'work', data: update })
+      return Promise.resolve(true)
     } catch (err) {
       this._logger.error(err)
       this._logger.warn(`Error while getting last previous BC block, reason: ${err.message}`)
@@ -400,64 +380,7 @@ export class MiningOfficer {
       this._logger.info('workers dismissed')
     })
 
-    // const process = this._workerProcess
-    // if (!process) {
-    //  return true
-    // }
-
-    // if (process.connected) {
-    //  try {
-    //    process.disconnect()
-    //  } catch (err) {
-    //    this._logger.info(`unable to disconnect workerProcess, reason: ${err.message}`)
-    //  }
-    // }
-
-    // try {
-    //  process.removeAllListeners()
-    // } catch (err) {
-    //  this._logger.info(`unable to remove workerProcess listeners, reason: ${err.message}`)
-    // }
-
-    /// / $FlowFixMe
-    // if (process.killed !== true) {
-    //  try {
-    //    process.kill()
-    //  } catch (err) {
-    //    this._logger.info(`Unable to kill workerProcess, reason: ${err.message}`)
-    //  }
-    // }
-
-    // this._workerProcess = undefined
-
     return true
-
-    // ENABLED for AT
-    // try {
-    //  return Promise.all(this._knownRovers.map((rv) => {
-    //    return this.persistence.get(rv + '.block.latest')
-    //      .then((latest) => {
-    //        return this.persistence.get(rv + '.block.' + (latest.getHeight() + 1))
-    //          .then((latestCandidate) => {
-    //            if (latest.getHash() === latestCandidate.getPreviousHash()) {
-    //              return this.persistence.put(latest.getBlockchain() + '.block.latest', latestCandidate)
-    //            }
-    //            return Promise.resolve(true)
-    //          })
-    //          .catch((err) => {
-    //            this._logger.error(err)
-    //            return Promise.resolve(false)
-    //          })
-    //      })
-    //      .catch((err) => {
-    //        this._logger.error(err)
-    //        return Promise.resolve(false)
-    //      })
-    //  }))
-    // } catch (err) {
-    //  this._logger.error(err)
-    //  return Promise.resolve(false)
-    // }
   }
 
   /*

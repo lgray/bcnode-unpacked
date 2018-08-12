@@ -24,7 +24,6 @@ const { max } = require('ramda')
 const LRUCache = require('lru-cache')
 const BN = require('bn.js')
 const semver = require('semver')
-const request = require('request')
 
 const { config } = require('../config')
 const { ensureDebugPath } = require('../debug')
@@ -626,38 +625,38 @@ export class Engine {
       // this._rawBlock.push(block)
 
       // TEST IF THIS SHOULD BE DONE
-      process.nextTick(() => {
-        let promise = null
+      //process.nextTick(() => {
+        //let promise = null
 
-        if (config.bc.council.enabled) {
-          promise = new Promise((resolve, reject) => {
-            request(config.bc.council.url, (error, response, body) => {
-              if (error) {
-                return reject(error)
-              }
+        //if (config.bc.council.enabled) {
+        //  promise = new Promise((resolve, reject) => {
+        //    request(config.bc.council.url, (error, response, body) => {
+        //      if (error) {
+        //        return reject(error)
+        //      }
 
-              return resolve(body)
-            })
-          })
-        } else {
-          promise = Promise.resolve(true)
-        }
+        //      return resolve(body)
+        //    })
+        //  })
+        //} else {
+        //  promise = Promise.resolve(true)
+        //}
 
-        promise.then(council => {
+        //promise.then(council => {
           this.miningOfficer.newRoveredBlock(rovers, block)
             .then((pid: number|false) => {
               if (pid !== false) {
-                this._logger.info(`collectBlock handler: sent to miner: ${pid}`)
+                this._logger.info(`collectBlock handler: sent to miner`)
               }
             })
             .catch(err => {
               this._logger.error(`could not send to mining worker, reason: ${errToString(err)}`)
               process.exit()
             })
-        }).catch(_ => {
-          this._logger.info('“Save Waves and NEO!” - After Block Collider miners completely brought down the Waves node 22 minutes into mining the team has paused the launch of genesis until we setup protections for centralized chains. Your NRG is safe.')
-        })
-      })
+        //}).catch(_ => {
+        //  this._logger.info('“Save Waves and NEO!” - After Block Collider miners completely brought down the Waves node 22 minutes into mining the team has paused the launch of genesis until we setup protections for centralized chains. Your NRG is safe.')
+        //})
+      //})
     })
   }
 

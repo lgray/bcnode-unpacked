@@ -317,11 +317,16 @@ export class PeerNode {
     this._p2p = discovery.start()
     this._p2p.join(this._p2p.hash, this._p2p.port, (data) => {
 		this._p2p.ip = ip
-    //const waypoint = setInterval(() => {
-    //  this._p2p.announce(this._p2p.hash, this._p2p.port, function() {
-    //    this._logger.info('confirmed waypoint key')
-    //  })
-    //}, 15000)
+
+    const waypointDiscoveryInterval = 300000 + Math.floor(Math.random() * 50000)
+
+    const waypoint = setInterval(() => {
+     if(this._p2p !== undefined && this._p2p._discovery !== undefined){
+        this._p2p.join(this._p2p.hash, this._p2p.port, (data) => {
+            this._p2p._discovery.update()
+        })
+      }
+    }, waypointDiscoveryInterval)
 
     this._engine._emitter.on('sendblockcontext', (msg) => {
       if(msg.data.constructor === Array.constructor) return
@@ -619,28 +624,13 @@ export class PeerNode {
                  obj.remoteHost = obj.host
 
 					if(this._p2p.ip === obj.host) return
-          //  this._p2p.add(obj)
-          //this._p2p._onconnection( ,'utp')
-                 // the host name as described by external peers
-                 // first one is always the immediate response to current peer
-                       // add seen protection
                        try {
                            const name = obj.host + ':' + obj.port + this._p2p.hash
-                           //console.log(obj)
-                           //console.log("local hash: " + this._p2p.hash)
-                           //console.log("local port: " + this._p2p.port)
-                           ////this._p2p._discovery.dht.emit('announce', obj, toBuffer(this._p2p.hash), { host: obj.host, port: obj.port })
                            this._p2p._discovery.emit('peer', name, obj, 'utp')
 
                        } catch (err) {
                            console.log('')
                        }
-                       //this._p2p.addPeer(this._p2p.hash, obj)
-                       //this._p2p.add(obj, () => {
-                       //   this._logger.info('adding peer: ' + peer)
-                       //     console.log('connected peers: ' + this._p2p.totalConnections)
-                       //})
-
             })
 
       			this._p2p._seeder.start()
@@ -652,6 +642,15 @@ export class PeerNode {
             setInterval(() => {
                 this._logger.info('active waypoints:  ' + this._p2p.totalConnections)
                 this._engine._emitter.emit('peerCount', this._p2p.totalConnections)
+                if(this._p2p.totalConnections < USER_QUORUM && LOW_HEALTH_NET !== true) {
+                  this._persistence.put('bc.dht.quorum', '0')
+                  .then(() => {
+                      this._logger.info('waiting for additional waypoints')
+                  })
+                  .catch((err) => {
+                      this._logger.debug(err)
+                  })
+                }
             }, 5000)
    })
 		})
@@ -677,14 +676,6 @@ export class PeerNode {
   //   '0010W01': '[*]'  // write multiverse (selective sync)
   // }
   peerDataHandler (conn: Object, info: Object, str: ?string) {
-    // if (this._greetingRegister[info.id] === undefined) {
-    //  this._greetingRegister[info.id] = 1
-    //  return
-    // } else {
-    //  this._greetingRegister[info.id]++
-    // }
-
-    // if (this._greetingRegister[info.id] > 1) {
     (async () => {
       if (str === undefined) { return }
       if (str.length < 8) { return }
@@ -692,8 +683,6 @@ export class PeerNode {
 
       // TODO: add lz4 compression for things larger than 1000 characters
       const type = str.slice(0, 7)
-      // console.log('  <<<<<<<<<<<<<<<< ' + type)
-
       if (protocolBits[type] === undefined) {
         return
       }
@@ -945,9 +934,6 @@ export class PeerNode {
   broadcastNewBlock (block: BcBlock, withoutPeerId: ?Object) {
     this._logger.debug(`broadcasting msg to peers, ${inspect(block.toObject())}`)
 
-    // this.bundle.pubsub.publish('newBlock', Buffer.from(JSON.stringify(block.toObject())), () => {})
-    // const raw = block.serializeBinary()
-
     let filters = []
     if (withoutPeerId !== undefined) {
       if (withoutPeerId.constructor === Array) {
@@ -957,24 +943,6 @@ export class PeerNode {
       }
     }
     this._engine._emitter.emit('announceblock', { data: block, filters: filters })
-
-    // const url = `${PROTOCOL_PREFIX}/newblock`
-    // this.manager.peerBookConnected.getAllArray().map(peer => {
-    //  this._logger.debug(`Sending to peer ${peer}`)
-    //  const peerId = peer.id.toB58String()
-    //  if (withoutPeerId === undefined || peerId !== withoutPeerId) {
-    //    this.bundle.dialProtocol(peer, url, (err, conn) => {
-    //      if (err) {
-    //        this._logger.error('error sending message to peer', peer.id.toB58String(), err)
-    //        this._logger.error(err)
-    //        return err
-    //      }
-
-    //      // TODO JSON.stringify?
-    //      pull(pull.values([block.serializeBinary()]), conn)
-    //    })
-    //  }
-    // })
   }
 
   // get the best multiverse from all peers

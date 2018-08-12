@@ -28,7 +28,7 @@ const activeWorkers = []
 const available = []
 
 if (cluster.isMaster) {
-  globalLog.info('worker online: ' + process.pid)
+  globalLog.info('--> worker online: ' + process.pid)
   const cycleWorker = () => {
     let prevWorker = false
     if(activeWorkers.length > 0){
@@ -44,7 +44,6 @@ if (cluster.isMaster) {
     return w
   }
   process.on('message', (data) => {
-    data.pid = process.pid
     if(data.type === 'heartbeat'){
       globalLog.info('controller : ' + process.pid + ' heartbeat message recieved ')
       data.activeWorkers = activeWorkers.map((w) => {
@@ -92,7 +91,7 @@ if (cluster.isMaster) {
    */
   const main = () => {
     process.title = 'bc-miner-worker'
-    globalLog.debug('miner recieved updated work')
+    globalLog.debug('miner worker ' + process.pid + ' recieved work')
 
     process.on('message', ({currentTimestamp, offset, work, minerKey, merkleRoot, difficulty, difficultyData}) => {
 

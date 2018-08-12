@@ -59,7 +59,6 @@ export class WorkerPool {
   _knownRovers: string[]
   _emitter: EventEmitter
   _workers: Object
-  _db: Object
   _maxWorkers: number
   _initialized: boolean
   _startupCheck: boolean
@@ -98,21 +97,6 @@ export class WorkerPool {
   }
 
   async init (): boolean {
-    const db = new FileAsync(this._poolGuardPath)
-    const state = await this._db.getState()
-    //if(state !== undefined && state.workers !== undefined) {
-    //  this._logger.info('cleaning previous work pool session ' + state.session + ' created on ' + state.timestamp)
-    //  if(Object.keys(state.workers).length > 0){
-    //    await this._closeWaywardWorkers(state.workers)
-    //  }
-    //}
-    const newState = {
-      session: this._session,
-      timestamp: new Date(),
-      workers: []
-    }
-    await this._db.setState(newState).write()
-    await this._db.set('workers', []).write()
 		this._initialized = true
     this._logger.info('work pool initialized with session ' + this._session)
 		return true
@@ -122,20 +106,25 @@ export class WorkerPool {
    * Boot workers
    */
   async allRise (): boolean {
-    if (this._db === undefined || this._initialized === false) { throw new Error('pool must initialize before calling rise') }
+    if (this._initialized === false) { throw new Error('pool must initialize before calling rise') }
     if (Object.keys(this._workers).length > 0) {
 			this._logger.warn('unable to launch new worker pool if workers already exist')
 			return false
 		 }
 
+    const workers = []
     for (let i = 0; i < this._maxWorkers; i++){
       const worker: ChildProcess = fork(MINER_WORKER_PATH)
+      workers.push(worker)
+	  }
+
+    workers.forEach((worker) => {
       worker.on('message', this._handleWorkerMessage.bind(this))
       worker.on('error', this._handleWorkerError.bind(this))
       worker.on('exit', this._handleWorkerExit.bind(this))
       this._logger.info('launch -> ' + worker.pid)
 			this._workers[worker.pid] = worker
-	  }
+    })
 
     this._emitter.emit('ready')
     return Promise.resolve(true)
@@ -177,10 +166,12 @@ export class WorkerPool {
   _sendMessage (pid: number, msg: Object): boolean {
 
     try {
-      this._workers[pid].send(msg)
+      //if(this._workers[pid] !== undefined && this._workers[pid].connected){
+        this._workers[pid].send(msg);
+      //}
     } catch (err) {
-			delete this._workers[pid]
-			this._logger.info(Object.keys(this._workers))
+      this.dismissWorker(this._workers[pid])
+      this._logger.info(Object.keys(this._workers));
     }
 		return true
 
@@ -213,8 +204,8 @@ export class WorkerPool {
   }
 
   updateWorkers (msg: Object): void {
-		Object.keys(this._workers).map((pid) => {
-			 return this._sendMessage(pid, msg)
+		Object.keys(this._workers).forEach((pid) => {
+			 this._sendMessage(pid, msg)
 		})
   }
 
@@ -248,10 +239,13 @@ export class WorkerPool {
     if (worker !== undefined && worker.killed !== true) {
       try {
         worker.kill()
-        await this._db.get('workers').remove({ pid: pid }).write()
       } catch (err) {
         this._logger.info(`Unable to kill workerProcess, reason: ${err.message}`)
       }
+    }
+
+    if(this._workers[worker.pid]){
+        delete this._workers[worker.pid]
     }
 
     return true
@@ -260,13 +254,9 @@ export class WorkerPool {
 
   async _healthCheck (): boolean {
     try {
-     const state  = await this._db.getState()
      let healthy = true
-     if(state.session !== this._session){
-        healthy = false
-     }
-     state.workers.map((worker) => {
-       if(this._workers[worker.pid] === undefined) {
+     Object.keys(this._workers).map((key) => {
+       if(this._workers[key] === undefined) {
          healthy = false
        }
      })
