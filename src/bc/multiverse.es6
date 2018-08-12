@@ -394,7 +394,7 @@ export class Multiverse {
     }
 
     // FAIL if new block not within 61 seconds of local time
-    if (new BN(newBlock.getHeight()).gt(50000) && newBlock.getTimestamp() + 61 < Math.floor(Date.now() * 0.001)) {
+    if (new BN(newBlock.getHeight()).gt(50000) === true && newBlock.getTimestamp() + 61 < Math.floor(Date.now() * 0.001)) {
       this._logger.info('failed resync req: time below 61 seconds')
       return Promise.resolve(false)
     }
