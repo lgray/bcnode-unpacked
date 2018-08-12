@@ -101,6 +101,22 @@ export class Server {
       help: Null
     }
 
+    // console.log(this._engine.node.p2p)
+    // this._logger.info('!!! SERVER START', this._engine._node)
+
+    this._app.get('/geo/ip2geo/:ip', (req, res, next) => {
+      const ip = req.params.ip
+      const geores = this.engine.geoDb.get(ip)
+      const city = geores && geores.city
+      const location = geores && geores.location
+
+      res.json({
+        ip: ip,
+        city,
+        location
+      })
+    })
+
     this._app.get('/balance/:address', (req, res: $Response, next: NextFunction) => {
       const address = req.params.address
       if (address) {
@@ -167,8 +183,17 @@ export class Server {
 
       debug('socket client connected', socket.id, ip)
 
+      const peerInterval = setInterval(() => {
+        this._wsBroadcast({
+          type: 'map.peers',
+          data: this._getPeers()
+        })
+      }, 10000)
+
       socket.on('disconnect', () => {
         debug('socket client disconnected', socket.id, ip)
+
+        clearInterval(peerInterval)
       })
 
       socket.on('message', (msg) => {
@@ -260,6 +285,41 @@ export class Server {
     this.engine.pubsub.subscribe('block.mined', '<server>', (block: Object) => {
       this._wsBroadcast(block)
     })
+  }
+
+  _getPeers (): Object {
+    const p2p = this._engine._p2p
+
+    if (!p2p) {
+      return {}
+    }
+
+    const ip = p2p.ip
+
+    const geo = this._engine.geoDb.get(ip)
+    const me = {
+      ip,
+      city: geo.city,
+      location: geo.location
+    }
+
+    const peers = p2p.connections.reduce((acc, val) => {
+      const ip = `${val.remoteAddress}`
+      const geo = this._engine.geoDb.get(ip)
+      if (geo.location) {
+        acc[ip] = {
+          ip: ip,
+          city: geo.city,
+          location: geo.location
+        }
+      }
+      return acc
+    }, {})
+
+    return {
+      me,
+      peers
+    }
   }
 
   _transformBlockToWire (block: Block) {
@@ -366,6 +426,10 @@ export class Server {
         data: {
           peer
         }
+      },
+      {
+        type: 'map.peers',
+        data: this._getPeers()
       }
     ]
 

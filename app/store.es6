@@ -16,6 +16,7 @@ import createSagaMiddleware from 'redux-saga'
 import { reducer as appReducer } from './reducers/app/reducer'
 import { reducer as blockReducer } from './reducers/block/reducer'
 import { reducer as blocksReducer } from './reducers/blocks/reducer'
+import { reducer as mapReducer } from './reducers/map/reducer'
 import { reducer as minerReducer } from './reducers/miner/reducer'
 import { reducer as multiverseReducer } from './reducers/multiverse/reducer'
 import { reducer as peerReducer } from './reducers/peer/reducer'
@@ -39,6 +40,7 @@ export const createStore = (history: Object, reducers: Object = {}) => {
       app: appReducer,
       block: blockReducer,
       blocks: blocksReducer,
+      map: mapReducer,
       miner: minerReducer,
       multiverse: multiverseReducer,
       peer: peerReducer,

@@ -14,6 +14,7 @@ import ConnectionState from './ConnectionState'
 import Dot from './Dot'
 import Ellipsis from './Ellipsis'
 import Navbar from './Navbar'
+import PeersMap from './PeersMap'
 import PeersTable from './PeersTable'
 import Root from './Root'
 import RoverBlock from './RoverBlock'
@@ -27,6 +28,7 @@ export {
   Dot,
   Ellipsis,
   Navbar,
+  PeersMap,
   PeersTable,
   Root,
   RoverBlock,

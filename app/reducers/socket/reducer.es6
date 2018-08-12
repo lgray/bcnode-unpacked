@@ -12,6 +12,7 @@ import SocketIO from 'socket.io-client'
 import { ACTIONS as PROFILE_ACTIONS } from '../profile/actions'
 import { ACTIONS as BLOCK_ACTIONS } from '../block/actions'
 import { ACTIONS as BLOCKS_ACTIONS } from '../blocks/actions'
+import { ACTIONS as MAP_ACTIONS } from '../map/actions'
 import { ACTIONS as MULTIVERSE_ACTIONS } from '../multiverse/actions'
 import { ACTIONS as PEER_ACTIONS } from '../peers/actions'
 import { ACTIONS as ROVER_ACTIONS } from '../rover/actions'
@@ -26,6 +27,7 @@ const DISPATCH_TABLE = {
   'block.set': BLOCK_ACTIONS.BLOCK_SET,
   'block.snapshot': ROVER_ACTIONS.ROVER_SET_BLOCKS,
   'blocks.set': BLOCKS_ACTIONS.BLOCKS_STORED_SET,
+  'map.peers': MAP_ACTIONS.MAP_PEERS,
   'multiverse.set': MULTIVERSE_ACTIONS.MULTIVERSE_SET,
   'peer.connected': PEER_ACTIONS.PEERS_ADD_PEER,
   'peer.disconnected': PEER_ACTIONS.PEERS_REMOVE_PEER,

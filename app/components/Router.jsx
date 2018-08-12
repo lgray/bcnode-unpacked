@@ -19,6 +19,7 @@ import {
   Blocks,
   Doc,
   Logs,
+  Map,
   Miner,
   Multiverse,
   Peer,
@@ -40,6 +41,7 @@ export class Router extends Component<*> {
               <Route path='/block/:id/' component={Block} />
               <Route path='/blocks/:id/' component={Blocks} />
               <Route path='/blockpool' component={BlockPool} />
+              <Route path='/map' component={Map} />
               <Route path='/miner' component={Miner} />
               <Route path='/multiverse' component={Multiverse} />
               <Route path='/peer/:id/' component={Peer} />

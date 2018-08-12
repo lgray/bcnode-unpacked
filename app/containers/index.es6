@@ -12,6 +12,7 @@ import BlockPool from './BlockPool'
 import Blocks from './Blocks'
 import Doc from './Doc'
 import Logs from './Logs'
+import Map from './Map'
 import Miner from './Miner'
 import Multiverse from './Multiverse'
 import Peer from './Peer'
@@ -25,6 +26,7 @@ export {
   Blocks,
   Doc,
   Logs,
+  Map,
   Miner,
   Multiverse,
   Peer,

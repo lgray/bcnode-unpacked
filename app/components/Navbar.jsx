@@ -55,6 +55,10 @@ export class Navbar extends Component<*, State> {
           <NavLink href='/#/rover' style={STYLE}>Rover</NavLink>
         </NavItem>
 
+        <NavItem>
+          <NavLink href='/#/map' style={STYLE}>Map</NavLink>
+        </NavItem>
+
         <Dropdown nav isOpen={this.state.dropdownOpen} toggle={
           () => {
             this.setState({
