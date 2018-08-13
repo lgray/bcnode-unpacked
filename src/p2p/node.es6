@@ -643,7 +643,7 @@ export class PeerNode {
                 this._logger.info('active waypoints:  ' + this._p2p.totalConnections)
                 this._engine._emitter.emit('peerCount', this._p2p.totalConnections)
                 if(this._p2p.totalConnections < USER_QUORUM && LOW_HEALTH_NET !== true) {
-                  this._persistence.put('bc.dht.quorum', '0')
+                  this._engine.persistence.put('bc.dht.quorum', '0')
                   .then(() => {
                       this._logger.info('waiting for additional waypoints')
                   })
