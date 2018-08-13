@@ -274,9 +274,10 @@ export function mine (currentTimestamp: number, work: string, miner: string, mer
     let nonceHash = blake2bl(nonce)
     let mr = 0
     result = distance(work, blake2bl(miner + merkleRoot + nonceHash + currentLoopTimestamp))
-    if (new BN(iterations).mod(new BN(50000)) === 0) {
+    if (new BN(iterations).mod(new BN(1000)) === 0) {
       mr = fs.readFileSync('.workermutex', 'utf8')
     }
+
     if (new BN(result).gt(new BN(difficulty)) === true) {
       res = {
         distance: (result).toString(),

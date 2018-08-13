@@ -271,6 +271,7 @@ export class WorkerPool {
     } else if (msg.type === 'solution') {
       // handle block
 			this._emitter.emit('mined', msg.data)
+      this.updateWorkers({ type: 'reset' })
 
     } else if (msg.type === 'heartbeat') {
 

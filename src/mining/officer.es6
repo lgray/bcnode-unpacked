@@ -340,6 +340,9 @@ export class MiningOfficer {
 
       this._logger.info('  >>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
       /* eslint-disable */
+      this._workerPool._emitter.once('mined', (data) => {
+          this._handleWorkerFinishedMessage(data)
+      })
       return  this._workerPool.updateWorkers({ type: 'work', data: update })
     } catch (err) {
       this._logger.error(err)

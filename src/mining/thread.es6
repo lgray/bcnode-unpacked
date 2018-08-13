@@ -51,15 +51,13 @@ if (cluster.isMaster) {
   process.on('message', (data) => {
     if(data.type === 'heartbeat'){
       globalLog.info('controller : ' + process.pid + ' heartbeat message recieved ')
-      data.activeWorkers = activeWorkers.map((w) => {
-        return w.pid
-      })
       // includes the heartbeat and the id to let them know we are in
       process.send(data)
     } else if(data.type === 'reset') {
       globalLog.info('controller : ' + process.pid + ' reset message recieved ')
       for(let w in activeWorkers){
-        w.kill()
+        let c = activeWorkers.pop()
+        c.kill()
       }
     } else if(data.type === 'work') {
       globalLog.info('controller ' + process.pid + ' reassigned worker to active queue ')
@@ -78,6 +76,7 @@ if (cluster.isMaster) {
   })
 
   cluster.on('exit', () => {
+    queuedWorkers.pop()
     globalLog.info('worker reassigned to passive queue')
     queuedWorkers.push(cycleWorker())
     globalLog.info('worker queue ' + queuedWorkers.length)
@@ -143,8 +142,9 @@ if (cluster.isMaster) {
         fs.readFile('.workermutex', 'utf8', (err, data) => {
           if(data !== merkleRoot){
             fs.writeFile('.workermutex', merkleRoot, (err) => {
-              globalLog.info(`solution found: ${JSON.stringify(solution, null, 2)}`)
+              //globalLog.info(`solution found: ${JSON.stringify(solution, null, 2)}`)
               process.send(solution)
+              process.exit()
             })
           } else {
             process.exit()

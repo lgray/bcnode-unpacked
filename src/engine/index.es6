@@ -187,14 +187,12 @@ export class Engine {
                                         this._persistence,
                                         { minerKey: this.minerKey })
 
-      this._workerPool._emitter.on('mined', (data) => {
-          this._workerPool.updateWorkers({ type: 'reset' })
-          this._logger.info('workers dismissed')
-          this.miningOfficer._handleWorkerFinishedMessage(data)
-      })
-
       this._miningOfficer = new MiningOfficer(this._pubsub, this._persistence, this._workerPool, opts)
 
+      //this._workerPool._emitter.on('mined', (data) => {
+      //    this._logger.info('workers dismissed')
+      //    //this.miningOfficer._handleWorkerFinishedMessage(data)
+      //})
 
       // Start NTP sync
       ts.start()
