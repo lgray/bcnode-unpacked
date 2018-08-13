@@ -189,10 +189,10 @@ export class Engine {
 
       this._miningOfficer = new MiningOfficer(this._pubsub, this._persistence, this._workerPool, opts)
 
-      //this._workerPool._emitter.on('mined', (data) => {
-      //    this._logger.info('workers dismissed')
-      //    //this.miningOfficer._handleWorkerFinishedMessage(data)
-      //})
+      this._workerPool._emitter.on('mined', (data) => {
+          this._logger.info('workers dismissed')
+          this.miningOfficer._handleWorkerFinishedMessage(data)
+      })
 
       // Start NTP sync
       ts.start()
