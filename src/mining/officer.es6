@@ -59,13 +59,13 @@ export class MiningOfficer {
   _paused: bool
   _blockTemplates: Object[]
 
-  constructor (pubsub: PubSub, persistence: RocksDb, opts: { minerKey: string, rovers: string[] }) {
+  constructor (pubsub: PubSub, persistence: RocksDb, workerPool: Object, opts: { minerKey: string, rovers: string[] }) {
     this._logger = getLogger(__filename)
     this._minerKey = opts.minerKey
     this._pubsub = pubsub
     this._persistence = persistence
     this._knownRovers = opts.rovers
-    this._workerPool = new WorkerPool(pubsub, persistence, opts)
+    this._workerPool = workerPool
 
     this._speedResults = []
     this._collectedBlocks = {}
@@ -98,11 +98,6 @@ export class MiningOfficer {
 
   async simMining (): Promise<*> {
     try {
-      this._workerPool.init()
-      this._workerPool.allRise()
-      this._workerPool._emitter.on('mined', (data) => {
-        this._handleWorkerFinishedMessage(data)
-      })
       this._logger.info('worker pool initialized')
     } catch (err) {
       this._logger.error(err)
@@ -235,6 +230,9 @@ export class MiningOfficer {
 
   async startMining (rovers: string[], block: Block): Promise<bool|number> {
     // get latest block from each child blockchain
+    //
+    // ////////////// --> runs everytime
+
     const lastPreviousBlock = await this.persistence.get('bc.block.latest')
     this._logger.info(`persisted block height: ${lastPreviousBlock.getHeight()}`)
     // [eth.block.latest,btc.block.latest,neo.block.latest...]
@@ -340,8 +338,9 @@ export class MiningOfficer {
         }
       }
 
-      this._workerPool.updateWorkers({ type: 'work', data: update })
-      return Promise.resolve(true)
+      this._logger.info('  >>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
+      /* eslint-disable */
+      return  this._workerPool.updateWorkers({ type: 'work', data: update })
     } catch (err) {
       this._logger.error(err)
       this._logger.warn(`Error while getting last previous BC block, reason: ${err.message}`)
@@ -372,13 +371,15 @@ export class MiningOfficer {
     return this._blockTemplates[0]
   }
 
-  stopMining (): bool {
+  stopMining (pool: ?Object): bool {
     debug('stop mining')
     this._logger.info('petioning new mining work')
 
-    this._workerPool.allDismissed().then(() => {
-      this._logger.info('workers dismissed')
-    })
+    if(pool !== undefined) {
+      pool.updateWorkers({ type: 'reset' })
+    } else {
+      this._workerPool.updateWorkers({ type: 'reset' })
+    }
 
     return true
   }

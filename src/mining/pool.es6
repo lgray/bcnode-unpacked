@@ -13,6 +13,7 @@ import type { PubSub } from '../engine/pubsub'
 import type { RocksDb } from '../persistence'
 
 const os = require('os')
+const fs = require('fs')
 const { fork, ChildProcess } = require('child_process')
 const { writeFileSync } = require('fs')
 const { resolve } = require('path')
@@ -56,36 +57,33 @@ export class WorkerPool {
   _persistence: RocksDb
   _timers: Object
   _timerResults: Object
-  _knownRovers: string[]
   _emitter: EventEmitter
   _workers: Object
   _maxWorkers: number
-  _initialized: boolean
   _startupCheck: boolean
   _outbox: Object
   _heartbeat: Object
 
   _collectedBlocks: { [blockchain: string]: number }
 
-  constructor (pubsub: PubSub, persistence: RocksDb, opts: { minerKey: string, rovers: string[] }) {
+  constructor (pubsub: PubSub, persistence: RocksDb, opts: { minerKey: string }) {
     let maxWorkers = os.cpus().length
-		if(opts.maxWorkers !== undefined){
+		if(opts !== undefined && opts.maxWorkers !== undefined){
 			maxWorkers = opts.maxWorkers
 		}
-    this._initialized = false
     this._logger = getLogger(__filename)
     this._session = crypto.randomBytes(32).toString('hex')
     this._minerKey = opts.minerKey
     this._pubsub = pubsub
     this._persistence = persistence
-    this._knownRovers = opts.rovers
     this._poolGuardPath = opts.poolguard || config.persistence.path + '/worker_pool_guard.json'
-    this._maxWorkers = max(1, maxWorkers - 1)
+    this._maxWorkers = max(1, maxWorkers - 2)
     this._emitter = new EventEmitter()
     this._startupCheck = false
     this._heartbeat = {}
     this._outbox = new EventEmitter()
     this._workers = {}
+    fs.writeFileSync('.workermutex', "0")
   }
 
   get persistence (): RocksDb {
@@ -96,17 +94,10 @@ export class WorkerPool {
     return this._pubsub
   }
 
-  async init (): boolean {
-		this._initialized = true
-    this._logger.info('work pool initialized with session ' + this._session)
-		return true
-  }
-
   /*
    * Boot workers
    */
-  async allRise (): boolean {
-    if (this._initialized === false) { throw new Error('pool must initialize before calling rise') }
+  async allRise (): Promise<*> {
     if (Object.keys(this._workers).length > 0) {
 			this._logger.warn('unable to launch new worker pool if workers already exist')
 			return false
@@ -115,20 +106,14 @@ export class WorkerPool {
     const workers = []
     for (let i = 0; i < this._maxWorkers; i++){
       const worker: ChildProcess = fork(MINER_WORKER_PATH)
-      workers.push(worker)
-	  }
-
-    workers.forEach((worker) => {
       worker.on('message', this._handleWorkerMessage.bind(this))
       worker.on('error', this._handleWorkerError.bind(this))
       worker.on('exit', this._handleWorkerExit.bind(this))
-      this._logger.info('launch -> ' + worker.pid)
 			this._workers[worker.pid] = worker
-    })
-
+      workers.push(worker)
+	  }
     this._emitter.emit('ready')
     return Promise.resolve(true)
-
   }
 
   allDismissed (): Promise<*> {

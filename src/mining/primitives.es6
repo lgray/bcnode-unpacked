@@ -24,7 +24,7 @@
 import type { Logger } from 'winston'
 
 const { inspect } = require('util')
-
+const fs = require('fs')
 const similarity = require('compute-cosine-similarity')
 const BN = require('bn.js')
 const Random = require('random-js')
@@ -119,11 +119,11 @@ export function getDiff (currentBlockTime: number, previousBlockTime: number, pr
   const bigMinus99 = new BN(-99)
   const big1 = new BN(1)
   const big0 = new BN(0)
-  const bigTargetTimeWindow = new BN(8)
+  const bigTargetTimeWindow = new BN(5)
   let elapsedTime = bigCurentBlockTime.sub(bigPreviousBlockTime)
 
-  // elapsedTime + ((elapsedTime - 4) * newBlocks)
-  const elapsedTimeBonus = elapsedTime.add(elapsedTime.sub(new BN(5)).mul(new BN(newBlockCount)))
+  // elapsedTime + ((elapsedTime - 6) * newBlocks)
+  const elapsedTimeBonus = elapsedTime.add(elapsedTime.sub(new BN(4)).mul(new BN(newBlockCount)))
 
   if (elapsedTimeBonus.gt(big0)) {
     elapsedTime = elapsedTimeBonus
@@ -272,7 +272,11 @@ export function mine (currentTimestamp: number, work: string, miner: string, mer
 
     let nonce = String(Math.abs(Random.engines.nativeMath())) // random string
     let nonceHash = blake2bl(nonce)
+    let mr = 0
     result = distance(work, blake2bl(miner + merkleRoot + nonceHash + currentLoopTimestamp))
+    if (new BN(iterations).mod(new BN(50000)) === 0) {
+      mr = fs.readFileSync('.workermutex', 'utf8')
+    }
     if (new BN(result).gt(new BN(difficulty)) === true) {
       res = {
         distance: (result).toString(),
@@ -283,6 +287,8 @@ export function mine (currentTimestamp: number, work: string, miner: string, mer
         iterations,
         timeDiff: ts.now() - tsStart
       }
+      break
+    } else if (mr === merkleRoot) {
       break
     }
   }

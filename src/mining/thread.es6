@@ -24,23 +24,28 @@ process.on('unhandledRejection', (err) => {
   globalLog.error(`Rejected promise, trace:\n${err.stack}`)
 })
 
+
 const activeWorkers = []
+const queuedWorkers = []
 const available = []
 
 if (cluster.isMaster) {
-  globalLog.info('--> worker online: ' + process.pid)
-  const cycleWorker = () => {
-    let prevWorker = false
-    if(activeWorkers.length > 0){
-       prevWorker = activeWorkers.pop()
-       prevWorker.kill()
+  process.on('uncaughtError', (err) => {
+    // $FlowFixMe
+    globalLog.error(`Rejected promise, trace:\n${err.stack}`)
+    for(let w in cluster.workers) {
+       w.kill()
     }
+    process.exit(3)
+  })
+  globalLog.info('--> pool controller reporting ' + process.pid)
+  const cycleWorker = () => {
     const w = cluster.fork()
-    activeWorkers.push(w)
     w.on('message', (msg) => {
+      const self = activeWorkers.pop()
+      queuedWorkers.push(self)
       process.send({ pid: process.pid, type: 'solution', data: msg})
     })
-		fs.writeFileSync('.mutex_claim', 'override:'+process.pid)
     return w
   }
   process.on('message', (data) => {
@@ -53,37 +58,32 @@ if (cluster.isMaster) {
       process.send(data)
     } else if(data.type === 'reset') {
       globalLog.info('controller : ' + process.pid + ' reset message recieved ')
-      cycleWorker()
-      data.pid = process.pid
-      available.push(1)
-      process.send(data)
-    } else if(data.type === 'work') {
-      globalLog.info('controller : ' + process.pid + ' work message recieved ')
-      if(available.length > 0){
-        available.pop()
-        activeWorkers[0].send(data.data)
-      } else {
-        const worker = cycleWorker()
-        worker.send(data.data)
+      for(let w in activeWorkers){
+        w.kill()
       }
-      // send back the id to let the controller know we got it
-      process.send({ id: data.id })
+    } else if(data.type === 'work') {
+      globalLog.info('controller ' + process.pid + ' reassigned worker to active queue ')
+      if(queuedWorkers.length > 0){
+        const w = queuedWorkers.pop()
+        activeWorkers.push(w)
+        w.send(data.data)
+      } else {
+        const w = cycleWorker()
+        activeWorkers.push(w)
+        w.send(data.data)
+      }
     } else {
       console.log(data)
     }
   })
 
   cluster.on('exit', () => {
-    globalLog.info('worker killed, respawning')
-    cycleWorker()
+    globalLog.info('worker reassigned to passive queue')
+    queuedWorkers.push(cycleWorker())
+    globalLog.info('worker queue ' + queuedWorkers.length)
   })
 
   cycleWorker()
-  available.push(1)
-
-  setTimeout(() => {
-    process.exit()
-  }, 55000)
 
 } else {
   /**
@@ -104,7 +104,7 @@ if (cluster.isMaster) {
 			if(marker.constructor !== merkleRoot.constructor){
 				marker = merkleRoot.toString()
 			}
-			globalLog.info(marker)
+			globalLog.info('-----------------------------> ' + marker)
       // function with all difficultyData closed in scope and
       // send it to mine with all arguments except of timestamp and use it
       // each 1s tick with new timestamp
@@ -140,21 +140,23 @@ if (cluster.isMaster) {
         )
 
         // send solution and exit
-
-        globalLog.info(`solution found: ${JSON.stringify(solution, null, 2)}`)
-
-				fs.readFileSync('.mutex_claim', 'utf8', (err, data) => {
-						if(marker !== data){
-        		  globalLog.info('no claim')
-							process.send(solution)
-						}
-				  process.exit(0)
-				})
+        fs.readFile('.workermutex', 'utf8', (err, data) => {
+          if(data !== merkleRoot){
+            fs.writeFile('.workermutex', merkleRoot, (err) => {
+              globalLog.info(`solution found: ${JSON.stringify(solution, null, 2)}`)
+              process.send(solution)
+            })
+          } else {
+            process.exit()
+          }
+        })
       } catch (e) {
         globalLog.warn(`Mining failed with reason: ${e.message}, stack ${e.stack}`)
         process.exit(1)
       }
     })
+    const variableTimeout = 150000 + Math.floor(Math.random() * 10000)
+    setTimeout(() => { process.exit() }, variableTimeout)
   }
 
   main()
