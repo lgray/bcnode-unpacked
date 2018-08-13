@@ -233,8 +233,11 @@ export class MiningOfficer {
     //
     // ////////////// --> runs everytime
 
+    this.stopMining(this._workerPool)
+
     const lastPreviousBlock = await this.persistence.get('bc.block.latest')
-    this._logger.info(`persisted block height: ${lastPreviousBlock.getHeight()}`)
+
+    this._logger.info(`local persisted block height: ${lastPreviousBlock.getHeight()}`)
     // [eth.block.latest,btc.block.latest,neo.block.latest...]
     const latestRoveredHeadersKeys: string[] = this._knownRovers.map(chain => `${chain}.block.latest`)
     const latestBlockHeaders = await this.persistence.getBulk(latestRoveredHeadersKeys)
@@ -339,11 +342,14 @@ export class MiningOfficer {
       }
 
       this._logger.info('  >>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
+
       /* eslint-disable */
       this._workerPool._emitter.once('mined', (data) => {
+    			this.pubsub.publish('update.mined.block', data)
           this._handleWorkerFinishedMessage(data)
       })
-      return  this._workerPool.updateWorkers({ type: 'work', data: update })
+      this._workerPool.updateWorkers({ type: 'work', data: update })
+      return Promise.resolve(true)
     } catch (err) {
       this._logger.error(err)
       this._logger.warn(`Error while getting last previous BC block, reason: ${err.message}`)

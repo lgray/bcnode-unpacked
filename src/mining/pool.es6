@@ -86,6 +86,10 @@ export class WorkerPool {
     fs.writeFileSync('.workermutex', "0")
   }
 
+  get emitter (): EventEmitter {
+    return this._emitter
+  }
+
   get persistence (): RocksDb {
     return this._persistence
   }
@@ -103,16 +107,15 @@ export class WorkerPool {
 			return false
 		 }
 
-    const workers = []
     for (let i = 0; i < this._maxWorkers; i++){
       const worker: ChildProcess = fork(MINER_WORKER_PATH)
       worker.on('message', this._handleWorkerMessage.bind(this))
       worker.on('error', this._handleWorkerError.bind(this))
       worker.on('exit', this._handleWorkerExit.bind(this))
 			this._workers[worker.pid] = worker
-      workers.push(worker)
 	  }
-    this._emitter.emit('ready')
+
+    this.emitter.emit('ready')
     return Promise.resolve(true)
   }
 
@@ -189,7 +192,7 @@ export class WorkerPool {
   }
 
   updateWorkers (msg: Object): void {
-		Object.keys(this._workers).forEach((pid) => {
+		Object.keys(this._workers).map((pid) => {
 			 this._sendMessage(pid, msg)
 		})
   }
@@ -212,7 +215,6 @@ export class WorkerPool {
         this._logger.info(`unable to disconnect workerProcess, reason: ${err.message}`)
       }
     }
-
 
     try {
       worker.removeAllListeners()
@@ -270,7 +272,9 @@ export class WorkerPool {
       // definately throw and likely exit
     } else if (msg.type === 'solution') {
       // handle block
-			this._emitter.emit('mined', msg.data)
+      this._logger.info(' HANDLE WORKER MESSAGE WITH SOLUTION PROVIDED')
+    	this.pubsub.publish('update.mined.block', msg.data)
+			this.emitter.emit('mined', msg.data)
       this.updateWorkers({ type: 'reset' })
 
     } else if (msg.type === 'heartbeat') {
@@ -279,19 +283,10 @@ export class WorkerPool {
 				this._heartbeat[msg.pid] = Math.floor(Date.now() * 0.001)
 			}
 
-		  if(this._startupCheck === false){
-
-				if(Object.keys(this._heartbeat).length > 0){
-					this._startupCheck = true
-          this._emitter.emit('ready')
-			  }
-
-			}
-
     } else if (this._outbox[msg.id] !== undefined) {
       this._logger.info('worker responded for ' + msg.id)
       delete this._outbox[msg.id]
-      this._emitter.emit(msg.id, msg)
+      this.emitter.emit(msg.id, msg)
     } else {
       // message has no friends
     }

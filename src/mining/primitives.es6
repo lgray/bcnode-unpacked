@@ -294,11 +294,11 @@ export function mine (currentTimestamp: number, work: string, miner: string, mer
     }
   }
 
-  const tsEnd = ts.now()
-  const tsDiff = tsEnd - tsStart
-  if (res === null) {
-    throw Error(`Mining took more than ${MAX_TIMEOUT_SECONDS}s, iterations: ${iterations}, tsDiff: ${tsDiff} ending...`)
-  }
+  // const tsEnd = ts.now()
+  // const tsDiff = tsEnd - tsStart
+  // if (res === null) {
+  //  throw Error(`Mining took more than ${MAX_TIMEOUT_SECONDS}s, iterations: ${iterations}, tsDiff: ${tsDiff} ending...`)
+  // }
 
   return res
 }

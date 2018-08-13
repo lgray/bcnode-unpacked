@@ -23,10 +23,20 @@ process.on('unhandledRejection', (err) => {
   // $FlowFixMe
   globalLog.error(`Rejected promise, trace:\n${err.stack}`)
 })
+process.once("SIGTERM", () => {
+	process.exit(0)
+})
+process.once("SIGINT", () => {
+	process.exit(0)
+})
+process.once("exit", () => {
+	process.exit(0)
+})
 
+cluster.activeWorkers = []
+cluster.queuedWorkers = []
+cluster.previousHash = ""
 
-const activeWorkers = []
-const queuedWorkers = []
 const available = []
 
 if (cluster.isMaster) {
@@ -38,51 +48,47 @@ if (cluster.isMaster) {
     }
     process.exit(3)
   })
-  globalLog.info('--> pool controller reporting ' + process.pid)
-  const cycleWorker = () => {
-    const w = cluster.fork()
-    w.on('message', (msg) => {
-      const self = activeWorkers.pop()
-      queuedWorkers.push(self)
-      process.send({ pid: process.pid, type: 'solution', data: msg})
+  globalLog.info('pool controller ready ' + process.pid)
+
+
+  cluster.on('exit', () => {
+    globalLog.info('exit ' + process.pid + ' recieved work')
+    cluster.fork().on('message', (msg) => {
+        process.send({ type: 'solution', data: msg })
     })
-    return w
-  }
+  })
+
   process.on('message', (data) => {
-    if(data.type === 'heartbeat'){
-      globalLog.info('controller : ' + process.pid + ' heartbeat message recieved ')
-      // includes the heartbeat and the id to let them know we are in
-      process.send(data)
-    } else if(data.type === 'reset') {
-      globalLog.info('controller : ' + process.pid + ' reset message recieved ')
-      for(let w in activeWorkers){
-        let c = activeWorkers.pop()
-        c.kill()
+
+    if(data.type === 'reset') {
+      globalLog.info('pool controller <- ' + process.pid + ' <- reset message ' + Object.keys(cluster.workers).length)
+
+      for(let w in cluster.workers){
+        cluster.workers[w].kill()
       }
     } else if(data.type === 'work') {
-      globalLog.info('controller ' + process.pid + ' reassigned worker to active queue ')
-      if(queuedWorkers.length > 0){
-        const w = queuedWorkers.pop()
-        activeWorkers.push(w)
-        w.send(data.data)
+      globalLog.info('pool controller ' + process.pid + ' <- work ')
+
+      if(cluster.workers.length > 0){
+        for(let w in cluster.workers){
+            cluster.workers[w].send(data.data)
+        }
       } else {
-        const w = cycleWorker()
-        activeWorkers.push(w)
-        w.send(data.data)
+        const worker = cluster.fork()
+        worker.once('online', () => {
+            worker.send(data.data)
+        })
+        worker.on('message', (data) => {
+            process.send({ type: 'solution', data: data, hash: data})
+        })
       }
+
     } else {
       console.log(data)
     }
+
   })
 
-  cluster.on('exit', () => {
-    queuedWorkers.pop()
-    globalLog.info('worker reassigned to passive queue')
-    queuedWorkers.push(cycleWorker())
-    globalLog.info('worker queue ' + queuedWorkers.length)
-  })
-
-  cycleWorker()
 
 } else {
   /**
@@ -90,9 +96,14 @@ if (cluster.isMaster) {
    */
   const main = () => {
     process.title = 'bc-miner-worker'
-    globalLog.debug('miner worker ' + process.pid + ' recieved work')
+
+    globalLog.info('worker ' + process.pid + ' ready')
+    const variableTimeout = 150000 + Math.floor(Math.random() * 10000)
+    setTimeout(() => { process.exit() }, variableTimeout)
 
     process.on('message', ({currentTimestamp, offset, work, minerKey, merkleRoot, difficulty, difficultyData}) => {
+
+    globalLog.info('miner worker ' + process.pid + ' recieved work')
 
       ts.offsetOverride(offset)
       // Deserialize buffers from parent process, buffer will be serialized as object of this shape { <idx>: byte } - so use Object.values on it
@@ -117,8 +128,6 @@ if (cluster.isMaster) {
         return function (timestamp: number) {
           const newBlockCount = getNewBlockCount(lastPreviousBlockProto.getBlockchainHeaders(), newBlockHeadersProto)
 
-          // globalLog.info(`stale states: ${JSON.stringify(newBlockCount, null, 2)}`)
-
           const preExpDiff = getNewPreExpDifficulty(
             timestamp,
             lastPreviousBlockProto,
@@ -139,24 +148,22 @@ if (cluster.isMaster) {
         )
 
         // send solution and exit
-        fs.readFile('.workermutex', 'utf8', (err, data) => {
-          if(data !== merkleRoot){
-            fs.writeFile('.workermutex', merkleRoot, (err) => {
-              //globalLog.info(`solution found: ${JSON.stringify(solution, null, 2)}`)
-              process.send(solution)
-              process.exit()
-            })
-          } else {
-            process.exit()
-          }
+        process.nextTick(() => {
+          fs.readFile('.workermutex', 'utf8', (err, data) => {
+            if(data !== undefined && data !== merkleRoot){
+
+              fs.writeFile('.workermutex', merkleRoot, (err) => {
+                globalLog.info(`solution found: ${JSON.stringify(solution, null, 2)}`)
+                process.send(solution)
+              })
+            }
+          })
         })
       } catch (e) {
         globalLog.warn(`Mining failed with reason: ${e.message}, stack ${e.stack}`)
-        process.exit(1)
+        process.exit(3)
       }
     })
-    const variableTimeout = 150000 + Math.floor(Math.random() * 10000)
-    setTimeout(() => { process.exit() }, variableTimeout)
   }
 
   main()

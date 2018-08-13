@@ -189,7 +189,7 @@ export class Engine {
 
       this._miningOfficer = new MiningOfficer(this._pubsub, this._persistence, this._workerPool, opts)
 
-      this._workerPool._emitter.on('mined', (data) => {
+      this._workerPool.emitter.on('mined', (data) => {
           this._logger.info('workers dismissed')
           this.miningOfficer._handleWorkerFinishedMessage(data)
       })
@@ -201,6 +201,14 @@ export class Engine {
     // TODO only needed because of server touches that - should be passed using constructor?
     get minerKey (): string {
       return this._minerKey
+    }
+
+    /**
+     * Get WorkerPool
+     * @returns {WorkerPool|*}
+     */
+    get workerPool (): WorkerPool {
+      return this._workerPool
     }
 
     /**
@@ -338,6 +346,10 @@ export class Engine {
             this._peerIsResyncing = true
         })
 
+        this.pubsub.subscribe('update.mined.block', '<engine>', (msg) => {
+            this._logger.info('------ update.mined.block -----')
+        })
+
         this.pubsub.subscribe('state.resync.failed', '<engine>', (msg) => {
             this._logger.info('pausing mining to reestablish multiverse')
             this._peerIsResyncing = true
@@ -347,6 +359,18 @@ export class Engine {
                 }
             })
         })
+
+	    	//[this.pubsub.subscribe('miner.block.new', (msg) => {
+				//[		/* eslint-disable */
+				//[		console.log('miner.block.new -----------> ')
+				//[		console.log(msg)
+				//[})
+
+	    	//this.pubsub.subscribe('mined', (msg) => {
+				//		/* eslint-disable */
+				//		console.log('miner -----------> ')
+				//		console.log(msg)
+				//})
 
         this.pubsub.subscribe('state.checkpoint.end', '<engine>', (msg) => {
             this._peerIsResyncing = false
@@ -711,7 +735,7 @@ export class Engine {
         //if (Object.keys(this._workerPool._workers).length === 0) {
         //}
 
-        this._workerPool.allRise().then(() => {
+        this.workerPool.allRise().then(() => {
                 this._emitter.on('collectBlock', ({
                     block
                 }) => {
