@@ -194,11 +194,15 @@ export class Server {
       debug('socket client connected', socket.id, ip)
 
       const peerInterval = setInterval(() => {
-        const peers = this._getPeers()
-        this._wsBroadcast({
-          type: 'map.peers',
-          data: peers
-        })
+        try {
+          const peers = this._getPeers()
+          this._wsBroadcast({
+            type: 'map.peers',
+            data: peers
+          })
+        } catch (err) {
+          this._logger.error('Unable to get and broadcast (WS) peers')
+        }
       }, 10000)
 
       socket.on('disconnect', () => {
@@ -444,12 +448,17 @@ export class Server {
         data: {
           peer
         }
-      },
-      {
-        type: 'map.peers',
-        data: this._getPeers()
       }
     ]
+
+    try {
+      msgs.push({
+        type: 'map.peers',
+        data: this._getPeers()
+      })
+    } catch (err) {
+      this._logger.info('Unable to get and send initial peers', err)
+    }
 
     msgs.forEach((msg) => {
       socket.emit(msg.type, msg.data)
