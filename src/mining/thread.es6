@@ -19,6 +19,10 @@ const fs = require('fs')
 
 const globalLog: Logger = logging.getLogger(__filename)
 // setup logging of unhandled rejections
+process.on('uncaughtError', (err) => {
+  // $FlowFixMe
+  globalLog.error(`error, trace:\n${err.stack}`)
+})
 process.on('unhandledRejection', (err) => {
   // $FlowFixMe
   globalLog.error(`Rejected promise, trace:\n${err.stack}`)
@@ -38,57 +42,56 @@ cluster.queuedWorkers = []
 cluster.previousHash = ""
 
 const available = []
-
+const settings = {
+  maxWorkers: 2
+}
 if (cluster.isMaster) {
-  process.on('uncaughtError', (err) => {
-    // $FlowFixMe
-    globalLog.error(`Rejected promise, trace:\n${err.stack}`)
-    for(let w in cluster.workers) {
-       w.kill()
-    }
-    process.exit(3)
-  })
-  globalLog.info('pool controller ready ' + process.pid)
 
+  globalLog.info('1111111111111111111111111111111111111111')
 
   cluster.on('exit', () => {
-    globalLog.info('exit ' + process.pid + ' recieved work')
-    cluster.fork().on('message', (msg) => {
-        process.send({ type: 'solution', data: msg })
+    globalLog.info('worker exited')
+    const worker = cluster.fork()
+    worker.on('message', (data) => {
+        process.send({ type: 'solution', data: data})
+        for(let id in cluster.workers){
+            cluster.workers[id].kill()
+        }
     })
   })
 
   process.on('message', (data) => {
 
+    globalLog.info('aaaaaaaa')
+
     if(data.type === 'reset') {
+      globalLog.info('bbbbbbb')
       globalLog.info('pool controller <- ' + process.pid + ' <- reset message ' + Object.keys(cluster.workers).length)
-
-      for(let w in cluster.workers){
-        cluster.workers[w].kill()
+      for(let id in cluster.workers){
+        globalLog.info('ccccccc')
+        cluster.workers[id].kill()
       }
+    } else if(data.type === 'config') {
+      settings.maxWorkers = data.maxWorkers || settings.maxWorkers
     } else if(data.type === 'work') {
-      globalLog.info('pool controller ' + process.pid + ' <- work ')
-
-      if(cluster.workers.length > 0){
-        for(let w in cluster.workers){
-            cluster.workers[w].send(data.data)
-        }
-      } else {
-        const worker = cluster.fork()
-        worker.once('online', () => {
-            worker.send(data.data)
-        })
-        worker.on('message', (data) => {
-            process.send({ type: 'solution', data: data, hash: data})
-        })
-      }
-
-    } else {
-      console.log(data)
+      const worker = cluster.fork()
+      worker.on('message', (data) => {
+          globalLog.info('888888888888888888888888888888888888')
+          process.send({ type: 'solution', data: data })
+          for(let id in cluster.workers){
+              globalLog.info('99999999999999999999999999999999999')
+               worker[id].kill()
+          }
+      })
+      worker.once('online', () => {
+        worker.send(data.data)
+      })
     }
 
   })
 
+
+  globalLog.info('pool controller ready ' + process.pid)
 
 } else {
   /**
@@ -137,6 +140,7 @@ if (cluster.isMaster) {
         }
       }
 
+
       try {
         const solution = mine(
           currentTimestamp,
@@ -147,18 +151,9 @@ if (cluster.isMaster) {
           difficultyCalculator()
         )
 
-        // send solution and exit
-        process.nextTick(() => {
-          fs.readFile('.workermutex', 'utf8', (err, data) => {
-            if(data !== undefined && data !== merkleRoot){
-
-              fs.writeFile('.workermutex', merkleRoot, (err) => {
-                globalLog.info(`solution found: ${JSON.stringify(solution, null, 2)}`)
-                process.send(solution)
-              })
-            }
-          })
-        })
+        globalLog.info(`solution found: ${JSON.stringify(solution, null, 2)}`)
+        process.send(solution)
+        process.exit()
       } catch (e) {
         globalLog.warn(`Mining failed with reason: ${e.message}, stack ${e.stack}`)
         process.exit(3)

@@ -24,7 +24,6 @@
 import type { Logger } from 'winston'
 
 const { inspect } = require('util')
-const fs = require('fs')
 const similarity = require('compute-cosine-similarity')
 const BN = require('bn.js')
 const Random = require('random-js')
@@ -246,7 +245,7 @@ export function distance (a: string, b: string): number {
  * @returns {Object} result containing found `nonce` and `distance` where distance is > `threshold` provided as parameter
  */
 // $FlowFixMe will never return anything else then a mining result
-export function mine (currentTimestamp: number, work: string, miner: string, merkleRoot: string, threshold: number, difficultyCalculator: ?Function): { distance: string, nonce: string, timestamp: number, difficulty: string } {
+export function mine (currentTimestamp: number, work: string, miner: string, merkleRoot: string, threshold: number, difficultyCalculator: ?Function, reportType: ?number): { distance: string, nonce: string, timestamp: number, difficulty: string } {
   let difficulty = threshold
   let result
   const tsStart = ts.now()
@@ -272,11 +271,7 @@ export function mine (currentTimestamp: number, work: string, miner: string, mer
 
     let nonce = String(Math.abs(Random.engines.nativeMath())) // random string
     let nonceHash = blake2bl(nonce)
-    let mr = 0
     result = distance(work, blake2bl(miner + merkleRoot + nonceHash + currentLoopTimestamp))
-    if (new BN(iterations).mod(new BN(1000)) === 0) {
-      mr = fs.readFileSync('.workermutex', 'utf8')
-    }
 
     if (new BN(result).gt(new BN(difficulty)) === true) {
       res = {
@@ -288,8 +283,6 @@ export function mine (currentTimestamp: number, work: string, miner: string, mer
         iterations,
         timeDiff: ts.now() - tsStart
       }
-      break
-    } else if (mr === merkleRoot) {
       break
     }
   }

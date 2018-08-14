@@ -62,6 +62,7 @@ export class WorkerPool {
   _maxWorkers: number
   _startupCheck: boolean
   _outbox: Object
+  _pool: Object
   _heartbeat: Object
 
   _collectedBlocks: { [blockchain: string]: number }
@@ -79,6 +80,7 @@ export class WorkerPool {
     this._poolGuardPath = opts.poolguard || config.persistence.path + '/worker_pool_guard.json'
     this._maxWorkers = max(1, maxWorkers - 2)
     this._emitter = new EventEmitter()
+    this._pool = {}
     this._startupCheck = false
     this._heartbeat = {}
     this._outbox = new EventEmitter()
@@ -94,6 +96,10 @@ export class WorkerPool {
     return this._persistence
   }
 
+  get pool (): Object {
+    return this._pool
+  }
+
   get pubsub (): PubSub {
     return this._pubsub
   }
@@ -102,18 +108,13 @@ export class WorkerPool {
    * Boot workers
    */
   async allRise (): Promise<*> {
-    if (Object.keys(this._workers).length > 0) {
-			this._logger.warn('unable to launch new worker pool if workers already exist')
-			return false
-		 }
 
-    for (let i = 0; i < this._maxWorkers; i++){
-      const worker: ChildProcess = fork(MINER_WORKER_PATH)
-      worker.on('message', this._handleWorkerMessage.bind(this))
-      worker.on('error', this._handleWorkerError.bind(this))
-      worker.on('exit', this._handleWorkerExit.bind(this))
-			this._workers[worker.pid] = worker
-	  }
+    const pool: ChildProcess = fork(MINER_WORKER_PATH)
+    pool.on('message', this._handlePoolMessage.bind(this))
+    pool.on('error', this._handlePoolError.bind(this))
+    pool.on('exit', this._handlePoolExit.bind(this))
+    pool.send({ type: 'config', maxWorkers: this._maxWorkers })
+    this._pool = pool
 
     this.emitter.emit('ready')
     return Promise.resolve(true)
@@ -151,50 +152,25 @@ export class WorkerPool {
           return proces
        }, []))
   }
-  _sendMessage (pid: number, msg: Object): boolean {
+  _sendMessage (msg: Object): boolean {
 
     try {
       //if(this._workers[pid] !== undefined && this._workers[pid].connected){
-        this._workers[pid].send(msg);
+        this._pool.send(msg);
       //}
     } catch (err) {
-      this.dismissWorker(this._workers[pid])
-      this._logger.info(Object.keys(this._workers));
+      this._logger.error(err);
+      this._pool = this._scheduleNewPool()
+      this._pool.once('online', () => {
+        this._pool.send(msg);
+      })
     }
 		return true
 
 	}
 
-  _sendMessageAsync (pid: number, msg: Object): Promise<*> {
-
-    const id = this._messageId(pid)
-
-    try {
-      this._workers[pid].send(msg)
-    } catch (err) {
-			this._logger.info(err.message)
-			delete this._workers[pid]
-    }
-
-    const deferredPromise = new Promise((resolve, reject) => {
-      this._emitter.once(id, (data) => {
-        if(data !== undefined && data !== false){
-          return resolve(data)
-        }
-       return resolve(false)
-      })
-    })
-
-    this._outbox[id] = Math.floor(Date.now() * 0.001)
-
-    return deferredPromise
-
-  }
-
   updateWorkers (msg: Object): void {
-		Object.keys(this._workers).map((pid) => {
-			 this._sendMessage(pid, msg)
-		})
+	  this._sendMessage(msg)
   }
 
   async dismissWorker (worker: Object): boolean {
@@ -257,52 +233,55 @@ export class WorkerPool {
     return pid + '@' + crypto.randomBytes(16).toString('hex')
 	}
 
-  _scheduleNewWorker () {
-    const worker: ChildProcess = fork(MINER_WORKER_PATH)
-    worker.on('message', this._handleWorkerMessage.bind(this))
-    worker.on('error', this._handleWorkerError.bind(this))
-    worker.on('exit', this._handleWorkerExit.bind(this))
-    this._workers[worker.pid] = worker
-    return true
+  _scheduleNewPool () {
+    const pool: ChildProcess = fork(MINER_WORKER_PATH)
+    pool.on('message', this._handlePoolMessage.bind(this))
+    pool.on('error', this._handlePoolError.bind(this))
+    pool.on('exit', this._handlePoolExit.bind(this))
+    this._pool = pool
+    return pool
   }
 
-  _handleWorkerMessage (msg: Object) {
-    if(msg === undefined || msg.id === undefined) {
+  _handlePoolMessage (msg: Object) {
+
+    /* eslint-disable */
+    this._logger.info('xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx')
+    this._logger.info('xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx')
+    this._logger.info('xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx')
+    this._logger.info('xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx')
+    this._logger.info('xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx')
+    this._logger.info('xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx')
+    this._logger.info('xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx')
+    this._logger.info('xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx')
+    console.log(msg)
+    if(msg === undefined) {
       // strange unrequested feedback from worker
       // definately throw and likely exit
+      this._logger.warn('unable to parse message from worker pool')
     } else if (msg.type === 'solution') {
       // handle block
-      this._logger.info(' HANDLE WORKER MESSAGE WITH SOLUTION PROVIDED')
-    	this.pubsub.publish('update.mined.block', msg.data)
 			this.emitter.emit('mined', msg.data)
-      this.updateWorkers({ type: 'reset' })
-
-    } else if (msg.type === 'heartbeat') {
-
-      if(this._heartbeat[msg.pid] === undefined) {
-				this._heartbeat[msg.pid] = Math.floor(Date.now() * 0.001)
-			}
-
-    } else if (this._outbox[msg.id] !== undefined) {
-      this._logger.info('worker responded for ' + msg.id)
-      delete this._outbox[msg.id]
-      this.emitter.emit(msg.id, msg)
+      this._logger.info(' HANDLE WORKER MESSAGE WITH SOLUTION PROVIDED')
+    	//this.pubsub.publish('update.mined.block', msg.data)
+      //this.updateWorkers({ type: 'reset' })
     } else {
+      this._logger.info('*********************************')
+      this._logger.info(msg)
       // message has no friends
     }
   }
 
-  _handleWorkerError (msg: Object) {
+  _handlePoolError (msg: Object) {
 		this._logger.error(msg)
   }
 
-  _handleWorkerExit (exitCode: Object) {
+  _handlePoolExit (exitCode: Object) {
 		// worker ahs exited
-    const worker: ChildProcess = fork(MINER_WORKER_PATH)
-    worker.on('message', this._handleWorkerMessage.bind(this))
-    worker.on('error', this._handleWorkerError.bind(this))
-    worker.on('exit', this._handleWorkerExit.bind(this))
-    this._workers[worker.pid] = worker
+    const pool: ChildProcess = fork(MINER_WORKER_PATH)
+    pool.on('message', this._handlePoolMessage.bind(this))
+    pool.on('error', this._handlePoolError.bind(this))
+    pool.on('exit', this._handlePoolExit.bind(this))
+    this._pool = pool
     return true
   }
 

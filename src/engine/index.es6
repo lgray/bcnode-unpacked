@@ -116,9 +116,9 @@ export class Engine {
     _logger: Logger
     _monitor: Monitor
     _knownBlocksCache: LRUCache < string, BcBlock >
-        _knownEvaluationsCache: LRUCache < string, BcBlock >
-        _rawBlocks: LRUCache < number, Block >
-        _node: Node
+    _knownEvaluationsCache: LRUCache < string, BcBlock >
+    _rawBlocks: LRUCache < number, Block >
+    _node: Node
     // _nodep2p2: NodeP2P2
     _persistence: PersistenceRocksDb
     _pubsub: PubSub
@@ -380,6 +380,7 @@ export class Engine {
             try {
                 if (!this._knownEvaluationsCache.has(msg.data.getHash())) {
                     this._knownEvaluationsCache.set(msg.data.getHash(), 1)
+                    // TODO: Check if any blocks are not the current one and reuse if its new
                     this.miningOfficer.stopMining(this._workerPool)
                     this.updateLatestAndStore(msg)
                         .then((res) => {
@@ -747,7 +748,6 @@ export class Engine {
                     // FIXME: @schnorr, is this typo? Should not it be this._rawBlocks.push(block) ?
                     // this._rawBlock.push(block)
 
-                    this._logger.info(Object.keys(this._workerPool._workers).length + ' workers in pool')
                     process.nextTick(() => {
                         this.miningOfficer.newRoveredBlock(rovers, block)
                             .then((pid: number | false) => {
@@ -1451,7 +1451,7 @@ export class Engine {
                 } else {
                     this._logger.warn('local mined block ' + newBlock.getHeight() + ' does not stack on multiverse height ' + this.multiverse.getHighestBlock().getHeight())
                     this._logger.warn('mined block ' + newBlock.getHeight() + ' cannot go on top of multiverse block ' + this.multiverse.getHighestBlock().getHash())
-                    return Promise.resolve(false)
+                    return Promise.resolve(true)
                     //return this.miningOfficer.rebaseMiner()
                     //  .then((res) => {
                     //    this._logger.info(res)

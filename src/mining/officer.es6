@@ -16,7 +16,7 @@ const { inspect } = require('util')
 
 const BN = require('bn.js')
 const debug = require('debug')('bcnode:mining:officer')
-const { mean, all, equals, flatten, fromPairs, last, range, values } = require('ramda')
+const { max, mean, all, equals, flatten, fromPairs, last, range, values } = require('ramda')
 
 const { prepareWork, prepareNewBlock, getUniqueBlocks } = require('./primitives')
 const { getLogger } = require('../logger')
@@ -57,6 +57,7 @@ export class MiningOfficer {
   _unfinishedBlock: ?BcBlock
   _unfinishedBlockData: ?UnfinishedBlockData
   _paused: bool
+  _blockCache: Block[]
   _blockTemplates: Object[]
 
   constructor (pubsub: PubSub, persistence: RocksDb, workerPool: Object, opts: { minerKey: string, rovers: string[] }) {
@@ -66,6 +67,7 @@ export class MiningOfficer {
     this._persistence = persistence
     this._knownRovers = opts.rovers
     this._workerPool = workerPool
+    this._blockCache = []
 
     this._speedResults = []
     this._collectedBlocks = {}
@@ -233,9 +235,18 @@ export class MiningOfficer {
     //
     // ////////////// --> runs everytime
 
-    this.stopMining(this._workerPool)
-
     const lastPreviousBlock = await this.persistence.get('bc.block.latest')
+
+    // collider is starting up
+    if (lastPreviousBlock.getHeight() === 1 && this._blockCache.length > 0) {
+      this._blockCache.unshift(block)
+      return
+    }
+
+    if (this._blockCache.length > 0) {
+      this._blockCache.unshift(block)
+      return
+    }
 
     this._logger.info(`local persisted block height: ${lastPreviousBlock.getHeight()}`)
     // [eth.block.latest,btc.block.latest,neo.block.latest...]
@@ -276,8 +287,10 @@ export class MiningOfficer {
       }
 
       if (to === undefined) {
-        to = from - 1
+        to = from + 2
       }
+
+      from = max(to - 30, from)
 
       this._logger.info('chain: ' + chain + 'from: ' + from + ' to: ' + to)
 
@@ -343,11 +356,11 @@ export class MiningOfficer {
 
       this._logger.info('  >>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
 
-      /* eslint-disable */
-      this._workerPool._emitter.once('mined', (data) => {
-    			this.pubsub.publish('update.mined.block', data)
-          this._handleWorkerFinishedMessage(data)
+      this._workerPool.emitter.once('mined', (data) => {
+        this._handleWorkerFinishedMessage(data)
       })
+
+      /* eslint-disable */
       this._workerPool.updateWorkers({ type: 'work', data: update })
       return Promise.resolve(true)
     } catch (err) {
@@ -382,7 +395,7 @@ export class MiningOfficer {
 
   stopMining (pool: ?Object): bool {
     debug('stop mining')
-    this._logger.info('petioning new mining work')
+    this._logger.info('realign mining path')
 
     if(pool !== undefined) {
       pool.updateWorkers({ type: 'reset' })
@@ -479,6 +492,8 @@ export class MiningOfficer {
 
   _handleWorkerFinishedMessage (solution: { distance: string, nonce: string, difficulty: string, timestamp: number, iterations: number, timeDiff: number }) {
     const unfinishedBlock = this._unfinishedBlock
+    /* eslint-disable */
+    console.log('aaaaaaaaaaaaaaaaaaaa')
     if (!unfinishedBlock) {
       this._logger.warn('There is not an unfinished block to use solution for')
       return
@@ -494,6 +509,7 @@ export class MiningOfficer {
     unfinishedBlock.setTotalDistance(new BN(unfinishedBlock.getTotalDistance()).add(new BN(chainWeight)).add(new BN(unfinishedBlock.getDifficulty(), 10)).toString())
     unfinishedBlock.setTimestamp(timestamp)
 
+    console.log('bbbbbbbbbbbbbbbbb')
     const unfinishedBlockData = this._unfinishedBlockData
     if (unfinishedBlockData) {
       unfinishedBlockData.iterations = iterations
@@ -506,12 +522,16 @@ export class MiningOfficer {
       return
     }
 
+    console.log('ccccccccccccccccccc')
     if (unfinishedBlock !== undefined && isDebugEnabled()) {
       this._writeMiningData(unfinishedBlock, solution)
     }
 
+    console.log('ddddddddddddddddddd')
     this._cleanUnfinishedBlock()
     this.pubsub.publish('miner.block.new', { unfinishedBlock, solution })
+    console.log('eeeeeeeeeeeeeeeee')
+
     return this.stopMining()
   }
 
