@@ -14,7 +14,7 @@ export const reducer = (state: Object = initialState, action: Object) => {
   switch (action.type) {
     case ACTIONS.MAP_PEERS:
       state.me = action.payload.me
-      state.peers = Object.values(action.payload.peers)
+      state.peers = Object.values(action.payload.peers || {})
       return state
   }
 

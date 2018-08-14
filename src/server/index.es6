@@ -22,6 +22,7 @@ const WebSocket = require('ws')
 const CircularBuffer = require('circular-buffer')
 const SocketIO = require('socket.io')
 
+const { anyDns } = require('../engine/helper')
 const logging = require('../logger')
 const { config } = require('../config')
 const { Null, Block } = require('../protos/core_pb')
@@ -62,6 +63,11 @@ export class Server {
     this._server = null
     this._logger = logging.getLogger(__filename)
     this._roveredBlocksBuffer = new CircularBuffer(24)
+
+    // setInterval(() => {
+    //   const peers = this._getPeers()
+    //   this._logger.info('!!! PEERS', peers)
+    // }, 3000)
   }
 
   get app (): express$Application { // eslint-disable-line
@@ -86,6 +92,10 @@ export class Server {
 
   run (opts: Opts): Promise<bool> {
     this._opts = opts
+
+    anyDns().then((ip) => {
+      this._ip = ip
+    })
 
     this._logger.debug('Starting Server for Web UI')
 
@@ -288,13 +298,17 @@ export class Server {
     })
   }
 
+  _getP2P (): Object {
+    return this._engine._p2p || this._engine._node._p2p
+  }
+
   _getPeers (): Object {
-    const p2p = this._engine._p2p || this._engine._node._p2p
+    const p2p = this._getP2P()
     if (!p2p) {
       return {}
     }
 
-    const ip = p2p.ip
+    const ip = this._ip || p2p.ip
     if (!ip) {
       return {}
     }
@@ -306,7 +320,8 @@ export class Server {
       location: geo.location
     }
 
-    const peers = p2p.connections.reduce((acc, val) => {
+    const connections = p2p.connections || []
+    const peers = connections.reduce((acc, val) => {
       const ip = `${val.remoteAddress}`
       const geo = this._engine.geoDb.get(ip)
       if (geo.location) {
