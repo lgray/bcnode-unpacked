@@ -28,10 +28,10 @@ export class PeersMap extends Component<*> {
     }
 
     const me = this.props.peer
-    const posMe = me && [
+    const posMe = (me && [
       me.location.latitude,
       me.location.longitude
-    ] || [49.2, 16.6333]
+    ]) || [40.730610, -73.935242]
 
     const peerPoints = this.props.peers.map((peer, idx) => {
       const posPeer = [
@@ -56,7 +56,14 @@ export class PeersMap extends Component<*> {
     })
 
     return (
-      <Map center={posMe} zoom={zoom} style={style}> minZoom={zoom} maxZoom={zoom}
+      <Map
+        animate={false}
+        center={posMe}
+        zoom={zoom}
+        style={style}
+        minZoom={zoom - 1}
+        maxZoom={zoom + 1}
+      >
         <TileLayer
           url='https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
         />
