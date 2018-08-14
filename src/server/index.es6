@@ -184,9 +184,10 @@ export class Server {
       debug('socket client connected', socket.id, ip)
 
       const peerInterval = setInterval(() => {
+        const peers = this._getPeers()
         this._wsBroadcast({
           type: 'map.peers',
-          data: this._getPeers()
+          data: peers
         })
       }, 10000)
 
@@ -288,13 +289,15 @@ export class Server {
   }
 
   _getPeers (): Object {
-    const p2p = this._engine._p2p
-
+    const p2p = this._engine._p2p || this._engine._node._p2p
     if (!p2p) {
       return {}
     }
 
     const ip = p2p.ip
+    if (!ip) {
+      return {}
+    }
 
     const geo = this._engine.geoDb.get(ip)
     const me = {
