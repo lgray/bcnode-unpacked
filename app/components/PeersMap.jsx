@@ -62,7 +62,6 @@ export class PeersMap extends Component<*> {
         zoom={zoom}
         style={style}
         minZoom={zoom - 1}
-        maxZoom={zoom + 1}
       >
         <TileLayer
           url='https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
