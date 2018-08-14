@@ -21,7 +21,7 @@ export class PeersMap extends Component<*> {
     const zoom = 3
 
     const style = {
-      marginLeft: -83,
+      // marginLeft: '-83px',
       paddingLeft: 0,
       height: this.props.size.height,
       width: this.props.size.width
