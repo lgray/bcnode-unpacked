@@ -41,7 +41,7 @@ function Discovery (nodeId) {
   seeds.unshift(randomIndex(seederBootstrap))
   seeds.unshift(randomIndex(seederBootstrap, seeds[0]))
   seeds.unshift(randomIndex(seederBootstrap, seeds[1]))
-  seeds.unshift(randomIndex(seederBootstrap, seeds[3]))
+  seeds.unshift(randomIndex(seederBootstrap, seeds[2]))
 
   if (process.env.MIN_HEALH_NETWORK === 'true') {
     seeds = seederBootstrap

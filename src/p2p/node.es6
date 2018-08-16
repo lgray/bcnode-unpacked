@@ -466,80 +466,13 @@ export class PeerNode {
 
             /* eslint-disable */
 
-            //this._p2p.on('connection-closed', (conn, info) => {
-            // // this.peerClosedConnectionHandler(conn, info)
-            // this._logger.info('------- CONNECTION CLOSED ------')
-            // //console.log(conn)
-            // //console.log(info)
-            // console.log("^^^^^^^^^^^^^^^^^^^^^^^^")
-            //})
-            //this._p2p.on('error', (err) => {
-            // this._logger.info('------- ERROR ------')
-            // console.trace(err)
-            // console.log("^^^^^^^^^^^^^^^^^^^^^^^^")
-            //})
-
-            //this._p2p.on('redundant-connection', (conn, info) => {
-            // this._logger.info('------- REDUNDANT CONNECTION ------')
-            // console.log("^^^^^^^^^^^^^^^^^^^^^^^^")
-            //})
-
-            //this._p2p.on('peer', (channel) => {
-            // this._logger.info('-------  PEER DISCOVERED ------')
-            // //console.log(channel)
-            // console.log("^^^^^^^^^^^^^^^^^^^^^^^^")
-            //})
-
-            //this._p2p.on('drop', (peer, type) => {
-            // this._logger.info('------- PEER DROPPED ------')
-            //   // console.log(peer)
-            //   // console.log(type)
-            // console.log("^^^^^^^^^^^^^^^^^^^^^^^^")
-            //})
-
-            //this._p2p.on('peer-banned', (peer, type) => {
-            // this._logger.info('------- PEER BANNED ------')
-            // //console.log(peer)
-            // //console.log(type)
-            // console.log("^^^^^^^^^^^^^^^^^^^^^^^^")
-            //})
-
-            //this._p2p.on('connect-failed', (next, timeout) => {
-            // this._logger.info('------- CONNECT FAILED ------')
-            // //console.log(next)
-            // //console.log(timeout)
-            // console.log("^^^^^^^^^^^^^^^^^^^^^^^^")
-            //})
-
-            //this._p2p.on('handshake-timeout', (conn, timeout) => {
-            // this._logger.info('------- HANDSHAKE TIMEOUT ------')
-            // //console.log(timeout)
-            // //console.log("^^^^^^^^^^^^^^^^^^^^^^^^")
-            //})
-
-            //this._p2p.on('peer-rejected', (peer, type) => {
-            // this._logger.warn('peer rejected ')
-            // //console.log(peer)
-            // //console.log(type)
-            // // this._logger.info("::::::::::::::::::::::::" + type)
-            // //console.log("^^^^^^^^^^^^^^^^^^^^^^^^")
-            //})
-
-            //this._p2p._discovery.on('peer', (data) => {
-            //    console.log(data)
-            //})
-
             this._engine._emitter.on('getmultiverse', (obj) => {
-
-							//console.log('bone art event get multiverse not fired <----------------')
 
               const type = '0009R01' // read selective block list (multiverse)
               const split = protocolBits[type]
               const low = obj.data.low
               const high = obj.data.high
               const msg = type + split + low + split + high
-              //console.log('>>>>>>>>>>>>>>>>>>>>>>>>> CONNECTION ')
-              //console.log(obj)
               this._p2p.qsend(obj.connection, msg)
                 .then((res) => {
                   if (res) {
@@ -553,8 +486,6 @@ export class PeerNode {
             })
 
           this._engine._emitter.on('putmultiverse', (msg) => {
-            //console.log('getblocklist event requests')
-            //console.log(msg)
             this._engine.getMultiverseHandler(msg, msg.data)
             .then((res) => {
               this._logger.info(res)

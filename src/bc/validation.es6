@@ -116,10 +116,10 @@ export function isValidChildAge (newBlock: BcBlock, type: number = 0): bool {
   const upperTimestampLimit = new BN(newestHeaderTimestamp).add(new BN(highRangeLimit)).toNumber()
   const lowerTimestampLimit = new BN(newestHeaderTimestamp).sub(new BN(lowRangeLimit)).toNumber()
 
-  console.log('newest header timestamp: ' + newestHeader.timestamp)
-  console.log('bcblocktimestamp timestamp: ' + bcBlockTimestamp)
-  console.log('upperTimestampLimit: ' + upperTimestampLimit)
-  console.log('lowerTimestampLimit: ' + lowerTimestampLimit)
+  logger.info('newest header timestamp: ' + newestHeader.timestamp)
+  logger.info('bcblocktimestamp timestamp: ' + bcBlockTimestamp)
+  logger.info('upperTimestampLimit: ' + upperTimestampLimit)
+  logger.info('lowerTimestampLimit: ' + lowerTimestampLimit)
   /* eslint-enable */
   if (new BN(bcBlockTimestamp).gt(new BN(upperTimestampLimit)) === true) {
     logger.warn('failed: isValidChildAge upper limit')
@@ -177,7 +177,7 @@ export function getNewestHeader (newBlock: BcBlock): bool {
 // }
 
 function numberOfBlockchainsNeededMatchesChildBlock (newBlock: BcBlock): bool {
-  logger.info('numberOfBlockchainsNeededMatchesChildBlock validation running')
+  logger.debug('numberOfBlockchainsNeededMatchesChildBlock validation running')
   // skip for genesis block - it chas no blockchain blocks embedded
   if (newBlock.getHeight() === GENESIS_DATA.hash && newBlock.getHeight() === 1) {
     return true
@@ -193,7 +193,7 @@ function numberOfBlockchainsNeededMatchesChildBlock (newBlock: BcBlock): bool {
 }
 
 function ifMoreThanOneHeaderPerBlockchainAreTheyOrdered (newBlock: BcBlock): bool {
-  logger.info('ifMoreThanOneHeaderPerBlockchainAreTheyOrdered validation running')
+  logger.debug('ifMoreThanOneHeaderPerBlockchainAreTheyOrdered validation running')
   const headersMap = newBlock.getBlockchainHeaders()
 
   // gather true/false for each chain signalling if either there is only one header
@@ -222,12 +222,12 @@ function ifMoreThanOneHeaderPerBlockchainAreTheyOrdered (newBlock: BcBlock): boo
   })
 
   // check if all chain conditions are true
-  logger.info(`ifMoreThanOneHeaderPerBlockchainAreTheyOrdered all chain conditions: ${inspect(chainsConditions)}`)
+  logger.debug(`ifMoreThanOneHeaderPerBlockchainAreTheyOrdered all chain conditions: ${inspect(chainsConditions)}`)
   return all(equals(true), chainsConditions)
 }
 
 function isChainRootCorrectlyCalculated (newBlock: BcBlock): bool {
-  logger.info('isChainRootCorrectlyCalculated validation running')
+  logger.debug('isChainRootCorrectlyCalculated validation running')
   const receivedChainRoot = newBlock.getChainRoot()
 
   const expectedBlockHashes = getChildrenBlocksHashes(blockchainMapToList(newBlock.getBlockchainHeaders()))
@@ -236,7 +236,7 @@ function isChainRootCorrectlyCalculated (newBlock: BcBlock): bool {
 }
 
 function isFieldLengthBounded (newBlock: BcBlock): bool {
-  logger.info('isFieldLengthBounded validation running')
+  logger.debug('isFieldLengthBounded validation running')
   return Object.keys(newBlock.toObject()).reduce((all, k) => {
     if (all[k] !== undefined && all[k].length > 128) {
       all = false
@@ -246,7 +246,7 @@ function isFieldLengthBounded (newBlock: BcBlock): bool {
 }
 
 function areDarkFibersValid (newBlock: BcBlock): bool {
-  logger.info('areDarkFibersValid validation running')
+  logger.debug('areDarkFibersValid validation running')
   const newBlockTimestampMs = newBlock.getTimestamp() * 1000
   const blockchainHeadersList = blockchainMapToList(newBlock.getBlockchainHeaders())
   const dfBoundHeadersChecks = blockchainHeadersList.map(header => {
@@ -264,7 +264,7 @@ function areDarkFibersValid (newBlock: BcBlock): bool {
 }
 
 function isMerkleRootCorrectlyCalculated (newBlock: BcBlock): bool {
-  logger.info('isMerkleRootCorrectlyCalculated validation running')
+  logger.debug('isMerkleRootCorrectlyCalculated validation running')
   const receivedMerkleRoot = newBlock.getMerkleRoot()
 
   const blockHashes = getChildrenBlocksHashes(blockchainMapToList(newBlock.getBlockchainHeaders()))
@@ -286,17 +286,17 @@ function isMerkleRootCorrectlyCalculated (newBlock: BcBlock): bool {
 }
 
 function isDistanceAboveDifficulty (newBlock: BcBlock): bool {
-  logger.info('isDistanceCorrectlyCalculated validation running')
+  logger.debug('isDistanceCorrectlyCalculated validation running')
   const receivedDistance = newBlock.getDistance()
   const recievedDifficulty = newBlock.getDifficulty() // !! NOTE: This is the difficulty for THIS block and not for the parent.
-	logger.info('recievedDistance ' + receivedDistance)
-	logger.info('recievedDifficulty ' + recievedDifficulty)
+	logger.debug('recievedDistance ' + receivedDistance)
+	logger.debug('recievedDifficulty ' + recievedDifficulty)
 
   return new BN(receivedDistance, 16).gt(new BN(recievedDifficulty, 16))
 }
 
 function isDistanceCorrectlyCalculated (newBlock: BcBlock): bool {
-  logger.info('isDistanceCorrectlyCalculated validation running')
+  logger.debug('isDistanceCorrectlyCalculated validation running')
   const receivedDistance = newBlock.getDistance()
 
   const expectedWork = prepareWork(newBlock.getPreviousHash(), newBlock.getBlockchainHeaders())
@@ -351,7 +351,7 @@ export function blockchainHeadersAreChain (childHeaderList: BlockchainHeader[]|B
     check = aperture(2, parentHeaderList).reduce((result, [a, b]) => a.getHash() === b.getPreviousHash() && result, true)
 
     if (!check) {
-      logger.info(`parent headers do not form a chain`)
+      logger.debug(`parent headers do not form a chain`)
       // return check // Disabled until AT
     }
   }
@@ -394,7 +394,7 @@ function validateChildHeadersSequence (childBlock, parentBlock): bool[] {
 export function validateBlockSequence (blocks: BcBlock[]): bool {
   // if any of the submissions are undefined reject the sequence
   if (reject(identity, blocks).length > 0) {
-    logger.info('undefined members in set')
+    logger.debug('undefined members in set')
     return false
   }
   // BC: 10 > BC: 9 > BC: 8 ...

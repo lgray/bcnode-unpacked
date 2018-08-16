@@ -1442,7 +1442,7 @@ export class Engine {
         }
 
         try {
-            this._logger.info('broadcasting block challenge ' + newBlock.getHash() + ' -> considered next block in current multiverse')
+            this._logger.info('broadcasting block challenge ' + newBlock.getHeight() + ' -> considered next block in current multiverse')
             this.node.broadcastNewBlock(newBlock)
 
             // NOTE: Do we really need nested try-catch ?

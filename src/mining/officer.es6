@@ -244,7 +244,7 @@ export class MiningOfficer {
     const latestBlockHeaders = await this.persistence.getBulk(latestRoveredHeadersKeys)
     // { eth: 200303, btc:2389, neo:933 }
     const latestBlockHeadersHeights = fromPairs(latestBlockHeaders.map(header => [header.getBlockchain(), header.getHeight()]))
-    this._logger.info(`latestBlockHeadersHeights: ${inspect(latestBlockHeadersHeights)}`)
+    this._logger.debug(`latestBlockHeadersHeights: ${inspect(latestBlockHeadersHeights)}`)
 
     // collider is starting up
     // if (lastPreviousBlock.getHeight() === 1 && blockCache.length > 0) {
@@ -515,7 +515,7 @@ export class MiningOfficer {
     let unfinishedBlockData = this._unfinishedBlockData
     let workId = solution.workId
 
-    this._logger.info('loading work id ' + workId + ' from imperforate blocks ' + this._unfinished.length)
+    this._logger.debug('loading work id ' + workId + ' from imperforate blocks ' + this._unfinished.length)
     /* eslint-disable */
     //if (!unfinishedBlock || unfinishedBlock.workId !== workId) {
 
@@ -526,7 +526,7 @@ export class MiningOfficer {
               return b
             }
         })
-        this._logger.info('loaded work id: ' + workId + ' candidates ' + candidates.length)
+        this._logger.debug('loaded work id: ' + workId + ' candidates ' + candidates.length)
         if(candidates.length > 0){
           const unfinishedBlockObject = candidates.shift()
           unfinishedBlock = unfinishedBlockObject.unfinishedBlock
@@ -548,7 +548,7 @@ export class MiningOfficer {
     //}
 
     const { nonce, distance, timestamp, difficulty, iterations, timeDiff } = solution
-    this._logger.info(`The calculated block difficulty was ${unfinishedBlock.getDifficulty()}, actual mining difficulty was ${difficulty}`)
+    this._logger.debug(`The calculated block difficulty was ${unfinishedBlock.getDifficulty()}, actual mining difficulty was ${difficulty}`)
 
     const chainWeight = unfinishedBlock.getDistance()
 
@@ -563,7 +563,7 @@ export class MiningOfficer {
     }
 
     if (!isValidBlock(unfinishedBlock, 1)) {
-      this._logger.warn(`mined block is invalid`)
+      this._logger.debug(`mined block is invalid`)
       this._cleanUnfinishedBlock()
       //this._workerPool.emitter.emit('blockCacheRebase')
       return
@@ -581,7 +581,7 @@ export class MiningOfficer {
 
   _handleWorkerError (error: Error): Promise<boolean> {
     this._logger.error(error)
-    this._logger.warn(`Mining worker process errored, reason: ${error.message}`)
+    this._logger.warn(`mining worker process errored, reason: ${error.message}`)
     this._cleanUnfinishedBlock()
 
     //return this.stopMining()
@@ -592,9 +592,9 @@ export class MiningOfficer {
       this._logger.info('miner pending new work')
 
       if (code === 0 || code === null) { // 0 means worker exited on it's own correctly, null that is was terminated from engine
-        this._logger.info(`Mining worker finished its work (code: ${code})`)
+        this._logger.info(`mining worker finished its work (code: ${code})`)
       } else {
-        this._logger.warn(`Mining worker process exited with code ${code}, signal ${signal}`)
+        this._logger.warn(`mining worker process exited with code ${code}, signal ${signal}`)
         this._cleanUnfinishedBlock()
       }
   }
