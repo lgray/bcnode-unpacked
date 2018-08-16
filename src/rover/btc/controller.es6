@@ -198,19 +198,19 @@ export default class Controller {
       this._logger.info(`peer count pool: ${pool.numberConnected()} dp: ${network.discoveredPeers}, sp: ${network.satoshiPeers}, q: ${network.hasQuorum()}, bh: ${network.bestHeight}`)
     }, 3 * 1000)
 
-    if (process.env.BC_BOOT_BLOCK !== undefined) {
-      const data = require('../../utils/templates/btcblock.json')
-      const unifiedBlock = createUnifiedBlock(data, _createUnifiedBlock)
-      setTimeout(() => {
-        this._rpc.rover.collectBlock(unifiedBlock, (err, response) => {
-          if (err) {
-            this._logger.warn('RpcClient could not collect block')
-          } else {
-            this._logger.debug(`Collector Response: ${JSON.stringify(response.toObject(), null, 4)}`)
-          }
-        })
-      }, 10000)
-    }
+    // if (process.env.BC_BOOT_BLOCK !== undefined) {
+    //  const data = require('../../utils/templates/btcblock.json')
+    //  const unifiedBlock = createUnifiedBlock(data, _createUnifiedBlock)
+    //  setTimeout(() => {
+    //    this._rpc.rover.collectBlock(unifiedBlock, (err, response) => {
+    //      if (err) {
+    //        this._logger.warn('RpcClient could not collect block')
+    //      } else {
+    //        this._logger.debug(`Collector Response: ${JSON.stringify(response.toObject(), null, 4)}`)
+    //      }
+    //    })
+    //  }, 10000)
+    // }
   }
 
   _onNewBlock (block): [boolean, Object] {
