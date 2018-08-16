@@ -1,55 +1,337 @@
-(node:53581) Warning: N-API is an experimental feature and could change at any time.
-1534441306 INFO	 utils.time Starting NTP time sync 
-1534441306 INFO	 engine.index stored rovers to persistence 
-1534441306 INFO	 engine.index stored appversion to persistence 
-1534441306 INFO	 engine.index genesis block saved to disk a8212d5a65f579c2018b19172be34e4422a93c8437f8e7c19ddc8cad15353862 
-1534441306 WARN	 engine.index boot block 93699 assigned as latest block 
-1534441306 INFO	 mining.officer worker pool initialized 
-1534441306 INFO	 engine.index starting rovers 'btc,eth,lsk,neo,wav' 
-1534441306 INFO	 rover.manager Starting rover 'btc' using '/Users/mtxodus1/Documents/GitHub/private/lib/rover/btc/rover.js' 
-1534441306 INFO	 rover.manager Rover started 'btc' 
-1534441306 INFO	 rover.manager Starting rover 'eth' using '/Users/mtxodus1/Documents/GitHub/private/lib/rover/eth/rover.js' 
-1534441306 INFO	 rover.manager Rover started 'eth' 
-1534441306 INFO	 rover.manager Starting rover 'lsk' using '/Users/mtxodus1/Documents/GitHub/private/lib/rover/lsk/rover.js' 
-1534441306 INFO	 rover.manager Rover started 'lsk' 
-1534441306 INFO	 rover.manager Starting rover 'neo' using '/Users/mtxodus1/Documents/GitHub/private/lib/rover/neo/rover.js' 
-1534441306 INFO	 rover.manager Rover started 'neo' 
-1534441306 INFO	 rover.manager Starting rover 'wav' using '/Users/mtxodus1/Documents/GitHub/private/lib/rover/wav/rover.js' 
-1534441306 INFO	 rover.manager Rover started 'wav' 
-1534441306 INFO	 server.index Server available at http://0.0.0.0:3000 
-1534441306 INFO	 mining.thread pool controller ready 53588 
-(node:53584) Warning: N-API is an experimental feature and could change at any time.
-(node:53587) Warning: N-API is an experimental feature and could change at any time.
-1534441307 INFO	 rover.helper unified block built from btc 00000000 
-(node:53583) Warning: N-API is an experimental feature and could change at any time.
-(node:53585) Warning: N-API is an experimental feature and could change at any time.
-1534441307 INFO	 utils.time Starting NTP time sync 
-(node:53586) Warning: N-API is an experimental feature and could change at any time.
-1534441310 INFO	 rover.btc.controller peer count pool: 50 dp: 30, sp: 30, q: true, bh: 537062 
-1534441313 INFO	 rover.btc.controller peer count pool: 50 dp: 30, sp: 30, q: true, bh: 537062 
-1534441314 INFO	 rover.helper unified block built from lsk 53014759 
-1534441314 INFO	 engine.index rovered block in consideration of cache 0 
-1534441314 INFO	 mining.officer [] <- [] rovered lsk block 6791755 53014759331246703 
-1534441314 INFO	 mining.officer constructing multiverse with blockchains [btc:0 eth:0 lsk:1 neo:0 wav:0] 
-1534441314 INFO	 mining.officer multiverse depth 1 
-1534441316 INFO	 rover.btc.controller peer count pool: 50 dp: 30, sp: 30, q: true, bh: 537062 
-1534441317 INFO	 engine.index rovered block in consideration of cache 0 
-1534441317 INFO	 mining.officer [] <- [] rovered btc block 100000 00000000000000000003fdb710e2f3d290adcd68b2643ff9c98dddb33fb8b36a 
-1534441317 INFO	 mining.officer constructing multiverse with blockchains [btc:1 eth:0 lsk:1 neo:0 wav:0] 
-1534441317 INFO	 mining.officer multiverse depth 2 
-1534441319 INFO	 rover.btc.controller peer count pool: 50 dp: 30, sp: 30, q: true, bh: 537062 
-1534441322 INFO	 rover.btc.controller peer count pool: 50 dp: 30, sp: 30, q: true, bh: 537062 
-1534441325 INFO	 rover.btc.controller peer count pool: 50 dp: 30, sp: 30, q: true, bh: 537062 
-1534441326 INFO	 rover.helper unified block built from lsk 15206794 
-1534441326 INFO	 engine.index rovered block in consideration of cache 0 
-1534441326 INFO	 mining.officer [] <- [] rovered lsk block 6791756 15206794855155624785 
-1534441326 INFO	 mining.officer constructing multiverse with blockchains [btc:1 eth:0 lsk:2 neo:0 wav:0] 
-1534441326 INFO	 mining.officer multiverse depth 3 
-1534441328 INFO	 rover.btc.controller peer count pool: 50 dp: 30, sp: 30, q: true, bh: 537062 
-1534441331 INFO	 rover.btc.controller peer count pool: 50 dp: 30, sp: 30, q: true, bh: 537062 
-1534441332 INFO	 rover.helper unified block built from lsk 40768799 
-1534441332 INFO	 engine.index rovered block in consideration of cache 0 
-1534441332 INFO	 mining.officer [] <- [] rovered lsk block 6791757 4076879980271814508 
-1534441332 INFO	 mining.officer constructing multiverse with blockchains [btc:1 eth:0 lsk:3 neo:0 wav:0] 
-1534441332 INFO	 mining.officer multiverse depth 4 
-1534441334 INFO	 rover.btc.controller peer count pool: 50 dp: 31, sp: 31, q: true, bh: 537062 
+(node:35043) Warning: N-API is an experimental feature and could change at any time.
+1534454825 INFO	 utils.time Starting NTP time sync 
+1534454825 INFO	 engine.index stored rovers to persistence 
+1534454825 INFO	 engine.index stored appversion to persistence 
+1534454825 INFO	 engine.index genesis block saved to disk a8212d5a65f579c2018b19172be34e4422a93c8437f8e7c19ddc8cad15353862 
+1534454825 WARN	 engine.index boot block 93699 assigned as latest block 
+1534454825 INFO	 mining.officer worker pool initialized 
+1534454825 INFO	 engine.index starting P2P node 
+1534454825 INFO	 engine.index starting rovers 'btc,eth,lsk,neo,wav' 
+1534454825 INFO	 rover.manager Starting rover 'btc' using '/Users/arjun/private-bcnode/lib/rover/btc/rover.js' 
+1534454825 INFO	 rover.manager Rover started 'btc' 
+1534454825 INFO	 rover.manager Starting rover 'eth' using '/Users/arjun/private-bcnode/lib/rover/eth/rover.js' 
+1534454825 INFO	 rover.manager Rover started 'eth' 
+1534454825 INFO	 rover.manager Starting rover 'lsk' using '/Users/arjun/private-bcnode/lib/rover/lsk/rover.js' 
+1534454825 INFO	 rover.manager Rover started 'lsk' 
+1534454825 INFO	 rover.manager Starting rover 'neo' using '/Users/arjun/private-bcnode/lib/rover/neo/rover.js' 
+1534454825 INFO	 rover.manager Rover started 'neo' 
+1534454825 INFO	 rover.manager Starting rover 'wav' using '/Users/arjun/private-bcnode/lib/rover/wav/rover.js' 
+1534454825 INFO	 rover.manager Rover started 'wav' 
+1534454825 INFO	 server.index Server available at http://0.0.0.0:3000 
+1534454825 WARN	 engine.index key needs to be set 
+1534454825 INFO	 engine.index asssigned node key <- f5e6ccdd8e6356089b16ce75f5e9a9e94474abf9 
+1534454825 INFO	 p2p.discovery assigned edge <- 68cb1ee15af08755204674752ef9aee13db93bb7 
+1534454825 INFO	 engine.index f5e6ccdd8e6356089b16ce75f5e9a9e94474abf9 
+1534454825 INFO	 cli.cmd.start client initialized 
+1534454825 INFO	 p2p.discovery initializing far reach discovery from 16061@68cb1ee15af08755204674752ef9aee13db93bb7 
+1534454825 INFO	 mining.thread pool controller ready 35055 
+(node:35051) Warning: N-API is an experimental feature and could change at any time.
+(node:35054) Warning: N-API is an experimental feature and could change at any time.
+1534454827 INFO	 rover.helper unified block built from btc 00000000 
+(node:35050) Warning: N-API is an experimental feature and could change at any time.
+(node:35052) Warning: N-API is an experimental feature and could change at any time.
+1534454827 INFO	 utils.time Starting NTP time sync 
+(node:35053) Warning: N-API is an experimental feature and could change at any time.
+1534454828 INFO	 p2p.node initialized far reaching discovery module 
+1534454828 INFO	 p2p.node joined waypoint table 
+1534454829 INFO	 engine.index Received new block from peer 94620 
+1534454829 INFO	 bc.validation numberOfBlockchainsNeededMatchesChildBlock validation running 
+1534454829 INFO	 bc.validation ifMoreThanOneHeaderPerBlockchainAreTheyOrdered validation running 
+1534454829 INFO	 bc.validation ifMoreThanOneHeaderPerBlockchainAreTheyOrdered all chain conditions: [ true, true, true, true, true ] 
+1534454829 INFO	 bc.validation isChainRootCorrectlyCalculated validation running 
+1534454829 INFO	 bc.validation isFieldLengthBounded validation running 
+1534454829 INFO	 bc.validation isMerkleRootCorrectlyCalculated validation running 
+newest header timestamp: 1534426100000
+bcblocktimestamp timestamp: 1534426109000
+upperTimestampLimit: 1534426136000
+lowerTimestampLimit: 1534426088000
+1534454829 INFO	 bc.validation isDistanceCorrectlyCalculated validation running 
+1534454829 INFO	 bc.validation recievedDistance 292778437655067 
+1534454829 INFO	 bc.validation recievedDifficulty 290112262029012 
+1534454829 INFO	 bc.validation isDistanceCorrectlyCalculated validation running 
+1534454829 INFO	 engine.index purposed block peer 94620 
+1534454829 WARN	 bc.multiverse.28b864db-9cba-31ee-684c-108a790c1e8f block is not sequenced correctly 
+1534454829 INFO	 engine.index block from peer 94620 is NOT next in multiverse block -> evaluating as sync candidate. 
+1534454829 INFO	 bc.validation numberOfBlockchainsNeededMatchesChildBlock validation running 
+1534454829 INFO	 bc.validation ifMoreThanOneHeaderPerBlockchainAreTheyOrdered validation running 
+1534454829 INFO	 bc.validation ifMoreThanOneHeaderPerBlockchainAreTheyOrdered all chain conditions: [ true, true, true, true, true ] 
+1534454829 INFO	 bc.validation isChainRootCorrectlyCalculated validation running 
+1534454829 INFO	 bc.validation isFieldLengthBounded validation running 
+1534454829 INFO	 bc.validation isMerkleRootCorrectlyCalculated validation running 
+1534454829 WARN	 bc.validation failed: isMerkleRootCorrectlyCalculated 
+1534454829 INFO	 bc.multiverse.28b864db-9cba-31ee-684c-108a790c1e8f passed sync req <- currentHighestBlock malformed 
+1534454829 INFO	 engine.index 38ec7657a04225fe36f33d99efc0ad5cc9028f2932ec311f1a75c163291c419b <- new block: 94620 should sync request approved 
+1534454829 INFO	 engine.index store block: 94620 38ec7657a04225fe36f33d99efc0ad5cc9028f2932ec311f1a75c163291c419b 
+1534454829 INFO	 persistence synchronized child headers: 5 
+1534454829 INFO	 persistence synchronized child headers: 5 
+1534454829 INFO	 engine.index determining if rovered headers include new child blocks 
+1534454830 INFO	 rover.btc.controller peer count pool: 50 dp: 42, sp: 41, q: true, bh: 537091 
+1534454833 INFO	 rover.btc.controller peer count pool: 50 dp: 42, sp: 41, q: true, bh: 537091 
+1534454833 INFO	 p2p.node active waypoints:  80 
+1534454834 INFO	 rover.helper unified block built from lsk 20697603 
+1534454834 INFO	 engine.index rovered block in consideration of cache 0 
+1534454834 INFO	 mining.officer [] <- [] rovered lsk block 6793107 2069760305198376321 
+1534454834 INFO	 mining.officer local persisted block height: 94620 
+1534454834 INFO	 mining.officer latestBlockHeadersHeights: { btc: 536861,
+  eth: 6151359,
+  lsk: 6793107,
+  neo: 2621422,
+  wav: 1128178 } 
+1534454834 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 94620, btc ln: 536862, 536861 
+1534454834 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 94620, eth ln: 6151360, 6151359 
+1534454834 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 94620, lsk ln: 6790235, 6793107 
+1534454834 INFO	 mining.officer chain: lskfrom: 6793077 to: 6793107 
+1534454834 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 94620, neo ln: 2621423, 2621422 
+1534454834 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 94620, wav ln: 1128179, 1128178 
+1534454834 INFO	 mining.officer preparing new block 
+1534454834 INFO	 mining.officer mining cycle initiated 
+1534454834 INFO	 engine.index collectBlock handler: sent to miner 
+1534454834 INFO	 mining.thread new worker created with id 1 
+1534454834 INFO	 mining.thread worker 35059 ready 
+1534454834 INFO	 mining.thread thread pool <- 35059 94620@90c6aac6a45e5ac8542f5663326affea 
+1534454834 INFO	 utils.time NTP offset resolved 
+1534454834 INFO	 mining.thread new worker created with id 2 
+1534454834 INFO	 mining.thread worker 35063 ready 
+1534454834 INFO	 mining.thread thread pool <- 35063 94620@90c6aac6a45e5ac8542f5663326affea 
+1534454834 INFO	 utils.time NTP offset resolved 
+1534454834 INFO	 mining.thread new worker created with id 3 
+1534454835 INFO	 mining.thread worker 35066 ready 
+1534454835 INFO	 mining.thread thread pool <- 35066 94620@90c6aac6a45e5ac8542f5663326affea 
+1534454835 INFO	 utils.time NTP offset resolved 
+1534454835 INFO	 mining.thread new worker created with id 4 
+1534454835 INFO	 mining.thread worker 35067 ready 
+1534454835 INFO	 mining.thread thread pool <- 35067 94620@90c6aac6a45e5ac8542f5663326affea 
+1534454835 INFO	 utils.time NTP offset resolved 
+1534454835 INFO	 mining.thread new worker created with id 5 
+1534454836 INFO	 rover.btc.controller peer count pool: 50 dp: 42, sp: 41, q: true, bh: 537091 
+1534454836 INFO	 mining.thread worker 35068 ready 
+1534454836 INFO	 mining.thread new worker created with id 6 
+1534454836 INFO	 mining.thread thread pool <- 35068 94620@90c6aac6a45e5ac8542f5663326affea 
+1534454836 INFO	 utils.time NTP offset resolved 
+1534454836 INFO	 mining.thread solution found: {
+  "distance": "296242931435513",
+  "nonce": "33387269",
+  "timestamp": 1534454836,
+  "difficulty": "290112262029012",
+  "iterations": 45641,
+  "timeDiff": 1393
+} 
+1534454836 INFO	 engine.index workers dismissed 
+1534454836 INFO	 mining.officer loading work id 94620@90c6aac6a45e5ac8542f5663326affea from imperforate blocks 1 
+1534454836 INFO	 mining.officer loaded work id: 94620@90c6aac6a45e5ac8542f5663326affea candidates 1 
+1534454836 INFO	 mining.officer The calculated block difficulty was 290112262029012, actual mining difficulty was 290112262029012 
+1534454836 INFO	 bc.validation numberOfBlockchainsNeededMatchesChildBlock validation running 
+1534454836 INFO	 bc.validation ifMoreThanOneHeaderPerBlockchainAreTheyOrdered validation running 
+1534454836 INFO	 bc.validation ifMoreThanOneHeaderPerBlockchainAreTheyOrdered all chain conditions: [ true, true, true, true, true ] 
+1534454836 INFO	 bc.validation isChainRootCorrectlyCalculated validation running 
+1534454836 INFO	 bc.validation isFieldLengthBounded validation running 
+1534454836 INFO	 bc.validation isMerkleRootCorrectlyCalculated validation running 
+newest header timestamp: 1534454830000
+bcblocktimestamp timestamp: 1534454836000
+upperTimestampLimit: 1534454866000
+lowerTimestampLimit: 1534454818000
+1534454836 INFO	 bc.validation isDistanceCorrectlyCalculated validation running 
+1534454836 INFO	 bc.validation recievedDistance 296242931435513 
+1534454836 INFO	 bc.validation recievedDifficulty 290112262029012 
+1534454836 INFO	 bc.validation isDistanceCorrectlyCalculated validation running 
+1534454836 INFO	 engine.index submitting mined block to current multiverse 
+1534454836 WARN	 bc.multiverse.28b864db-9cba-31ee-684c-108a790c1e8f child height new block: 17230927 
+1534454836 WARN	 bc.multiverse.28b864db-9cba-31ee-684c-108a790c1e8f child height previous block: 17228054 
+1534454836 INFO	 engine.index store block: 94621 f0ae620a7f42f74c8f64d729a063536f16b63b143a75974d014e7b251f3bed28 
+1534454836 INFO	 engine.index multiverse coverage: 3 
+1534454836 INFO	 engine.index broadcasting block challenge f0ae620a7f42f74c8f64d729a063536f16b63b143a75974d014e7b251f3bed28 -> considered next block in current multiverse 
+1534454836 INFO	 p2p.node announceblock <- event 
+1534454836 INFO	 engine.index broadcasted mined block true 
+1534454836 INFO	 p2p.node block announced! 
+1534454836 INFO	 persistence synchronized child headers: 5 
+1534454836 INFO	 engine.index latest block 94621 has been updated 
+<<<< Proof of Distance >>>> (RAD/s) collecting samples 1/20
+1534454836 INFO	 mining.thread worker 35070 ready 
+1534454836 INFO	 mining.thread thread pool <- 35070 94620@90c6aac6a45e5ac8542f5663326affea 
+1534454836 INFO	 utils.time NTP offset resolved 
+1534454836 INFO	 mining.thread pool rebase success 
+1534454837 INFO	 engine.index rovered block in consideration of cache 0 
+1534454837 INFO	 mining.officer [] <- [] rovered btc block 100000 00000000000000000003fdb710e2f3d290adcd68b2643ff9c98dddb33fb8b36a 
+1534454837 INFO	 mining.officer local persisted block height: 94621 
+1534454837 INFO	 mining.officer latestBlockHeadersHeights: { btc: 100000,
+  eth: 6151359,
+  lsk: 6793107,
+  neo: 2621422,
+  wav: 1128178 } 
+1534454837 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 94621, btc ln: 536862, 100000 
+1534454837 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 94621, eth ln: 6151360, 6151359 
+1534454837 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 94621, lsk ln: 6793108, 6793107 
+1534454837 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 94621, neo ln: 2621423, 2621422 
+1534454837 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 94621, wav ln: 1128179, 1128178 
+1534454837 INFO	 mining.officer preparing new block 
+1534454837 INFO	 mining.officer mining cycle initiated 
+1534454837 INFO	 engine.index collectBlock handler: sent to miner 
+1534454837 INFO	 mining.thread new worker created with id 7 
+1534454837 INFO	 mining.thread worker 35078 ready 
+1534454837 INFO	 mining.thread thread pool <- 35078 94621@a4cb846d174d184f73a4019acc903374 
+1534454837 INFO	 utils.time NTP offset resolved 
+1534454837 INFO	 mining.thread new worker created with id 8 
+1534454837 INFO	 mining.thread worker 35079 ready 
+1534454837 INFO	 mining.thread thread pool <- 35079 94621@a4cb846d174d184f73a4019acc903374 
+1534454837 INFO	 utils.time NTP offset resolved 
+1534454837 INFO	 mining.thread new worker created with id 9 
+1534454838 INFO	 mining.thread worker 35080 ready 
+1534454838 INFO	 mining.thread thread pool <- 35080 94621@a4cb846d174d184f73a4019acc903374 
+1534454838 INFO	 utils.time NTP offset resolved 
+1534454838 INFO	 mining.thread new worker created with id 10 
+1534454838 INFO	 p2p.node active waypoints:  80 
+1534454838 INFO	 mining.thread worker 35081 ready 
+1534454838 INFO	 mining.thread thread pool <- 35081 94621@a4cb846d174d184f73a4019acc903374 
+1534454838 INFO	 utils.time NTP offset resolved 
+1534454838 INFO	 mining.thread new worker created with id 11 
+1534454838 INFO	 mining.thread worker 35082 ready 
+1534454838 INFO	 mining.thread thread pool <- 35082 94621@a4cb846d174d184f73a4019acc903374 
+1534454838 INFO	 utils.time NTP offset resolved 
+1534454838 INFO	 mining.thread new worker created with id 12 
+1534454839 INFO	 rover.btc.controller peer count pool: 50 dp: 43, sp: 42, q: true, bh: 537091 
+1534454839 INFO	 mining.thread worker 35083 ready 
+1534454839 INFO	 mining.thread thread pool <- 35083 94621@a4cb846d174d184f73a4019acc903374 
+1534454839 INFO	 utils.time NTP offset resolved 
+1534454842 INFO	 rover.btc.controller peer count pool: 50 dp: 43, sp: 42, q: true, bh: 537091 
+1534454842 INFO	 mining.thread solution found: {
+  "distance": "294975049290887",
+  "nonce": "417385107",
+  "timestamp": 1534454842,
+  "difficulty": "293525347464647",
+  "iterations": 190761,
+  "timeDiff": 4198
+} 
+1534454842 INFO	 engine.index workers dismissed 
+1534454842 INFO	 mining.officer loading work id 94621@a4cb846d174d184f73a4019acc903374 from imperforate blocks 1 
+1534454842 INFO	 mining.officer loaded work id: 94621@a4cb846d174d184f73a4019acc903374 candidates 1 
+1534454842 INFO	 mining.officer The calculated block difficulty was 293525347464647, actual mining difficulty was 293525347464647 
+1534454842 INFO	 bc.validation numberOfBlockchainsNeededMatchesChildBlock validation running 
+1534454842 INFO	 bc.validation ifMoreThanOneHeaderPerBlockchainAreTheyOrdered validation running 
+1534454842 INFO	 bc.validation ifMoreThanOneHeaderPerBlockchainAreTheyOrdered all chain conditions: [ true, true, true, true, true ] 
+1534454842 INFO	 bc.validation isChainRootCorrectlyCalculated validation running 
+1534454842 INFO	 bc.validation isFieldLengthBounded validation running 
+1534454842 INFO	 bc.validation isMerkleRootCorrectlyCalculated validation running 
+newest header timestamp: 1534454830000
+bcblocktimestamp timestamp: 1534454842000
+upperTimestampLimit: 1534454866000
+lowerTimestampLimit: 1534454818000
+1534454842 INFO	 bc.validation isDistanceCorrectlyCalculated validation running 
+1534454842 INFO	 bc.validation recievedDistance 294975049290887 
+1534454842 INFO	 bc.validation recievedDifficulty 293525347464647 
+1534454842 INFO	 bc.validation isDistanceCorrectlyCalculated validation running 
+1534454842 INFO	 engine.index submitting mined block to current multiverse 
+1534454842 WARN	 bc.multiverse.28b864db-9cba-31ee-684c-108a790c1e8f child height new block: 17230927 
+1534454842 WARN	 bc.multiverse.28b864db-9cba-31ee-684c-108a790c1e8f child height previous block: 17230927 
+1534454842 WARN	 bc.multiverse.28b864db-9cba-31ee-684c-108a790c1e8f connection chain weight is below threshold 
+1534454842 INFO	 engine.index store block: 94622 72feec2573b0c04da63646128086a5003902847a858a3c26d9002041b666cdd2 
+1534454842 INFO	 engine.index multiverse coverage: 4 
+1534454842 INFO	 engine.index broadcasting block challenge 72feec2573b0c04da63646128086a5003902847a858a3c26d9002041b666cdd2 -> considered next block in current multiverse 
+1534454842 INFO	 p2p.node announceblock <- event 
+1534454842 INFO	 engine.index broadcasted mined block true 
+1534454842 INFO	 p2p.node block announced! 
+1534454842 INFO	 persistence synchronized child headers: 5 
+1534454842 INFO	 engine.index latest block 94622 has been updated 
+1534454842 INFO	 mining.thread pool rebase success 
+1534454843 INFO	 p2p.node active waypoints:  79 
+1534454845 INFO	 rover.btc.controller peer count pool: 50 dp: 43, sp: 42, q: true, bh: 537091 
+1534454845 INFO	 rover.helper unified block built from lsk 12259921 
+1534454845 INFO	 engine.index rovered block in consideration of cache 0 
+1534454845 INFO	 mining.officer [] <- [] rovered lsk block 6793108 1225992149580308222 
+1534454845 INFO	 mining.officer local persisted block height: 94622 
+1534454845 INFO	 mining.officer latestBlockHeadersHeights: { btc: 536861,
+  eth: 6151359,
+  lsk: 6793108,
+  neo: 2621422,
+  wav: 1128178 } 
+1534454845 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 94622, btc ln: 536862, 536861 
+1534454845 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 94622, eth ln: 6151360, 6151359 
+1534454845 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 94622, lsk ln: 6793108, 6793108 
+1534454845 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 94622, neo ln: 2621423, 2621422 
+1534454845 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 94622, wav ln: 1128179, 1128178 
+1534454845 INFO	 mining.officer preparing new block 
+1534454845 INFO	 mining.officer mining cycle initiated 
+1534454845 INFO	 engine.index collectBlock handler: sent to miner 
+1534454845 INFO	 mining.thread new worker created with id 13 
+1534454846 INFO	 mining.thread worker 35092 ready 
+1534454846 INFO	 mining.thread thread pool <- 35092 94622@8b8e89a5747b37de115ad28c74e6a3dd 
+1534454846 INFO	 utils.time NTP offset resolved 
+1534454846 INFO	 mining.thread new worker created with id 14 
+1534454846 INFO	 mining.thread worker 35093 ready 
+1534454846 INFO	 mining.thread thread pool <- 35093 94622@8b8e89a5747b37de115ad28c74e6a3dd 
+1534454846 INFO	 utils.time NTP offset resolved 
+1534454846 INFO	 mining.thread new worker created with id 15 
+1534454846 INFO	 mining.thread worker 35094 ready 
+1534454846 INFO	 mining.thread thread pool <- 35094 94622@8b8e89a5747b37de115ad28c74e6a3dd 
+1534454846 INFO	 utils.time NTP offset resolved 
+1534454846 INFO	 mining.thread new worker created with id 16 
+1534454847 INFO	 mining.thread worker 35095 ready 
+1534454847 INFO	 mining.thread thread pool <- 35095 94622@8b8e89a5747b37de115ad28c74e6a3dd 
+1534454847 INFO	 utils.time NTP offset resolved 
+1534454847 INFO	 mining.thread new worker created with id 17 
+1534454847 INFO	 mining.thread worker 35096 ready 
+1534454847 INFO	 mining.thread thread pool <- 35096 94622@8b8e89a5747b37de115ad28c74e6a3dd 
+1534454847 INFO	 utils.time NTP offset resolved 
+1534454847 INFO	 mining.thread new worker created with id 18 
+<<<< Proof of Distance >>>> (RAD/s) collecting samples 2/20
+1534454848 INFO	 rover.btc.controller peer count pool: 50 dp: 43, sp: 42, q: true, bh: 537091 
+1534454848 INFO	 mining.thread worker 35097 ready 
+1534454848 INFO	 mining.thread thread pool <- 35097 94622@8b8e89a5747b37de115ad28c74e6a3dd 
+1534454848 INFO	 utils.time NTP offset resolved 
+1534454848 INFO	 p2p.node active waypoints:  57 
+1534454851 INFO	 rover.btc.controller peer count pool: 50 dp: 43, sp: 42, q: true, bh: 537091 
+1534454851 INFO	 rover.helper unified block built from lsk 26324173 
+1534454851 INFO	 engine.index rovered block in consideration of cache 0 
+1534454851 INFO	 mining.officer [] <- [] rovered lsk block 6793109 2632417341841164995 
+1534454851 INFO	 mining.officer local persisted block height: 94622 
+1534454851 INFO	 mining.officer latestBlockHeadersHeights: { btc: 536861,
+  eth: 6151359,
+  lsk: 6793109,
+  neo: 2621422,
+  wav: 1128178 } 
+1534454851 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 94622, btc ln: 536862, 536861 
+1534454851 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 94622, eth ln: 6151360, 6151359 
+1534454851 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 94622, lsk ln: 6793108, 6793109 
+1534454851 INFO	 mining.officer chain: lskfrom: 6793108 to: 6793109 
+1534454851 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 94622, neo ln: 2621423, 2621422 
+1534454851 INFO	 mining.officer newBlockHeadersKeys, heights nrg: 94622, wav ln: 1128179, 1128178 
+1534454851 INFO	 mining.officer preparing new block 
+1534454851 INFO	 mining.officer mining cycle initiated 
+1534454851 INFO	 engine.index collectBlock handler: sent to miner 
+1534454851 INFO	 mining.thread new worker created with id 19 
+1534454852 INFO	 mining.thread worker 35098 ready 
+1534454852 INFO	 mining.thread thread pool <- 35098 94622@e3fe663153515f4da997baae1e7d1629 
+1534454852 INFO	 utils.time NTP offset resolved 
+1534454853 INFO	 p2p.node active waypoints:  33 
+1534454854 INFO	 rover.btc.controller peer count pool: 50 dp: 43, sp: 42, q: true, bh: 537091 
+1534454857 INFO	 rover.btc.controller peer count pool: 50 dp: 43, sp: 42, q: true, bh: 537091 
+1534454857 INFO	 engine.index workers dismissed 
+1534454857 INFO	 mining.officer loading work id 94622@8b8e89a5747b37de115ad28c74e6a3dd from imperforate blocks 2 
+1534454857 INFO	 mining.thread solution found: {
+  "distance": "290615319903321",
+  "nonce": "144974904",
+  "timestamp": 1534454857,
+  "difficulty": "290112262029012",
+  "iterations": 490642,
+  "timeDiff": 10936
+} 
+1534454857 INFO	 mining.officer loaded work id: 94622@8b8e89a5747b37de115ad28c74e6a3dd candidates 1 
+1534454857 INFO	 mining.officer The calculated block difficulty was 296978586846584, actual mining difficulty was 290112262029012 
+1534454857 INFO	 bc.validation numberOfBlockchainsNeededMatchesChildBlock validation running 
+1534454857 INFO	 bc.validation ifMoreThanOneHeaderPerBlockchainAreTheyOrdered validation running 
+1534454857 INFO	 bc.validation ifMoreThanOneHeaderPerBlockchainAreTheyOrdered all chain conditions: [ true, true, true, true, true ] 
+1534454857 INFO	 bc.validation isChainRootCorrectlyCalculated validation running 
+1534454857 INFO	 bc.validation isFieldLengthBounded validation running 
+1534454857 INFO	 bc.validation isMerkleRootCorrectlyCalculated validation running 
+newest header timestamp: 1534454840000
+bcblocktimestamp timestamp: 1534454857000
+upperTimestampLimit: 1534454876000
+lowerTimestampLimit: 1534454828000
+1534454857 INFO	 bc.validation isDistanceCorrectlyCalculated validation running 
+1534454857 INFO	 bc.validation recievedDistance 290615319903321 
+1534454857 INFO	 bc.validation recievedDifficulty 296978586846584 
+1534454857 WARN	 bc.validation failed: isDistanceAboveDifficulty 
+1534454857 WARN	 mining.officer mined block is invalid 
+1534454857 INFO	 mining.thread pool rebase success 
+1534454858 INFO	 p2p.node active waypoints:  57 
+<<<< Proof of Distance >>>> (RAD/s) collecting samples 3/20
+1534454860 INFO	 rover.btc.controller peer count pool: 50 dp: 43, sp: 42, q: true, bh: 537091 

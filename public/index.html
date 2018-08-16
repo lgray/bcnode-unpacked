@@ -19,6 +19,98 @@
     <link href="https://fonts.googleapis.com/css?family=Lato" rel="stylesheet">
     <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/leaflet.css">
     <style>
+
+
+
+@-webkit-keyframes pulse {
+  0% {
+    -webkit-box-shadow: 0 0 0 0 rgba(204,169,44, 0.4);
+  }
+  70% {
+      -webkit-box-shadow: 0 0 0 10px rgba(204,169,44, 0);
+  }
+  100% {
+      -webkit-box-shadow: 0 0 0 0 rgba(204,169,44, 0);
+  }
+}
+@keyframes pulse {
+  0% {
+    -moz-box-shadow: 0 0 0 0 rgba(204,169,44, 0.4);
+    box-shadow: 0 0 0 0 rgba(204,169,44, 0.4);
+  }
+  70% {
+      -moz-box-shadow: 0 0 0 10px rgba(204,169,44, 0);
+      box-shadow: 0 0 0 10px rgba(204,169,44, 0);
+  }
+  100% {
+      -moz-box-shadow: 0 0 0 0 rgba(204,169,44, 0);
+      box-shadow: 0 0 0 0 rgba(204,169,44, 0);
+  }
+}
+
+.leaflet-container {
+  opacity: 0.8;
+  position: absolute;
+  top: 61px;
+}
+
+.leaflet-bottom {
+  display:none;
+}
+
+.leaflet-pulsing-icon {
+    border-radius: 100%;
+    box-shadow: 1px 1px 3px 0 rgba(0,0,0,0.75);
+    height: 8px !important;
+    width: 8px !important;
+}
+
+.h6 {
+    height: 6px !important;
+    width: 6px !important;
+}
+
+.h7 {
+    height: 7px !important;
+    width: 7px !important;
+}
+
+.h8 {
+    height: 8px !important;
+    width: 8px !important;
+}
+.h9 {
+    height: 9px !important;
+    width: 9px !important;
+}
+.h10 {
+    height: 10px !important;
+    width: 10px !important;
+}
+.h11 {
+    height: 11px !important;
+    width: 11px !important;
+}
+
+.h12 {
+    height: 12px !important;
+    width: 12px !important;
+}
+
+.lpi{
+    background-color: white;
+}
+
+.lpi{
+  box-shadow: 0 0 6px 2px white;
+  animation: pulse 1s infinite;
+}
+
+
+    .leaflet-container {
+        margin: 0 auto;
+    }
+
     html {
       background:none;
       min-height:100%;
@@ -33,7 +125,7 @@ pre {
   background: black !important;
   color: white !important;
   border-bottom: 1.2px
-  border-color: white 
+  border-color: white
 }
 
 .nav-item a {
@@ -58,58 +150,58 @@ h2 {
   background-color: black;
   color: white;
 }
-#btcList { 
+#btcList {
   float: left;
   border: 1px solid orange;
   font-style: 'monospace';
   font-size: 8pt;
   margin: 2px;
   text-align: center;
-  width: 23px; 
+  width: 23px;
 }
-#ethList { 
+#ethList {
   float: left;
   border: 1px solid #9400D3;
   font-style: 'monospace';
   font-size: 8pt;
   margin: 2px;
   text-align: center;
-  width: 23px; 
+  width: 23px;
 }
-#neoList { 
+#neoList {
   float: left;
-  border: 1px solid green; 
+  border: 1px solid green;
   font-size: 8pt;
   font-style: 'monospace';
   margin: 2px;
   text-align: center;
-  width: 23px; 
+  width: 23px;
 }
-#lskList { 
+#lskList {
   float: left;
-  border: 1px solid blue; 
+  border: 1px solid blue;
   font-size: 8pt;
   font-style: 'monospace';
   margin: 2px;
   text-align: center;
-  width: 23px; 
+  width: 23px;
 }
-#wavList { 
+#wavList {
   float: left;
-  border: 1px solid lightblue; 
+  border: 1px solid lightblue;
   font-size: 8pt;
   font-style: 'monospace';
   margin: 2px;
   text-align: center;
-  width: 23px; 
+  width: 23px;
 }
-#glassList { 
+#glassList {
   float: left;
   border: 1px solid white;
   font-size: 8pt;
   margin: 2px;
   text-align: center;
-  width: 23px; 
+  width: 23px;
 }
 pre {
   color: white !important;
