@@ -644,6 +644,8 @@ export class PeerNode {
 
       this._logger.info('joined waypoint table')
             setInterval(() => {
+                // this._logger.info('peers', Object.getOwnPropertyNames(this._p2p._discovery.dht))
+                // this._logger.info('peers', this._p2p._discovery.dht._peers)
                 this._logger.info('active waypoints:  ' + this._p2p.totalConnections)
                 this._engine._emitter.emit('peerCount', this._p2p.totalConnections)
                 if(this._p2p.totalConnections < USER_QUORUM && MIN_HEALTH_NET !== true) {

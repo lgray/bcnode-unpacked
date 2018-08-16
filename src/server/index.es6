@@ -22,6 +22,7 @@ const WebSocket = require('ws')
 const CircularBuffer = require('circular-buffer')
 const SocketIO = require('socket.io')
 
+const { anyDns } = require('../engine/helper')
 const logging = require('../logger')
 const { config } = require('../config')
 const { Null, Block } = require('../protos/core_pb')
@@ -62,6 +63,11 @@ export class Server {
     this._server = null
     this._logger = logging.getLogger(__filename)
     this._roveredBlocksBuffer = new CircularBuffer(24)
+
+    // setInterval(() => {
+    //   const peers = this._getPeers()
+    //   this._logger.info('!!! PEERS', peers)
+    // }, 3000)
   }
 
   get app (): express$Application { // eslint-disable-line
@@ -87,6 +93,10 @@ export class Server {
   run (opts: Opts): Promise<bool> {
     this._opts = opts
 
+    anyDns().then((ip) => {
+      this._ip = ip
+    })
+
     this._logger.debug('Starting Server for Web UI')
 
     if (config.server.logCalls) {
@@ -100,6 +110,22 @@ export class Server {
       getLatestBlocks: Null,
       help: Null
     }
+
+    // console.log(this._engine.node.p2p)
+    // this._logger.info('!!! SERVER START', this._engine._node)
+
+    this._app.get('/geo/ip2geo/:ip', (req, res, next) => {
+      const ip = req.params.ip
+      const geores = this.engine.geoDb.get(ip)
+      const city = geores && geores.city
+      const location = geores && geores.location
+
+      res.json({
+        ip: ip,
+        city,
+        location
+      })
+    })
 
     this._app.get('/balance/:address', (req, res: $Response, next: NextFunction) => {
       const address = req.params.address
@@ -167,8 +193,22 @@ export class Server {
 
       debug('socket client connected', socket.id, ip)
 
+      const peerInterval = setInterval(() => {
+        try {
+          const peers = this._getPeers()
+          this._wsBroadcast({
+            type: 'map.peers',
+            data: peers
+          })
+        } catch (err) {
+          this._logger.error('Unable to get and broadcast (WS) peers')
+        }
+      }, 10000)
+
       socket.on('disconnect', () => {
         debug('socket client disconnected', socket.id, ip)
+
+        clearInterval(peerInterval)
       })
 
       socket.on('message', (msg) => {
@@ -260,6 +300,48 @@ export class Server {
     this.engine.pubsub.subscribe('block.mined', '<server>', (block: Object) => {
       this._wsBroadcast(block)
     })
+  }
+
+  _getP2P (): Object {
+    return this._engine._p2p || this._engine._node._p2p
+  }
+
+  _getPeers (): Object {
+    const p2p = this._getP2P()
+    if (!p2p) {
+      return {}
+    }
+
+    const ip = this._ip || p2p.ip
+    if (!ip) {
+      return {}
+    }
+
+    const geo = this._engine.geoDb.get(ip)
+    const me = {
+      ip,
+      city: geo.city,
+      location: geo.location
+    }
+
+    const connections = p2p.connections || []
+    const peers = connections.reduce((acc, val) => {
+      const ip = `${val.remoteAddress}`
+      const geo = this._engine.geoDb.get(ip)
+      if (geo.location) {
+        acc[ip] = {
+          ip: ip,
+          city: geo.city,
+          location: geo.location
+        }
+      }
+      return acc
+    }, {})
+
+    return {
+      me,
+      peers
+    }
   }
 
   _transformBlockToWire (block: Block) {
@@ -368,6 +450,15 @@ export class Server {
         }
       }
     ]
+
+    try {
+      msgs.push({
+        type: 'map.peers',
+        data: this._getPeers()
+      })
+    } catch (err) {
+      this._logger.info('Unable to get and send initial peers', err)
+    }
 
     msgs.forEach((msg) => {
       socket.emit(msg.type, msg.data)

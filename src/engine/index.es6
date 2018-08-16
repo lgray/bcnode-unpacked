@@ -20,11 +20,13 @@ import type {
 
 const debug = require('debug')('bcnode:engine')
 const crypto = require('crypto')
+
 const { EventEmitter } = require('events')
-const { queue } = require('async')
 const { join, resolve } = require('path')
 const { writeFileSync } = require('fs')
 const { max } = require('ramda')
+const { queue } = require('async')
+const maxmind = require('maxmind')
 const LRUCache = require('lru-cache')
 const BN = require('bn.js')
 const semver = require('semver')
@@ -51,6 +53,8 @@ const { getVersion } = require('../helper/version')
 const { MiningOfficer } = require('../mining/officer')
 const { WorkerPool } = require('../mining/pool')
 const ts = require('../utils/time').default // ES6 default export
+
+const GEO_DB_PATH = resolve(__dirname, '..', '..', 'data', 'GeoLite2-City.mmdb')
 
 const DATA_DIR = process.env.BC_DATA_DIR || config.persistence.path
 const MONITOR_ENABLED = process.env.BC_MONITOR === 'true'
@@ -119,6 +123,10 @@ export class Engine {
           cb(err)
         })
       })
+
+      // Open Maxmind Geo DB
+      this._geoDb = maxmind.openSync(GEO_DB_PATH)
+
       process.on('uncaughtError', function (err) {
         this._logger.error(err)
       })
@@ -141,6 +149,10 @@ export class Engine {
 
       // Start NTP sync
       ts.start()
+    }
+
+    get geoDb (): Object {
+      return this._geoDb
     }
 
     // TODO only needed because of server touches that - should be passed using constructor?
