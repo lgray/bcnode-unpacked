@@ -95,37 +95,39 @@ if (cluster.isMaster) {
     const record = {}
 		/* eslint-disable */
 		setInterval(() => {
-			if(stats.length >= 20) {
-				 const RadianDistancesPerSecond = new BN(mean(stats)).div(1000).mul(new BN((settings.maxWorkers - 2))).div(new BN(6.283)).toNumber()
-				 console.log('<<<< Proof of Distance >>>> operating metric Radian Distance Collisions > ' + RadianDistancesPerSecond + ' RAD/s')
+			if(stats.length >= 5) {
+				 const distancePerSecond = mean(stats) * 1000
+         const workerLimit = settings.maxWorkers - 2
+				 const distancePerRadianSecond = new BN(distancePerSecond).div(new BN(6.283)).toNumber()
+				 const coreCountAdjustment = new BN(distancePerRadianSecond).mul(new BN(workerLimit)).toNumber()
+				 const formattedMetric = Math.round(coreCountAdjustment * 100) / 100000
+				 console.log('\r\n  ' + formattedMetric + ' kRAD/s -> radian distance collisions performance metric -> proof of distance miner\n\r')
 			} else if(stats.length > 0) {
-			   console.log('<<<< Proof of Distance >>>> (RAD/s) collecting samples ' + stats.length + '/20')
+			   console.log('\r\n  ' + 'sampling radian distance performance <- ' + stats.length + '/5\n\r')
 			}
-		}, 11000)
+		}, 13500)
 		/* eslint-enable */
 
   process.on('message', (data) => {
     const createThread = function () {
       const worker = cluster.fork()
-      globalLog.info('new worker created with id ' + worker.id)
       active.unshift(worker.id)
       return worker
     }
 
     const applyEvents = (worker) => {
       worker.once('message', (data) => {
+        stats.unshift(new BN(data.data.iterations).div(new BN(data.data.timeDiff)).toNumber())
+        if (stats.length > 10) { stats.pop() }
         process.send({
           type: 'solution',
           data: data.data,
           workId: data.workId
         }, () => {
-          if (stats.length > 20) { stats.pop() }
-          stats.unshift(new BN(data.data.iterations).div(new BN(data.data.timeDiff)).toNumber())
           fkill('bc-miner-worker', { force: true }).then(() => {
             globalLog.info('pool rebase success')
           }).catch((err) => {
             globalLog.debug(err)
-            globalLog.error('no workers used in pool rebase')
           })
           active.length = 0
         })
@@ -182,7 +184,7 @@ if (cluster.isMaster) {
       difficultyData,
       workId
     }) => {
-      globalLog.info('thread pool <- ' + process.pid + ' ' + workId)
+      globalLog.debug('thread pool <- ' + process.pid + ' ' + workId + '                 ')
 
       ts.offsetOverride(offset)
       // Deserialize buffers from parent process, buffer will be serialized as object of this shape { <idx>: byte } - so use Object.values on it
@@ -229,7 +231,7 @@ if (cluster.isMaster) {
           data: solution,
           workId: workId
         }, () => {
-          globalLog.info(`solution found: ${JSON.stringify(solution, null, 2)}`)
+          globalLog.info(`solution found: ${JSON.stringify(solution, null, 0)}`)
           process.exit()
         })
       } catch (e) {

@@ -35,7 +35,7 @@ export class TimeService { // export for tests
       if (err) {
         this._offset = t << 0
         this.inFlight = false
-        this._logger.warn(`could not get offset from NTP servers, reason ${err.message}`)
+        this._logger.debug(`could not get offset from NTP servers, reason ${err.message}`)
         return
       }
       this._offset = t << 0
@@ -47,20 +47,20 @@ export class TimeService { // export for tests
 
   start () {
     if (this.intervalHandler === undefined) {
-      this._logger.info('Starting NTP time sync')
+      this._logger.debug('starting NTP time sync')
       this.ntpGetOffset()
       this.intervalHandler = setInterval(this.ntpGetOffset.bind(this), REFRESH_INTERVAL)
     }
   }
 
   stop () {
-    this._logger.info('stopping NTP time cycle')
+    this._logger.debug('stopping NTP time cycle')
     this.intervalHandler && clearInterval(this.intervalHandler)
     this.intervalHandler = undefined
   }
 
   offsetOverride (offset: number) {
-    this._logger.info('NTP offset resolved')
+    this._logger.debug('NTP offset resolved')
     this._offset = offset
     this.lastSyncedAt = Date.now()
   }
