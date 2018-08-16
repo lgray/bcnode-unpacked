@@ -16,15 +16,17 @@ import {
   TileLayer
 } from 'react-leaflet'
 
+import { divIcon } from 'leaflet'
+import { Marker } from 'react-leaflet'
+
 export class PeersMap extends Component<*> {
   render () {
-    const zoom = 3
+    const zoom = 3;
 
     const style = {
-      // marginLeft: '-83px',
-      paddingLeft: 0,
+      width: this.props.size.width,
       height: this.props.size.height,
-      width: this.props.size.width
+      paddingLeft: 0,
     }
 
     const me = this.props.peer
@@ -33,27 +35,36 @@ export class PeersMap extends Component<*> {
       me.location.longitude
     ]) || [40.730610, -73.935242]
 
-    const peerPoints = this.props.peers.map((peer, idx) => {
-      const posPeer = [
-        peer.location.latitude,
-        peer.location.longitude
-      ]
+    let latlon = {};
+    this.props.peers.map((peer, idx) => {
+      let ln = `${peer.location.latitude},${peer.location.longitude}`;
+      latlon[ln] = latlon[ln] ? latlon[ln]+1 : 1;
+    });
+
+    let latlongs = Object.keys(latlon).map(ln=>{
+      return {lat:ln.split(',')[0],lon:ln.split(',')[1],count:latlon[ln]};
+    });
+
+    const peerPoints = latlongs.map(({lat,lon,count},idx) => {
+      let size = count > 6 ? `h12` : `h${count+5}`;
+      let icon = divIcon({className: `lpi leaflet-pulsing-icon ${size}`})
 
       return (
-        <Circle key={idx} center={posPeer} fillColor='red' radius={300} />
+        <Marker key={idx} icon={icon} position={[lat,lon]}/>
+      )
+    });
+
+    const peerLines = latlongs.map(({lat,lon,count}, idx) => {
+      const posPeer = [lat,lon]
+      if(count > 20) count = 20;
+      return (
+        <Polyline key={idx} color='white' weight={count/10} positions={[posMe, posPeer]} />
       )
     })
 
-    const peerLines = this.props.peers.map((peer, idx) => {
-      const posPeer = [
-        peer.location.latitude,
-        peer.location.longitude
-      ]
+    const icon = divIcon({className: 'lpi leaflet-pulsing-icon h6'})
 
-      return (
-        <Polyline key={idx} color='lime' positions={[posMe, posPeer]} />
-      )
-    })
+    const mePoint = (<Marker icon={icon} position={posMe}/>);
 
     return (
       <Map
@@ -61,14 +72,15 @@ export class PeersMap extends Component<*> {
         center={posMe}
         zoom={zoom}
         style={style}
+        zoomControl={false}
+        gridLines={false}
         minZoom={zoom - 1}
       >
         <TileLayer
-          url='https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
+          url='https://cartodb-basemaps-{s}.global.ssl.fastly.net/dark_nolabels/{z}/{x}/{y}{r}.png'
         />
 
-        <Circle center={posMe} fillColor='red' radius={300} />
-
+        { mePoint }
         { peerPoints }
         { peerLines }
       </Map>
