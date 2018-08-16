@@ -15,7 +15,7 @@ const BN = require('bn.js')
 const { all, flatten, zip } = require('ramda')
 
 const { getGenesisBlock } = require('./genesis')
-const { validateRoveredSequences, validateBlockSequence, childrenHeightSum } = require('./validation')
+const { isValidBlock, validateRoveredSequences, validateBlockSequence, getNewestHeader, childrenHeightSum } = require('./validation')
 const { standardId } = require('./helper')
 const { getLogger } = require('../logger')
 
@@ -239,6 +239,26 @@ export class Multiverse {
       return Promise.resolve(false)
     }
 
+    if (newBlock.getHeight() - 1 !== currentHighestBlock.getHeight()) {
+      // block being sent is genesis block
+      this._logger.warn('block is not sequenced correctly')
+      return Promise.resolve(false)
+    }
+
+    this._logger.warn('child height new block: ' + childrenHeightSum(newBlock))
+    this._logger.warn('child height previous block: ' + childrenHeightSum(currentHighestBlock))
+    if (childrenHeightSum(newBlock) < childrenHeightSum(currentHighestBlock)) {
+      this._logger.warn('connection chain weight is below threshold')
+      return Promise.resolve(false)
+    }
+
+    if (childrenHeightSum(newBlock) === childrenHeightSum(currentHighestBlock)) {
+      this._logger.warn('connection chain weight is below threshold')
+      if (new BN(getNewestHeader(newBlock).timestamp).lt(new BN(getNewestHeader(currentHighestBlock).timestamp)) === true) {
+        return Promise.resolve(false)
+      }
+    }
+
     // FAIL
     // case fails over into the resync
     if (newBlock.getHeight() - 7 > currentHighestBlock.getHeight()) {
@@ -288,17 +308,19 @@ export class Multiverse {
       return Promise.resolve(false)
     }
 
-    // FAIL
-    // if malformed timestamp referenced from previous block with five second lag
-    // if (newBlock.getTimestamp() + 5 <= currentHighestBlock.getTimestamp()) {
-    //  this._logger.info('purposed block ' + newBlock.getHash() + ' has invalid timestamp ' + newBlock.getTimestamp() + ' from current height timestamp ' + currentHighestBlock.getTimestamp())
-    //  return this.addBestBlock(newBlock)
-    // }
-    // FAIL if timestamp of block is greater than 31 seconds from system time
-    // if (newBlock.getTimestamp() + 31 < Math.floor(Date.now() * 0.001)) {
-    //   this._logger.info('purposed block ' + newBlock.getHash() + ' has invalid timestamp ' + newBlock.getTimestamp() + ' from current height timestamp ' + currentHighestBlock.getTimestamp())
-    //   return this.addBestBlock(newBlock)
-    // }
+    // AT STRICT TIMELINE
+    // without ire from retrograde
+
+    // if malformed timestamp referenced from previous block with three second lag
+    if (newBlock.getTimestamp() + 3 <= currentHighestBlock.getTimestamp()) {
+      this._logger.info('purposed block ' + newBlock.getHash() + ' has invalid timestamp ' + newBlock.getTimestamp() + ' from current height timestamp ' + currentHighestBlock.getTimestamp())
+      return Promise.resolve(false)
+    }
+    // FAIL if timestamp of block is greater than 27 seconds from system time
+    if (newBlock.getTimestamp() + 27 < Math.floor(Date.now() * 0.001)) {
+      this._logger.info('purposed block ' + newBlock.getHash() + ' has invalid timestamp ' + newBlock.getTimestamp() + ' from current height timestamp ' + currentHighestBlock.getTimestamp())
+      return Promise.resolve(false)
+    }
 
     // FAIL
     // if newBlock does not reference the current highest block as it's previous hash
@@ -336,7 +358,7 @@ export class Multiverse {
     try {
       const synclock = await this.persistence.get('synclock')
 
-      if (synclock.getHeight() !== 1 && (synclock.getTimestamp() + 969) < Math.floor(Date.now() * 0.001)) {
+      if (synclock.getHeight() !== 1 && (synclock.getTimestamp() + 69) < Math.floor(Date.now() * 0.001)) {
         this._logger.warn('sync lock is stale resetting')
         return Promise.resolve(false)
       } else if (synclock.getHeight() === 1) {
@@ -370,6 +392,12 @@ export class Multiverse {
       return Promise.resolve(false)
     }
 
+    // current chain is malformed
+    if (!isValidBlock(currentHighestBlock)) {
+      this._logger.info('passed sync req <- currentHighestBlock malformed')
+      return Promise.resolve(true)
+    }
+
     if (this._chain.length === 0) {
       this._logger.info('passed sync req <- currentHighestBlock not set')
       return Promise.resolve(true)
@@ -387,20 +415,38 @@ export class Multiverse {
       return Promise.resolve(true)
     }
 
-    // Fail is the block hashes are identical
+    // Fail if the block hashes are identical
     if (newBlock.getHash() === currentHighestBlock.getHash()) {
       this._logger.info('failed resync req <- newBlock non-unique hash')
       return Promise.resolve(false)
     }
 
-    // FAIL if new block not within 61 seconds of local time
-    if (new BN(newBlock.getHeight()).gt(100000) === true && newBlock.getTimestamp() + 61 < Math.floor(Date.now() * 0.001)) {
-      this._logger.info('failed resync req: time below 61 seconds')
+    // Fail if distance of new block is lower
+    if (new BN(newBlock.getDistance()).lt(new BN(currentHighestBlock.getDistance())) === true) {
+      this._logger.info('failed resync req <- newBlock non-unique hash')
       return Promise.resolve(false)
     }
 
-    // PASS if current highest block is older than 61 seconds from local time
-    if (currentHighestBlock.getTimestamp() + 61 < Math.floor(Date.now() * 0.001)) {
+    // Fail if distance of new block is lower
+    if (new BN(newBlock.getDistance()).lt(new BN(currentHighestBlock.getDistance())) === true) {
+      this._logger.info('failed resync req <- newBlock non-unique hash')
+      return Promise.resolve(false)
+    }
+
+    // FAIL if new block not within 15 seconds of local time
+    if (new BN(newBlock.getHeight()).gt(100000) === true && newBlock.getTimestamp() + 15 < Math.floor(Date.now() * 0.001)) {
+      this._logger.info('failed resync req: time below 19 seconds')
+      return Promise.resolve(false)
+    }
+
+    // FAIL if new block not within 19 seconds of local time
+    if (new BN(newBlock.getHeight()).gt(100000) === true && newBlock.getTimestamp() - 15 > Math.floor(Date.now() * 0.001)) {
+      this._logger.info('failed resync req: time below 19 seconds')
+      return Promise.resolve(false)
+    }
+
+    // PASS if current highest block is older than 19 seconds from local time
+    if (currentHighestBlock.getTimestamp() + 19 < Math.floor(Date.now() * 0.001)) {
       this._logger.info('current chain is stale chain')
       return Promise.resolve(true)
     }
@@ -426,19 +472,25 @@ export class Multiverse {
     }
 
     // make sure that blocks that are added reference child chains
-    return this.validateRoveredBlocks(newBlock).then(areAllChildrenRovered => {
-      if (!areAllChildrenRovered) {
-        this._logger.warn('failed resync req: not all rovers have found blocks')
-      // return Promise.resolve(false) // TODO: enabled in AT
-      }
+    // FAIL if sum of child block heights is less than the rovered child heights
+    if (childrenHeightSum(newBlock) <= childrenHeightSum(currentHighestBlock)) {
+      this._logger.warn('child height new block: ' + childrenHeightSum(newBlock))
+      this._logger.warn('child height previous block: ' + childrenHeightSum(currentHighestBlock))
 
-      // FAIL if sum of child block heights is less than the rovered child heights
-      if (childrenHeightSum(newBlock) <= childrenHeightSum(currentHighestBlock)) {
-        this._logger.info('child height of new block is lower than height the current parent block')
-        return Promise.resolve(false)
-      }
-      return Promise.resolve(true)
-    })
+      return this.validateRoveredBlocks(newBlock).then(areAllChildrenRovered => {
+        if (!areAllChildrenRovered) {
+          this._logger.warn('failed resync req: not all rovers have found blocks')
+          return Promise.resolve(false) // TODO: enabled in AT
+        }
+        return this.validateRoveredBlocks(currentHighestBlock).then(areCurrentChildrenRovered => {
+          if (!areCurrentChildrenRovered) {
+            return Promise.resolve(true)
+          } else {
+            return Promise.resolve(false)
+          }
+        })
+      })
+    }
   }
 
   async validateRoveredBlocks (block: BcBlock): Promise<boolean> {

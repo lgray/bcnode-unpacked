@@ -1,6 +1,6 @@
 {
   "name": "bcnode",
-  "version": "0.7.8",
+  "version": "0.7.9",
   "description": "Block Collider JS Network Node with miner and rovers",
   "main": "lib/src/init.js",
   "scripts": {
@@ -148,6 +148,7 @@
     "express": "^4.16.2",
     "express-winston": "2.5.1",
     "external-ip": "^2.0.3",
+    "fkill": "^5.3.0",
     "fs-extra": "https://github.com/mmpmm/node-fs-extra",
     "gauge": "^2.7.4",
     "getos": "^3.1.0",
@@ -244,7 +245,7 @@
     "webcoin-bitcoin-testnet": "^1.1.1",
     "winston": "^2.4.0",
     "winston-daily-rotate-file": "^1.7.2",
-    "wrtc": "^0.1.2",
+    "wrtc": "^0.1.6",
     "xor-it": "^1.0.2"
   },
   "devDependencies": {

@@ -35,7 +35,7 @@ const { getBlockchainsBlocksCount } = require('../bc/helper')
 const ts = require('../utils/time').default // ES6 default export
 
 const MINER_WORKER_PATH = resolve(__filename, '..', '..', 'mining', 'thread.js')
-const LOW_HEALTH_NET = process.env.LOW_HEALTH_NET === 'true'
+const MIN_HEALTH_NET = process.env.MIN_HEALTH_NET === 'true'
 
 type UnfinishedBlockData = {
   lastPreviousBlock: ?BcBlock,
@@ -245,34 +245,38 @@ export class WorkerPool {
   _handlePoolMessage (msg: Object) {
 
     /* eslint-disable */
-    this._logger.info('xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx')
-    this._logger.info('xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx')
-    this._logger.info('xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx')
-    this._logger.info('xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx')
-    this._logger.info('xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx')
-    this._logger.info('xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx')
-    this._logger.info('xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx')
-    this._logger.info('xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx')
-    console.log(msg)
+    /*
+     * { type: 'soloution',
+     *   data: {
+     *    distance: '',
+     *    nonce: '',
+     *    timestamp: ''
+     *   },
+     *   workId: '000000'
+     * }
+     *
+     */
     if(msg === undefined) {
       // strange unrequested feedback from worker
       // definately throw and likely exit
       this._logger.warn('unable to parse message from worker pool')
     } else if (msg.type === 'solution') {
       // handle block
-			this.emitter.emit('mined', msg.data)
-      this._logger.info(' HANDLE WORKER MESSAGE WITH SOLUTION PROVIDED')
-    	//this.pubsub.publish('update.mined.block', msg.data)
-      //this.updateWorkers({ type: 'reset' })
-    } else {
-      this._logger.info('*********************************')
-      this._logger.info(msg)
-      // message has no friends
+      if(msg.data !== undefined && msg.workId !== undefined){
+				msg.data.workId = msg.workId
+				this.emitter.emit('mined', msg.data)
+			}
     }
   }
 
   _handlePoolError (msg: Object) {
 		this._logger.error(msg)
+    const pool: ChildProcess = fork(MINER_WORKER_PATH)
+    pool.on('message', this._handlePoolMessage.bind(this))
+    pool.on('error', this._handlePoolError.bind(this))
+    pool.on('exit', this._handlePoolExit.bind(this))
+    this._pool = pool
+    return true
   }
 
   _handlePoolExit (exitCode: Object) {

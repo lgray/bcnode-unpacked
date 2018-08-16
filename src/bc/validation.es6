@@ -6,6 +6,7 @@
  *
  * @flow
  */
+/* eslint-disable */
 const { inspect } = require('util')
 const BN = require('bn.js')
 const {
@@ -27,6 +28,9 @@ const { blake2bl } = require('../utils/crypto')
 const { concatAll } = require('../utils/ramda')
 const { BcBlock, BlockchainHeader, Block } = require('../protos/core_pb')
 const {
+  getExpFactorDiff,
+  getNewBlockCount,
+  getDiff,
   getChildrenBlocksHashes,
   getChildrenRootHash,
   blockchainMapToList,
@@ -36,6 +40,7 @@ const {
 } = require('../mining/primitives')
 const GENESIS_DATA = require('./genesis.raw')
 const FINGERPRINTS_TEMPLATE = require('../utils/templates/blockchain_fingerprints.json')
+const MINIMAL_DIFFICULTY = new BN(290112262029012, 16)
 
 export type DfConfig = {
   [chain: string]: {dfNumerator: number, dfDenominator: number, dfVoid: number, dfBound: number}
@@ -74,21 +79,96 @@ export function isValidBlock (newBlock: BcBlock, type: number = 0): bool {
     logger.warn('failed: isMerkleRootCorrectlyCalculated')
     return false
   }
+  if (!isValidChildAge(newBlock)) {
+    return false
+  }
+  if (!isDistanceAboveDifficulty(newBlock)) {
+    logger.warn('failed: isDistanceAboveDifficulty')
+    return false
+  }
+  if (!isDistanceCorrectlyCalculated(newBlock)) {
+    logger.warn('failed: isDistanceCorrectlyCalculated')
+    return false
+  }
   if (type === 0) {
     if (!areDarkFibersValid(newBlock)) {
       logger.warn('failed: areDarkFibersValid')
       return false
     }
-    if (!isDistanceAboveDifficulty(newBlock)) {
-      logger.warn('failed: isDistanceAboveDifficulty')
-      return false
-    }
-    if (!isDistanceCorrectlyCalculated(newBlock)) {
-      logger.warn('failed: isDistanceCorrectlyCalculated')
-      return false
-    }
   }
   return true
+}
+
+export function isValidChildAge (newBlock: BcBlock, type: number = 0): bool {
+  const newestHeader = getNewestHeader(newBlock)
+
+  if (newestHeader === false) {
+    logger.warn('failed: validChildAge no upper limit child header found')
+    return false
+  }
+
+  // add the offset for dark fiber
+  const bcBlockTimestamp = new BN(newBlock.getTimestamp()).mul(new BN(1000)).toNumber()
+  const highRangeLimit = 36 * 1000
+  const lowRangeLimit = 12 * 1000
+  const newestHeaderDFBound = DF_CONFIG[newestHeader.blockchain].dfBound * 1000
+  const newestHeaderTimestamp = new BN(newestHeader.timestamp).add(new BN(newestHeaderDFBound)).toNumber()
+  const upperTimestampLimit = new BN(newestHeaderTimestamp).add(new BN(highRangeLimit)).toNumber()
+  const lowerTimestampLimit = new BN(newestHeaderTimestamp).sub(new BN(lowRangeLimit)).toNumber()
+
+  console.log('newest header timestamp: ' + newestHeader.timestamp)
+  console.log('bcblocktimestamp timestamp: ' + bcBlockTimestamp)
+  console.log('upperTimestampLimit: ' + upperTimestampLimit)
+  console.log('lowerTimestampLimit: ' + lowerTimestampLimit)
+  /* eslint-enable */
+  if (new BN(bcBlockTimestamp).gt(new BN(upperTimestampLimit)) === true) {
+    logger.warn('failed: isValidChildAge upper limit')
+    return false
+  }
+
+  if (new BN(bcBlockTimestamp).lt(new BN(lowerTimestampLimit)) === true) {
+    logger.warn('failed: isValidChildAge lower limit')
+    return false
+  }
+  return true
+}
+
+export function getNewestHeader (newBlock: BcBlock): bool {
+  if (newBlock === undefined) {
+    logger.warn('failed: isValidChildAge new block could not be found')
+    return false
+  }
+
+  const headers = newBlock.getBlockchainHeaders().toObject()
+  const newestHeader = Object.keys(headers).reduce((newest, key) => {
+    const sorted = headers[key].sort((a, b) => {
+      /* eslint-disable */
+      if (new BN(a.timestamp).gt(new BN(b.timestamp)) === true) {
+        return 1
+      }
+      if (new BN(a.timestamp).lt(new BN(b.timestamp)) === true) {
+        return -1
+      }
+      return 0
+    })
+
+    const header = sorted.pop()
+
+    if (newest === false) {
+      newest = header
+    } else {
+      if (new BN(newest.timestamp).lt(new BN(header.timestamp))) {
+        newest = header
+      }
+    }
+    return newest
+  }, false)
+
+  if (newestHeader === false) {
+    return false
+  }
+
+  return newestHeader
 }
 
 // function theBlockChainFingerPrintMatchGenesisBlock (newBlock: BcBlock): bool {
@@ -209,8 +289,10 @@ function isDistanceAboveDifficulty (newBlock: BcBlock): bool {
   logger.info('isDistanceCorrectlyCalculated validation running')
   const receivedDistance = newBlock.getDistance()
   const recievedDifficulty = newBlock.getDifficulty() // !! NOTE: This is the difficulty for THIS block and not for the parent.
+	logger.info('recievedDistance ' + receivedDistance)
+	logger.info('recievedDifficulty ' + recievedDifficulty)
 
-  return new BN(receivedDistance).gt(new BN(recievedDifficulty))
+  return new BN(receivedDistance, 16).gt(new BN(recievedDifficulty, 16))
 }
 
 function isDistanceCorrectlyCalculated (newBlock: BcBlock): bool {
@@ -255,14 +337,14 @@ export function blockchainHeadersAreChain (childHeaderList: BlockchainHeader[]|B
   }
 
   // if more than one child header check if child headers form a chain
-  if (childHeaderList.length > 1) {
-    check = aperture(2, childHeaderList).reduce((result, [a, b]) => a.getHash() === b.getPreviousHash() && result, true)
+  // if (childHeaderList.length > 1) {
+  //  check = aperture(2, childHeaderList).reduce((result, [a, b]) => a.getHash() === b.getPreviousHash() && result, true)
 
-    if (!check) {
-      logger.info(`child headers do not form a chain`)
-      // return check // Disabled until AT
-    }
-  }
+  //  if (!check) {
+  //    logger.info(`child headers do not form a chain`)
+  //    // return check // Disabled until AT
+  //  }
+  // }
 
   // if more than one parent header check if parent headers form a chain
   if (parentHeaderList.length > 1) {
@@ -286,6 +368,14 @@ export function validateRoveredSequences (blocks: BcBlock[]): boolean {
   logger.debug(`validateRoveredSequences: ${inspect(checks)}`)
 
   return all(equals(true), flatten(checks))
+}
+
+export function validateSequenceDifficulty (previousBlock: BcBlock, newBlock: BcBlock): boolean {
+  const newBlockCount = getNewBlockCount(previousBlock.getBlockchainHeaders(), newBlock.getBlockchainHeaders())
+  const preExpDiff = getDiff(newBlock.getTimestamp(), previousBlock.getTimestamp(), previousBlock.getDifficulty(), MINIMAL_DIFFICULTY, newBlockCount)
+  const finalDifficulty = getExpFactorDiff(preExpDiff, previousBlock.getHeight()).toString()
+
+  return newBlock.getDifficulty() === finalDifficulty
 }
 
 function validateChildHeadersSequence (childBlock, parentBlock): bool[] {
@@ -346,11 +436,27 @@ export function validateBlockSequence (blocks: BcBlock[]): bool {
   return true
 }
 
+export function childrenHighestBlock (block: BcBlock): number {
+
+  const highest = Object.values(block.getBlockchainHeaders().toObject()).reduce((all, headers) => {
+		const top = headers.sort((a, b) => {
+			if(a.height > b.height) {
+				return 1
+			}
+			if(a.height < b.height) {
+				return -1
+			}
+			return 0
+	  }).pop()
+		all[top.blockchain] = top
+	  return all
+	}, {})
+
+	return Object.values(highest)
+}
+
 export function childrenHeightSum (block: BcBlock): number {
   return sum(
-    flatten(
-      Object.values(block.getBlockchainHeaders().toObject())
-    // $FlowFixMe Object.values is not generic
-    ).map((header) => header.height)
+      childrenHighestBlock(block).map((header) => Number(header.height))
   )
 }

@@ -51,8 +51,13 @@ const getLastHeight = (api: Object): Promise<number> => {
   return response.then(d => d.height)
 }
 
+/* eslint-disable */
 const getBlock = (api: Object, height: number): Promise<LiskBlock> => { // TODO type for block
-  return api.sendRequest('blocks', { height }).then(response => response.blocks.pop())
+  return api.sendRequest('blocks', { height }).then((response) => {
+    if (response.blocks !== undefined && response.blocks.length > 0) {
+      return response.blocks.pop()
+    }
+  })
 }
 
 const getTransactionsForBlock = (api: Object, blockId: string): Promise<Object[]> => {
@@ -174,6 +179,10 @@ export default class Controller {
             })
           }
         })
+          .catch((err) => {
+            this._logger.debug(err)
+            this._logger.error('connection lsk network error')
+          })
       }).catch(e => {
         this._logger.error(`Error while getting new block, err: ${e.message}`)
       })
@@ -184,7 +193,7 @@ export default class Controller {
       cycle().then(() => {
         this._logger.debug('tick')
       })
-    }, 4000)
+    }, 6000)
 
     // setInterval(function () {
     //  lisk.api(liskOptions).getPeersList({}, function (error, success, response) {

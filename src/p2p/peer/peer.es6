@@ -66,7 +66,7 @@ export class Peer {
               const blocks = wireData.map(b => BcBlock.deserializeBinary(Uint8Array.from(b).buffer))
               // validate each block separately
               blocks.forEach(block => {
-                if (!isValidBlock()) {
+                if (!isValidBlock(block)) {
                   const reason = `Block ${block.getHeight()}, h: ${block.getHash()} is not a valid BC block`
                   debug(reason)
                   reject(new Error(reason))

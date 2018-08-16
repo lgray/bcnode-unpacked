@@ -59,7 +59,7 @@
       "quorum": 21 
     },
     "eth": {
-      "maximumPeers": 43,
+      "maximumPeers": 73,
       "quorum": 16, 
       "altBootNodes": [
         {

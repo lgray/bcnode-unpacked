@@ -68,7 +68,8 @@ export class RoverManager {
     }
 
     this._logger.info(`Starting rover '${roverName}' using '${roverPath}'`)
-
+    const cycleInterval = Math.floor(Math.random() * 50000)
+    const roverRefreshTimeout = (1000 * 900) + cycleInterval
     const rover = fork(
       roverPath,
       [],
@@ -79,10 +80,9 @@ export class RoverManager {
     this._logger.info(`Rover started '${roverName}'`)
     this._rovers[roverName] = rover
     this._timeouts[roverName] = setTimeout(() => {
-      this._logger.info('kill rover: ' + roverName)
-      // return this._killRover(roverName)
-    }, 1000 * 900)
-
+      this._logger.info('cycling rover ' + roverName)
+      return this._killRover(roverName)
+    }, roverRefreshTimeout)
     rover.on('exit', (code, signal) => {
       this._logger.warn(`Rover ${roverName} exited (code: ${code}, signal: ${signal}) - restarting in ${ROVER_RESTART_TIMEOUT / 1000}s`)
       delete this._rovers[roverName]
