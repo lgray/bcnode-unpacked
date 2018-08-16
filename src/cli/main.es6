@@ -25,6 +25,7 @@ const Raven = require('raven')
 const uncaughtExceptionHandler = (err) => {
   // eslint-disable-next-line no-console
   console.log(err)
+  process.exit(3)
 }
 
 process.env.UV_THREADPOOL_SIZE = 64

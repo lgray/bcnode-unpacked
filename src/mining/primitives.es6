@@ -24,7 +24,6 @@
 import type { Logger } from 'winston'
 
 const { inspect } = require('util')
-const fs = require('fs')
 const similarity = require('compute-cosine-similarity')
 const BN = require('bn.js')
 const Random = require('random-js')
@@ -119,11 +118,11 @@ export function getDiff (currentBlockTime: number, previousBlockTime: number, pr
   const bigMinus99 = new BN(-99)
   const big1 = new BN(1)
   const big0 = new BN(0)
-  const bigTargetTimeWindow = new BN(5)
+  const bigTargetTimeWindow = new BN(7)
   let elapsedTime = bigCurentBlockTime.sub(bigPreviousBlockTime)
 
   // elapsedTime + ((elapsedTime - 6) * newBlocks)
-  const elapsedTimeBonus = elapsedTime.add(elapsedTime.sub(new BN(4)).mul(new BN(newBlockCount)))
+  const elapsedTimeBonus = elapsedTime.add(elapsedTime.sub(new BN(5)).mul(new BN(newBlockCount)))
 
   if (elapsedTimeBonus.gt(big0)) {
     elapsedTime = elapsedTimeBonus
@@ -138,8 +137,8 @@ export function getDiff (currentBlockTime: number, previousBlockTime: number, pr
     x = bigMinus99
   }
 
-  // y = bigPreviousDifficulty -> SPECTRUM: 10062600 // AT: 1615520 // BT: (32 * 16) + 20 = 532
-  y = bigPreviousDifficulty.div(new BN(532))
+  // y = bigPreviousDifficulty -> SPECTRUM: 10062600 // AT: 1615520 // BT: ((32 * 16) + 20) / 2PI = 85
+  y = bigPreviousDifficulty.div(new BN(85))
   // x = x * y
   x = x.mul(y)
   // x = x + previousDifficulty
@@ -246,7 +245,7 @@ export function distance (a: string, b: string): number {
  * @returns {Object} result containing found `nonce` and `distance` where distance is > `threshold` provided as parameter
  */
 // $FlowFixMe will never return anything else then a mining result
-export function mine (currentTimestamp: number, work: string, miner: string, merkleRoot: string, threshold: number, difficultyCalculator: ?Function): { distance: string, nonce: string, timestamp: number, difficulty: string } {
+export function mine (currentTimestamp: number, work: string, miner: string, merkleRoot: string, threshold: number, difficultyCalculator: ?Function, reportType: ?number): { distance: string, nonce: string, timestamp: number, difficulty: string } {
   let difficulty = threshold
   let result
   const tsStart = ts.now()
@@ -272,11 +271,7 @@ export function mine (currentTimestamp: number, work: string, miner: string, mer
 
     let nonce = String(Math.abs(Random.engines.nativeMath())) // random string
     let nonceHash = blake2bl(nonce)
-    let mr = 0
     result = distance(work, blake2bl(miner + merkleRoot + nonceHash + currentLoopTimestamp))
-    if (new BN(iterations).mod(new BN(1000)) === 0) {
-      mr = fs.readFileSync('.workermutex', 'utf8')
-    }
 
     if (new BN(result).gt(new BN(difficulty)) === true) {
       res = {
@@ -289,16 +284,14 @@ export function mine (currentTimestamp: number, work: string, miner: string, mer
         timeDiff: ts.now() - tsStart
       }
       break
-    } else if (mr === merkleRoot) {
-      break
     }
   }
 
-  const tsEnd = ts.now()
-  const tsDiff = tsEnd - tsStart
-  if (res === null) {
-    throw Error(`Mining took more than ${MAX_TIMEOUT_SECONDS}s, iterations: ${iterations}, tsDiff: ${tsDiff} ending...`)
-  }
+  // const tsEnd = ts.now()
+  // const tsDiff = tsEnd - tsStart
+  // if (res === null) {
+  //  throw Error(`Mining took more than ${MAX_TIMEOUT_SECONDS}s, iterations: ${iterations}, tsDiff: ${tsDiff} ending...`)
+  // }
 
   return res
 }

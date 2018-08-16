@@ -59,7 +59,7 @@ export class BlockContainer extends Component<*> {
 
         { pagination }
 
-        <div className='container bg-light'>
+        <div className='container bg-light' style={{padding: '18px'}}>
           { blockJson &&
             <pre>
               {blockJson}

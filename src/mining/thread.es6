@@ -1,4 +1,5 @@
 #! /usr/bin/env node
+
 /**
  * Copyright (c) 2017-present, blockcollider.org developers, All rights reserved.
  *
@@ -8,116 +9,202 @@
  * @flow
  */
 /* eslint-disable */
-import type { Logger } from 'winston'
+import type {
+    Logger
+} from 'winston'
 const process = require('process')
-const { getExpFactorDiff, getNewPreExpDifficulty, getNewBlockCount, mine } = require('./primitives')
-const { BlockchainHeaders, BlockchainHeader, BcBlock } = require('../protos/core_pb')
+const {
+    getExpFactorDiff,
+    getNewPreExpDifficulty,
+    getNewBlockCount,
+    mine
+} = require('./primitives')
+const {
+    BlockchainHeaders,
+    BlockchainHeader,
+    BcBlock
+} = require('../protos/core_pb')
 const ts = require('../utils/time').default // ES6 default export
 const cluster = require('cluster')
 const logging = require('../logger')
 const fs = require('fs')
-
+const { mean, max } = require('ramda')
+const BN = require('bn.js')
+const ps = require('ps-node')
+const fkill = require('fkill')
+const minerRecycleInterval = 660000 + Math.floor(Math.random() * 10) * 10000
 const globalLog: Logger = logging.getLogger(__filename)
 // setup logging of unhandled rejections
+//
+//
+
+const purgeWorkers = () => {
+		return fkill('bc-miner-worker', { force: true })
+}
+process.on('uncaughtError', (err) => {
+    // $FlowFixMe
+    globalLog.error(`error, trace:\n${err.stack}`)
+})
 process.on('unhandledRejection', (err) => {
-  // $FlowFixMe
-  globalLog.error(`Rejected promise, trace:\n${err.stack}`)
+    // $FlowFixMe
+    globalLog.error(`rejected promise, trace:\n${err.stack}`)
 })
 
+const settings = {
+    maxWorkers: 2
+}
 
-const activeWorkers = []
-const queuedWorkers = []
-const available = []
+const sendWorker = (worker, msg) => {
+    return new Promise((resolve, reject) => {
+        try {
+            return worker.send(msg, resolve)
+        } catch (err) {
+            return reject(err)
+        }
+    })
+}
+
 
 if (cluster.isMaster) {
-  process.on('uncaughtError', (err) => {
-    // $FlowFixMe
-    globalLog.error(`Rejected promise, trace:\n${err.stack}`)
-    for(let w in cluster.workers) {
-       w.kill()
-    }
-    process.exit(3)
-  })
-  globalLog.info('--> pool controller reporting ' + process.pid)
-  const cycleWorker = () => {
-    const w = cluster.fork()
-    w.on('message', (msg) => {
-      const self = activeWorkers.pop()
-      queuedWorkers.push(self)
-      process.send({ pid: process.pid, type: 'solution', data: msg})
+
+		const stats = []
+
+		setInterval(() => {
+				if(Object.keys(cluster.workers).length > 0){
+					fkill('bc-miner-worker', { force: true })
+					.then(() => {
+						globalLog.info('global pool rebase success')
+					})
+					.catch((err) => {
+						globalLog.debug(err.message)
+					})
+				}
+		}, minerRecycleInterval)
+
+    process.once("SIGTERM", () => {
+        process.exit(0)
     })
-    return w
-  }
+    process.once("SIGINT", () => {
+        process.exit(0)
+    })
+    process.once("exit", () => {
+        globalLog.info('worker exited')
+    })
+
+    const active = []
+    const record = {}
+		/* eslint-disable */
+		setInterval(() => {
+			if(stats.length >= 20) {
+				 const RadianDistancesPerSecond = new BN(mean(stats)).div(1000).mul(new BN((settings.maxWorkers - 2))).div(new BN(6.283)).toNumber()
+				 console.log('<<<< Proof of Distance >>>> operating metric Radian Distance Collisions > ' + RadianDistancesPerSecond + ' RAD/s')
+			} else if(stats.length > 0) {
+			   console.log('<<<< Proof of Distance >>>> (RAD/s) collecting samples ' + stats.length + '/20')
+			}
+		}, 11000)
+		/* eslint-enable */
+
   process.on('message', (data) => {
-    if(data.type === 'heartbeat'){
-      globalLog.info('controller : ' + process.pid + ' heartbeat message recieved ')
-      // includes the heartbeat and the id to let them know we are in
-      process.send(data)
-    } else if(data.type === 'reset') {
-      globalLog.info('controller : ' + process.pid + ' reset message recieved ')
-      for(let w in activeWorkers){
-        let c = activeWorkers.pop()
-        c.kill()
-      }
-    } else if(data.type === 'work') {
-      globalLog.info('controller ' + process.pid + ' reassigned worker to active queue ')
-      if(queuedWorkers.length > 0){
-        const w = queuedWorkers.pop()
-        activeWorkers.push(w)
-        w.send(data.data)
-      } else {
-        const w = cycleWorker()
-        activeWorkers.push(w)
-        w.send(data.data)
-      }
-    } else {
-      console.log(data)
+    const createThread = function () {
+      const worker = cluster.fork()
+      globalLog.info('new worker created with id ' + worker.id)
+      active.unshift(worker.id)
+      return worker
+    }
+
+    const applyEvents = (worker) => {
+      worker.once('message', (data) => {
+        process.send({
+          type: 'solution',
+          data: data.data,
+          workId: data.workId
+        }, () => {
+          if (stats.length > 20) { stats.pop() }
+          stats.unshift(new BN(data.data.iterations).div(new BN(data.data.timeDiff)).toNumber())
+          fkill('bc-miner-worker', { force: true }).then(() => {
+            globalLog.info('pool rebase success')
+          }).catch((err) => {
+            globalLog.debug(err)
+            globalLog.error('no workers used in pool rebase')
+          })
+          active.length = 0
+        })
+      })
+      return worker
+    }
+    if (data.type === 'config') {
+      settings.maxWorkers = data.maxWorkers || settings.maxWorkers
+    } else if (data.type === 'work') {
+      // expressed in Radians (cycles/second) / 2 * PI
+      (async () => {
+        if (active.length < (settings.maxWorkers - 1)) {
+          const deploy = settings.maxWorkers - Object.keys(cluster.workers).length
+          for (let i = 0; i < deploy; i++) {
+            const worker = applyEvents(createThread())
+            await sendWorker(worker, data.data)
+          }
+        } else {
+          const ida = active.pop()
+          if (cluster.workers[ida] !== undefined) {
+            cluster.workers[ida].kill('SIGKILL')
+          }
+          let workerA = createThread()
+          workerA = applyEvents(workerA)
+          await sendWorker(workerA, data.data)
+        }
+      })()
+        .catch((err) => {
+          globalLog.error(err.message + ' ' + err.stack)
+        })
     }
   })
-
-  cluster.on('exit', () => {
-    queuedWorkers.pop()
-    globalLog.info('worker reassigned to passive queue')
-    queuedWorkers.push(cycleWorker())
-    globalLog.info('worker queue ' + queuedWorkers.length)
-  })
-
-  cycleWorker()
-
+  globalLog.info('pool controller ready ' + process.pid)
 } else {
   /**
-   * Miner woker entrypoin
-   */
+     * Miner woker entrypoin
+     */
   const main = () => {
     process.title = 'bc-miner-worker'
-    globalLog.debug('miner worker ' + process.pid + ' recieved work')
 
-    process.on('message', ({currentTimestamp, offset, work, minerKey, merkleRoot, difficulty, difficultyData}) => {
+    globalLog.info('worker ' + process.pid + ' ready')
+    const variableTimeout = 120000 + Math.floor(Math.random() * 10000)
+    setTimeout(() => {
+      process.exit()
+    }, variableTimeout)
+
+    process.on('message', ({
+      currentTimestamp,
+      offset,
+      work,
+      minerKey,
+      merkleRoot,
+      difficulty,
+      difficultyData,
+      workId
+    }) => {
+      globalLog.info('thread pool <- ' + process.pid + ' ' + workId)
 
       ts.offsetOverride(offset)
       // Deserialize buffers from parent process, buffer will be serialized as object of this shape { <idx>: byte } - so use Object.values on it
-      const deserialize = (buffer: { [string]: number }, clazz: BcBlock|BlockchainHeader|BlockchainHeaders) => clazz.deserializeBinary(new Uint8Array(Object.values(buffer).map(n => parseInt(n, 10))))
+      const deserialize = (buffer: {
+                [string]: number
+            }, clazz: BcBlock | BlockchainHeader | BlockchainHeaders) => clazz.deserializeBinary(new Uint8Array(Object.values(buffer).map(n => parseInt(n, 10))))
 
-			let marker = merkleRoot
-
-			if(marker.constructor !== merkleRoot.constructor){
-				marker = merkleRoot.toString()
-			}
-			globalLog.info('-----------------------------> ' + marker)
       // function with all difficultyData closed in scope and
       // send it to mine with all arguments except of timestamp and use it
       // each 1s tick with new timestamp
       const difficultyCalculator = function () {
         // Proto buffers are serialized - let's deserialize them
-        const { lastPreviousBlock, newBlockHeaders } = difficultyData
+        const {
+          lastPreviousBlock,
+          newBlockHeaders
+        } = difficultyData
         const lastPreviousBlockProto = deserialize(lastPreviousBlock, BcBlock)
         const newBlockHeadersProto = deserialize(newBlockHeaders, BlockchainHeaders)
 
         // return function with scope closing all deserialized difficulty data
         return function (timestamp: number) {
           const newBlockCount = getNewBlockCount(lastPreviousBlockProto.getBlockchainHeaders(), newBlockHeadersProto)
-
-          // globalLog.info(`stale states: ${JSON.stringify(newBlockCount, null, 2)}`)
 
           const preExpDiff = getNewPreExpDifficulty(
             timestamp,
@@ -138,25 +225,18 @@ if (cluster.isMaster) {
           difficultyCalculator()
         )
 
-        // send solution and exit
-        fs.readFile('.workermutex', 'utf8', (err, data) => {
-          if(data !== merkleRoot){
-            fs.writeFile('.workermutex', merkleRoot, (err) => {
-              //globalLog.info(`solution found: ${JSON.stringify(solution, null, 2)}`)
-              process.send(solution)
-              process.exit()
-            })
-          } else {
-            process.exit()
-          }
+        process.send({
+          data: solution,
+          workId: workId
+        }, () => {
+          globalLog.info(`solution found: ${JSON.stringify(solution, null, 2)}`)
+          process.exit()
         })
       } catch (e) {
-        globalLog.warn(`Mining failed with reason: ${e.message}, stack ${e.stack}`)
-        process.exit(1)
+        globalLog.warn(`mining eailed with reason: ${e.message}, stack ${e.stack}`)
+        process.exit(3)
       }
     })
-    const variableTimeout = 150000 + Math.floor(Math.random() * 10000)
-    setTimeout(() => { process.exit() }, variableTimeout)
   }
 
   main()

@@ -1,0 +1,55 @@
+(node:53581) Warning: N-API is an experimental feature and could change at any time.
+1534441306 INFO	 utils.time Starting NTP time sync 
+1534441306 INFO	 engine.index stored rovers to persistence 
+1534441306 INFO	 engine.index stored appversion to persistence 
+1534441306 INFO	 engine.index genesis block saved to disk a8212d5a65f579c2018b19172be34e4422a93c8437f8e7c19ddc8cad15353862 
+1534441306 WARN	 engine.index boot block 93699 assigned as latest block 
+1534441306 INFO	 mining.officer worker pool initialized 
+1534441306 INFO	 engine.index starting rovers 'btc,eth,lsk,neo,wav' 
+1534441306 INFO	 rover.manager Starting rover 'btc' using '/Users/mtxodus1/Documents/GitHub/private/lib/rover/btc/rover.js' 
+1534441306 INFO	 rover.manager Rover started 'btc' 
+1534441306 INFO	 rover.manager Starting rover 'eth' using '/Users/mtxodus1/Documents/GitHub/private/lib/rover/eth/rover.js' 
+1534441306 INFO	 rover.manager Rover started 'eth' 
+1534441306 INFO	 rover.manager Starting rover 'lsk' using '/Users/mtxodus1/Documents/GitHub/private/lib/rover/lsk/rover.js' 
+1534441306 INFO	 rover.manager Rover started 'lsk' 
+1534441306 INFO	 rover.manager Starting rover 'neo' using '/Users/mtxodus1/Documents/GitHub/private/lib/rover/neo/rover.js' 
+1534441306 INFO	 rover.manager Rover started 'neo' 
+1534441306 INFO	 rover.manager Starting rover 'wav' using '/Users/mtxodus1/Documents/GitHub/private/lib/rover/wav/rover.js' 
+1534441306 INFO	 rover.manager Rover started 'wav' 
+1534441306 INFO	 server.index Server available at http://0.0.0.0:3000 
+1534441306 INFO	 mining.thread pool controller ready 53588 
+(node:53584) Warning: N-API is an experimental feature and could change at any time.
+(node:53587) Warning: N-API is an experimental feature and could change at any time.
+1534441307 INFO	 rover.helper unified block built from btc 00000000 
+(node:53583) Warning: N-API is an experimental feature and could change at any time.
+(node:53585) Warning: N-API is an experimental feature and could change at any time.
+1534441307 INFO	 utils.time Starting NTP time sync 
+(node:53586) Warning: N-API is an experimental feature and could change at any time.
+1534441310 INFO	 rover.btc.controller peer count pool: 50 dp: 30, sp: 30, q: true, bh: 537062 
+1534441313 INFO	 rover.btc.controller peer count pool: 50 dp: 30, sp: 30, q: true, bh: 537062 
+1534441314 INFO	 rover.helper unified block built from lsk 53014759 
+1534441314 INFO	 engine.index rovered block in consideration of cache 0 
+1534441314 INFO	 mining.officer [] <- [] rovered lsk block 6791755 53014759331246703 
+1534441314 INFO	 mining.officer constructing multiverse with blockchains [btc:0 eth:0 lsk:1 neo:0 wav:0] 
+1534441314 INFO	 mining.officer multiverse depth 1 
+1534441316 INFO	 rover.btc.controller peer count pool: 50 dp: 30, sp: 30, q: true, bh: 537062 
+1534441317 INFO	 engine.index rovered block in consideration of cache 0 
+1534441317 INFO	 mining.officer [] <- [] rovered btc block 100000 00000000000000000003fdb710e2f3d290adcd68b2643ff9c98dddb33fb8b36a 
+1534441317 INFO	 mining.officer constructing multiverse with blockchains [btc:1 eth:0 lsk:1 neo:0 wav:0] 
+1534441317 INFO	 mining.officer multiverse depth 2 
+1534441319 INFO	 rover.btc.controller peer count pool: 50 dp: 30, sp: 30, q: true, bh: 537062 
+1534441322 INFO	 rover.btc.controller peer count pool: 50 dp: 30, sp: 30, q: true, bh: 537062 
+1534441325 INFO	 rover.btc.controller peer count pool: 50 dp: 30, sp: 30, q: true, bh: 537062 
+1534441326 INFO	 rover.helper unified block built from lsk 15206794 
+1534441326 INFO	 engine.index rovered block in consideration of cache 0 
+1534441326 INFO	 mining.officer [] <- [] rovered lsk block 6791756 15206794855155624785 
+1534441326 INFO	 mining.officer constructing multiverse with blockchains [btc:1 eth:0 lsk:2 neo:0 wav:0] 
+1534441326 INFO	 mining.officer multiverse depth 3 
+1534441328 INFO	 rover.btc.controller peer count pool: 50 dp: 30, sp: 30, q: true, bh: 537062 
+1534441331 INFO	 rover.btc.controller peer count pool: 50 dp: 30, sp: 30, q: true, bh: 537062 
+1534441332 INFO	 rover.helper unified block built from lsk 40768799 
+1534441332 INFO	 engine.index rovered block in consideration of cache 0 
+1534441332 INFO	 mining.officer [] <- [] rovered lsk block 6791757 4076879980271814508 
+1534441332 INFO	 mining.officer constructing multiverse with blockchains [btc:1 eth:0 lsk:3 neo:0 wav:0] 
+1534441332 INFO	 mining.officer multiverse depth 4 
+1534441334 INFO	 rover.btc.controller peer count pool: 50 dp: 31, sp: 31, q: true, bh: 537062 

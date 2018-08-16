@@ -37,8 +37,9 @@ const { Multiverse } = require('../bc/multiverse')
 const { BlockPool } = require('../bc/blockpool')
 
 const { PROTOCOL_PREFIX, NETWORK_ID } = require('./protocol/version')
-const LOW_HEALTH_NET = process.env.LOW_HEALTH_NET === 'true'
+const MIN_HEALTH_NET = process.env.MIN_HEALTH_NET === 'true'
 const USER_QUORUM = process.env.USER_QUORUM || config.bc.quorum
+const BC_MAX_CONNECTIONS = process.env.BC_MAX_CONNECTIONS || 80
 
 const { range, max } = require('ramda')
 const { protocolBits, anyDns } = require('../engine/helper')
@@ -397,11 +398,11 @@ export class PeerNode {
                 const quorumState = await this._engine.persistence.get('bc.dht.quorum')
                 const quorum = parseInt(quorumState, 10) // coerce for Flow
 
-                if(this._p2p.totalConnections < USER_QUORUM && quorum === 1 && LOW_HEALTH_NET === false){
+                if(this._p2p.totalConnections < USER_QUORUM && quorum === 1 && MIN_HEALTH_NET === false){
                     await this._engine.persistence.put('bc.dht.quorum', "0")
                 } else if(this._p2p.totalConnections >= USER_QUORUM && quorum === 0){
                     await this._engine.persistence.put('bc.dht.quorum', "1")
-                } else if (quorum === 0 && LOW_HEALTH_NET === true){
+                } else if (quorum === 0 && MIN_HEALTH_NET === true){
                     await this._engine.persistence.put('bc.dht.quorum', "1")
                 }
 
@@ -603,34 +604,37 @@ export class PeerNode {
 
           this._p2p._seeder.on('peer', (peer) => {
 
-          if(this._seededPeers.get(peer)) {
-             return
-          }
+              if(this._p2p.totalConnections > BC_MAX_CONNECTIONS){
+                return
+              }
+              if(this._seededPeers.get(peer)) {
+                return
+              }
 
-          this._seededPeers.set(peer, 1)
+              this._seededPeers.set(peer, 1)
 
-                 const channel = this._p2p.hash
-                 const url = Url.parse(peer)
-                 const h = url.href.split(':')
-                 const obj = {
-                     //id: crypto.createHash('sha1').update(peer).digest('hex'),
-                     host: h[0],
-                     port: Number(h[1]) + 1, // seeder broadcasts listen on one port below the peers address
-                     retries: 0,
-                     channel: Buffer.from(channel),
-                 }
-                 obj.id = obj.host + ':' + obj.port
-                 obj.remotePort = obj.port
-                 obj.remoteHost = obj.host
+                     const channel = this._p2p.hash
+                     const url = Url.parse(peer)
+                     const h = url.href.split(':')
+                     const obj = {
+                         //id: crypto.createHash('sha1').update(peer).digest('hex'),
+                         host: h[0],
+                         port: Number(h[1]) + 1, // seeder broadcasts listen on one port below the peers address
+                         retries: 0,
+                         channel: Buffer.from(channel),
+                     }
+                     obj.id = obj.host + ':' + obj.port
+                     obj.remotePort = obj.port
+                     obj.remoteHost = obj.host
 
-					if(this._p2p.ip === obj.host) return
-                       try {
-                           const name = obj.host + ':' + obj.port + this._p2p.hash
-                           this._p2p._discovery.emit('peer', name, obj, 'utp')
+                     if(this._p2p.ip === obj.host) return
+                           try {
+                               const name = obj.host + ':' + obj.port + this._p2p.hash
+                               this._p2p._discovery.emit('peer', name, obj, 'utp')
 
-                       } catch (err) {
-                           console.log('')
-                       }
+                           } catch (err) {
+                               console.log('')
+                           }
             })
 
       			this._p2p._seeder.start()
@@ -644,10 +648,10 @@ export class PeerNode {
                 // this._logger.info('peers', this._p2p._discovery.dht._peers)
                 this._logger.info('active waypoints:  ' + this._p2p.totalConnections)
                 this._engine._emitter.emit('peerCount', this._p2p.totalConnections)
-                if(this._p2p.totalConnections < USER_QUORUM && LOW_HEALTH_NET !== true) {
+                if(this._p2p.totalConnections < USER_QUORUM && MIN_HEALTH_NET !== true) {
                   this._engine.persistence.put('bc.dht.quorum', '0')
                   .then(() => {
-                      this._logger.info('waiting for additional waypoints')
+                      this._logger.info('waietng for additional waypoints')
                   })
                   .catch((err) => {
                       this._logger.debug(err)

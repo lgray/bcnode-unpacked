@@ -20,84 +20,38 @@ import type {
 
 const debug = require('debug')('bcnode:engine')
 const crypto = require('crypto')
-const {
-  EventEmitter
-} = require('events')
-const {
-  queue
-} = require('async')
-const {
-  join,
-  resolve
-} = require('path')
-const {
-  writeFileSync
-} = require('fs')
-const {
-  max
-} = require('ramda')
+
+const { EventEmitter } = require('events')
+const { join, resolve } = require('path')
+const { writeFileSync } = require('fs')
+const { max } = require('ramda')
+const { queue } = require('async')
 const maxmind = require('maxmind')
 const LRUCache = require('lru-cache')
 const BN = require('bn.js')
 const semver = require('semver')
-
-const {
-  config
-} = require('../config')
-const {
-  ensureDebugPath
-} = require('../debug')
-const {
-  Multiverse
-} = require('../bc/multiverse')
-const {
-  getLogger
-} = require('../logger')
-const {
-  Monitor
-} = require('../monitor')
-const {
-  Node
-} = require('../p2p')
+const { config } = require('../config')
+const { ensureDebugPath } = require('../debug')
+const { Multiverse } = require('../bc/multiverse')
+const { getLogger } = require('../logger')
+const { Monitor } = require('../monitor')
+const { Node } = require('../p2p')
 // const { NodeP2P2 } = require('../p2p2')
-const {
-  RoverManager
-} = require('../rover/manager')
+const { RoverManager } = require('../rover/manager')
 const rovers = require('../rover/manager').rovers
-const {
-  Server
-} = require('../server/index')
+const { Server } = require('../server/index')
 const PersistenceRocksDb = require('../persistence').RocksDb
-const {
-  PubSub
-} = require('./pubsub')
-const {
-  RpcServer
-} = require('../rpc/index')
-const {
-  getGenesisBlock
-} = require('../bc/genesis')
-const {
-  BlockPool
-} = require('../bc/blockpool')
-const {
-  isValidBlock
-} = require('../bc/validation')
-const {
-  Block
-} = require('../protos/core_pb')
-const {
-  errToString
-} = require('../helper/error')
-const {
-  getVersion
-} = require('../helper/version')
-const {
-  MiningOfficer
-} = require('../mining/officer')
-const {
-  WorkerPool
-} = require('../mining/pool')
+const { PubSub } = require('./pubsub')
+const { RpcServer } = require('../rpc/index')
+const { getGenesisBlock } = require('../bc/genesis')
+const { getBootBlock } = require('../bc/bootblock')
+const { BlockPool } = require('../bc/blockpool')
+const { isValidBlock, validateSequenceDifficulty } = require('../bc/validation')
+const { Block } = require('../protos/core_pb')
+const { errToString } = require('../helper/error')
+const { getVersion } = require('../helper/version')
+const { MiningOfficer } = require('../mining/officer')
+const { WorkerPool } = require('../mining/pool')
 const ts = require('../utils/time').default // ES6 default export
 
 const GEO_DB_PATH = resolve(__dirname, '..', '..', 'data', 'GeoLite2-City.mmdb')
@@ -119,9 +73,9 @@ export class Engine {
     _logger: Logger
     _monitor: Monitor
     _knownBlocksCache: LRUCache < string, BcBlock >
-        _knownEvaluationsCache: LRUCache < string, BcBlock >
-        _rawBlocks: LRUCache < number, Block >
-        _node: Node
+    _knownEvaluationsCache: LRUCache < string, BcBlock >
+    _rawBlocks: LRUCache < number, Block >
+    _node: Node
     // _nodep2p2: NodeP2P2
     _persistence: PersistenceRocksDb
     _pubsub: PubSub
@@ -137,6 +91,7 @@ export class Engine {
     _peerIsSyncing: boolean
     _peerIsResyncing: boolean
     _storageQueue: any
+    _blockCache: Block[]
     _miningOfficer: MiningOfficer
     _stepSyncTimestamps: Number[]
 
@@ -148,6 +103,7 @@ export class Engine {
       this._knownRovers = opts.rovers
       this._minerKey = opts.minerKey // TODO only needed because of server touches that - should be passed using constructor?
       this._rawBlock = []
+      this._blockCache = []
       this._monitor = new Monitor(this, {})
       this._persistence = new PersistenceRocksDb(DATA_DIR)
       this._pubsub = new PubSub()
@@ -190,16 +146,6 @@ export class Engine {
       this._peerIsSyncing = false
       this._peerIsResyncing = false
 
-      this._workerPool = new WorkerPool(this._pubsub,
-                                        this._persistence,
-                                        { minerKey: this.minerKey })
-
-      this._miningOfficer = new MiningOfficer(this._pubsub, this._persistence, this._workerPool, opts)
-
-      this._workerPool._emitter.on('mined', (data) => {
-          this._logger.info('workers dismissed')
-          this.miningOfficer._handleWorkerFinishedMessage(data)
-      })
 
       // Start NTP sync
       ts.start()
@@ -212,6 +158,14 @@ export class Engine {
     // TODO only needed because of server touches that - should be passed using constructor?
     get minerKey (): string {
       return this._minerKey
+    }
+
+    /**
+     * Get WorkerPool
+     * @returns {WorkerPool|*}
+     */
+    get workerPool (): WorkerPool {
+      return this._workerPool
     }
 
     /**
@@ -249,7 +203,6 @@ export class Engine {
      * - Store name of available rovers
      */
     async init () {
-      await this._miningOfficer.simMining()
       const roverNames = Object.keys(rovers)
       const {
         npm,
@@ -271,7 +224,7 @@ export class Engine {
         })
       })
       const DB_LOCATION = resolve(`${__dirname}/../../${this.persistence._db.location}`)
-      const DELETE_MESSAGE = `Your DB version is old, please delete data folder '${DB_LOCATION}' and run bcnode again`
+      const DELETE_MESSAGE = `DB data structure is stale, delete data folder '${DB_LOCATION}' and run bcnode again`
       // TODO get from CLI / config
       try {
         await this._persistence.open()
@@ -323,6 +276,13 @@ export class Engine {
                     process.exit(1)
                 }
             }
+        if(process.env.BC_BOOT_BLOCK !== undefined){
+           const bootBlock = getBootBlock(process.env.BC_BOOT_BLOCK)
+           await this.persistence.put('bc.block.latest', bootBlock)
+           await this.persistence.put('bc.block.' + bootBlock.getHeight(), bootBlock)
+           await this.multiverse._chain.unshift(bootBlock)
+           this._logger.warn('boot block ' + bootBlock.getHeight() + ' assigned as latest block')
+        }
         } catch (e) {
             this._logger.warn(`could not store rovers to persistence, reason ${e.message}`)
         }
@@ -349,6 +309,10 @@ export class Engine {
             this._peerIsResyncing = true
         })
 
+        this.pubsub.subscribe('update.mined.block', '<engine>', (msg) => {
+            this._logger.info('------ update.mined.block -----')
+        })
+
         this.pubsub.subscribe('state.resync.failed', '<engine>', (msg) => {
             this._logger.info('pausing mining to reestablish multiverse')
             this._peerIsResyncing = true
@@ -359,6 +323,18 @@ export class Engine {
             })
         })
 
+	    	//[this.pubsub.subscribe('miner.block.new', (msg) => {
+				//[		/* eslint-disable */
+				//[		console.log('miner.block.new -----------> ')
+				//[		console.log(msg)
+				//[})
+
+	    	//this.pubsub.subscribe('mined', (msg) => {
+				//		/* eslint-disable */
+				//		console.log('miner -----------> ')
+				//		console.log(msg)
+				//})
+
         this.pubsub.subscribe('state.checkpoint.end', '<engine>', (msg) => {
             this._peerIsResyncing = false
         })
@@ -367,9 +343,11 @@ export class Engine {
             try {
                 if (!this._knownEvaluationsCache.has(msg.data.getHash())) {
                     this._knownEvaluationsCache.set(msg.data.getHash(), 1)
-                    this.miningOfficer.stopMining(this._workerPool)
+                    // TODO: Check if any blocks are not the current one and reuse if its new
+                    // this could be rebase
+                    // this.miningOfficer.stopMining(this._workerPool)
                     this.updateLatestAndStore(msg)
-                        .then((res) => {
+                        .then((previousBlock) => {
                             if (msg.mined !== undefined && msg.mined === true) {
                                 this._logger.info(`latest block ${msg.data.getHeight()} has been updated`)
                             } else {
@@ -381,6 +359,43 @@ export class Engine {
                                 //   this._logger.error(`error occurred during updateLatestAndStore(), reason: ${err.message}`)
                                 // })
                             }
+                            this._blockCache.length = 0
+                            //if(this._blockCache.length > 0){
+                            //    const candidates = this._blockCache.reduce((all, block) => {
+                            //      const blockchains = previousBlock.getBlockchainHeaders().toObject()
+                            //      const key = block.getBlockchain() + 'List'
+                            //      const headers = blockchains[key]
+                            //      const found = headers.reduce((f, header) => {
+                            //         if(all === false) {
+                            //           if(block.getHeight() > header.getHeight()){
+                            //              f = true
+                            //           }
+                            //         }
+                            //         return f
+                            //      }, false)
+
+                            //      if(found === true) {
+                            //        all.push(block)
+                            //      }
+                            //      return all
+                            //    }, [])
+                            //    this._blockCache.length = 0
+                            //    if(candidates.length > 0){
+                            //      this._blockCache = candidates
+                            //      const nextBlock = this._blockCache.shift()
+                            //      this.miningOfficer.newRoveredBlock(rovers, nextBlock, this._blockCache)
+                            //        .then((pid: number | false) => {
+                            //            if (pid !== false) {
+                            //                this._logger.info(`collectBlock handler: sent to miner`)
+                            //            }
+                            //        })
+                            //        .catch(err => {
+                            //            this._logger.error(`could not send to mining worker, reason: ${errToString(err)}`)
+                            //            process.exit()
+                            //        })
+
+                            //    }
+                            //}
                         })
                         .catch((err) => {
                             this._logger.info(errToString(err))
@@ -427,6 +442,65 @@ export class Engine {
                     this._logger.warn(err)
                 })
         })
+
+        this._workerPool = new WorkerPool(this._pubsub,
+                                          this._persistence,
+                                          { minerKey: this._minerKey })
+
+        this._miningOfficer = new MiningOfficer(this._pubsub, this._persistence, this._workerPool, {minerKey: this._minerKey, rovers: this._knownRovers })
+
+        this._workerPool.emitter.on('mined', (data) => {
+            this._logger.info('workers dismissed')
+            //this.miningOfficer.stopMining()
+            this.miningOfficer._handleWorkerFinishedMessage(data)
+        })
+
+        this._workerPool.emitter.on('blockCacheRebase', () => {
+            this._logger.info('block cache rebase requested')
+            this.persistence.get('bc.block.latest').then((previousBlock) => {
+            if(this._blockCache.length > 0){
+                const candidates = this._blockCache.reduce((all, block) => {
+                  const blockchains = previousBlock.getBlockchainHeaders().toObject()
+                  const key = block.getBlockchain() + 'List'
+                  const headers = blockchains[key]
+                  const found = headers.reduce((f, header) => {
+                     if(all === false) {
+                       if(block.getHeight() > header.getHeight()){
+                          f = true
+                       }
+                     }
+                     return f
+                  }, false)
+
+                  if(found === true) {
+                    all.push(block)
+                  }
+                  return all
+                }, [])
+                this._blockCache.length = 0
+                if(candidates.length > 0){
+                  this._blockCache = candidates
+                  const nextBlock = this._blockCache.shift()
+                  this.miningOfficer.newRoveredBlock(rovers, nextBlock, this._blockCache)
+                    .then((pid: number | false) => {
+                        if (pid !== false) {
+                            this._logger.info(`collectBlock reassigned sent to miner`)
+                        }
+                    })
+                    .catch(err => {
+                        this._logger.error(`could not send to mining worker, reason: ${errToString(err)}`)
+                        process.exit()
+                    })
+
+                }
+            }
+            })
+            .catch((err) => {
+              this._logger.debug(err)
+            })
+        })
+        await this._miningOfficer.simMining()
+
     }
 
     /**
@@ -491,7 +565,8 @@ export class Engine {
                 await this.persistence.put('bc.block.' + block.getHeight(), block)
                 await this.persistence.putChildHeaders(block)
             } else if (previousLatest.getHash() === block.getPreviousHash() &&
-                new BN(block.getTimestamp()).gt(new BN(parent.getTimestamp())) === true) {
+                new BN(block.getTimestamp()).gt(new BN(parent.getTimestamp())) === true &&
+                validateSequenceDifficulty(previousLatest, block) === true) {
                 await this.persistence.put('bc.block.parent', previousLatest)
                 await this.persistence.put('bc.block.latest', block)
                 await this.persistence.put('bc.block.' + block.getHeight(), block)
@@ -516,6 +591,9 @@ export class Engine {
                 await this.persistence.put('bc.block.latest', block)
                 await this.persistence.put('bc.block.' + block.getHeight(), block)
                 await this.persistence.putChildHeaders(block)
+            /*
+             * Remove this after block 100,000
+             */
             } else if (msg.force === true &&
                 synclock.getHeight() === 1) {
                 await this.persistence.put('synclock', block)
@@ -542,7 +620,7 @@ export class Engine {
                         await this.persistence.putChildHeaders(b)
                     }
                 }
-                return Promise.resolve(true)
+                return Promise.resolve(block)
             }
 
             if (this.miningOfficer._canMine === false) {
@@ -555,7 +633,7 @@ export class Engine {
                     }
                 })
             }
-            return Promise.resolve(true)
+            return Promise.resolve(block)
         } catch (err) {
             this._logger.warn(err)
             this._logger.error(errToString(err))
@@ -578,9 +656,9 @@ export class Engine {
                         await this.persistence.putChildHeaders(b)
                     }
                 }
-                return Promise.resolve(true)
+                return Promise.resolve(block)
             }
-            return Promise.resolve(true)
+            return Promise.resolve(block)
         }
     }
 
@@ -722,7 +800,7 @@ export class Engine {
         //if (Object.keys(this._workerPool._workers).length === 0) {
         //}
 
-        this._workerPool.allRise().then(() => {
+        this.workerPool.allRise().then(() => {
                 this._emitter.on('collectBlock', ({
                     block
                 }) => {
@@ -733,10 +811,10 @@ export class Engine {
 
                     // FIXME: @schnorr, is this typo? Should not it be this._rawBlocks.push(block) ?
                     // this._rawBlock.push(block)
+                    this._logger.info('rovered block in consideration of cache ' + this._blockCache.length)
 
-                    this._logger.info(Object.keys(this._workerPool._workers).length + ' workers in pool')
                     process.nextTick(() => {
-                        this.miningOfficer.newRoveredBlock(rovers, block)
+                        this.miningOfficer.newRoveredBlock(rovers, block, this._blockCache)
                             .then((pid: number | false) => {
                                 if (pid !== false) {
                                     this._logger.info(`collectBlock handler: sent to miner`)
@@ -1103,6 +1181,7 @@ export class Engine {
             this._logger.info('purposed block peer ' + newBlock.getHeight())
             return this.multiverse.addNextBlock(newBlock).then((isNextBlock) => {
                     if (isNextBlock === true) {
+
                         if (this.multiverse._chain.length > 1) {
                             this._logger.info('new block ' + newBlock.getHash() + ' references previous Block ' + newBlock.getPreviousHash() + ' for block ' + this.multiverse._chain[1].getHash())
                         }
@@ -1119,6 +1198,7 @@ export class Engine {
                         return this.multiverse.addResyncRequest(newBlock, this.miningOfficer._canMine)
                             .then(shouldResync => {
                                 if (shouldResync === true) {
+
                                     this._logger.info(newBlock.getHash() + ' <- new block: ' + newBlock.getHeight() + ' should sync request approved')
 
                                     // const host = conn.remoteHost || conn.remoteAddress
@@ -1170,7 +1250,7 @@ export class Engine {
     getMultiverseHandler(conn: Object, newBlocks: BcBlock[]): Promise <?boolean> {
         // get the lowest of the current multiverse
         try {
-            this.miningOfficer.stopMining(this._workerPool)
+            // REPLACE this.miningOfficer.stopMining(this._workerPool)
             this._logger.info('end mining')
             return true
         } catch (e) {
@@ -1274,7 +1354,7 @@ export class Engine {
                                                 force: true,
                                                 multiverse: this.multiverse._chain
                                             })
-                                            this.node.broadcastNewBlock(conn, newBlock)
+                                            this.node.broadcastNewBlock(newBlock)
                                             return Promise.resolve(true)
                                         }
                                     })
@@ -1406,7 +1486,7 @@ export class Engine {
         if (this._knownBlocksCache.has(newBlock.getHash())) {
             this._logger.warn('received duplicate new block ' + newBlock.getHeight() + ' (' + newBlock.getHash() + ')')
             try {
-                this.miningOfficer.stopMining(this._workerPool)
+                // REPLACE this.miningOfficer.stopMining(this._workerPool)
                 this._logger.info('end mining')
                 return Promise.resolve(true)
             } catch (e) {
@@ -1438,7 +1518,7 @@ export class Engine {
                 } else {
                     this._logger.warn('local mined block ' + newBlock.getHeight() + ' does not stack on multiverse height ' + this.multiverse.getHighestBlock().getHeight())
                     this._logger.warn('mined block ' + newBlock.getHeight() + ' cannot go on top of multiverse block ' + this.multiverse.getHighestBlock().getHash())
-                    return Promise.resolve(false)
+                    return Promise.resolve(true)
                     //return this.miningOfficer.rebaseMiner()
                     //  .then((res) => {
                     //    this._logger.info(res)

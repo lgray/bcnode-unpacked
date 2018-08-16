@@ -4,9 +4,9 @@ const swarm = require('discovery-swarm')
 // const avon = require('avon')
 const crypto = require('crypto')
 const { config } = require('../config')
-// const bootstrap = require('../utils/templates/bootstrap')
 // const seeds = require('../utils/templates/seed')
-const bootstrap = require('../utils/templates/collocation.json')
+const seederBootstrap = require('../utils/templates/collocation.json')
+const dhtBootstrap = require('../utils/templates/bootstrap')
 let seeds = []
 const logging = require('../logger')
 // load
@@ -38,12 +38,13 @@ function randomIndex (items, last) {
 
 function Discovery (nodeId) {
   // bootstrap from two randomly selected nodes
-  seeds.unshift(randomIndex(bootstrap))
-  seeds.unshift(randomIndex(bootstrap, seeds[0]))
-  seeds.unshift(randomIndex(bootstrap, seeds[1]))
+  seeds.unshift(randomIndex(seederBootstrap))
+  seeds.unshift(randomIndex(seederBootstrap, seeds[0]))
+  seeds.unshift(randomIndex(seederBootstrap, seeds[1]))
+  seeds.unshift(randomIndex(seederBootstrap, seeds[3]))
 
-  if (process.env.LOW_HEALTH_NETWORK === 'true') {
-    seeds = bootstrap
+  if (process.env.MIN_HEALH_NETWORK === 'true') {
+    seeds = seederBootstrap
   }
 
   if (process.env.BC_SEED_FILE !== undefined) {
@@ -65,7 +66,7 @@ function Discovery (nodeId) {
     tcp: process.env.BC_DISCOVERY_TCP === 'true',
     dns: process.env.BC_DISCOVERY_MDNS === 'true',
     dht: {
-      bootstrap: ['18.210.15.44:16060'],
+      bootstrap: dhtBootstrap,
       interval: 80000 + random(1000),
       maxConnections: maxConnections,
       concurrency: maxConnections,
