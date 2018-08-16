@@ -95,11 +95,15 @@ if (cluster.isMaster) {
     const record = {}
 		/* eslint-disable */
 		setInterval(() => {
-			if(stats.length >= 20) {
-				 const RadianDistancesPerSecond = new BN(mean(stats)).div(1000).mul(new BN((settings.maxWorkers - 2))).div(new BN(6.283)).toNumber()
-				 console.log('<<<< Proof of Distance >>>> operating metric Radian Distance Collisions > ' + RadianDistancesPerSecond + ' RAD/s')
+			if(stats.length >= 5) {
+				 const distancePerSecond = mean(stats) / 1000
+				 console.log(distancePerSecond)
+				 //const distancePerRadianSecond = new BN(distancePerSecond).div(new BN(6.283)).toNumber()
+				 //const coreCountAdjustment = new BN(distancePerRadianSecond).times(settings.maxWorkers - 2).toNumber()
+				 //const formattedMetric = Math.round(coreCountAdjustment * 100) / 100
+				 //console.log('\n  Proof of Distance >>>> op: ' + formattedMetric + ' RAD/s\n')
 			} else if(stats.length > 0) {
-			   console.log('<<<< Proof of Distance >>>> (RAD/s) collecting samples ' + stats.length + '/20')
+			   console.log('\n  Proof of Distance >>>> op: sampling for radian distance collides per second (RAD\s) ... ' + stats.length + '/20\n')
 			}
 		}, 11000)
 		/* eslint-enable */
@@ -107,20 +111,19 @@ if (cluster.isMaster) {
   process.on('message', (data) => {
     const createThread = function () {
       const worker = cluster.fork()
-      globalLog.info('new worker created with id ' + worker.id)
       active.unshift(worker.id)
       return worker
     }
 
     const applyEvents = (worker) => {
       worker.once('message', (data) => {
+        stats.unshift(new BN(data.data.iterations).div(new BN(data.data.timeDiff)).toNumber())
+        if (stats.length > 20) { stats.pop() }
         process.send({
           type: 'solution',
           data: data.data,
           workId: data.workId
         }, () => {
-          if (stats.length > 20) { stats.pop() }
-          stats.unshift(new BN(data.data.iterations).div(new BN(data.data.timeDiff)).toNumber())
           fkill('bc-miner-worker', { force: true }).then(() => {
             globalLog.info('pool rebase success')
           }).catch((err) => {
@@ -182,7 +185,7 @@ if (cluster.isMaster) {
       difficultyData,
       workId
     }) => {
-      globalLog.info('thread pool <- ' + process.pid + ' ' + workId)
+      process.stdout.write('\rthread pool <- ' + process.pid + ' ' + workId + '                 ')
 
       ts.offsetOverride(offset)
       // Deserialize buffers from parent process, buffer will be serialized as object of this shape { <idx>: byte } - so use Object.values on it
