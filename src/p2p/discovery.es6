@@ -7,7 +7,7 @@ const { config } = require('../config')
 // const seeds = require('../utils/templates/seed')
 const seederBootstrap = require('../utils/templates/collocation.json')
 const dhtBootstrap = require('../utils/templates/bootstrap')
-let seeds = []
+let seeds = seederBootstrap
 const logging = require('../logger')
 // load
 // function blake2bl (input) {
@@ -38,10 +38,10 @@ function randomIndex (items, last) {
 
 function Discovery (nodeId) {
   // bootstrap from two randomly selected nodes
-  seeds.unshift(randomIndex(seederBootstrap))
-  seeds.unshift(randomIndex(seederBootstrap, seeds[0]))
-  seeds.unshift(randomIndex(seederBootstrap, seeds[1]))
-  seeds.unshift(randomIndex(seederBootstrap, seeds[2]))
+  // seeds.unshift(randomIndex(seederBootstrap))
+  // seeds.unshift(randomIndex(seederBootstrap, seeds[0]))
+  // seeds.unshift(randomIndex(seederBootstrap, seeds[1]))
+  // seeds.unshift(randomIndex(seederBootstrap, seeds[2]))
 
   if (process.env.MIN_HEALH_NETWORK === 'true') {
     seeds = seederBootstrap
