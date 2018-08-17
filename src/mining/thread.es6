@@ -101,7 +101,10 @@ if (cluster.isMaster) {
 				 const distancePerRadianSecond = new BN(distancePerSecond).div(new BN(6.283)).toNumber()
 				 const coreCountAdjustment = new BN(distancePerRadianSecond).mul(new BN(workerLimit)).toNumber()
 				 const formattedMetric = Math.round(coreCountAdjustment * 100) / 100000
-				 console.log('\r\n  ' + formattedMetric + ' kRAD/s -> radian distance collisions performance metric -> proof of distance miner\n\r')
+
+         if(formattedMetric !== undefined && formattedMetric > 0){
+				   console.log('\r\n  ' + formattedMetric + ' kRAD/s -> radian distance collisions performance metric -> proof of distance miner\n\r')
+         }
 			} else if(stats.length > 0) {
 			   console.log('\r\n  ' + 'sampling radian distance performance <- ' + stats.length + '/5\n\r')
 			}
