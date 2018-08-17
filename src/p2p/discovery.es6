@@ -28,13 +28,13 @@ function random (range) {
 // function randomId () {
 //  return crypto.randomBytes(20)
 // }
-function randomIndex (items, last) {
-  const d = items[Math.floor(Math.random() * items.length)]
-  if (last !== undefined && last === d) {
-    return randomIndex(items, last)
-  }
-  return d
-}
+// function randomIndex (items, last) {
+//  const d = items[Math.floor(Math.random() * items.length)]
+//  if (last !== undefined && last === d) {
+//    return randomIndex(items, last)
+//  }
+//  return d
+// }
 
 function Discovery (nodeId) {
   // bootstrap from two randomly selected nodes
