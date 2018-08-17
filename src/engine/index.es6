@@ -257,7 +257,6 @@ export class Engine {
                 await this.persistence.get('bc.block.1')
                 await this.persistence.put('bc.dht.quorum', '0')
                 /* eslint-disable */
-                this._logger.info('highest block height on disk ' + latestBlock.getHeight())
             } catch (_) { // genesis block not found
                 try {
                     await this.persistence.put('synclock', newGenesisBlock)
@@ -272,7 +271,6 @@ export class Engine {
                     this._logger.info('genesis block saved to disk ' + newGenesisBlock.getHash())
                 } catch (e) {
                     this._logger.error(`error while creating genesis block ${e.message}`)
-                    this.requestExit()
                     process.exit(1)
                 }
             }
@@ -1214,7 +1212,7 @@ export class Engine {
                                         connection: conn
                                     }
                                     // parent headers do not form a chain
-                                    this.node._engine._emitter.emit('getmultiverse', obj)
+                                    this._emitter.emit('getmultiverse', obj)
 
                                     this.pubsub.publish('update.block.latest', {
                                         key: 'bc.block.latest',

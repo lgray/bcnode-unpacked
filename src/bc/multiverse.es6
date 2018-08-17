@@ -427,12 +427,6 @@ export class Multiverse {
       return Promise.resolve(false)
     }
 
-    // Fail if distance of new block is lower
-    if (new BN(newBlock.getDistance()).lt(new BN(currentHighestBlock.getDistance())) === true) {
-      this._logger.info('failed resync req <- newBlock non-unique hash')
-      return Promise.resolve(false)
-    }
-
     // FAIL if new block not within 15 seconds of local time
     if (new BN(newBlock.getHeight()).gt(100000) === true && newBlock.getTimestamp() + 15 < Math.floor(Date.now() * 0.001)) {
       this._logger.info('failed resync req: time below 19 seconds')

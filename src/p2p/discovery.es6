@@ -139,15 +139,11 @@ Discovery.prototype = {
 
     this.dht.qsend = async (conn, msg) => {
       /* eslint-disable */
-      const list = this.dht.getPeerByHost(conn)
-      this._logger.debug('peers to write: ' + list.length)
-      if (list.length < 1) { return Promise.resolve(false) }
-      const tasks = list.reduce((all, conn) => {
-        const a = new Promise((resolve, reject) => {
+        return new Promise((resolve, reject) => {
           try {
                 conn.resume()
                 conn.write(msg)
-                conn.close()
+                //conn.close()
                 return resolve({
                   address: conn.remoteAddress + ':' + conn.remotePort,
                   success: true,
@@ -168,10 +164,6 @@ Discovery.prototype = {
               })
           }
         })
-        all.push(a)
-        return all
-      }, [])
-      await Promise.all(tasks)
     }
 
     this.dht.qbroadcast = async (msg, filters) => {
@@ -183,7 +175,7 @@ Discovery.prototype = {
         const idr = conn.remoteHost || conn.host
         if (filters.indexOf(idr) < 0) {
           const res = await this.dht.qsend(conn, msg)
-          if (!res || res.length === 0) {
+          if (!res || res.success === false) {
             warnings.push(res)
           }
         }

@@ -468,21 +468,21 @@ export class PeerNode {
 
             this._engine._emitter.on('getmultiverse', (obj) => {
 
-              const type = '0009R01' // read selective block list (multiverse)
-              const split = protocolBits[type]
-              const low = obj.data.low
-              const high = obj.data.high
-              const msg = type + split + low + split + high
-              this._p2p.qsend(obj.connection, msg)
-                .then((res) => {
-                  if (res) {
-                    this._logger.info(res.length + ' delivered')
-                  }
-                })
-                .catch((err) => {
-                  this._logger.error(new Error('critical write to peer socket failed'))
-                  this._logger.error(err)
-                })
+                const type = '0009R01' // read selective block list (multiverse)
+                const split = protocolBits[type]
+                const low = obj.data.low
+                const high = obj.data.high
+                const msg = type + split + low + split + high
+                this._p2p.qsend(obj.connection, msg)
+                  .then((res) => {
+                    if (res) {
+                      this._logger.info(res.length + ' delivered')
+                    }
+                  })
+                  .catch((err) => {
+                    this._logger.error(new Error('critical write to peer socket failed'))
+                    this._logger.error(err)
+                  })
             })
 
           this._engine._emitter.on('putmultiverse', (msg) => {

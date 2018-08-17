@@ -51,6 +51,7 @@ const {
 const { blake2bl } = require('../utils/crypto')
 const { concatAll } = require('../utils/ramda')
 const { Block, BcBlock, BcTransaction, BlockchainHeader, BlockchainHeaders } = require('../protos/core_pb')
+const { getNewestHeader } = require('../bc/validation')
 const ts = require('../utils/time').default // ES6 default export
 const GENESIS_DATA = require('../bc/genesis.raw')
 
@@ -105,7 +106,7 @@ export function getExpFactorDiff (calculatedDifficulty: BN, parentBlockHeight: n
  * @param newBlockCount
  * @returns
  */
-export function getDiff (currentBlockTime: number, previousBlockTime: number, previousDifficulty: string, minimalDifficulty: number, newBlockCount: number): BN {
+export function getDiff (currentBlockTime: number, previousBlockTime: number, previousDifficulty: string, minimalDifficulty: number, newBlockCount: number, newestChildHeader: Block): BN {
   // https://github.com/ethereum/EIPs/blob/master/EIPS/eip-2.md
 
   let bigMinimalDifficulty = new BN(minimalDifficulty, 16)
@@ -114,18 +115,31 @@ export function getDiff (currentBlockTime: number, previousBlockTime: number, pr
 
   const bigPreviousBlockTime = new BN(previousBlockTime)
   const bigPreviousDifficulty = new BN(previousDifficulty)
-  const bigCurentBlockTime = new BN(currentBlockTime)
+  const bigCurrentBlockTime = new BN(currentBlockTime)
   const bigMinus99 = new BN(-99)
   const big1 = new BN(1)
   const big0 = new BN(0)
-  const bigTargetTimeWindow = new BN(8)
-  let elapsedTime = bigCurentBlockTime.sub(bigPreviousBlockTime)
+  const bigTargetTimeWindow = new BN(9)
+  const bigChildHeaderTime = new BN(newestChildHeader.getTimestamp()).div(new BN(1000))
+  const bigChildHeaderTimeBound = new BN(bigChildHeaderTime).add(bigTargetTimeWindow)
+  let elapsedTime = bigCurrentBlockTime.sub(bigPreviousBlockTime)
+  /* eslint-disable */
+  console.log('elapsedTime: ' + elapsedTime.toNumber())
+  let staleCost = bigCurrrentBlockTime.sub(bigChildHeaderTimeBound)
+  let elapsedTime = elapsedTime.sub(staleCost)
 
-  // elapsedTime + ((elapsedTime - 6) * newBlocks)
-  const elapsedTimeBonus = elapsedTime.add(elapsedTime.sub(new BN(6)).mul(new BN(newBlockCount)))
+  console.log('staleCost: ' + staleCost.toNumber())
+  console.log('(after) elapsedTime: ' + elapsedTime.toNumber())
+
+  // elapsedTime + ((elapsedTime - 5) * newBlocks)
+  const elapsedTimeBonus = elapsedTime.add(elapsedTime.sub(new BN(5)).mul(new BN(newBlockCount)))
 
   if (elapsedTimeBonus.gt(big0)) {
     elapsedTime = elapsedTimeBonus
+  }
+
+  if (elapsedTimeBonus.lt(big0)) {
+    elapsedTime = elapsedTime - 2
   }
 
   // x = 1 - floor(x / handicap)
@@ -138,7 +152,7 @@ export function getDiff (currentBlockTime: number, previousBlockTime: number, pr
   }
 
   // y = bigPreviousDifficulty -> SPECTRUM: 10062600 // AT: 1615520 // BT: ((32 * 16) + 20) / 2PI = 85
-  y = bigPreviousDifficulty.div(new BN(2200))
+  y = bigPreviousDifficulty.div(new BN(22000))
   // x = x * y
   x = x.mul(y)
   // x = x + previousDifficulty
@@ -363,7 +377,8 @@ export function getNewPreExpDifficulty (
     lastPreviousBlock.getTimestamp(),
     lastPreviousBlock.getDifficulty(),
     MINIMUM_DIFFICULTY,
-    newBlockCount
+    newBlockCount,
+    getNewestHeader(lastPreviousBlock)
   ) // Calculate the final pre-singularity difficulty adjustment
 
   return preExpDiff
