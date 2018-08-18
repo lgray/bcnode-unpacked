@@ -127,29 +127,36 @@ if (cluster.isMaster) {
           data: data.data,
           workId: data.workId
         }, () => {
-          fkill('bc-miner-worker', { force: true }).then(() => {
-            globalLog.info('pool rebase success')
-          }).catch((err) => {
-            globalLog.debug(err)
-          })
-          active.length = 0
+          (async () => {
+            active.length = 0
+            try {
+              await fkill('bc-miner-worker')
+              globalLog.info('pool rebase success')
+            } catch (err) {
+              globalLog.info('pool rebase success')
+            }
+          })()
+            .catch((err) => {
+              globalLog.error(err.message + ' ' + err.stack)
+            })
         })
       })
       return worker
     }
     if (data.type === 'config') {
       settings.maxWorkers = data.maxWorkers || settings.maxWorkers
+      settings.maxWorkers = max(2, settings.maxWorkers - 2)
     } else if (data.type === 'work') {
       // expressed in Radians (cycles/second) / 2 * PI
       (async () => {
-        if (active.length < (settings.maxWorkers - 1)) {
+        if (Object.keys(cluster.workers).length < settings.maxWorkers) {
           const deploy = settings.maxWorkers - Object.keys(cluster.workers).length
           for (let i = 0; i < deploy; i++) {
             const worker = applyEvents(createThread())
             await sendWorker(worker, data.data)
           }
         } else {
-          const ida = active.pop()
+          const ida = Object.keys(cluster.workers).pop()
           if (cluster.workers[ida] !== undefined) {
             cluster.workers[ida].kill('SIGKILL')
           }

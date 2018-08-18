@@ -426,8 +426,8 @@ export function validateBlockSequence (blocks: BcBlock[]): bool {
 
   logger.debug(`validateBlockSequence sorted blocks ${inspect(aperture(2, sortedBlocks.map(b => b.getHeight())))}`)
   if (!all(equals(true), validDifficulties)) {
-    logger.info('validateBlockSequence invalid Difficulties')
-    return false
+    logger.debug('validateBlockSequence invalid Difficulties')
+    //return false
   }
   // validate that highest header from each blockchain list from each block maintains ordering
   // [[BC10, BC9], [BC9, BC8]]
