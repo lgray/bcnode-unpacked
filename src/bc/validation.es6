@@ -102,6 +102,7 @@ export function isValidBlock (newBlock: BcBlock, type: number = 0): bool {
 export function isValidChildAge (newBlock: BcBlock, type: number = 0): bool {
   const newestHeader = getNewestHeader(newBlock)
 
+  logger.info('confirming valid child ages for new block')
   if (newestHeader === false) {
     logger.warn('failed: validChildAge no upper limit child header found')
     return false
@@ -109,15 +110,15 @@ export function isValidChildAge (newBlock: BcBlock, type: number = 0): bool {
 
   // add the offset for dark fiber
   const bcBlockTimestamp = new BN(newBlock.getTimestamp()).mul(new BN(1000)).toNumber()
-  const highRangeLimit = 36 * 1000
+  const highRangeLimit = 38 * 1000
   const lowRangeLimit = 12 * 1000
   const newestHeaderDFBound = DF_CONFIG[newestHeader.blockchain].dfBound * 1000
   const newestHeaderTimestamp = new BN(newestHeader.timestamp).add(new BN(newestHeaderDFBound)).toNumber()
   const upperTimestampLimit = new BN(newestHeaderTimestamp).add(new BN(highRangeLimit)).toNumber()
   const lowerTimestampLimit = new BN(newestHeaderTimestamp).sub(new BN(lowRangeLimit)).toNumber()
 
-  logger.info('newest header timestamp: ' + newestHeader.timestamp)
   logger.info('bcblocktimestamp timestamp: ' + bcBlockTimestamp)
+  logger.info('newest header timestamp: ' + newestHeader.timestamp)
   logger.info('upperTimestampLimit: ' + upperTimestampLimit)
   logger.info('lowerTimestampLimit: ' + lowerTimestampLimit)
   /* eslint-enable */
@@ -134,6 +135,7 @@ export function isValidChildAge (newBlock: BcBlock, type: number = 0): bool {
 }
 
 export function getNewestHeader (newBlock: BcBlock): bool {
+  logger.info('getting block height ' + newBlock.getHeight())
   if (newBlock === undefined) {
     logger.warn('failed: isValidChildAge new block could not be found')
     return false
@@ -371,9 +373,13 @@ export function validateRoveredSequences (blocks: BcBlock[]): boolean {
 }
 
 export function validateSequenceDifficulty (previousBlock: BcBlock, newBlock: BcBlock): boolean {
+  logger.info('comparing difficulties prevBlock: ' + previousBlock.getHeight() + ' with next block ' + newBlock.getHeight())
   const newBlockCount = getNewBlockCount(previousBlock.getBlockchainHeaders(), newBlock.getBlockchainHeaders())
-  const preExpDiff = getDiff(newBlock.getTimestamp(), previousBlock.getTimestamp(), previousBlock.getDifficulty(), MINIMAL_DIFFICULTY, newBlockCount)
+  const preExpDiff = getDiff(newBlock.getTimestamp(), previousBlock.getTimestamp(), previousBlock.getDifficulty(), MINIMAL_DIFFICULTY, newBlockCount, getNewestHeader(newBlock))
   const finalDifficulty = getExpFactorDiff(preExpDiff, previousBlock.getHeight()).toString()
+
+  logger.info('comparing difficulties prevBlock: ' + previousBlock.getHeight() + ' (' +  previousBlock.getDifficulty() + ') with next block ' + newBlock.getHeight() + ' (' + newBlock.getDifficulty() + ') ')
+  logger.info('difficulty should be ' + finalDifficulty)
 
   return newBlock.getDifficulty() === finalDifficulty
 }
@@ -399,6 +405,7 @@ export function validateBlockSequence (blocks: BcBlock[]): bool {
   }
   // BC: 10 > BC: 9 > BC: 8 ...
   const sortedBlocks = sort((a, b) => b.getHeight() - a.getHeight(), blocks)
+  const sortedBlocksTopDown = sort((a, b) => a.getHeight() - b.getHeight(), blocks)
 
   logger.debug(`validateBlockSequence sorted blocks ${sortedBlocks.map(b => b.getHeight()).toString()}`)
   // validate that Bc blocks are all in the same chain
@@ -412,6 +419,16 @@ export function validateBlockSequence (blocks: BcBlock[]): bool {
     return false
   }
 
+  /* eslint-disable */
+  const validDifficulties = aperture(2, sortedBlocksTopDown).map(([a, b]) => {
+    return validateSequenceDifficulty(a, b)
+  })
+
+  logger.debug(`validateBlockSequence sorted blocks ${inspect(aperture(2, sortedBlocks.map(b => b.getHeight())))}`)
+  if (!all(equals(true), validDifficulties)) {
+    logger.info('validateBlockSequence invalid Difficulties')
+    return false
+  }
   // validate that highest header from each blockchain list from each block maintains ordering
   // [[BC10, BC9], [BC9, BC8]]
   const pairs = aperture(2, sortedBlocks)

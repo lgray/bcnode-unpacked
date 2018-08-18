@@ -18,6 +18,8 @@ const { RpcClient } = require('../../rpc')
 const { blake2b } = require('../../utils/crypto')
 const { createUnifiedBlock } = require('../helper')
 
+let skip = []
+
 type LiskBlock = { // eslint-disable-line no-undef
   id: string,
   height: number,
@@ -164,36 +166,48 @@ export default class Controller {
             getTransactionsForBlock(this._liskApi, lastBlock.id).then(transactions => {
               // TODO decide if we want to use block with no transactions, there are such
               lastBlock.transactions = transactions
-              this._logger.debug(`successfuly got ${transactions.length} transactions for block ${inspect(lastBlock.id)}`)
+              if (transactions !== undefined) {
+                this._logger.debug(`successfuly got ${transactions.length} transactions for block ${inspect(lastBlock.id)}`)
 
-              const unifiedBlock = createUnifiedBlock(lastBlock, _createUnifiedBlock)
+                const unifiedBlock = createUnifiedBlock(lastBlock, _createUnifiedBlock)
 
-              this._logger.debug('LSK Going to call this._rpc.rover.collectBlock()')
-              this._rpc.rover.collectBlock(unifiedBlock, (err, response) => {
-                if (err) {
-                  this._logger.error(`Error while collecting block ${inspect(err)}`)
-                  return
-                }
-                this._logger.debug(`Collector Response: ${JSON.stringify(response.toObject(), null, 4)}`)
-              })
+                this._logger.debug('LSK Going to call this._rpc.rover.collectBlock()')
+                this._rpc.rover.collectBlock(unifiedBlock, (err, response) => {
+                  if (err) {
+                    this._logger.debug(`rrror while collecting block ${inspect(err)}`)
+                    skip = skip.concat(['1', '1'])
+                    return
+                  }
+                  this._logger.debug(`Collector Response: ${JSON.stringify(response.toObject(), null, 4)}`)
+                })
+              } else {
+                skip.push('1')
+              }
             })
           }
         })
           .catch((err) => {
+            skip = skip.concat(['1', '1'])
             this._logger.debug(err)
-            this._logger.error('connection lsk network error')
+            this._logger.debug('connection lsk network error')
           })
       }).catch(e => {
-        this._logger.error(`Error while getting new block, err: ${e.message}`)
+        skip = skip.concat(['1', '1'])
+        this._logger.debug(`error while getting new block, err: ${e.message}`)
       })
     }
 
     this._logger.debug('tick')
     this._intervalDescriptor = setInterval(() => {
-      cycle().then(() => {
-        this._logger.debug('tick')
-      })
-    }, 4000)
+      if (skip.length > 0) {
+        this._logger.debug('skip')
+        skip.pop()
+      } else {
+        cycle().then(() => {
+          this._logger.debug('tick')
+        })
+      }
+    }, 5100)
 
     // setInterval(function () {
     //  lisk.api(liskOptions).getPeersList({}, function (error, success, response) {

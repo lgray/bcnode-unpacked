@@ -95,7 +95,7 @@
     ]
   },
   "dependencies": {
-    "@cityofzion/neo-js": "0.7.0",
+    "@cityofzion/neo-js": "0.8.1",
     "ascii-text-generator": "^1.0.5",
     "async": "^2.6.1",
     "atob": "2.1.1",

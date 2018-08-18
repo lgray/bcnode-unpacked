@@ -15,7 +15,7 @@ const BN = require('bn.js')
 const { all, flatten, zip } = require('ramda')
 
 const { getGenesisBlock } = require('./genesis')
-const { isValidBlock, validateRoveredSequences, validateBlockSequence, getNewestHeader, childrenHeightSum } = require('./validation')
+const { validateSequenceDifficulty, isValidBlock, validateRoveredSequences, validateBlockSequence, getNewestHeader, childrenHeightSum } = require('./validation')
 const { standardId } = require('./helper')
 const { getLogger } = require('../logger')
 
@@ -192,7 +192,7 @@ export class Multiverse {
       return Promise.resolve(false)
     }
     // FAIL if newBlock total difficulty <  currentHighestBlock
-    if (new BN(newBlock.getTotalDistance()).lt(new BN(currentHighestBlock.getTotalDistance()))) {
+    if (new BN(newBlock.getTotalDistance(), 16).lt(new BN(currentHighestBlock.getTotalDistance(), 16))) {
       this._logger.info('bestBlock failed newBlock total distance < currentHighestBlock total distance')
       return Promise.resolve(false)
     }
@@ -226,12 +226,30 @@ export class Multiverse {
       this._chain.push(newBlock)
       return Promise.resolve(true)
     }
+
     const currentHighestBlock = await this.persistence.get('bc.block.latest')
     // PASS
     // no other candidate in Multiverse
     if (currentHighestBlock === null || currentHighestBlock === undefined) {
       this._chain.unshift(newBlock)
       return Promise.resolve(true)
+    }
+
+    // HOTSWAP - NO SYNC
+    // this is a hotswap in at the current block height for a new block
+    // TODO: Consider moving this to resync (except we dont want sync triggered)
+    const currentHighestParent = await this.persistence.get('bc.block.parent', { asBuffer: true, softFail: true })
+    if (currentHighestParent !== false && currentHighestParent.getHash() !== currentHighestBlock.getPreviousHash() &&
+       currentHighestBlock.getHeight() === newBlock.getHeight() &&
+       new BN(currentHighestBlock.getHeight()) === new BN(newBlock.getDistance()) &&
+       validateSequenceDifficulty(currentHighestParent, newBlock) === true) {
+      if (new BN(newBlock.getTotalDistance()).gt(new BN(currentHighestBlock.getTotalDistance())) === true &&
+          new BN(newBlock.getTimBlockestamp()).gte(new BN(currentHighestBlock.getTimestamp())) === true) {
+        this._chain.shift()
+        this._chain.unshift(newBlock)
+        this._logger.warn('hs occured ' + newBlock.getHeight() + ' <-> ' + newBlock.getHeight() + ' all clear <- ref hash' + newBlock.getHash().slice(0, 12))
+        return Promise.resolve(true)
+      }
     }
 
     if (newBlock.getHeight() === 1 || newBlock.getHeight() === '1') {
@@ -254,6 +272,11 @@ export class Multiverse {
 
     if (childrenHeightSum(newBlock) === childrenHeightSum(currentHighestBlock)) {
       this._logger.warn('connection chain weight is below threshold')
+      const newBlockNewestChildHeader = getNewestHeader(newBlock)
+      const currentBlockNewestChildHeader = getNewestHeader(currentHighestBlock)
+
+      this._logger.info('new block newest child header: ' + newBlockNewestChildHeader)
+      this._logger.info('current block newest child header: ' + currentBlockNewestChildHeader)
       if (new BN(getNewestHeader(newBlock).timestamp).lt(new BN(getNewestHeader(currentHighestBlock).timestamp)) === true) {
         return Promise.resolve(false)
       }
@@ -277,18 +300,6 @@ export class Multiverse {
       this._logger.warn('newBlock hash === currentHighestBlock hash')
       return Promise.resolve(false)
     }
-    // FAIL
-    // if newBlock totalDifficulty < (lt) currentHighestBlock totalDifficulty
-    const currentHighestParent = await this.persistence.get('bc.block.parent')
-    if (currentHighestParent.getHash() !== currentHighestBlock.getPreviousHash() &&
-       currentHighestBlock.getHeight() === newBlock.getHeight()) {
-      if (new BN(newBlock.getTotalDistance()).gt(new BN(currentHighestBlock.getTotalDistance())) &&
-        new BN(newBlock.getTimestamp()).gte(new BN(currentHighestBlock.getTimestamp()))) {
-        this._chain.shift()
-        this._chain.unshift(newBlock)
-        return Promise.resolve(true)
-      }
-    }
 
     // FAIL
     // case fails over into the resync
@@ -304,7 +315,7 @@ export class Multiverse {
     // FAIL
     // if newBlock does not include additional rover blocks
     if (newBlock.getBlockchainHeadersCount() === '0') {
-      this._logger.warn('new Block totalDistance ' + newBlock.getTotalDistance() + 'less than currentHighestBlock' + currentHighestBlock.getTotalDistance())
+      this._logger.warn('new Block total headers count is below threshold')
       return Promise.resolve(false)
     }
 
@@ -392,8 +403,8 @@ export class Multiverse {
       return Promise.resolve(false)
     }
 
-    // current chain is malformed
-    if (!isValidBlock(currentHighestBlock)) {
+    // current chain is malformed and new block is not
+    if (isValidBlock(newBlock) === true && isValidBlock(currentHighestBlock) === false) {
       this._logger.info('passed sync req <- currentHighestBlock malformed')
       return Promise.resolve(true)
     }
@@ -440,22 +451,30 @@ export class Multiverse {
     }
 
     // PASS if current highest block is older than 19 seconds from local time
-    if (currentHighestBlock.getTimestamp() + 19 < Math.floor(Date.now() * 0.001)) {
+    if (currentHighestBlock.getTimestamp() + 28 < Math.floor(Date.now() * 0.001) &&
+       new BN(currentHighestBlock.getTotalDistance()).lt(new BN(newBlock.getTotalDistance())) === true) {
       this._logger.info('current chain is stale chain')
       return Promise.resolve(true)
     }
 
     if (this._chain.length < 2) {
       this._logger.info('determining if chain current total distance is less than new block')
-      if (new BN(currentHighestBlock.getTotalDistance()).lt(newBlock.getTotalDistance())) {
-        return Promise.resolve(true)
+      if (new BN(currentHighestBlock.getTotalDistance()).lt(new BN(newBlock.getTotalDistance())) === true &&
+         new BN(childrenHeightSum(currentHighestBlock)).lt(new BN(childrenHeightSum(newBlock))) === true) {
+        const passed = await this.validateRoveredBlocks(newBlock)
+        if (passed === true) {
+          return Promise.resolve(true)
+        }
       }
     }
 
     if (currentParentHighestBlock === null && currentHighestBlock !== null) {
-      if (new BN(newBlock.getTotalDistance()).gt(new BN(currentHighestBlock.getTotalDistance()))) {
-        this._logger.info('passed resync: total distance of new block is greater than current highest')
-        return Promise.resolve(true)
+      if (new BN(newBlock.getTotalDistance()).gt(new BN(currentHighestBlock.getTotalDistance())) &&
+         new BN(newBlock.getDifficulty()).gt(new BN(currentHighestBlock.getDifficulty())) === true) {
+        const passed = this.validateRoveredBlocks(newBlock)
+        if (passed === true) {
+          return Promise.resolve(true)
+        }
       }
     }
 
@@ -465,26 +484,21 @@ export class Multiverse {
       return Promise.resolve(false)
     }
 
-    // make sure that blocks that are added reference child chains
-    // FAIL if sum of child block heights is less than the rovered child heights
+    // pick the chain we have rovered blocks for
     if (childrenHeightSum(newBlock) <= childrenHeightSum(currentHighestBlock)) {
       this._logger.warn('child height new block: ' + childrenHeightSum(newBlock))
       this._logger.warn('child height previous block: ' + childrenHeightSum(currentHighestBlock))
 
-      return this.validateRoveredBlocks(newBlock).then(areAllChildrenRovered => {
-        if (!areAllChildrenRovered) {
-          this._logger.warn('failed resync req: not all rovers have found blocks')
-          return Promise.resolve(false) // TODO: enabled in AT
+      const passedNewBlock = await this.validateRoveredBlocks(newBlock)
+      if (passedNewBlock === true) {
+        const passedOldBlock = await this.validateRoveredBlocks(currentHighestBlock)
+        if (passedOldBlock === false) {
+          return Promise.resolve(true)
         }
-        return this.validateRoveredBlocks(currentHighestBlock).then(areCurrentChildrenRovered => {
-          if (!areCurrentChildrenRovered) {
-            return Promise.resolve(true)
-          } else {
-            return Promise.resolve(false)
-          }
-        })
-      })
+      }
+      return Promise.resolve(false)
     }
+    return Promise.resolve(false)
   }
 
   async validateRoveredBlocks (block: BcBlock): Promise<boolean> {

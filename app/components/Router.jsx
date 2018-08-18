@@ -50,7 +50,7 @@ export class Router extends Component<*> {
             </div>
           </div>
           <Route path='/map' component={Map} />
-          <Route path='/doc/' component={Doc} />
+          <Route path='/docx/' component={Doc} />
           <Route path='/logs/' component={Logs} />
         </App>
       </ConnectedRouter>

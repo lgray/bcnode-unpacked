@@ -20,7 +20,7 @@ export class DocContainer extends Component<*> {
         </Helmet>
 
         <iframe
-          src='/doc'
+          src='/docx'
           frameBorder={0}
           height={this.props.window.size.height - 60}
           width={this.props.window.size.width}

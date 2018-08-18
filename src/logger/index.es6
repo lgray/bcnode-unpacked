@@ -136,7 +136,19 @@ class LoggingContext {
   }
 }
 
+function expandErrors (logger) {
+  var oldLogFunc = logger.log
+  logger.log = function () {
+    var args = Array.prototype.slice.call(arguments, 0)
+    if (args.length >= 2 && args[1] instanceof Error) {
+      args[1] = args[1].stack
+    }
+    return oldLogFunc.apply(this, args)
+  }
+  return logger
+}
+
 export const getLogger = (path: string, translatePath: bool = true, meta: ?Object): Logger => {
   const name = (translatePath) ? pathToLogPrefix(path) : path
-  return new LoggingContext(logger, name, meta)
+  return expandErrors(new LoggingContext(logger, name, meta))
 }

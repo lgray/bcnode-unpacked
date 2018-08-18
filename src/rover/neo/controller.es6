@@ -10,11 +10,13 @@ import type { Logger } from 'winston'
 import type { Backoff } from 'backo'
 import type { DfConfig } from '../../bc/validation'
 const profiles = require('@cityofzion/neo-js/dist/common/profiles')
+const { sites } = require('./mesh.json')
 const NeoMesh = require('@cityofzion/neo-js/dist/node/mesh')
 const NeoNode = require('@cityofzion/neo-js/dist/node/node')
 const { inspect } = require('util')
 const LRUCache = require('lru-cache')
 const { isEmpty } = require('ramda')
+const { shuffle } = require('lodash')
 
 const { Block } = require('../../protos/core_pb')
 const logging = require('../../logger')
@@ -27,6 +29,31 @@ const ts = require('../../utils/time').default // ES6 default export
 const { ROVER_DF_VOID_EXIT_CODE } = require('../manager')
 
 const PING_PERIOD = 20000
+const localMesh = sites.reduce((all, site) => {
+  if (site.type === 'RPC') {
+    if (site.protocol === 'https' || site.protocol === 'http') {
+      let port = 80
+      if (site.port !== undefined) {
+        port = Number(site.port)
+      } else if (site.protocol === 'https') {
+        port = 443
+      }
+      const obj = {
+        domain: site.address,
+        port: port
+      }
+      all.push(obj)
+    }
+  }
+  return all
+}, [])
+
+process.on('uncaughtError', (err) => {
+  /* eslint-disable */
+  console.trace(err)
+  /* eslint-enable */
+  process.exit()
+})
 
 type NeoBlock = { // eslint-disable-line no-undef
   hash: string,
@@ -119,7 +146,7 @@ export default class Controller {
       max: 500,
       maxAge: 1000 * 60 * 60
     })
-    this._neoMesh = new NeoMesh(profiles.rpc.mainnet.endpoints.map(endpoint => {
+    this._neoMesh = new NeoMesh(shuffle(profiles.rpc.mainnet.endpoints.concat(localMesh)).map(endpoint => {
       return new NeoNode({
         domain: endpoint.domain,
         port: endpoint.port
@@ -159,10 +186,10 @@ export default class Controller {
             this._pendingRequests.push([requestTime, block.index])
             // push second further to future
             this._pendingRequests.push([requestTime + 5, block.index + 1])
-            cycle()
+            setTimeout(cycle, 2000)
           }).catch(err => {
             this._logger.debug(`unable to start roving, could not get block count, err: ${err.message}`)
-            cycle()
+            setTimeout(cycle, 5000)
           })
           return
         }
@@ -170,7 +197,7 @@ export default class Controller {
         const [requestTimestamp, requestBlockHeight] = this._pendingRequests.shift()
         if (requestTimestamp <= ts.nowSeconds()) {
           node.rpc.getBlock(requestBlockHeight).then(block => {
-            this._logger.debug(`Got block at height : "${requestBlockHeight}"`)
+            this._logger.debug(`neo height set to ${requestBlockHeight}`)
             if (!this._blockCache.has(requestBlockHeight)) {
               this._blockCache.set(requestBlockHeight, true)
               this._logger.debug(`Unseen block with hash: ${block.hash} => using for BC chain`)
@@ -189,6 +216,7 @@ export default class Controller {
             }
             cycle()
           }, reason => {
+            this._logger.error(reason)
             throw new Error(reason)
           }).catch(err => {
             this._logger.debug(`error while getting new block height: ${requestBlockHeight}, err: ${errToString(err)}`)
@@ -196,14 +224,14 @@ export default class Controller {
             this._pendingRequests = this._pendingRequests.map(([ts, height]) => [ts + 10, height])
             // prepend currentrequest back but schedule to try it in [now, now + 10s]
             this._pendingRequests.unshift([randRange(ts.nowSeconds(), ts.nowSeconds() + 10), requestBlockHeight])
-            cycle()
+            setTimeout(cycle, 5000)
           })
         } else {
           // prepend request back to queue - we have to wait until time it is scheduled
           this._pendingRequests.unshift([requestTimestamp, requestBlockHeight])
-          cycle()
+          setTimeout(cycle, 5000)
         }
-      }, 3000)
+      }, 4000)
     }
 
     const pingNode = (node: NeoNode) => {
@@ -271,6 +299,21 @@ export default class Controller {
     this._neoMesh.nodes.forEach((node) => {
       pingNode(node)
     })
+
+    setInterval(() => {
+      // this._logger.info(`peer count pool: ${pool.numberConnected()} dp: ${network.discoveredPeers}, sp: ${network.satoshiPeers}, q: ${network.hasQuorum()}, bh: ${network.bestHeight}`)
+      const pendingUpdate = Math.floor(this._neoMesh.nodes.reduce((all, node) => {
+        all = all + node.pendingRequests
+        return all
+      }, 0) / this._neoMesh.nodes.length)
+      const active = this._neoMesh.nodes.reduce((all, node) => {
+        if (node.active !== undefined && node.active === true) {
+          all++
+        }
+        return all
+      }, 0)
+      this._logger.info('mesh count pool: ' + active + '/' + this._neoMesh.nodes.length + ' pending state changes: ' + pendingUpdate)
+    }, 9 * 1000)
 
     // Ping a random node periodically
     // TODO: apply some sort of priority to ping inactive node less frequent

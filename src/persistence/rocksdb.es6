@@ -119,6 +119,9 @@ export default class PersistenceRocksDb {
           const deserialized = deserialize(value)
           return resolve(deserialized)
         } catch (e) {
+          if (opts !== undefined && opts.softFail !== undefined && opts.softFail === false) {
+            return resolve(false)
+          }
           return reject(new Error(`Could not deserialize value`))
         }
       })

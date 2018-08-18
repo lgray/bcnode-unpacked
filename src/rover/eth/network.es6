@@ -10,22 +10,24 @@
 const assert = require('assert')
 const EventEmitter = require('events')
 const { DPT, RLPx, ETH, _util } = require('ethereumjs-devp2p')
-const ethereumCommon = require('ethereumjs-common')
+const EthereumCommon = require('ethereumjs-common')
 const EthereumBlock = require('ethereumjs-block')
 const EthereumTx = require('ethereumjs-tx')
 const LRUCache = require('lru-cache')
 const portscanner = require('portscanner')
 const { promisify } = require('util')
+const { shuffle } = require('lodash')
 const rlp = require('rlp-encoding')
+const fs = require('fs')
 
 const logging = require('../../logger')
 const { getPrivateKey } = require('../utils')
 
 const { config } = require('../../config')
 
-const ec = new ethereumCommon('mainnet')
+const ec = new EthereumCommon('mainnet')
 
-const BOOTNODES = ec.bootstrapNodes().map(node => {
+const BOOTNODES_ORDERED = ec.bootstrapNodes().map(node => {
   return {
     address: node.ip,
     udpPort: node.port,
@@ -33,7 +35,10 @@ const BOOTNODES = ec.bootstrapNodes().map(node => {
   }
 }).concat(config.rovers.eth.altBootNodes)
 
+const BOOTNODES = shuffle(BOOTNODES_ORDERED)
+
 const DAO_FORK_SUPPORT = true
+let ws = false
 
 const DISCONNECT_REASONS = Object.keys(RLPx.DISCONNECT_REASONS)
   .reduce((acc, key) => {
@@ -45,6 +50,10 @@ const DISCONNECT_REASONS = Object.keys(RLPx.DISCONNECT_REASONS)
 const HOSTS = BOOTNODES.map((b) => {
   return b.address
 })
+
+if (process.env.BC_ROVER_DEBUG_ETH !== undefined) {
+  ws = fs.createWriteStream('eth_peer_errors.csv')
+}
 
 // TODO extract this to config
 const ETH_1920000_HEADER = rlp.decode(
@@ -250,6 +259,9 @@ export default class Network extends EventEmitter {
           this.onNewBlock(block, peer)
         } else {
           this._logger.info(`Disconnecting ${getPeerAddr(peer)} for invalid block body`)
+          if (ws) {
+            ws.write(getPeerAddr(peer) + '\n')
+          }
           peer.disconnect(RLPx.DISCONNECT_REASONS.USELESS_PEER)
         }
       })

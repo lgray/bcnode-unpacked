@@ -111,6 +111,7 @@ export function getDiff (currentBlockTime: number, previousBlockTime: number, pr
 
   let bigMinimalDifficulty = new BN(minimalDifficulty, 16)
 
+  /* eslint-disable */
   logger.debug('number of new blocks: ' + newBlockCount)
 
   const bigPreviousBlockTime = new BN(previousBlockTime)
@@ -119,31 +120,31 @@ export function getDiff (currentBlockTime: number, previousBlockTime: number, pr
   const bigMinus99 = new BN(-99)
   const big1 = new BN(1)
   const big0 = new BN(0)
-  const bigTargetTimeWindow = new BN(9)
-  const bigChildHeaderTime = new BN(newestChildHeader.getTimestamp()).div(new BN(1000))
+  const bigTargetTimeWindow = new BN(8)
+  const bigChildHeaderTime = new BN(newestChildHeader.timestamp).div(new BN(1000))
   const bigChildHeaderTimeBound = new BN(bigChildHeaderTime).add(bigTargetTimeWindow)
   let elapsedTime = bigCurrentBlockTime.sub(bigPreviousBlockTime)
-  /* eslint-disable */
-  console.log('elapsedTime: ' + elapsedTime.toNumber())
-  let staleCost = bigCurrrentBlockTime.sub(bigChildHeaderTimeBound)
-  let elapsedTime = elapsedTime.sub(staleCost)
 
-  console.log('staleCost: ' + staleCost.toNumber())
-  console.log('(after) elapsedTime: ' + elapsedTime.toNumber())
+  /* eslint-disable */
+  //console.log('(before) elapsedTime: ' + elapsedTime.toNumber())
+  // (currentBlockTime - newestChildTime) / targetWindowOfTime) ^ newBlocks
+  //console.log('newest child was ' + bigCurrentBlockTime.sub(bigChildHeaderTime) + ' seconds ago')
+  let staleCost = new BN(new BN(bigCurrentBlockTime.sub(bigChildHeaderTimeBound)).div(new BN(bigTargetTimeWindow))).mul(new BN(newBlockCount))
+  elapsedTime = elapsedTime.sub(staleCost)
+
+  //console.log('staleCost: ' + staleCost.toNumber())
+  //console.log('(after) elapsedTime: ' + elapsedTime.toNumber())
 
   // elapsedTime + ((elapsedTime - 5) * newBlocks)
   const elapsedTimeBonus = elapsedTime.add(elapsedTime.sub(new BN(5)).mul(new BN(newBlockCount)))
+  //console.log('time bonus  ' + elapsedTimeBonus.toNumber())
 
   if (elapsedTimeBonus.gt(big0)) {
     elapsedTime = elapsedTimeBonus
   }
 
-  if (elapsedTimeBonus.lt(big0)) {
-    elapsedTime = elapsedTime - 2
-  }
-
   // x = 1 - floor(x / handicap)
-  let x = big1.sub(elapsedTime.div(bigTargetTimeWindow)) // div floors by default
+  let x = big1.sub(new BN(new BN(elapsedTime).div(bigTargetTimeWindow))) // div floors by default
   let y
 
   // x < -99 ? -99 : x
@@ -152,7 +153,7 @@ export function getDiff (currentBlockTime: number, previousBlockTime: number, pr
   }
 
   // y = bigPreviousDifficulty -> SPECTRUM: 10062600 // AT: 1615520 // BT: ((32 * 16) + 20) / 2PI = 85
-  y = bigPreviousDifficulty.div(new BN(22000))
+  y = bigPreviousDifficulty.div(new BN(2200))
   // x = x * y
   x = x.mul(y)
   // x = x + previousDifficulty
@@ -162,6 +163,16 @@ export function getDiff (currentBlockTime: number, previousBlockTime: number, pr
   if (x.lt(bigMinimalDifficulty)) {
     return bigMinimalDifficulty
   }
+
+  //if(new BN(bigPreviousDifficulty).lt(new BN(x)) === true){
+  //  console.log('difficulty is increasing ' + new BN(x).sub(new BN(bigPreviousDifficulty)))
+  //} else if(new BN(bigPreviousDifficulty).gt(new BN(x)) === true){
+  //  console.log('difficulty is decreasing ' + new BN(x).sub(new BN(bigPreviousDifficulty)))
+  //} else {
+  //  console.log('difficulty is constant ' + new BN(x).sub(new BN(bigPreviousDifficulty)))
+  //}
+
+  //console.log("\n\n")
 
   return x
 }
@@ -601,7 +612,7 @@ export function prepareNewBlock (currentTimestamp: number, lastPreviousBlock: Bc
 
   let chainWeight = 0
   if (new BN(lastPreviousBlock.getHeight()).gt(2) === true) {
-    chainWeight = new BN(lastPreviousBlock.getDistance()).sub(new BN(lastPreviousBlock.getDifficulty())).divRound(new BN(4)).toString()
+    chainWeight = new BN(lastPreviousBlock.getDistance()).sub(new BN(lastPreviousBlock.getDifficulty())).divRound(new BN(8)).toString()
   }
 
   const newBlock = new BcBlock()

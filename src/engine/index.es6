@@ -727,11 +727,14 @@ export class Engine {
         this._logger.info('starting P2P node')
         let nodeId
         try {
+            this._logger.info('loading network key')
             const now = Math.floor(Date.now() * 0.001)
             const nodeObjectData = await this.persistence.get('bc.dht.id')
             const nodeObject = JSON.parse(nodeObjectData)
             nodeId = nodeObject.id
+            this._logger.info('network dht key is ' + nodeObject.timestamp)
             const nodeTimestamp = nodeObject.timestamp
+
             // if the key is more than 1 week old reset it
             if (nodeTimestamp + 604800 < now) {
                 this._logger.warn('key needs to be set')
