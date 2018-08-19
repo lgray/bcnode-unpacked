@@ -91,10 +91,10 @@ export function isValidBlock (newBlock: BcBlock, type: number = 0): bool {
     return false
   }
   if (type === 0) {
-    if (!areDarkFibersValid(newBlock)) {
-      logger.warn('failed: areDarkFibersValid')
-      return false
-    }
+    //if (!areDarkFibersValid(newBlock)) {
+    //  logger.warn('failed: areDarkFibersValid')
+    //  return false
+    //}
   }
   return true
 }

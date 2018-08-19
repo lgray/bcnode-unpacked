@@ -183,7 +183,7 @@ export class Multiverse {
     // }
     // if there is no current parent, this block is the right lbock
     if (currentParentHighestBlock === false) {
-      if (new BN(newBlock.getTotalDistance()).gt(new BN(currentHighestBlock.getTotalDistance()))) {
+      if (new BN(newBlock.getTotalDistance(), 16).gt(new BN(currentHighestBlock.getTotalDistance(), 16))) {
         this._logger.info('bestBlock failed newBlock total distance < currentHighestBlock total distance')
         this._chain.length = 0
         this._chain.push(newBlock)
@@ -243,7 +243,7 @@ export class Multiverse {
        currentHighestBlock.getHeight() === newBlock.getHeight() &&
        new BN(currentHighestBlock.getHeight()) === new BN(newBlock.getDistance()) &&
        validateSequenceDifficulty(currentHighestParent, newBlock) === true) {
-      if (new BN(newBlock.getTotalDistance()).gt(new BN(currentHighestBlock.getTotalDistance())) === true &&
+      if (new BN(newBlock.getTotalDistance(), 16).gt(new BN(currentHighestBlock.getTotalDistance(), 16)) === true &&
           new BN(newBlock.getTimBlockestamp()).gte(new BN(currentHighestBlock.getTimestamp())) === true) {
         this._chain.shift()
         this._chain.unshift(newBlock)
@@ -307,7 +307,7 @@ export class Multiverse {
       return Promise.resolve(false)
     }
 
-    if (new BN(newBlock.getTotalDistance()).lt(new BN(currentHighestBlock.getTotalDistance()))) {
+    if (new BN(newBlock.getTotalDistance(), 16).lt(new BN(currentHighestBlock.getTotalDistance(), 16))) {
       this._logger.warn('new Block totalDistance ' + newBlock.getTotalDistance() + 'less than currentHighestBlock' + currentHighestBlock.getTotalDistance())
       return Promise.resolve(false)
     }
@@ -444,16 +444,16 @@ export class Multiverse {
       return Promise.resolve(false)
     }
 
-    // PASS if current highest block is older than 19 seconds from local time
-    if (currentHighestBlock.getTimestamp() + 28 < Math.floor(Date.now() * 0.001) &&
-       new BN(currentHighestBlock.getTotalDistance()).lt(new BN(newBlock.getTotalDistance())) === true) {
+    // PASS if current highest block is older than 32 seconds from local time
+    if (currentHighestBlock.getTimestamp() + 32 < Math.floor(Date.now() * 0.001) &&
+       new BN(currentHighestBlock.getTotalDistance(), 16).lt(new BN(newBlock.getTotalDistance(), 16)) === true) {
       this._logger.info('current chain is stale chain')
       return Promise.resolve(true)
     }
 
     if (this._chain.length < 2) {
       this._logger.info('determining if chain current total distance is less than new block')
-      if (new BN(currentHighestBlock.getTotalDistance()).lt(new BN(newBlock.getTotalDistance())) === true &&
+      if (new BN(currentHighestBlock.getTotalDistance(), 16).lt(new BN(newBlock.getTotalDistance(), 16)) === true &&
          new BN(childrenHeightSum(currentHighestBlock)).lt(new BN(childrenHeightSum(newBlock))) === true) {
         const passed = await this.validateRoveredBlocks(newBlock)
         if (passed === true) {
@@ -463,7 +463,7 @@ export class Multiverse {
     }
 
     if (currentParentHighestBlock === null && currentHighestBlock !== null) {
-      if (new BN(newBlock.getTotalDistance()).gt(new BN(currentHighestBlock.getTotalDistance())) &&
+      if (new BN(newBlock.getTotalDistance(), 16).gt(new BN(currentHighestBlock.getTotalDistance(), 16)) &&
          new BN(newBlock.getDifficulty()).gt(new BN(currentHighestBlock.getDifficulty())) === true) {
         const passed = this.validateRoveredBlocks(newBlock)
         if (passed === true) {
@@ -473,7 +473,7 @@ export class Multiverse {
     }
 
     // FAIL if newBlock total difficulty <  currentHighestBlock
-    if (new BN(newBlock.getTotalDistance()).lt(new BN(currentHighestBlock.getTotalDistance()))) {
+    if (new BN(newBlock.getTotalDistance(), 16).lt(new BN(currentHighestBlock.getTotalDistance(), 16)) === true) {
       this._logger.info('failed resync req: new block distance is lower than highest block')
       return Promise.resolve(false)
     }

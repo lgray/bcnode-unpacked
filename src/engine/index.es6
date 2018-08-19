@@ -46,7 +46,7 @@ const { RpcServer } = require('../rpc/index')
 const { getGenesisBlock } = require('../bc/genesis')
 const { getBootBlock } = require('../bc/bootblock')
 const { BlockPool } = require('../bc/blockpool')
-const { isValidBlock, validateSequenceDifficulty } = require('../bc/validation')
+const { isValidBlockCached, validateSequenceDifficulty } = require('../bc/validation')
 const { Block } = require('../protos/core_pb')
 const { errToString } = require('../helper/error')
 const { getVersion } = require('../helper/version')
@@ -1153,7 +1153,7 @@ export class Engine {
             this._knownBlocksCache.set(newBlock.getHash(), 1)
             this._logger.info('Received new block from peer', newBlock.getHeight())
 
-            if (!isValidBlock(newBlock, 1)) {
+            if (!isValidBlockCached(newBlock, 1)) {
                 debug('Received block was not valid')
                 // TODO this peer should make to the the blacklist
                 return
