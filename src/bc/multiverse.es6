@@ -353,6 +353,11 @@ export class Multiverse {
     // add the new block to the parent position
     this._chain.unshift(newBlock)
 
+    if (!validateSequenceDifficulty(currentHighestBlock, newBlock)) {
+      this._logger.info('invalid difficulties')
+      return Promise.resolve(false)
+    }
+
     const validRovers = validateRoveredSequences([newBlock, currentHighestBlock])
 
     if (validRovers === false) {
@@ -364,6 +369,7 @@ export class Multiverse {
     if (this._chain.length > 7) {
       this._chain.pop()
     }
+
     return Promise.resolve(true)
   }
 
