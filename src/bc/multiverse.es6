@@ -513,18 +513,18 @@ export class Multiverse {
       return Promise.resolve(valid)
     }
 
-    const pairs = zip(receivedBlocks, blocks)
+    // const pairs = zip(receivedBlocks, blocks)
 
-    const isChained = Promise.resolve(all(flag => flag === true, pairs.map(([received, expected]) => {
-      // $FlowFixMe
-      return received.hash === expected.getHash() &&
-        // $FlowFixMe
-        received.height === expected.getHeight() &&
-        // $FlowFixMe
-        received.merkleRoot === expected.getMerkleRoot() &&
-        // $FlowFixMe
-        received.timestamp === expected.getTimestamp()
-    })))
+    // const isChained = Promise.resolve(all(flag => flag === true, pairs.map(([received, expected]) => {
+    //  // $FlowFixMe
+    //  return received.hash === expected.getHash() &&
+    //    // $FlowFixMe
+    //    received.height === expected.getHeight() &&
+    //    // $FlowFixMe
+    //    received.merkleRoot === expected.getMerkleRoot() &&
+    //    // $FlowFixMe
+    //    received.timestamp === expected.getTimestamp()
+    // })))
 
     return true
     // disabled until AT
