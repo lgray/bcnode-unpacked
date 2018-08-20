@@ -526,10 +526,12 @@ export class Multiverse {
         received.timestamp === expected.getTimestamp()
     })))
 
-    if (isChained !== true) {
-      this._logger.info('failed chained check')
-    }
-    return isChained
+    return true
+    // disabled until AT
+    // if (isChained !== true) {
+    //  this._logger.info('failed chained check')
+    // }
+    // return isChained
   }
 
   /**
