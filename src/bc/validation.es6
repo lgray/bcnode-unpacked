@@ -134,6 +134,28 @@ export function isValidChildAge (newBlock: BcBlock, type: number = 0): bool {
   return true
 }
 
+export async function isValidBlockCached (persistence: Object, newBlock: BcBlock, type: number = 0): Promise<boolean> {
+  try {
+    if (new BN(newBlock.getHeight()).lt(new BN(151500)) === true) {
+      return Promise.resolve(true)
+    }
+    const cached = await persistence.get('valid_' + newBlock.getHash())
+    // if of type: string 'false' it means the block is invalid
+    return Promise.resolve(cached === 'true')
+  } catch (_) {
+    try {
+      const valid = isValidBlock(newBlock, type)
+      await persistence.put('valid_' + newBlock.getHash(), String(valid))
+      // return this block in wrhatever state it was validated
+      return Promise.resolve(valid)
+    } catch (err) {
+      // error attempting to parse this as a block, reject
+      logger.error(err)
+      return Promise.resolve(false)
+    }
+  }
+}
+
 export function getNewestHeader (newBlock: BcBlock): bool {
   logger.info('getting block height ' + newBlock.getHeight())
   if (newBlock === undefined) {

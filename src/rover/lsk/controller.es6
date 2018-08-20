@@ -9,7 +9,8 @@
 import type { Logger } from 'winston'
 const { inspect } = require('util')
 const LRUCache = require('lru-cache')
-const lisk = require('lisk-js')
+// Depcricated library const lisk = require('lisk-js')
+const lisk = require('lisk-elements')
 
 const { Block } = require('../../protos/core_pb')
 const logging = require('../../logger')
@@ -20,22 +21,22 @@ const { createUnifiedBlock } = require('../helper')
 
 let skip = []
 
-type LiskBlock = { // eslint-disable-line no-undef
-  id: string,
-  height: number,
-  previousBlock: string,
-  transactions: Object[],
-  totalFee: number,
-  payloadHash: string,
-  payloadLength: number,
-  generatorId: string,
-  generatorPublicKey: string,
-  blockSignature: string,
-  confirmations: number,
-  totalForged: number,
-  timestamp: number,
-  version: string,
-}
+// type LiskBlock = { // eslint-disable-line no-undef
+//  id: string,
+//  height: number,
+//  previousBlock: string,
+//  transactions: Object[],
+//  totalFee: number,
+//  payloadHash: string,
+//  payloadLength: number,
+//  generatorId: string,
+//  generatorPublicKey: string,
+//  blockSignature: string,
+//  confirmations: number,
+//  totalForged: number,
+//  timestamp: number,
+//  version: string
+// }
 
 const LSK_GENESIS_DATE = new Date('2016-05-24T17:00:00.000Z')
 
@@ -46,24 +47,6 @@ const getMerkleRoot = (block) => {
 
   const txs = block.transactions.map((tx) => tx.id)
   return txs.reduce((acc, el) => blake2b(acc + el), '')
-}
-
-const getLastHeight = (api: Object): Promise<number> => {
-  const response = api.sendRequest('blocks/getHeight')
-  return response.then(d => d.height)
-}
-
-/* eslint-disable */
-const getBlock = (api: Object, height: number): Promise<LiskBlock> => { // TODO type for block
-  return api.sendRequest('blocks', { height }).then((response) => {
-    if (response.blocks !== undefined && response.blocks.length > 0) {
-      return response.blocks.pop()
-    }
-  })
-}
-
-const getTransactionsForBlock = (api: Object, blockId: string): Promise<Object[]> => {
-  return api.sendRequest('transactions', { blockId }).then(response => response.transactions)
 }
 
 const getAbsoluteTimestamp = (blockTs: number) => {
@@ -133,7 +116,9 @@ export default class Controller {
       maxAge: 1000 * 60 * 60
     })
     this._otherCache = new LRUCache({ max: 50 })
-    this._liskApi = lisk.api(config.rovers.lsk)
+    // this._liskApi = lisk.api(config.rovers.lsk)
+    // randomizeNodes: true
+    this._liskApi = lisk.APIClient.createMainnetAPIClient(config.rovers.lsk)
     this._rpc = new RpcClient()
   }
 
@@ -151,50 +136,54 @@ export default class Controller {
     })
 
     const cycle = () => {
-      this._logger.debug('trying to get new block')
+      this._logger.info('LSK rover has active access state: ' + this._liskApi.hasAvailableNodes())
 
-      return getLastHeight(this._liskApi).then(lastHeight => {
-        this._logger.debug(`Got lastHeight: "${lastHeight}"`)
+      return this._liskApi.blocks.get({ limit: 1 }).then(lastBlocks => {
+        /* eslint-disable */
+        try {
+        const lastBlock = lastBlocks.blocks[0]
+        this._logger.info(`Collected new block with id: ${inspect(lastBlock.id)}`)
 
-        getBlock(this._liskApi, lastHeight).then(lastBlock => {
-          this._logger.debug(`Collected new block with id: ${inspect(lastBlock.id)}`)
+        if (!this._blockCache.has(lastBlock.id)) {
+          this._blockCache.set(lastBlock.id, true)
+          this._logger.info(`unseen block with id: ${inspect(lastBlock.id)} => using for BC chain`)
 
-          if (!this._blockCache.has(lastBlock.id)) {
-            this._blockCache.set(lastBlock.id, true)
-            this._logger.debug(`unseen block with id: ${inspect(lastBlock.id)} => using for BC chain`)
+          // getTransactionsForBlock(this._liskApi, lastBlock.id).then(transactions => {
+          // TODO decide if we want to use block with no transactions, there are such
+          lastBlock.transactions = []
+          // if (transactions !== undefined) {
 
-            getTransactionsForBlock(this._liskApi, lastBlock.id).then(transactions => {
-              // TODO decide if we want to use block with no transactions, there are such
-              lastBlock.transactions = transactions
-              if (transactions !== undefined) {
-                this._logger.debug(`successfuly got ${transactions.length} transactions for block ${inspect(lastBlock.id)}`)
+          const unifiedBlock = createUnifiedBlock(lastBlock, _createUnifiedBlock)
 
-                const unifiedBlock = createUnifiedBlock(lastBlock, _createUnifiedBlock)
-
-                this._logger.debug('LSK Going to call this._rpc.rover.collectBlock()')
-                this._rpc.rover.collectBlock(unifiedBlock, (err, response) => {
-                  if (err) {
-                    this._logger.debug(`rrror while collecting block ${inspect(err)}`)
-                    skip = skip.concat(['1', '1'])
-                    return
-                  }
-                  this._logger.debug(`Collector Response: ${JSON.stringify(response.toObject(), null, 4)}`)
-                })
-              } else {
-                skip.push('1')
+          this._logger.info('LSK Going to call this._rpc.rover.collectBlock()')
+          try {
+            this._rpc.rover.collectBlock(unifiedBlock, (err, response) => {
+              if (err) {
+                this._logger.error(`error while collecting block ${inspect(err)}`)
+                skip = skip.concat(['1', '1'])
+                return
               }
+              this._logger.info(`Collector Response: ${JSON.stringify(response.toObject(), null, 4)}`)
             })
-          }
-        })
-          .catch((err) => {
+          } catch (err) {
             skip = skip.concat(['1', '1'])
-            this._logger.debug(err)
-            this._logger.debug('connection lsk network error')
-          })
-      }).catch(e => {
-        skip = skip.concat(['1', '1'])
-        this._logger.debug(`error while getting new block, err: ${e.message}`)
+            this._logger.error(err)
+          }
+          // } else {
+          //  skip.push('1')
+          // }
+          // })
+        }
+        } catch (err) {
+          skip.push('1')
+          this._logger.error(err)
+        }
       })
+        .catch((err) => {
+          skip.push('1')
+          this._logger.error(err)
+          this._logger.error('connection lsk network error')
+        })
     }
 
     this._logger.debug('tick')

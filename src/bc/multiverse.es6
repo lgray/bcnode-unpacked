@@ -15,7 +15,7 @@ const BN = require('bn.js')
 const { all, flatten, zip } = require('ramda')
 
 const { getGenesisBlock } = require('./genesis')
-const { validateSequenceDifficulty, isValidBlock, validateRoveredSequences, validateBlockSequence, getNewestHeader, childrenHeightSum } = require('./validation')
+const { validateSequenceDifficulty, isValidBlockCached, validateRoveredSequences, validateBlockSequence, getNewestHeader, childrenHeightSum } = require('./validation')
 const { standardId } = require('./helper')
 const { getLogger } = require('../logger')
 
@@ -404,7 +404,9 @@ export class Multiverse {
     }
 
     // current chain is malformed and new block is not
-    if (isValidBlock(newBlock) === true && isValidBlock(currentHighestBlock) === false) {
+    const validNewBlock = await isValidBlockCached(this.persistence, newBlock)
+    const validCurrentBlock = await isValidBlockCached(this.persistence, currentHighestBlock)
+    if (validNewBlock === true && validCurrentBlock === false) {
       this._logger.info('passed sync req <- currentHighestBlock malformed')
       return Promise.resolve(true)
     }
