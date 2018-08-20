@@ -12,7 +12,7 @@ import type { Logger } from 'winston'
 import type PersistenceRocksDb from '../persistence/rocksdb'
 
 const BN = require('bn.js')
-const { all, flatten, zip } = require('ramda')
+const { flatten } = require('ramda')
 
 const { getGenesisBlock } = require('./genesis')
 const { validateSequenceDifficulty, isValidBlockCached, validateRoveredSequences, validateBlockSequence, getNewestHeader, childrenHeightSum } = require('./validation')
