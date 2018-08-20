@@ -19,7 +19,7 @@ const { errToString } = require('../helper/error')
 const { Block } = require('../protos/core_pb')
 const { RpcClient } = require('../rpc')
 
-const ROVER_RESTART_TIMEOUT = 5000
+const ROVER_RESTART_TIMEOUT = 15000
 const ROVED_DATA_PATH = path.resolve(__dirname, '..', '..', '_debug')
 export const ROVER_DF_VOID_EXIT_CODE = 16
 

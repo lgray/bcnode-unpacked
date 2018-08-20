@@ -196,7 +196,7 @@ export default class Controller {
           this._logger.debug('tick')
         })
       }
-    }, 5100)
+    }, 5600)
 
     // setInterval(function () {
     //  lisk.api(liskOptions).getPeersList({}, function (error, success, response) {
