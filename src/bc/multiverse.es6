@@ -257,6 +257,8 @@ export class Multiverse {
       return Promise.resolve(false)
     }
 
+    this._logger.info('newBlock height: ' + newBlock.getHeight())
+    this._logger.info('currentHighestBlock height: ' + currentHighestBlock.getHeight())
     if (newBlock.getHeight() - 1 !== currentHighestBlock.getHeight()) {
       // block being sent is genesis block
       this._logger.warn('block is not sequenced correctly')
