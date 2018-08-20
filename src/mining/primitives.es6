@@ -152,8 +152,8 @@ export function getDiff (currentBlockTime: number, previousBlockTime: number, pr
     x = bigMinus99
   }
 
-  // y = bigPreviousDifficulty -> SPECTRUM: 10062600 // AT: 1615520 // BT: ((32 * 16) + 20) / 2PI = 85
-  y = bigPreviousDifficulty.div(new BN(2200))
+  // y = bigPreviousDifficulty -> SPECTRUM: 10062600 // AT: 1615520 // BT: ((32 * 16) + 20) / 2PI = 85 * chain count + hidden chain = 508
+  y = bigPreviousDifficulty.div(new BN(508))
   // x = x * y
   x = x.mul(y)
   // x = x + previousDifficulty

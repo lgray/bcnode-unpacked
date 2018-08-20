@@ -156,8 +156,8 @@ export const isNewBlockTimestampGreaterThanHighestInMultiverse = (newBlock: BcBl
 }
 
 export const blockByTotalDistanceSorter = (a: BcBlock, b: BcBlock) => {
-  const aTotalDistance = new BN(a.getTotalDistance())
-  const bTotalDistance = new BN(b.getTotalDistance())
+  const aTotalDistance = new BN(a.getTotalDistance(), 16)
+  const bTotalDistance = new BN(b.getTotalDistance(), 16)
   // a > b
   if (aTotalDistance.gt(bTotalDistance)) {
     return 1
