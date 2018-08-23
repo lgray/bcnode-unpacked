@@ -130,7 +130,7 @@ if (cluster.isMaster) {
           (async () => {
             active.length = 0
             try {
-              await fkill('bc-miner-worker')
+              await fkill('bc-miner-worker', { force: true })
               globalLog.info('pool rebase success')
             } catch (err) {
               globalLog.info('pool rebase success')
@@ -185,14 +185,15 @@ if (cluster.isMaster) {
     }, variableTimeout)
 
     process.on('message', ({
+      workId,
       currentTimestamp,
       offset,
       work,
       minerKey,
       merkleRoot,
+      newestChildBlock,
       difficulty,
-      difficultyData,
-      workId
+      difficultyData
     }) => {
       globalLog.debug('thread pool <- ' + process.pid + ' ' + workId + '                 ')
 
@@ -221,6 +222,7 @@ if (cluster.isMaster) {
           const preExpDiff = getNewPreExpDifficulty(
             timestamp,
             lastPreviousBlockProto,
+            newestChildBlock,
             newBlockCount
           )
           return getExpFactorDiff(preExpDiff, lastPreviousBlockProto.getHeight()).toString()

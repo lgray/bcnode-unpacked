@@ -51,11 +51,10 @@ const {
 const { blake2bl } = require('../utils/crypto')
 const { concatAll } = require('../utils/ramda')
 const { Block, BcBlock, BcTransaction, BlockchainHeader, BlockchainHeaders } = require('../protos/core_pb')
-const { getNewestHeader } = require('../bc/validation')
 const ts = require('../utils/time').default // ES6 default export
 const GENESIS_DATA = require('../bc/genesis.raw')
 
-const MINIMUM_DIFFICULTY = new BN(290112262029012, 16)
+const MINIMUM_DIFFICULTY = new BN(290112262029012)
 // testnet: 11801972029393
 const MAX_TIMEOUT_SECONDS = 300
 
@@ -76,9 +75,9 @@ const logger: Logger = logging.getLogger(__filename)
  * @returns a
  */
 export function getExpFactorDiff (calculatedDifficulty: BN, parentBlockHeight: number): BN {
-  const big1 = new BN(1, 16)
-  const big2 = new BN(2, 16)
-  const expDiffPeriod = new BN(66000000, 16)
+  const big1 = new BN(1)
+  const big2 = new BN(2)
+  const expDiffPeriod = new BN(66000000)
 
   // periodCount = (parentBlockHeight + 1) / 66000000
   let periodCount = new BN(parentBlockHeight).add(big1)
@@ -109,10 +108,17 @@ export function getExpFactorDiff (calculatedDifficulty: BN, parentBlockHeight: n
 export function getDiff (currentBlockTime: number, previousBlockTime: number, previousDifficulty: string, minimalDifficulty: number, newBlockCount: number, newestChildHeader: Block): BN {
   // https://github.com/ethereum/EIPs/blob/master/EIPS/eip-2.md
 
-  let bigMinimalDifficulty = new BN(minimalDifficulty, 16)
+  let bigMinimalDifficulty = new BN(minimalDifficulty)
+  let newestChildBlock = newestChildHeader
+  if (newBlockCount === undefined) {
+    throw new Error('new block count is not defined')
+    // return false
+  }
 
   /* eslint-disable */
-  logger.debug('number of new blocks: ' + newBlockCount)
+
+  //logger.info('\n\n\n\n------- CHILD HEADER --------\n')
+  //console.log(newestChildHeader)
 
   const bigPreviousBlockTime = new BN(previousBlockTime)
   const bigPreviousDifficulty = new BN(previousDifficulty)
@@ -121,23 +127,27 @@ export function getDiff (currentBlockTime: number, previousBlockTime: number, pr
   const big1 = new BN(1)
   const big0 = new BN(0)
   const bigTargetTimeWindow = new BN(8)
-  const bigChildHeaderTime = new BN(newestChildHeader.timestamp).div(new BN(1000))
-  const bigChildHeaderTimeBound = new BN(bigChildHeaderTime).add(bigTargetTimeWindow)
+  if(newestChildBlock.timestamp === undefined){
+    newestChildBlock = newestChildHeader.toObject()
+  }
+  const bigChildHeaderTime = new BN(newestChildBlock.timestamp).div(new BN(1000))
+  //console.log('----------------------------- currentBlockTime: ' + currentBlockTime)
+  //console.log('----------------------------- previousBlockTime: ' + previousBlockTime)
+  //console.log('----------------------------- newBlockCount: ' + newBlockCount)
+  //console.log('----------------------------- bigChildHeaderTime: ' + bigChildHeaderTime)
+
+  const bigChildHeaderTimeBound = new BN(bigChildHeaderTime).add(new BN(bigTargetTimeWindow).mul(new BN(2)))
   let elapsedTime = bigCurrentBlockTime.sub(bigPreviousBlockTime)
 
-  /* eslint-disable */
-  //console.log('(before) elapsedTime: ' + elapsedTime.toNumber())
-  // (currentBlockTime - newestChildTime) / targetWindowOfTime) ^ newBlocks
-  //console.log('newest child was ' + bigCurrentBlockTime.sub(bigChildHeaderTime) + ' seconds ago')
-  let staleCost = new BN(new BN(bigCurrentBlockTime.sub(bigChildHeaderTimeBound)).div(new BN(bigTargetTimeWindow))).mul(new BN(newBlockCount))
+  let staleCost = new BN(new BN(bigCurrentBlockTime.sub(bigChildHeaderTimeBound)).div(new BN(bigTargetTimeWindow)))
   elapsedTime = elapsedTime.sub(staleCost)
 
-  //console.log('staleCost: ' + staleCost.toNumber())
-  //console.log('(after) elapsedTime: ' + elapsedTime.toNumber())
+  // console.log('staleCost: ' + staleCost.toNumber())
+  // console.log('(after) elapsedTime: ' + elapsedTime.toNumber())
 
   // elapsedTime + ((elapsedTime - 5) * newBlocks)
   const elapsedTimeBonus = elapsedTime.add(elapsedTime.sub(new BN(5)).mul(new BN(newBlockCount)))
-  //console.log('time bonus  ' + elapsedTimeBonus.toNumber())
+  // console.log('time bonus  ' + elapsedTimeBonus.toNumber())
 
   if (elapsedTimeBonus.gt(big0)) {
     elapsedTime = elapsedTimeBonus
@@ -152,8 +162,8 @@ export function getDiff (currentBlockTime: number, previousBlockTime: number, pr
     x = bigMinus99
   }
 
-  // y = bigPreviousDifficulty -> SPECTRUM: 10062600 // AT: 1615520 // BT: ((32 * 16) + 20) / 2PI = 85 * chain count + hidden chain = 508
-  y = bigPreviousDifficulty.div(new BN(508))
+  // y = bigPreviousDifficulty -> SPECTRUM: 10062600 // AT: 1615520 // BT: ((32 * 16) / 2PI ) * 10 = 815 chain count + hidden chain = 508
+  y = bigPreviousDifficulty.div(new BN(815))
   // x = x * y
   x = x.mul(y)
   // x = x + previousDifficulty
@@ -381,6 +391,7 @@ export function getMinimumDifficulty (childChainCount: number): BN {
 export function getNewPreExpDifficulty (
   currentTimestamp: number,
   lastPreviousBlock: BcBlock,
+  blockWhichTriggeredMining: Block,
   newBlockCount: number
 ) {
   const preExpDiff = getDiff(
@@ -389,7 +400,7 @@ export function getNewPreExpDifficulty (
     lastPreviousBlock.getDifficulty(),
     MINIMUM_DIFFICULTY,
     newBlockCount,
-    getNewestHeader(lastPreviousBlock)
+    blockWhichTriggeredMining // aka getNewestHeader(newBlock)
   ) // Calculate the final pre-singularity difficulty adjustment
 
   return preExpDiff
@@ -571,6 +582,8 @@ export function getUniqueBlocks (previousBlockHeaders: BlockchainHeaders, curren
  * @return {BcBlock} Prepared structure of the new BC block, does not contain `nonce` and `distance` which will be filled after successful mining of the block
  */
 export function prepareNewBlock (currentTimestamp: number, lastPreviousBlock: BcBlock, newChildHeaders: Block[], blockWhichTriggeredMining: Block, newTransactions: BcTransaction[], minerAddress: string, unfinishedBlock: ?BcBlock): [BcBlock, number] {
+
+
   let childBlockHeaders
   if (lastPreviousBlock !== undefined && lastPreviousBlock.getHeight() === GENESIS_DATA.height) {
     childBlockHeaders = prepareChildBlockHeadersMapForGenesis(newChildHeaders)
@@ -581,16 +594,32 @@ export function prepareNewBlock (currentTimestamp: number, lastPreviousBlock: Bc
       newChildHeaders
     )
   }
+
+  /* eslint-disable */
+  //console.log(' BLOCK WHICH TRIGGERED MINING ')
+  //console.log(blockWhichTriggeredMining)
+  //console.log(' CHILD BLOCK HEADERS ' )
+  //console.log(childBlockHeaders)
+  //console.log(' LAST PREVIOUS BLOCK HEADERS' )
+  //console.log(lastPreviousBlock.getBlockchainHeaders())
+
   const blockHashes = getChildrenBlocksHashes(blockchainMapToList(childBlockHeaders))
   const newChainRoot = getChildrenRootHash(blockHashes)
   const newBlockCount = getNewBlockCount(lastPreviousBlock.getBlockchainHeaders(), childBlockHeaders)
-  // const newBlockCount = getUniqueBlocks(lastPreviousBlock.getBlockchainHeaders(), childBlockHeaders).length
+  //const newBlockCount = getUniqueBlocks(lastPreviousBlock.getBlockchainHeaders(), childBlockHeaders).length
+
+  /* eslint-disable */
+  //console.log('currentTimestamp: ' + currentTimestamp)
+  //console.log('newBlockCount: ' + newBlockCount)
 
   const preExpDiff = getNewPreExpDifficulty(
     currentTimestamp,
     lastPreviousBlock,
+    blockWhichTriggeredMining,
     newBlockCount
   )
+
+  //console.log('preExpDiff: ' + preExpDiff)
   const finalDifficulty = getExpFactorDiff(preExpDiff, lastPreviousBlock.getHeight()).toString()
 
   const newHeight = lastPreviousBlock.getHeight() + 1
@@ -645,6 +674,9 @@ export function prepareNewBlock (currentTimestamp: number, lastPreviousBlock: Bc
   newBlock.setTxFeeBase(GENESIS_DATA.txFeeBase)
   newBlock.setTxDistanceSumLimit(GENESIS_DATA.txDistanceSumLimit)
   newBlock.setBlockchainHeaders(childBlockHeaders)
+
+  /* eslint-disable */
+  console.log('difficulty here is ' + newBlock.getDifficulty())
 
   return [newBlock, currentTimestamp]
 }

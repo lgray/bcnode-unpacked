@@ -16,7 +16,7 @@ const EthereumTx = require('ethereumjs-tx')
 const LRUCache = require('lru-cache')
 const portscanner = require('portscanner')
 const { promisify } = require('util')
-const { shuffle } = require('lodash')
+// const { shuffle } = require('lodash')
 const rlp = require('rlp-encoding')
 const fs = require('fs')
 
@@ -27,15 +27,20 @@ const { config } = require('../../config')
 
 const ec = new EthereumCommon('mainnet')
 
-const BOOTNODES_ORDERED = ec.bootstrapNodes().map(node => {
+const BOOTNODES = ec.bootstrapNodes().map(node => {
   return {
     address: node.ip,
     udpPort: node.port,
     tcpPort: node.port
   }
-}).concat(config.rovers.eth.altBootNodes)
+}).concat(config.rovers.eth.altBootNodes).map((node) => {
+  if (node.tcpPort === undefined) {
+    node.tcpPort = node.udpPort
+  }
+  return node
+})
 
-const BOOTNODES = shuffle(BOOTNODES_ORDERED)
+// const BOOTNODES = shuffle(BOOTNODES_ORDERED)
 
 const DAO_FORK_SUPPORT = true
 let ws = false
@@ -510,12 +515,12 @@ export default class Network extends EventEmitter {
 
     rlpx.on('peer:error', (peer, err) => this.handlePeerError(this._dpt, peer, err))
 
-    for (let node of BOOTNODES) {
+    BOOTNODES.forEach((node) => {
       // $FlowFixMe
       this._dpt.bootstrap(node).catch(err => {
         this._logger.debug(`DPT bootstrap error: ${err.stack || err.toString()}`)
       })
-    }
+    })
 
     setInterval(() => {
       // $FlowFixMe

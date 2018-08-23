@@ -40,7 +40,7 @@ const {
 } = require('../mining/primitives')
 const GENESIS_DATA = require('./genesis.raw')
 const FINGERPRINTS_TEMPLATE = require('../utils/templates/blockchain_fingerprints.json')
-const MINIMAL_DIFFICULTY = new BN(290112262029012, 16)
+const MINIMAL_DIFFICULTY = new BN(290112262029012)
 
 export type DfConfig = {
   [chain: string]: {dfNumerator: number, dfDenominator: number, dfVoid: number, dfBound: number}
@@ -316,10 +316,10 @@ function isDistanceAboveDifficulty (newBlock: BcBlock): bool {
   logger.debug('isDistanceCorrectlyCalculated validation running')
   const receivedDistance = newBlock.getDistance()
   const recievedDifficulty = newBlock.getDifficulty() // !! NOTE: This is the difficulty for THIS block and not for the parent.
-	logger.debug('recievedDistance ' + receivedDistance)
-	logger.debug('recievedDifficulty ' + recievedDifficulty)
+	logger.debug('receivedDistance ' + receivedDistance)
+	logger.debug('receivedDifficulty ' + recievedDifficulty)
 
-  return new BN(receivedDistance, 16).gt(new BN(recievedDifficulty, 16))
+  return new BN(receivedDistance).gt(new BN(recievedDifficulty))
 }
 
 function isDistanceCorrectlyCalculated (newBlock: BcBlock): bool {
@@ -397,15 +397,58 @@ export function validateRoveredSequences (blocks: BcBlock[]): boolean {
   return all(equals(true), flatten(checks))
 }
 
+export function validateSequenceTotalDistance (previousBlock: BcBlock, newBlock: BcBlock): boolean {
+  logger.info('comparing totalDifficulties prevBlock: ' + previousBlock.getHeight() + ' with next block ' + newBlock.getHeight())
+
+
+  const chainWeight = new BN(previousBlock.getDistance()).sub(new BN(previousBlock.getDifficulty())).divRound(new BN(8)).toString()
+         //chainWeight = new BN(lastPreviousBlock.getDistance()).sub(new BN(previousBlock.getDifficulty())).divRound(new BN(8)).toString()
+
+  // unfinishedBlock.setTotalDistance(new BN(unfinishedBlock.getTotalDistance()).add(new BN(chainWeight)).add(new BN(unfinishedBlock.getDifficulty(), 10)).toString())
+  const finalDistance = new BN(previousBlock.getTotalDistance()).add(new BN(chainWeight)).add(new BN(newBlock.getDifficulty())).toString()
+
+  logger.info('chain weight between prevBlock: ' + previousBlock.getHeight() + ' - ' + newBlock.getHeight() + ' is ' + chainWeight)
+  logger.info('final total distance is ' + finalDistance)
+  logger.info('final total distance should be ' + newBlock.getTotalDistance())
+
+  if(previousBlock.getDifficulty() === "" || previousBlock.getDifficulty() < 1){
+    return true
+  }
+  return finalDistance === newBlock.getTotalDistance()
+}
+
 export function validateSequenceDifficulty (previousBlock: BcBlock, newBlock: BcBlock): boolean {
   logger.info('comparing difficulties prevBlock: ' + previousBlock.getHeight() + ' with next block ' + newBlock.getHeight())
   const newBlockCount = getNewBlockCount(previousBlock.getBlockchainHeaders(), newBlock.getBlockchainHeaders())
-  const preExpDiff = getDiff(newBlock.getTimestamp(), previousBlock.getTimestamp(), previousBlock.getDifficulty(), MINIMAL_DIFFICULTY, newBlockCount, getNewestHeader(newBlock))
+  const preExpDiff = getDiff(
+    newBlock.getTimestamp(),
+    previousBlock.getTimestamp(),
+    previousBlock.getDifficulty(),
+    MINIMAL_DIFFICULTY,
+    newBlockCount,
+    getNewestHeader(newBlock)
+  )
+
+  logger.info('preExpDiff: ' + preExpDiff)
+
+  //const preExpDiff = getDiff(
+  //  currentTimestamp,
+  //  lastPreviousBlock.getTimestamp(),
+  //  lastPreviousBlock.getDifficulty(),
+  //  MINIMUM_DIFFICULTY,
+  //  newBlockCount,
+  //  getNewestHeader(lastPreviousBlock)
+  //) // Calculate the final pre-singularity difficulty adjustment
+
   const finalDifficulty = getExpFactorDiff(preExpDiff, previousBlock.getHeight()).toString()
 
   logger.info('comparing difficulties prevBlock: ' + previousBlock.getHeight() + ' (' +  previousBlock.getDifficulty() + ') with next block ' + newBlock.getHeight() + ' (' + newBlock.getDifficulty() + ') ')
   logger.info('difficulty should be ' + finalDifficulty)
 
+  //if(previousBlock.getDifficulty() === "" || previousBlock.getDifficulty() < 1){
+  //  logger.warn('difficulty assertion overridden
+  //  return true
+  //}
   return newBlock.getDifficulty() === finalDifficulty
 }
 

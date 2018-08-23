@@ -139,7 +139,6 @@ export class WorkerPool {
                     return resolve(true)
                  } else {
                      const res = results[0]
-                     console.log('test: '+res)
                      ps.kil(res.pid, { signal: 'SIGKILL', timeout: 5, psargs: '-l'}, (err) => {
                         if(err) { reject(err) } else {
                           resolve(true)

@@ -368,6 +368,7 @@ export class MiningOfficer {
         work,
         minerKey: this._minerKey,
         merkleRoot: newBlock.getMerkleRoot(),
+        newestChildBlock: block.toObject(),
         difficulty: newBlock.getDifficulty(),
         difficultyData: {
           currentTimestamp,
@@ -382,7 +383,7 @@ export class MiningOfficer {
       // })
 
       /* eslint-disable */
-      this._workerPool.updateWorkers({ type: 'work', data: update, workId: workId })
+      this._workerPool.updateWorkers({ type: 'work', data: update, workId: workId, newestChildBlock: block })
       return Promise.resolve(true)
     } catch (err) {
       this._logger.error(err)
@@ -548,13 +549,21 @@ export class MiningOfficer {
     //}
 
     const { nonce, distance, timestamp, difficulty, iterations, timeDiff } = solution
-    this._logger.debug(`The calculated block difficulty was ${unfinishedBlock.getDifficulty()}, actual mining difficulty was ${difficulty}`)
+
+    this._logger.info(' nonce: ' + nonce)
+    this._logger.info(' distance: ' + distance)
+    this._logger.info(' timestamp: ' + timestamp)
+    this._logger.info(' difficulty: ' + difficulty)
+    this._logger.info(' iterations: ' + iterations)
+    this._logger.info(' timeDiff: ' + timeDiff)
+    this._logger.info(`The calculated block difficulty was ${unfinishedBlock.getDifficulty()}, actual mining difficulty was ${difficulty}`)
 
     const chainWeight = unfinishedBlock.getDistance()
 
     unfinishedBlock.setNonce(nonce)
     unfinishedBlock.setDistance(distance)
-    unfinishedBlock.setTotalDistance(new BN(unfinishedBlock.getTotalDistance()).add(new BN(chainWeight)).add(new BN(unfinishedBlock.getDifficulty(), 10)).toString())
+    // this is likely the problem
+    unfinishedBlock.setTotalDistance(new BN(unfinishedBlock.getTotalDistance()).add(new BN(chainWeight)).add(new BN(unfinishedBlock.getDifficulty())).toString())
     unfinishedBlock.setTimestamp(timestamp)
 
     if (unfinishedBlockData) {

@@ -136,17 +136,17 @@ export default class Controller {
     })
 
     const cycle = () => {
-      this._logger.info('LSK rover has active access state: ' + this._liskApi.hasAvailableNodes())
+      this._logger.info('LSK rover active connection: ' + this._liskApi.hasAvailableNodes())
 
       return this._liskApi.blocks.get({ limit: 1 }).then(lastBlocks => {
         /* eslint-disable */
         try {
         const lastBlock = lastBlocks.blocks[0]
-        this._logger.info(`Collected new block with id: ${inspect(lastBlock.id)}`)
+        this._logger.debug(`Collected new block with id: ${inspect(lastBlock.id)}`)
 
         if (!this._blockCache.has(lastBlock.id)) {
           this._blockCache.set(lastBlock.id, true)
-          this._logger.info(`unseen block with id: ${inspect(lastBlock.id)} => using for BC chain`)
+          this._logger.debug(`unseen block with id: ${inspect(lastBlock.id)} => using for BC chain`)
 
           // getTransactionsForBlock(this._liskApi, lastBlock.id).then(transactions => {
           // TODO decide if we want to use block with no transactions, there are such
@@ -155,7 +155,7 @@ export default class Controller {
 
           const unifiedBlock = createUnifiedBlock(lastBlock, _createUnifiedBlock)
 
-          this._logger.info('LSK Going to call this._rpc.rover.collectBlock()')
+          this._logger.debug('LSK Going to call this._rpc.rover.collectBlock()')
           try {
             this._rpc.rover.collectBlock(unifiedBlock, (err, response) => {
               if (err) {
@@ -163,7 +163,7 @@ export default class Controller {
                 skip = skip.concat(['1', '1'])
                 return
               }
-              this._logger.info(`Collector Response: ${JSON.stringify(response.toObject(), null, 4)}`)
+              this._logger.debug(`Collector Response: ${JSON.stringify(response.toObject(), null, 4)}`)
             })
           } catch (err) {
             skip = skip.concat(['1', '1'])
