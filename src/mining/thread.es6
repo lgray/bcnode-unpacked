@@ -97,7 +97,7 @@ if (cluster.isMaster) {
 		setInterval(() => {
 			if(stats.length >= 5) {
 				 const distancePerSecond = mean(stats) * 1000
-         const workerLimit = settings.maxWorkers - 2
+         const workerLimit = settings.maxWorkers - 3
 				 const distancePerRadianSecond = new BN(distancePerSecond).div(new BN(6.283)).toNumber()
 				 const coreCountAdjustment = new BN(distancePerRadianSecond).mul(new BN(workerLimit)).toNumber()
 				 const formattedMetric = Math.round(coreCountAdjustment * 100) / 100000
@@ -145,7 +145,7 @@ if (cluster.isMaster) {
     }
     if (data.type === 'config') {
       settings.maxWorkers = data.maxWorkers || settings.maxWorkers
-      settings.maxWorkers = max(2, settings.maxWorkers - 2)
+      settings.maxWorkers = max(2, settings.maxWorkers - 3)
     } else if (data.type === 'work') {
       // expressed in Radians (cycles/second) / 2 * PI
       (async () => {
@@ -243,8 +243,14 @@ if (cluster.isMaster) {
           data: solution,
           workId: workId
         }, () => {
-          globalLog.info(`solution found: ${JSON.stringify(solution, null, 0)}`)
-          process.exit()
+          globalLog.info(`purposed candidate found: ${JSON.stringify(solution, null, 0)}`)
+          fkill('bc-miner-worker', { force: true })
+            .then(() => {
+              globalLog.info('global pool rebase success')
+            })
+            .catch((err) => {
+              globalLog.debug(err.message)
+            })
         })
       } catch (e) {
         globalLog.warn(`mining eailed with reason: ${e.message}, stack ${e.stack}`)
