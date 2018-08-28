@@ -6,7 +6,7 @@ RUN apt-get update && apt-get install -y \
     unzip
 
 # Install yarn
-RUN curl -o- -L https://yarnpkg.com/install.sh | bash -s -- --version 1.5.1 \
+RUN curl -o- -L https://yarnpkg.com/install.sh | bash -s -- --version 1.9.1 \
     && export PATH=$HOME/.yarn/bin:$PATH
 
 ENV PATH "/root/.yarn/bin:$PATH"
