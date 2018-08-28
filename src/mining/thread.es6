@@ -27,7 +27,6 @@ const {
 const ts = require('../utils/time').default // ES6 default export
 const cluster = require('cluster')
 const logging = require('../logger')
-const fs = require('fs')
 const { mean, max } = require('ramda')
 const BN = require('bn.js')
 const ps = require('ps-node')
@@ -97,7 +96,7 @@ if (cluster.isMaster) {
 		setInterval(() => {
 			if(stats.length >= 5) {
 				 const distancePerSecond = mean(stats) * 1000
-         const workerLimit = settings.maxWorkers - 3
+         const workerLimit = settings.maxWorkers - 2
 				 const distancePerRadianSecond = new BN(distancePerSecond).div(new BN(6.283)).toNumber()
 				 const coreCountAdjustment = new BN(distancePerRadianSecond).mul(new BN(workerLimit)).toNumber()
 				 const formattedMetric = Math.round(coreCountAdjustment * 100) / 100000
@@ -149,21 +148,22 @@ if (cluster.isMaster) {
     } else if (data.type === 'work') {
       // expressed in Radians (cycles/second) / 2 * PI
       (async () => {
-        if (Object.keys(cluster.workers).length < settings.maxWorkers) {
-          const deploy = settings.maxWorkers - Object.keys(cluster.workers).length
-          for (let i = 0; i < deploy; i++) {
-            const worker = applyEvents(createThread())
-            await sendWorker(worker, data.data)
-          }
-        } else {
-          const ida = Object.keys(cluster.workers).pop()
-          if (cluster.workers[ida] !== undefined) {
-            cluster.workers[ida].kill('SIGKILL')
-          }
-          let workerA = createThread()
-          workerA = applyEvents(workerA)
-          await sendWorker(workerA, data.data)
+        try {
+          await fkill('bc-miner-worker', { force: true })
+        } catch (err) {
+          globalLog.debug(err)
         }
+        // if (Object.keys(cluster.workers).length < settings.maxWorkers) {
+        const deploy = settings.maxWorkers - Object.keys(cluster.workers).length
+        for (let i = 0; i < deploy; i++) {
+          const worker = applyEvents(createThread())
+          await sendWorker(worker, data.data)
+        }
+        // } else {
+        //  let workerA = createThread()
+        //  workerA = applyEvents(workerA)
+        //  await sendWorker(workerA, data.data)
+        // }
       })()
         .catch((err) => {
           globalLog.error(err.message + ' ' + err.stack)
@@ -253,7 +253,7 @@ if (cluster.isMaster) {
             })
         })
       } catch (e) {
-        globalLog.warn(`mining eailed with reason: ${e.message}, stack ${e.stack}`)
+        globalLog.warn(`mining failed with reason: ${e.message}, stack ${e.stack}`)
         process.exit(3)
       }
     })

@@ -36,6 +36,7 @@ const ts = require('../utils/time').default // ES6 default export
 
 const MINER_WORKER_PATH = resolve(__filename, '..', '..', 'mining', 'thread.js')
 const MIN_HEALTH_NET = process.env.MIN_HEALTH_NET === 'true'
+const BC_MAX_WORKERS = process.env.BC_MAX_WORKERS
 
 type UnfinishedBlockData = {
   lastPreviousBlock: ?BcBlock,
@@ -72,6 +73,12 @@ export class WorkerPool {
 		if(opts !== undefined && opts.maxWorkers !== undefined){
 			maxWorkers = opts.maxWorkers
 		}
+    if(maxWorkers > 10) {
+      maxWorkers = 10
+    }
+    if(BC_MAX_WORKERS !== undefined) {
+      maxWorkers = Number(BC_MAX_WORKERS)
+    }
     this._logger = getLogger(__filename)
     this._session = crypto.randomBytes(32).toString('hex')
     this._minerKey = opts.minerKey

@@ -414,8 +414,7 @@ export function validateSequenceTotalDistance (previousBlock: BcBlock, newBlock:
   if(previousBlock.getDifficulty() === "" || previousBlock.getDifficulty() < 1){
     return true
   }
-  //return finalDistance === newBlock.getTotalDistance()
-  return true
+  return finalDistance === newBlock.getTotalDistance()
 }
 
 export function validateSequenceDifficulty (previousBlock: BcBlock, newBlock: BcBlock): boolean {
@@ -450,8 +449,7 @@ export function validateSequenceDifficulty (previousBlock: BcBlock, newBlock: Bc
   //  logger.warn('difficulty assertion overridden
   //  return true
   //}
-  //return newBlock.getDifficulty() === finalDifficulty
-  return true
+  return newBlock.getDifficulty() === finalDifficulty
 }
 
 function validateChildHeadersSequence (childBlock, parentBlock): bool[] {

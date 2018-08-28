@@ -38,10 +38,6 @@ function random (range) {
 
 function Discovery (nodeId) {
   // bootstrap from two randomly selected nodes
-  // seeds.unshift(randomIndex(seederBootstrap))
-  // seeds.unshift(randomIndex(seederBootstrap, seeds[0]))
-  // seeds.unshift(randomIndex(seederBootstrap, seeds[1]))
-  // seeds.unshift(randomIndex(seederBootstrap, seeds[2]))
 
   if (process.env.MIN_HEALH_NETWORK === 'true') {
     seeds = seederBootstrap
@@ -52,7 +48,13 @@ function Discovery (nodeId) {
   }
 
   if (process.env.BC_SEED !== undefined) {
-    seeds.unshift(process.env.BC_SEED)
+    let seed = process.env.BC_SEED
+    if (seed.indexOf(',') > -1) {
+      seed = seed.split(',')
+      seeds = seeds.concat(seed)
+    } else {
+      seeds.unshift(seed)
+    }
   }
 
   const hash = crypto.createHash('sha1').update('bcbt002' + config.blockchainFingerprintsHash).digest('hex') // 68cb1ee15af08755204674752ef9aee13db93bb7

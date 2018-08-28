@@ -7,7 +7,7 @@
     }
   },
   "bc": {
-    "quorum": 5,
+    "quorum": 4,
     "council": {
       "enabled": false,
       "url": "http://council.blockcollider.org"

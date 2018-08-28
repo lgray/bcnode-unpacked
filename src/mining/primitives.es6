@@ -126,7 +126,7 @@ export function getDiff (currentBlockTime: number, previousBlockTime: number, pr
   const bigMinus99 = new BN(-99)
   const big1 = new BN(1)
   const big0 = new BN(0)
-  const bigTargetTimeWindow = new BN(8)
+  const bigTargetTimeWindow = new BN(10)
   if(newestChildBlock.timestamp === undefined){
     newestChildBlock = newestChildHeader.toObject()
   }
@@ -146,7 +146,7 @@ export function getDiff (currentBlockTime: number, previousBlockTime: number, pr
   // console.log('(after) elapsedTime: ' + elapsedTime.toNumber())
 
   // elapsedTime + ((elapsedTime - 5) * newBlocks)
-  const elapsedTimeBonus = elapsedTime.add(elapsedTime.sub(new BN(5)).mul(new BN(newBlockCount)))
+  const elapsedTimeBonus = elapsedTime.add(elapsedTime.sub(new BN(7)).mul(new BN(newBlockCount)))
   // console.log('time bonus  ' + elapsedTimeBonus.toNumber())
 
   if (elapsedTimeBonus.gt(big0)) {
