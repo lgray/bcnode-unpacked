@@ -96,7 +96,7 @@ Discovery.prototype = {
   seeder: function () {
     const self = this
     const client = new Client(self.streamOptions)
-    const refreshWindow = 600000 + Math.floor(Math.random() * 50000)
+    const refreshWindow = 60000 + Math.floor(Math.random() * 50000)
 
     client.on('error', (err) => {
       self._logger.debug(err.message)
