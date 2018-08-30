@@ -1,6 +1,6 @@
 Block Collider Node
 ===================
-#### Release Candidate 2 - "Boson Friend"
+#### Release Candidate 2 - "Deep Space"
 
 Mining node with built-in block rover, DHT, and peer discovery.
 
@@ -46,12 +46,12 @@ Following environment variables can be used for advanced tweaking
 ***Backround/Daemon***
 
 ```
-$ docker run --rm --name bcnode -d -p 3000:3000 -p 9090:9090 blockcollider/bcnode:latest start --ws --rovers --ui --node --miner-key ABCDEF
+$ docker run --rm --name bcnode -d -p 3000:3000 -p 16061:16061 -p 16060:16060 blockcollider/bcnode:latest start --ws --rovers --ui --node --miner-key ABCDEF
 ```
 
 ***Foreground***
 ```
-$ docker run --rm --name bcnode -p 3000:3000 -p 9090:9090 blockcollider/bcnode:latest start --ws --rovers --ui --node --miner-key ABCDEF
+$ docker run --rm --name bcnode -p 3000:3000 -p 16061:16061 -p 16060:16060 blockcollider/bcnode:latest start --ws --rovers --ui --node --miner-key ABCDEF
 ```
 
 ### Build docker image locally
