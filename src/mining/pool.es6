@@ -85,7 +85,7 @@ export class WorkerPool {
     this._pubsub = pubsub
     this._persistence = persistence
     this._poolGuardPath = opts.poolguard || config.persistence.path + '/worker_pool_guard.json'
-    this._maxWorkers = max(1, maxWorkers - 2)
+    this._maxWorkers = max(1, maxWorkers - 1)
     this._emitter = new EventEmitter()
     this._pool = {}
     this._startupCheck = false

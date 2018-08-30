@@ -144,7 +144,7 @@ if (cluster.isMaster) {
     }
     if (data.type === 'config') {
       settings.maxWorkers = data.maxWorkers || settings.maxWorkers
-      settings.maxWorkers = max(2, settings.maxWorkers - 3)
+      settings.maxWorkers = max(3, settings.maxWorkers - 1)
     } else if (data.type === 'work') {
       // expressed in Radians (cycles/second) / 2 * PI
       (async () => {
