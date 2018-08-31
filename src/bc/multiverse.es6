@@ -381,7 +381,7 @@ export class Multiverse {
     try {
       const synclock = await this.persistence.get('synclock')
 
-      if (synclock.getHeight() !== 1 && (synclock.getTimestamp() + 51) < Math.floor(Date.now() * 0.001)) {
+      if (synclock.getHeight() !== 1 && (synclock.getTimestamp() + 111) < Math.floor(Date.now() * 0.001)) {
         await this.persistence.put('synclock', getGenesisBlock())
         this._logger.warn('sync lock is stale resetting')
         return Promise.resolve(false)
@@ -410,7 +410,7 @@ export class Multiverse {
     const currentParentHighestBlock = this.getParentHighestBlock()
     const currentHighestBlock = await this.persistence.get('bc.block.latest')
 
-    if (new BN(new BN(newBlock.getTimestamp()).add(new BN(5))).lt(new BN(currentHighestBlock.getTimestamp())) === true) {
+    if (new BN(new BN(newBlock.getTimestamp()).add(new BN(3))).lt(new BN(currentHighestBlock.getTimestamp())) === true) {
       this._logger.info('failed resync <- purposed new block is stale')
       return Promise.resolve(false)
     }
@@ -458,10 +458,11 @@ export class Multiverse {
       return Promise.resolve(false)
     }
 
-    // PASS if current highest block is older than 32 seconds from local time
-    if (currentHighestBlock.getTimestamp() + 32 < Math.floor(Date.now() * 0.001) &&
-       new BN(currentHighestBlock.getTotalDistance()).lt(new BN(newBlock.getTotalDistance())) === true) {
-      this._logger.info('current chain is stale chain')
+    // PASS if current highest block is older than 111 seconds from local time
+    if (new BN(new BN(currentHighestBlock.getTimestamp()).add(new BN(111))).lt(new BN(Math.floor(Date.now() * 0.001))) === true &&
+       new BN(currentHighestBlock.getTotalDistance()).lt(new BN(newBlock.getTotalDistance())) === true &&
+       new BN(getNewestHeader(newBlock).timestamp).gt(new BN(getNewestHeader(currentHighestBlock).timestamp)) === true) {
+      this._logger.info('current chain is stale chain new child time: ' + getNewestHeader(newBlock).timestamp + ' current child time: ' + getNewestHeader(currentHighestBlock).timestamp)
       return Promise.resolve(true)
     }
 

@@ -39,7 +39,7 @@ const { BlockPool } = require('../bc/blockpool')
 const { PROTOCOL_PREFIX, NETWORK_ID } = require('./protocol/version')
 const MIN_HEALTH_NET = process.env.MIN_HEALTH_NET === 'true'
 const USER_QUORUM = process.env.USER_QUORUM || config.bc.quorum
-const BC_MAX_CONNECTIONS = process.env.BC_MAX_CONNECTIONS || 80
+const BC_MAX_CONNECTIONS = process.env.BC_MAX_CONNECTIONS || 60
 
 const { range, max } = require('ramda')
 const { protocolBits, anyDns } = require('../engine/helper')
@@ -290,17 +290,27 @@ export class PeerNode {
       'bc.block.' + (latest.getHeight() - 2)
     ]
 
-    const set = await this._engine.persistence.getBulk(query)
-    set.unshift(latest)
-    return Promise.resolve(set.sort((a, b) => {
-      if (new BN(a.getHeight()).gt(new BN(b.getHeight())) === true) {
-        return -1
+    try {
+      const set = await this._engine.persistence.getBulk(query)
+      // if it is a valid set of multiple options send it otherwise resolve with the latest
+      if (set !== undefined && set !== false && set.length > 0) {
+        set.unshift(latest)
+        return Promise.resolve(set.sort((a, b) => {
+          if (new BN(a.getHeight()).gt(new BN(b.getHeight())) === true) {
+            return -1
+          }
+          if (new BN(a.getHeight()).lt(new BN(b.getHeight())) === true) {
+            return 1
+          }
+          return 0
+        }))
       }
-      if (new BN(a.getHeight()).lt(new BN(b.getHeight())) === true) {
-        return 1
-      }
-      return 0
-    }))
+      return Promise.resolve([latest])
+    } catch (err) {
+      this._logger.error(err)
+      this._logger.warn('multiverse not set on disk')
+      return Promise.resolve([latest])
+    }
   }
 
   async start (nodeId) {
@@ -572,7 +582,6 @@ export class PeerNode {
             this._manager._p2p = this._p2p
             this._engine._p2p = this._p2p
 
-
       this._logger.info('joined waypoint table')
             setInterval(() => {
                 // this._logger.info('peers', Object.getOwnPropertyNames(this._p2p._discovery.dht))
@@ -582,17 +591,18 @@ export class PeerNode {
                 if(this._p2p.totalConnections < USER_QUORUM && MIN_HEALTH_NET !== true) {
                   this._engine.persistence.put('bc.dht.quorum', '0')
                   .then(() => {
-                      this._logger.info('waietng for additional waypoints')
+                      this._logger.info('patiently "waietng" for additional waypoints')
                   })
                   .catch((err) => {
                       this._logger.debug(err)
                   })
                 }
-            }, 5000)
+            }, 5900)
    })
 		})
 		.catch((err) => {
-
+      this._logger.debug('an error has occured determining local IP address')
+      this._logger.error(err)
 		})
      return Promise.resolve(true)
             /* eslint-enable */
