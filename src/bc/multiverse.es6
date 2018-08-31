@@ -409,6 +409,12 @@ export class Multiverse {
     }
     const currentParentHighestBlock = this.getParentHighestBlock()
     const currentHighestBlock = await this.persistence.get('bc.block.latest')
+
+    if (new BN(new BN(newBlock.getTimestamp()).add(new BN(5))).lt(new BN(currentHighestBlock.getTimestamp())) === true) {
+      this._logger.info('failed resync <- purposed new block is stale')
+      return Promise.resolve(false)
+    }
+
     // current chain is malformed and new block is not
     const validNewBlock = await isValidBlockCached(this.persistence, newBlock)
     const validCurrentBlock = await isValidBlockCached(this.persistence, currentHighestBlock)
