@@ -110,6 +110,7 @@ const DATA_DIR = process.env.BC_DATA_DIR || config.persistence.path
 const MONITOR_ENABLED = process.env.BC_MONITOR === 'true'
 const BC_CHECK = process.env.BC_CHECK === 'true'
 const PERSIST_ROVER_DATA = process.env.PERSIST_ROVER_DATA === 'true'
+const BC_BT_VALIDATION = process.env.BC_BT_VALIDATION === 'true'
 
 process.on('uncaughtError', (err) => {
   /* eslint-disable */
@@ -601,6 +602,22 @@ export class Engine {
      */
     async updateLatestAndStore(msg: Object) {
         const block = msg.data
+        let storeChildHeaders = {
+          btc: false,
+          neo: true,
+          lsk: false,
+          eth: true,
+          wav: true
+        }
+        if(BC_BT_VALIDATION === true) {
+          storeChildHeaders = {
+            btc: false,
+            neo: false,
+            lsk: false,
+            eth: false,
+            wav: false
+          }
+        }
         this._logger.info('store block: ' + block.getHeight() + ' ' + block.getHash())
         try {
             const previousLatest = await this.persistence.get('bc.block.latest')
@@ -615,19 +632,19 @@ export class Engine {
                 // behavior must be echoed in multiverse
                 await this.persistence.put('bc.block.latest', block)
                 await this.persistence.put('bc.block.' + block.getHeight(), block)
-                await this.persistence.putChildHeaders(block)
+                await this.persistence.putChildHeaders(block, storeChildHeaders)
             } else if (previousLatest.getHash() === block.getPreviousHash() &&
                 new BN(block.getTimestamp()).gt(new BN(parent.getTimestamp())) === true &&
                 validateSequenceDifficulty(previousLatest, block) === true) {
                 await this.persistence.put('bc.block.parent', previousLatest)
                 await this.persistence.put('bc.block.latest', block)
                 await this.persistence.put('bc.block.' + block.getHeight(), block)
-                await this.persistence.putChildHeaders(block)
+                await this.persistence.putChildHeaders(block, storeChildHeaders)
             } else if (previousLatest.getHeight() === 1) {
                 await this.persistence.put('bc.block.parent', previousLatest)
                 await this.persistence.put('bc.block.latest', block)
                 await this.persistence.put('bc.block.' + block.getHeight(), block)
-                await this.persistence.putChildHeaders(block)
+                await this.persistence.putChildHeaders(block, storeChildHeaders)
             } else if (msg.force === true &&
                 msg.multiverse !== undefined &&
                 msg.multiverse.constructor === Array.constructor &&
@@ -642,7 +659,7 @@ export class Engine {
                 await this.persistence.put('bc.block.parent', msg.multiverse[1])
                 await this.persistence.put('bc.block.latest', block)
                 await this.persistence.put('bc.block.' + block.getHeight(), block)
-                await this.persistence.putChildHeaders(block)
+                await this.persistence.putChildHeaders(block, storeChildHeaders)
                 /*
                  * Remove this after block 100,000
                  */
@@ -653,14 +670,14 @@ export class Engine {
                 await this.persistence.put('bc.block.parent', previousLatest)
                 await this.persistence.put('bc.block.latest', block)
                 await this.persistence.put('bc.block.' + block.getHeight(), block)
-                await this.persistence.putChildHeaders(block)
+                await this.persistence.putChildHeaders(block, storeChildHeaders)
             } else if (parent.getHash() === block.getPreviousHash()) {
                 await this.persistence.put('bc.block.parent', msg.multiverse[1])
                 await this.persistence.put('bc.block.latest', block)
                 await this.persistence.put('bc.block.' + block.getHeight(), block)
-                await this.persistence.putChildHeaders(block)
+                await this.persistence.putChildHeaders(block, storeChildHeaders)
             } else {
-                this._logger.error('failed to set block ' + block.getHeight() + ' ' + block.getHash() + ' as latest block, wrong previous hash')
+                this._logger.error('failed to set block ' + block.getHeight() + ' ' + block.getHash() + ' as latest block <- invalid chain')
             }
 
             if (msg.multiverse !== undefined) {

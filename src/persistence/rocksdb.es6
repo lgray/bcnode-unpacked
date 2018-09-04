@@ -386,18 +386,6 @@ export default class PersistenceRocksDb {
         this._logger.info('synchronized child headers: ' + c.length)
       }
       return Promise.resolve(true)
-      // return (async () => {
-      //  const currentLatest = await Promise.all(Object.keys(table).map((chain) => {
-      //    return this.get(chain + '.block.latest')
-      //  }))
-      //  await Promise.all(currentLatest.map((latest) => {
-      //    if (new BN(table[latest.getBlockchain()].getHeight()).gt(new BN(latest.getHeight()) === true) {
-      //      return this.put(latest.getBlockchain() + '.block.latest', table[latest.getBlockchain()])
-      //    } else {
-      //      return Promise.resolve(true)
-      //    }
-      //  }))
-      // })()
     }).catch((err) => {
       return Promise.reject(err)
     })

@@ -137,14 +137,15 @@ export class MiningOfficer {
     if (this._canMine === true && MIN_HEALTH_NET === false) {
       try {
         const parent = await this._persistence.get('bc.block.parent')
-        const latest = await this._persistence.get('bc.block.latest')
-        if (parent.getHash() !== latest.getPreviousHash()) {
-          this._logger.warn('after resync approval rovers must complete new multiverse')
-          this._canMine = false
-          return Promise.resolve(false)
-        }
+        // DISABLED UNTIL AT
+        // const latest = await this._persistence.get('bc.block.latest')
+        // if (parent.getHash() !== latest.getPreviousHash()) {
+        // this._logger.warn('after resync approval rovers must complete new multiverse')
+        // this._canMine = false
+        // return Promise.resolve(false)
+        // }
         if (parent.getHeight() === '1') {
-          this._logger.warn('cannot mine over the genesis block without enabling low health network.')
+          this._logger.warn('searching for additional blocks before initiating mining')
           this._canMine = false
         }
       } catch (err) {

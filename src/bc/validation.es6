@@ -113,17 +113,19 @@ export function isValidChildAge (newBlock: BcBlock, type: number = 0): bool {
 
   // add the offset for dark fiber
   const bcBlockTimestamp = new BN(newBlock.getTimestamp()).mul(new BN(1000)).toNumber()
-  const highRangeLimit = 38 * 1000
-  const lowRangeLimit = 12 * 1000
+  const highRangeLimit = 39 * 1000
+  const lowRangeLimit = 19 * 1000
   const newestHeaderDFBound = DF_CONFIG[newestHeader.blockchain].dfBound * 1000
   const newestHeaderTimestamp = new BN(newestHeader.timestamp).add(new BN(newestHeaderDFBound)).toNumber()
   const upperTimestampLimit = new BN(newestHeaderTimestamp).add(new BN(highRangeLimit)).toNumber()
   const lowerTimestampLimit = new BN(newestHeaderTimestamp).sub(new BN(lowRangeLimit)).toNumber()
 
   logger.info('bcblocktimestamp timestamp: ' + bcBlockTimestamp)
+  logger.info('newest header bound: ' + newestHeaderDFBound)
   logger.info('newest header timestamp: ' + newestHeader.timestamp)
   logger.info('upperTimestampLimit: ' + upperTimestampLimit)
   logger.info('lowerTimestampLimit: ' + lowerTimestampLimit)
+
   /* eslint-enable */
   if (new BN(bcBlockTimestamp).gt(new BN(upperTimestampLimit)) === true) {
     logger.warn('failed: isValidChildAge upper limit')
@@ -170,6 +172,7 @@ export function getNewestHeader (newBlock: BcBlock): bool {
   const newestHeader = Object.keys(headers).reduce((newest, key) => {
     const sorted = headers[key].sort((a, b) => {
       /* eslint-disable */
+      console.log('timestamp: ' + a.timestamp)
       if (new BN(a.timestamp).gt(new BN(b.timestamp)) === true) {
         return 1
       }

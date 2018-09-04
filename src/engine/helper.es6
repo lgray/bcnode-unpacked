@@ -99,7 +99,8 @@ export const protocolBits = {
   '0008R01': '[*]', // read highest block
   '0008W01': '[*]', // write highest block
   '0009R01': '[*]', // read multiverse (selective sync)
-  '0010W01': '[*]' // write multiverse (selective sync)
+  '0010W01': '[*]', // write multiverse (selective sync)
+  '0011W01': '[*]' // write challenge block
 }
 
 export const utf8ArrayToString = (array): string => {

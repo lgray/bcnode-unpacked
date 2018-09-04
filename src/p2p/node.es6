@@ -485,7 +485,7 @@ export class PeerNode {
                 const msg = type + split + low + split + high
                 this._p2p.qsend(obj.connection, msg)
                   .then((res) => {
-                    if (res) {
+                    if (res !== undefined && res.length !== undefined) {
                       this._logger.info(res.length + ' delivered')
                     }
                   })
@@ -591,7 +591,7 @@ export class PeerNode {
                 if(this._p2p.totalConnections < USER_QUORUM && MIN_HEALTH_NET !== true) {
                   this._engine.persistence.put('bc.dht.quorum', '0')
                   .then(() => {
-                      this._logger.info('patiently "waietng" for additional waypoints')
+                      this._logger.info('searching for additional waypoints')
                   })
                   .catch((err) => {
                       this._logger.debug(err)
@@ -703,18 +703,57 @@ export class PeerNode {
           this._logger.error(err)
         }
 
+      // Peer Sends Challenge Block
+      } else if (type === '0011W01') {
+
+        const parts = str.split(protocolBits[type])
+
+        if(parts[1].indexOf(',') > -1) {
+          const rawUint = parts[1]
+          const raw = new Uint8Array(rawUint.split(','))
+          const block = BcBlock.deserializeBinary(raw)
+
+          this._engine._emitter.emit('putblock', {
+            data: block,
+            connection: conn
+          })
+        } else {
+          const raw = new Uint8Array(parts[1])
+          const block = BcBlock.deserializeBinary(raw)
+
+          this._engine._emitter.emit('putblock', {
+            data: block,
+            connection: conn
+          })
+        }
       // Peer Sends New Block
       } else if (type === '0008W01') {
         //this._logger.info("::::::::::::::::::::::::" + type)
         const parts = str.split(protocolBits[type])
-        const rawUint = parts[1]
-        const raw = new Uint8Array(rawUint.split(','))
-        const block = BcBlock.deserializeBinary(raw)
 
+        let raw
+
+        if(parts[1].indexOf(',') > -1) {
+          const rawUint = parts[1]
+          raw = new Uint8Array(rawUint.split(','))
+        } else {
+          raw = new Uint8Array(parts[1])
+        }
+        const block = BcBlock.deserializeBinary(raw)
         this._engine._emitter.emit('putblock', {
           data: block,
           connection: conn
         })
+
+        try {
+          const latestBlock = await this._engine.persistence.get('bc.block.latest')
+          if(new BN(block.getHeight()).lt(new BN(latestBlock.getHeight())) === true){
+            const msg = '0008W01' + protocolBits[type] + latestBlock.serializeBinary()
+            await this._p2p.qsend(conn, msg)
+          }
+        } catch (err) {
+          this._logger.error(err)
+        }
 
       // Peer Sends Block List 0007 // Peer Sends Multiverse 001
       } else if (type === '0007W01' || type === '0010W01') {
@@ -760,7 +799,7 @@ export class PeerNode {
           this._logger.debug('unable to parse: ' + type + ' from peer ')
         }
       } else {
-        this._logger.info('unable to parse: ' + type)
+        this._logger.info('unknown protocol flag received: ' + type)
       }
 
       return Promise.resolve(true)
