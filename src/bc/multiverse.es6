@@ -270,11 +270,11 @@ export class Multiverse {
     this._logger.warn('child height previous block: ' + childrenHeightSum(currentHighestBlock))
     if (childrenHeightSum(newBlock) < childrenHeightSum(currentHighestBlock)) {
       this._logger.warn('connection child chain weight is below threshold')
-      // after block height 400000 resume traditional assertions even if BC_BT_VALIDATION is true
-      if (new BN(newBlock.getHeight()).gt(new BN(400000)) === true && BC_BT_VALIDATION === true) {
+      // after block height 450000 resume traditional assertions even if BC_BT_VALIDATION is true
+      if (new BN(newBlock.getHeight()).gt(new BN(450000)) === true && BC_BT_VALIDATION === true) {
         return Promise.resolve(false)
-      // if BC_BT_VALIDATION is not enabled and the block height is greater than 400000 throw this as an error
-      } else if (BC_BT_VALIDATION !== true && new BN(newBlock.getHeight()).gt(new BN(400000)) === true) {
+      // if BC_BT_VALIDATION is not enabled and the block height is greater than 450000 throw this as an error
+      } else if (BC_BT_VALIDATION !== true && new BN(newBlock.getHeight()).gt(new BN(450000)) === true) {
         return Promise.resolve(false)
       }
     }
@@ -414,7 +414,7 @@ export class Multiverse {
     // check if the node is currently syncing, if so do not approve a sync
     const syncLockActive = await this.isSyncLockActive()
     if (syncLockActive === true) {
-      this._logger.info('block ' + newBlock.getHeight() + ' passed for active sync lock')
+      this._logger.info('proposed block ' + newBlock.getHeight() + ' not accepted <- active sync lock')
       return Promise.resolve(false)
     }
     const currentParentHighestBlock = this.getParentHighestBlock()

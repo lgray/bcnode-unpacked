@@ -360,7 +360,7 @@ export class PeerNode {
           const serial = list.map((l) => { return l.serializeBinary() }).join(protocolBits[type])
           this._p2p.qsend(msg.connection, type + protocolBits[type] +  serial)
         .then(() => {
-        	this._logger.info('block announced!')
+        	this._logger.info('block sent!')
 				})
 				.catch((err) => {
 					this._logger.warn('critical block rewards feature is failing with this error')
