@@ -124,9 +124,9 @@ export class Engine {
     _logger: Logger
     _monitor: Monitor
     _knownBlocksCache: LRUCache < string, BcBlock >
-        _knownEvaluationsCache: LRUCache < string, BcBlock >
-        _rawBlocks: LRUCache < number, Block >
-        _node: Node
+    _knownEvaluationsCache: LRUCache < string, BcBlock >
+    _rawBlocks: LRUCache < number, Block >
+    _node: Node
     // _nodep2p2: NodeP2P2
     _persistence: PersistenceRocksDb
     _pubsub: PubSub
@@ -848,8 +848,8 @@ export class Engine {
             }
         })
         return this.node.start(nodeId).then(() => {
-                this._logger.info(nodeId)
-            })
+            this._logger.info(nodeId)
+        })
             .catch((err) => {
                 this._logger.error(err)
             })
