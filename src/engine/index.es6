@@ -614,7 +614,7 @@ export class Engine {
             btc: false,
             neo: false,
             lsk: false,
-            eth: false,
+            eth: true,
             wav: false
           }
         }
@@ -686,7 +686,7 @@ export class Engine {
                     // strict local only write of genesis block
                     if (b.getHeight() > 1) {
                         await this.persistence.put('bc.block.' + b.getHeight(), b)
-                        await this.persistence.putChildHeaders(b)
+                        await this.persistence.putChildHeaders(b, storeChildHeaders)
                     }
                 }
                 return Promise.resolve(block)
@@ -711,7 +711,7 @@ export class Engine {
                 await this.persistence.put('bc.block.parent', getGenesisBlock())
                 await this.persistence.put('bc.block.latest', block)
                 await this.persistence.put('bc.block.' + block.getHeight(), block)
-                await this.persistence.putChildHeaders(block)
+                await this.persistence.putChildHeaders(block, storeChildHeaders)
             } else {
                 this._logger.warn('submitted block ' + block.getHeight() + ' ' + block.getHash() + ' will not be persisted')
             }
@@ -722,7 +722,7 @@ export class Engine {
                     const b = msg.multiverse.pop()
                     if (b.getHeight() > 1) {
                         await this.persistence.put('bc.block.' + b.getHeight(), b)
-                        await this.persistence.putChildHeaders(b)
+                        await this.persistence.putChildHeaders(b, storeChildHeaders)
                     }
                 }
                 return Promise.resolve(block)
@@ -1282,8 +1282,6 @@ export class Engine {
                                                 },
                                                 connection: conn
                                             }
-                                            // parent headers do not form a chain
-                                            this._emitter.emit('getmultiverse', obj)
 
                                             this.pubsub.publish('update.block.latest', {
                                                 key: 'bc.block.latest',
@@ -1292,8 +1290,26 @@ export class Engine {
                                                 mined: false
                                             })
 
-                                            this.persistence.putChildHeaders(newBlock).then(() => {
+                                            let storeChildHeaders = {
+                                              btc: false,
+                                              neo: true,
+                                              lsk: false,
+                                              eth: true,
+                                              wav: true
+                                            }
+                                            if(BC_BT_VALIDATION === true) {
+                                              storeChildHeaders = {
+                                                btc: false,
+                                                neo: false,
+                                                lsk: false,
+                                                eth: true,
+                                                wav: false
+                                              }
+                                            }
+                                            this.persistence.putChildHeaders(newBlock, storeChildHeaders).then(() => {
                                                     // note the local machine does not broadcast this block update until the multiverse has been proven
+                                                    // parent headers do not form a chain
+                                                    this._emitter.emit('getmultiverse', obj)
                                                 })
                                                 .catch((err) => {
                                                     this._logger.error(err)

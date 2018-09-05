@@ -535,19 +535,72 @@ export class Multiverse {
       // $FlowFixMe - Object.values is not generic
       .map(({ blockchain, height }) => `${blockchain}.block.${height}`)
 
+    const previousKeys = receivedBlocks
+      // $FlowFixMe - Object.values is not generic
+      .map((b) => `${b.blockchain}.block.${(b.height - 1)}`)
+
     const blocks = await this.persistence.getBulk(keys)
     let valid = keys.length === blocks.length
+
     if (!valid) {
       /* eslint-disable */
       console.log('------- KEYS ---------')
       console.log(keys)
-      const readable = blocks.map((b) => {
+      console.log('------- PREV KEYS ---------')
+      console.log(previousKeys)
+      const parentBlock = await this.persistence.get('bc.block.parent')
+      // if the parent block is one accept the given child headers
+      if(parentBlock.getHeight() === '1'){
+        return Promise.resolve(true)
+      }
+      const previousBlocks = await this.persistence.getBulk(previousKeys)
+      const latestBlockchainNames = blocks.map((b) => {
         return b.getBlockchain()
       })
+      const previousBlockchainNames = previousBlocks.map((b) => {
+        return b.getBlockchain()
+      })
+
+      const missingBlockchainNames = keys.reduce((missing, key) => {
+        if(keys.indexOf(key) < 0){
+          missing.push(key)
+        }
+        return missing
+      }, [])
+
+      const missingBlocks = missingBlockchainNames.reduce((missing, blockchain) => {
+        receivedBlocks.map((b) => {
+          if(b.getBlockchain() === blockchain){
+            missing.push(b)
+          }
+        })
+        return missing
+      }, [])
+
       console.log('------- FOUND BLOCKS ---------')
-      console.log(readable)
-      this._logger.warn('purposed child blocks not known by rover')
-      return Promise.resolve(valid)
+      console.log(latestBlockchainNames)
+      console.log('------- PREVIOUS FOUND BLOCKS ---------')
+      console.log(previousBlockchainNames)
+      console.log('------- MISSING BLOCKS ---------')
+      console.log(missingBlockchainNames)
+
+      const correctSequence = missingBlocks.reduce((valid, block) => {
+        if(valid === true) {
+          previousBlocks.map((pb) => {
+            if(block.getBlockchain() === pb.getBlockchain()){
+              console.log('eval blockchain ' + pb.getBlockchain() + ' previousHash: ' + pb.getPreviousHash() + ' hash: ' + block.getHash())
+              if(!validateBlockSequence([pb, block])){
+                console.log('for blockchain ' + pb.getBlockchain() + ' sequence is INVALID previousHash: ' + pb.getPreviousHash() + ' hash: ' + block.getHash())
+                valid = false
+              }
+            }
+          })
+        }
+        return valid
+      }, true)
+
+      this._logger.warn('purposed child blocks not known by rover <- correctSequence: ' + correctSequence)
+      return Promise.resolve(correctSequence)
     }
 
     // const pairs = zip(receivedBlocks, blocks)
@@ -563,7 +616,7 @@ export class Multiverse {
     //    received.timestamp === expected.getTimestamp()
     // })))
 
-    return true
+    return Promise.resolve(true)
     // disabled until AT
     // if (isChained !== true) {
     //  this._logger.info('failed chained check')
