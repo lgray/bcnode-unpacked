@@ -391,10 +391,6 @@ export class MiningOfficer {
       this._logger.warn(`Error while getting last previous BC block, reason: ${err.message}`)
       return Promise.reject(err)
     }
-  } catch (err) {
-    this._logger.error(err)
-    this._logger.warn(`Error while getting current blocks, reason: ${err.message}`)
-    return Promise.reject(err)
   }
 
   /// **
