@@ -246,15 +246,15 @@ export function distanceFromCache (aChunks: string[], b: string): number {
   const len = Math.min(aChunks.length, bchunkslength)
   for (var i = 0; i < len; i++) {
     const theend = Math.min(32 * (i + 1), bChunks.length)
-    //logger.info('aChunks: '+aChunks[i]+' '+aChunks[i].length)
+    // logger.info('aChunks: '+aChunks[i]+' '+aChunks[i].length)
     value += dist(bChunks.slice(32 * i, theend), aChunks[i])
   }
-  
+
   // const chunks = zip(aChunks, bChunks)
   // const value = chunks.reduce(function (all, [a, b]) {
   //  return all + dist(b, a)
   // }, 0)
-  
+
   // TODO this is the previous implementation - because of
   // ac.pop() we need to reverse(aChunks) to produce same number
   // is that correct or just side-effect?
@@ -312,7 +312,7 @@ export function mine (currentTimestamp: number, work: string, miner: string, mer
         timeDiff: nowms - tsStart
       }
       break
-    }    
+    }
 
     // recalculate difficulty each second
     if (difficultyCalculator && currentLoopTimestamp < now) {
@@ -327,7 +327,7 @@ export function mine (currentTimestamp: number, work: string, miner: string, mer
     result = distanceFromCache(workChunks, blake2bl(miner + merkleRoot + nonceHash + currentLoopTimestamp))
   }
 
-  logger.info('mining took ' + iterations + ' iterations in '+res.timeDiff+' ms!')
+  logger.info('mining took ' + iterations + ' iterations in ' + res.timeDiff + ' ms!')
 
   return res
 }
