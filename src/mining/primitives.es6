@@ -238,22 +238,22 @@ export function distance (a: string, b: string): number {
 // allows us to not recalculate the split() and reverse()
 // of a every time, since it's constant
 export function distanceFromCache (aChunks: string[], b: string): number {
-  //const aChunks = reverse(splitEvery(32, split(a)))
+  // const aChunks = reverse(splitEvery(32, split(a)))
   const bChunks = split(b)
 
-  const bchunkslength = Math.ceil(bChunks.length/32)
+  const bchunkslength = Math.ceil(bChunks.length / 32)
   let value = 0
-  const len = Math.min(aChunks.length,bchunkslength)
-  for(var i = 0; i < len;i++) {
-    const theend = Math.min(32*(i+1),bChunks.length)
+  const len = Math.min(aChunks.length, bchunkslength)
+  for (var i = 0; i < len; i++) {
+    const theend = Math.min(32 * (i + 1), bChunks.length)
     //logger.info('aChunks: '+aChunks[i]+' '+aChunks[i].length)
-    value += dist(bChunks.slice(32*i,theend),aChunks[i])
+    value += dist(bChunks.slice(32 * i, theend), aChunks[i])
   }
   
-  //const chunks = zip(aChunks, bChunks)
-  //const value = chunks.reduce(function (all, [a, b]) {
+  // const chunks = zip(aChunks, bChunks)
+  // const value = chunks.reduce(function (all, [a, b]) {
   //  return all + dist(b, a)
-  //}, 0)
+  // }, 0)
   
   // TODO this is the previous implementation - because of
   // ac.pop() we need to reverse(aChunks) to produce same number
@@ -290,21 +290,18 @@ export function mine (currentTimestamp: number, work: string, miner: string, mer
   let res = null
   let nowms = 0
   let now = 0
-  let nonce = String(Math.abs(Random.engines.nativeMath())) // random string  
+  let nonce = String(Math.abs(Random.engines.nativeMath())) // random string
   while (true) {
-    iterations += 1   
+    iterations += 1
 
     // TODO optimize not to count each single loop
     nowms = ts.now()
-    now   = (nowms/1000)<<0
+    now = (nowms / 1000) << 0
     if (maxCalculationEnd < nowms) {
       break
     }
 
-    let nonce = String(Math.abs(Random.engines.nativeMath())) // random string
-    let nonceHash = blake2bl(nonce)
-    result = distance(work, blake2bl(miner + merkleRoot + nonceHash + currentLoopTimestamp))
-    if (new BN(result).gt(new BN(difficulty)) === true) {
+    if (new BN(result).gt(difficultyBN) === true) {
       res = {
         distance: (result).toString(),
         nonce,
@@ -322,17 +319,15 @@ export function mine (currentTimestamp: number, work: string, miner: string, mer
       currentLoopTimestamp = now
       difficulty = difficultyCalculator(now)
       difficultyBN = new BN(difficulty)
-      //logger.info(`In timestamp: ${currentLoopTimestamp} recalculated difficulty is: ${difficulty}`)
+      // logger.info(`In timestamp: ${currentLoopTimestamp} recalculated difficulty is: ${difficulty}`)
     }
 
     nonce = String(Math.abs(Random.engines.nativeMath())) // random string
     const nonceHash = blake2bl(nonce)
     result = distanceFromCache(workChunks, blake2bl(miner + merkleRoot + nonceHash + currentLoopTimestamp))
-
-    
   }
 
-  logger.info('mining took '+iterations+' iterations in '+res.timeDiff+' ms!')
+  logger.info('mining took ' + iterations + ' iterations in '+res.timeDiff+' ms!')
 
   return res
 }
