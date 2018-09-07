@@ -539,7 +539,13 @@ export function childrenHighestBlock (block: BcBlock): number {
 	  return all
 	}, {})
 
-	return Object.values(highest)
+  const set = Object.values(highest)
+
+  if(set.length < 1){
+    return [1]
+  } else {
+    return set
+  }
 }
 
 export function childrenHeightSum (block: BcBlock): number {
