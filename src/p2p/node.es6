@@ -209,7 +209,6 @@ export class PeerNode {
         const serial = msg.data.serializeBinary()
         const announceData = type + protocolBits[type] + serial
         const tasks = this._p2p.connections.map((conn) => {
-          this._logger.info(type + ' -> announced')
           return this._p2p.qsend(conn, announceData)
         })
         return Promise.all(tasks).then(() => {
@@ -421,17 +420,6 @@ export class PeerNode {
             })
         }
       }, 30900)
-      const waypointDiscoveryInterval = 300000 + Math.floor(Math.random() * 50000)
-      // TODO cleanup on close
-      setInterval(() => {
-        if (this._p2p !== undefined && this._p2p._discovery !== undefined) {
-          // this._p2p.join(this._p2p.hash, this._p2p.port, (data) => {
-          // this._p2p._discovery.update()
-          // })
-          this._logger.info('emitting DHT echo')
-          this._p2p._discovery.update()
-        }
-      }, waypointDiscoveryInterval)
     })
     return Promise.resolve(true)
   }
