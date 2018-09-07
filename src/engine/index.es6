@@ -57,6 +57,7 @@ const MONITOR_ENABLED = process.env.BC_MONITOR === 'true'
 const BC_CHECK = process.env.BC_CHECK === 'true'
 const PERSIST_ROVER_DATA = process.env.PERSIST_ROVER_DATA === 'true'
 const BC_BT_VALIDATION = process.env.BC_BT_VALIDATION === 'true'
+const BC_REMOVE_BTC = process.env.BC_REMOVE_BTC === 'true'
 
 process.on('uncaughtError', (err) => {
   /* eslint-disable */
@@ -242,6 +243,10 @@ export class Engine {
             res = await this.persistence.put('appversion', versionData)
             if (res) {
                 this._logger.info('stored appversion to persistence')
+            }
+
+            if(BC_REMOVE_BTC === true){
+               await this.persistence.del('btc.block.latest')
             }
             /* eslint-disable */
             try {

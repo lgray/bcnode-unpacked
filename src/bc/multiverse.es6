@@ -427,7 +427,6 @@ export class Multiverse {
     }
 
     const newBlockHeaders = newBlock.getBlockchainHeaders().toObject()
-
     if (BC_BT_VALIDATION === true && new BN(newBlockHeaders['btcList'][0].height).gt(new BN(541000)) === true) {
       return Promise.resolve(false)
     }
