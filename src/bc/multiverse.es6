@@ -564,10 +564,10 @@ export class Multiverse {
       const previousKeys = receivedBlocks
         // $FlowFixMe - Object.values is not generic
         .map((b) => `${b.blockchain}.block.${(b.height - 1)}`)
-      console.log('------- KEYS ---------')
-      console.log(keys)
-      console.log('------- PREV KEYS ---------')
-      console.log(previousKeys)
+      //console.log('------- KEYS ---------')
+      //console.log(keys)
+      //console.log('------- PREV KEYS ---------')
+      //console.log(previousKeys)
       const parentBlock = await this.persistence.get('bc.block.parent')
       // if the parent block is one accept the given child headers
       if(parentBlock.getHeight() === '1'){
@@ -676,12 +676,12 @@ export class Multiverse {
         return missing
       }, [])
 
-      console.log('------- BLOCKS ON DISK ---------')
-      console.log(latestBlockchainNames)
-      console.log('------- PREVIOUS BLOCKS ON DISK ---------')
-      console.log(previousBlockchainNames)
-      console.log('------- UNROVERED BLOCKS ---------')
-      console.log(missingBlockchainNames)
+      //console.log('------- BLOCKS ON DISK ---------')
+      //console.log(latestBlockchainNames)
+      //console.log('------- PREVIOUS BLOCKS ON DISK ---------')
+      //console.log(previousBlockchainNames)
+      //console.log('------- UNROVERED BLOCKS ---------')
+      //console.log(missingBlockchainNames)
 
       const correctSequence = missingBlocks.reduce((valid, block) => {
         if(block.getBlockchain() === 'btc' && BC_BT_VALIDATION === true){

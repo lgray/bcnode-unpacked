@@ -149,6 +149,7 @@ export async function isValidBlockCached (persistence: Object, newBlock: BcBlock
     return Promise.resolve(cached === 'true')
   } catch (_) {
     try {
+      // logger.info('checking validity of block: ' + newBlock)
       const valid = isValidBlock(newBlock, type)
       await persistence.put('valid_' + newBlock.getHash(), String(valid))
       // return this block in wrhatever state it was validated
