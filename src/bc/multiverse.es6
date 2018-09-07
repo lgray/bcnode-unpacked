@@ -600,7 +600,7 @@ export class Multiverse {
 
       const missingBlocks = missingBlockchainNames.reduce((missing, blockchain) => {
         receivedBlocks.map((b) => {
-          if(b.getBlockchain() === blockchain){
+          if(b.blockchain === blockchain){
             missing.push(b)
           }
         })
@@ -615,14 +615,14 @@ export class Multiverse {
       //console.log(missingBlockchainNames)
 
       const correctSequence = missingBlocks.reduce((valid, block) => {
-        if(block.getBlockchain() === 'btc' && BC_BT_VALIDATION === true){
+        if(block.blockchain === 'btc' && BC_BT_VALIDATION === true){
           if(new BN(block.getHeight()).gt(new BN(541000)) === true){
             valid = false
           }
         }
         if(valid === true) {
           valid = previousBlocks.reduce((updateValid, pb) => {
-            if(block.getBlockchain() === pb.getBlockchain()){
+            if(block.blockchain === pb.getBlockchain()){
               console.log('eval blockchain ' + pb.getBlockchain() + ' previousHash: ' + pb.getPreviousHash() + ' hash: ' + block.getHash())
               if(!validateBlockSequence([pb, block])){
                 console.log('for blockchain ' + pb.getBlockchain() + ' sequence is INVALID previousHash: ' + pb.getPreviousHash() + ' hash: ' + block.getHash())
