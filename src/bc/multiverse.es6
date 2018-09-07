@@ -446,11 +446,11 @@ export class Multiverse {
     }
 
     try {
-    const roveredBlockHeaders = await this.validateRoveredBlocks(newBlock)
-    if (roveredBlockHeaders === false) {
-      this._logger.warn('rover coverage of child headers is low')
+      const roveredBlockHeaders = await this.validateRoveredBlocks(newBlock)
+      if (roveredBlockHeaders === false) {
+        this._logger.warn('rover coverage of child headers is low')
       // return Promise.resolve(false)
-    }
+      }
     } catch (err) {
       this._logger.error(err)
     }
@@ -567,11 +567,11 @@ export class Multiverse {
         // $FlowFixMe - Object.values is not generic
         .map(({ blockchain, height }) => `${blockchain}.block.${height}`)
 
-    const blocks = await this.persistence.getBulk(keys)
+      const blocks = await this.persistence.getBulk(keys)
 
-    let valid = keys.length === blocks.length
+      let valid = keys.length === blocks.length
 
-    if (!valid) {
+      if (!valid) {
       /* eslint-disable */
       const previousKeys = receivedBlocks
         // $FlowFixMe - Object.values is not generic
@@ -714,6 +714,10 @@ export class Multiverse {
 
       this._logger.warn('purposed child blocks not known by rover <- correctSequence: ' + correctSequence)
       return Promise.resolve(correctSequence)
+    }
+
+    } catch (err) {
+      this._logger.error(err)
     }
 
     // const pairs = zip(receivedBlocks, blocks)
