@@ -241,6 +241,10 @@ export class Multiverse {
       return Promise.resolve(true)
     }
 
+    const roveredBlockHeaders = await this.validateRoveredBlocks(newBlock)
+    if (roveredBlockHeaders === false) {
+      return Promise.resolve(false)
+    }
     // HOTSWAP - NO SYNC
     // this is a hotswap in at the current block height for a new block
     // TODO: Consider moving this to resync (except we dont want sync triggered)
@@ -432,6 +436,11 @@ export class Multiverse {
       return Promise.resolve(false)
     }
 
+    const roveredBlockHeaders = await this.validateRoveredBlocks(newBlock)
+    if (roveredBlockHeaders === false) {
+      this._logger.info('child header weight <- below threshold')
+      return Promise.resolve(false)
+    }
     // current chain is malformed and new block is not
     const validNewBlock = await isValidBlockCached(this.persistence, newBlock)
     const validCurrentBlock = await isValidBlockCached(this.persistence, currentHighestBlock)

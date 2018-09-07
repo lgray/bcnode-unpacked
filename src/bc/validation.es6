@@ -535,7 +535,9 @@ export function childrenHighestBlock (block: BcBlock): number {
 			}
 			return 0
 	  }).pop()
-		all[top.blockchain] = top
+    if(top !== undefined) {
+		  all[top.blockchain] = top
+    }
 	  return all
 	}, {})
 
