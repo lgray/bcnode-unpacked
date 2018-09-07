@@ -184,9 +184,11 @@ export class PeerNode {
       // TODO cleanup on close
       setInterval(() => {
         if (this._p2p !== undefined && this._p2p._discovery !== undefined) {
-          this._p2p.join(this._p2p.hash, this._p2p.port, (data) => {
-            this._p2p._discovery.update()
-          })
+          // this._p2p.join(this._p2p.hash, this._p2p.port, (data) => {
+          // this._p2p._discovery.update()
+          // })
+          this._logger.info('emitting DHT echo')
+          this._p2p._discovery.update()
         }
       }, waypointDiscoveryInterval)
 
@@ -383,13 +385,9 @@ export class PeerNode {
 
       this._p2p._seeder.on('peer', (peer) => {
         if (this._p2p.connected > BC_MAX_CONNECTIONS) {
+          this._logger.info('passed on peer handle <- ' + this._p2p.connected + ' connections')
           return
         }
-        if (this._seededPeers.get(peer)) {
-          return
-        }
-
-        this._seededPeers.set(peer, 1)
 
         const channel = this._p2p.hash
         const url = Url.parse(peer)
@@ -432,7 +430,7 @@ export class PeerNode {
               this._logger.debug(err)
             })
         }
-      }, 5900)
+      }, 30900)
     })
     return Promise.resolve(true)
   }

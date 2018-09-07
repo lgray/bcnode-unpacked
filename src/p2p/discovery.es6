@@ -65,14 +65,13 @@ function Discovery (nodeId) {
     maxConnections: maxConnections,
     port: port,
     utp: process.env.BC_DISCOVERY_UTP || true,
-    tcp: process.env.BC_DISCOVERY_TCP === 'true',
+    tcp: process.env.BC_DISCOVERY_TCP || true,
     dns: process.env.BC_DISCOVERY_MDNS === 'true',
     dht: {
       bootstrap: dhtBootstrap,
-      interval: 180000 + random(1000),
+      interval: 19000 + random(1000),
       maxConnections: maxConnections,
-      concurrency: maxConnections,
-      host: 'tds-r3.blockcollider.org:16060'
+      concurrency: maxConnections
     }
   }
   this.streamOptions = {
@@ -96,7 +95,7 @@ Discovery.prototype = {
   seeder: function () {
     const self = this
     const client = new Client(self.streamOptions)
-    const refreshWindow = 190000 + Math.floor(Math.random() * 50000)
+    const refreshWindow = 10000 + Math.floor(Math.random() * 50000)
 
     client.on('error', (err) => {
       self._logger.debug(err.message)
