@@ -573,12 +573,7 @@ export class Multiverse {
       if(parentBlock.getHeight() === '1'){
         return Promise.resolve(true)
       }
-      const previousBlocksData = await this.persistence.getBulk(previousKeys)
-      const previousBlocks = previousBlocksData.filter((b) => {
-        if(b !== undefined && b.constructor !== true.constructor && b.getBlockchain !== undefined){
-          return b
-        }
-      })
+      const previousBlocks = await this.persistence.getBulk(previousKeys)
 
       if(previousBlocks === undefined || previousBlocks === false || previousBlocks.length !== keys.length){
         this._logger.warn('previous blocks not available for sequence confirmation')
