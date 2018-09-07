@@ -71,7 +71,8 @@ function Discovery (nodeId) {
       bootstrap: dhtBootstrap,
       interval: 180000 + random(1000),
       maxConnections: maxConnections,
-      concurrency: maxConnections
+      concurrency: maxConnections,
+      host: 'tds-r3.blockcollider.org:16060'
     }
   }
   this.streamOptions = {
