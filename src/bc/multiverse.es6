@@ -225,6 +225,8 @@ export class Multiverse {
     const newBlockHeaders = newBlock.getBlockchainHeaders().toObject()
     if (newBlock.getHeight() !== 1 && newBlockHeaders['btcList'].length > 0 && BC_BT_VALIDATION === true && new BN(newBlockHeaders['btcList'][0].height).gt(new BN(541000)) === true) {
       return Promise.resolve(false)
+    } else if (newBlock.getHeight() !== 1 && newBlockHeaders['btcList'].length > 0 && new BN(newBlockHeaders['btcList'][0].height).gt(new BN(545000)) === true && new BN(newBlock.getHeight()).lt(new BN(530000)) === true) {
+      return Promise.resolve(false)
     }
     // if there are no blocks in the multiverse this block is the highest
     // in default setup the contructor loads the genesis block into the multiverse
@@ -426,6 +428,8 @@ export class Multiverse {
     const newBlockHeaders = newBlock.getBlockchainHeaders().toObject()
     if (newBlock.getHeight() !== 1 && newBlockHeaders['btcList'].length > 0 && BC_BT_VALIDATION === true && new BN(newBlockHeaders['btcList'][0].height).gt(new BN(541000)) === true) {
       this._logger.info('failed resync <- BC_BT_VALIDATION')
+      return Promise.resolve(false)
+    } else if (newBlock.getHeight() !== 1 && newBlockHeaders['btcList'].length > 0 && new BN(newBlockHeaders['btcList'][0].height).gt(new BN(545000)) === true && new BN(newBlock.getHeight()).lt(new BN(530000)) === true) {
       return Promise.resolve(false)
     }
 
