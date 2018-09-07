@@ -174,6 +174,7 @@ Discovery.prototype = {
       }
       for (const conn of this.dht.connections) {
         const idr = conn.remoteHost || conn.host
+        this._logger.info('announce <- ' + idr)
         if (filters.indexOf(idr) < 0) {
           const res = await this.dht.qsend(conn, msg)
           if (!res || res.success === false) {

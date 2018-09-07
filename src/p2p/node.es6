@@ -217,23 +217,26 @@ export class PeerNode {
         const type = '0008W01'
         this._logger.info('announceblock <- event')
         // this._engine.persistence.get('bc.block.' + msg.data.getHeight() - 1
-        this.getLiteMultiverse(msg.data).then((list) => {
-          const serial = list.map((l) => { return l.serializeBinary() }).join(protocolBits[type])
-          this._p2p.qbroadcast(type +
-              protocolBits[type] +
-              serial)
-            .then(() => {
-              this._logger.info('block announced!')
-            })
-            .catch((err) => {
-              this._logger.warn('critical block rewards feature is failing with this error')
-              this._logger.error(err)
-            })
+        //
+        // this.getLiteMultiverse(msg.data).then((list) => {
+        const serial = msg.data.serializeBinary()
+        const announceData = type + protocolBits[type] + serial
+        const tasks = this._p2p.connections.map((conn) => {
+          this._logger.info(type + ' -> announced')
+          return this._qsend(conn, announceData)
+        })
+        return Promise.all(tasks).then(() => {
+          this._logger.info('block announced!')
         })
           .catch((err) => {
-            this._logger.warn('critical block rewards feature is failing with this error')
+            this._logger.warn('connection failure when announcing to network')
             this._logger.error(err)
           })
+        // })
+        //  .catch((err) => {
+        //    this._logger.warn('critical block rewards feature is failing with this error')
+        //    this._logger.error(err)
+        //  })
       })
 
       this._logger.info('initialized far reaching discovery module')
