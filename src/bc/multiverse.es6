@@ -544,7 +544,13 @@ export class Multiverse {
       // $FlowFixMe - Object.values is not generic
       .map(({ blockchain, height }) => `${blockchain}.block.${height}`)
 
-    const blocks = await this.persistence.getBulk(keys)
+    const blocksData = await this.persistence.getBulk(keys)
+    const blocks = blocksData.filter((b) => {
+      if (b !== undefined && b.constructor !== true.constructor && b.getBlockchain !== undefined) {
+        return b
+      }
+    })
+
     let valid = keys.length === blocks.length
 
     if (!valid) {
@@ -561,7 +567,12 @@ export class Multiverse {
       if(parentBlock.getHeight() === '1'){
         return Promise.resolve(true)
       }
-      const previousBlocks = await this.persistence.getBulk(previousKeys)
+      const previousBlocksData = await this.persistence.getBulk(previousKeys)
+      const previousBlocks = previousBlocksData.filter((b) => {
+        if(b !== undefined && b.constructor !== true.constructor && b.getBlockchain !== undefined){
+          return b
+        }
+      })
 
       if(previousBlocks === undefined || previousBlocks === false || previousBlocks.length !== keys.length){
         this._logger.warn('previous blocks not available for sequence confirmation')
@@ -571,6 +582,7 @@ export class Multiverse {
       const latestBlockchainNames = blocks.map((b) => {
         return b.getBlockchain()
       })
+
       const previousBlockchainNames = previousBlocks.map((b) => {
         return b.getBlockchain()
       })
