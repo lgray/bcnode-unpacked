@@ -591,7 +591,7 @@ export class Multiverse {
 
       const correctSequence = missingBlocks.reduce((valid, block) => {
         if(block.getBlockchain() === 'btc' && BC_BT_VALIDATION === true){
-          if(new BN(block.getHeight()).gt(new BN(541000) === true){
+          if(new BN(block.getHeight()).gt(new BN(541000)) === true){
             valid = false
           }
         }
