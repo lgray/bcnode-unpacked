@@ -575,10 +575,10 @@ export class Multiverse {
       }
       const previousBlocks = await this.persistence.getBulk(previousKeys)
 
-      if(previousBlocks === undefined || previousBlocks === false || previousBlocks.length !== keys.length){
-        this._logger.warn('previous blocks not available for sequence confirmation')
-        return Promise.resolve(false)
-      }
+      //if(previousBlocks === undefined || previousBlocks === false || previousBlocks.length !== keys.length){
+      //  this._logger.warn('previous blocks not available for sequence confirmation')
+      //  return Promise.resolve(false)
+      //}
 
       const latestBlockchainNames = blocks.map((b) => {
         return b.getBlockchain()

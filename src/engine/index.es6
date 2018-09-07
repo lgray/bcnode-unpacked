@@ -1267,10 +1267,10 @@ export class Engine {
                                             if(BC_BT_VALIDATION === true) {
                                               storeChildHeaders = {
                                                 btc: false,
-                                                neo: false,
-                                                lsk: false,
+                                                neo: true,
+                                                lsk: true,
                                                 eth: true,
-                                                wav: false
+                                                wav: true
                                               }
                                             }
                                             this.persistence.putChildHeaders(newBlock, storeChildHeaders).then(() => {
@@ -1285,10 +1285,10 @@ export class Engine {
                                         } else {
                                             // this means the local peer has a better version of the chain and
                                             // therefore pushing it to the outside peer
-                                            this._emitter.emit('sendblock', {
-                                                data: newBlock,
-                                                connection: conn
-                                            })
+                                            //this._emitter.emit('sendblock', {
+                                            //    data: newBlock,
+                                            //    connection: conn
+                                            //})
                                         }
                                     })
                             }

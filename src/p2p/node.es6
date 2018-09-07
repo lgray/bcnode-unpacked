@@ -187,17 +187,15 @@ export class PeerNode {
 
       this._engine._emitter.on('sendblock', (msg) => {
         const type = '0008W01'
-        this.getLiteMultiverse(msg.data).then((list) => {
-          const serial = list.map((l) => { return l.serializeBinary() }).join(protocolBits[type])
-          this._p2p.qsend(msg.connection, type + protocolBits[type] + serial)
-            .then(() => {
-              this._logger.info('block sent!')
-            })
-            .catch((err) => {
-              this._logger.warn('critical block rewards feature is failing with this error')
-              this._logger.error(err)
-            })
-        })
+        const serial = msg.data.serializeBinary()
+        this._p2p.qsend(msg.connection, type + protocolBits[type] + serial)
+          .then(() => {
+            this._logger.info('block sent!')
+          })
+          .catch((err) => {
+            this._logger.warn('critical block rewards feature is failing with this error')
+            this._logger.error(err)
+          })
       })
 
       this._engine._emitter.on('announceblock', (msg) => {
