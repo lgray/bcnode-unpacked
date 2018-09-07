@@ -38,7 +38,7 @@ const globalLog: Logger = logging.getLogger(__filename)
 //
 
 const purgeWorkers = () => {
-		return fkill('bc-miner-worker', { force: true })
+		return fkill('bcworker', { force: true })
 }
 process.on('uncaughtError', (err) => {
     // $FlowFixMe
@@ -68,18 +68,6 @@ if (cluster.isMaster) {
 
 		const stats = []
 
-		setInterval(() => {
-				if(Object.keys(cluster.workers).length > 0){
-					fkill('bc-miner-worker', { force: true })
-					.then(() => {
-						globalLog.info('global pool rebase success')
-					})
-					.catch((err) => {
-						globalLog.debug(err.message)
-					})
-				}
-		}, minerRecycleInterval)
-
     process.once("SIGTERM", () => {
         process.exit(0)
     })
@@ -92,22 +80,6 @@ if (cluster.isMaster) {
 
     const active = []
     const record = {}
-		/* eslint-disable */
-		setInterval(() => {
-			if(stats.length >= 5) {
-				 const distancePerSecond = mean(stats) * 1000
-         const workerLimit = settings.maxWorkers - 2
-				 const distancePerRadianSecond = new BN(distancePerSecond).div(new BN(6.283)).toNumber()
-				 const coreCountAdjustment = new BN(distancePerRadianSecond).mul(new BN(workerLimit)).toNumber()
-				 const formattedMetric = Math.round(coreCountAdjustment * 100) / 100000
-
-         if(formattedMetric !== undefined && formattedMetric > 0){
-				   console.log('\r\n  ' + formattedMetric + ' kRAD/s -> radian distance collisions performance metric -> proof of distance miner\n\r')
-         }
-			} else if(stats.length > 0) {
-			   console.log('\r\n  ' + 'sampling radian distance performance <- ' + stats.length + '/5\n\r')
-			}
-		}, 13500)
 		/* eslint-enable */
 
   process.on('message', (data) => {
@@ -120,7 +92,7 @@ if (cluster.isMaster) {
     const applyEvents = (worker) => {
       worker.once('message', (data) => {
         stats.unshift(new BN(data.data.iterations).div(new BN(data.data.timeDiff)).toNumber())
-        if (stats.length > 10) { stats.pop() }
+        if (stats.length > 5) { stats.pop() }
         process.send({
           type: 'solution',
           data: data.data,
@@ -128,11 +100,15 @@ if (cluster.isMaster) {
         }, () => {
           (async () => {
             active.length = 0
-            try {
-              await fkill('bc-miner-worker', { force: true })
-              globalLog.info('pool rebase success')
-            } catch (err) {
-              globalLog.info('pool rebase success')
+            if (cluster.workers !== undefined && Object.keys(cluster.workers).length > 0) {
+              Object.keys(cluster.workers).map((id) => {
+                if (cluster.workers[id].isConnected() === true) {
+                  cluster.workers[id].disconnect()
+                }
+                if (cluster.workers[id] !== undefined) {
+                  cluster.workers[id].kill()
+                }
+              })
             }
           })()
             .catch((err) => {
@@ -144,25 +120,21 @@ if (cluster.isMaster) {
     }
     if (data.type === 'config') {
       settings.maxWorkers = data.maxWorkers || settings.maxWorkers
-      settings.maxWorkers = max(3, settings.maxWorkers - 1)
     } else if (data.type === 'work') {
       // expressed in Radians (cycles/second) / 2 * PI
       (async () => {
-        try {
-          await fkill('bc-miner-worker', { force: true })
-        } catch (err) {
-          globalLog.debug(err)
-        }
+        const workerA = applyEvents(createThread())
+        await sendWorker(workerA, data.data)
+        const workerB = applyEvents(createThread())
+        await sendWorker(workerB, data.data)
         // if (Object.keys(cluster.workers).length < settings.maxWorkers) {
-        const deploy = settings.maxWorkers - Object.keys(cluster.workers).length
-        for (let i = 0; i < deploy; i++) {
-          const worker = applyEvents(createThread())
-          await sendWorker(worker, data.data)
-        }
-        // } else {
-        //  let workerA = createThread()
-        //  workerA = applyEvents(workerA)
-        //  await sendWorker(workerA, data.data)
+        // const deploy = settings.maxWorkers - Object.keys(cluster.workers).length
+        // const worker = applyEvents(createThread())
+        // await sendWorker(worker, data.data)
+        // const deploy = settings.maxWorkers
+        // for (let i = 0; i < deploy; i++) {
+        //  const worker = applyEvents(createThread())
+        //  await sendWorker(worker, data.data)
         // }
       })()
         .catch((err) => {
@@ -170,19 +142,53 @@ if (cluster.isMaster) {
         })
     }
   })
+
+  setInterval(() => {
+    if (Object.keys(cluster.workers).length > 0) {
+      fkill('bcworker', { force: true })
+        .then(() => {
+          globalLog.info('global pool rebase success')
+        })
+        .catch((err) => {
+          globalLog.debug(err.message)
+        })
+    }
+  }, minerRecycleInterval)
+
+  /* eslint-disable */
+  setInterval(() => {
+    if(stats.length >= 5) {
+       let workerLimit = 1
+       if(cluster.workers !== undefined && Object.keys(cluster.workers).length > 1){
+         workerLimit = Object.keys(cluster.workers).length
+       }
+       const distancePerSecond = mean(stats) * 1000
+       const distancePerRadianSecond = new BN(distancePerSecond).div(new BN(6.283)).toNumber()
+       const coreCountAdjustment = new BN(distancePerRadianSecond).mul(new BN(workerLimit)).toNumber()
+       const formattedMetric = Math.round(coreCountAdjustment * 100) / 100000
+
+       if(formattedMetric !== undefined && formattedMetric > 0){
+         console.log('\r\n  ' + formattedMetric + ' kRAD/s -> radian distance collisions performance metric -> proof of distance miner\n\r')
+       }
+    } else if(stats.length > 0) {
+       console.log('\r\n  ' + 'sampling radian distance performance <- ' + stats.length + '/5\n\r')
+    }
+  }, 11500)
+
   globalLog.info('pool controller ready ' + process.pid)
+
 } else {
   /**
      * Miner woker entrypoin
      */
-  const main = () => {
-    process.title = 'bc-miner-worker'
+  process.title = 'bcworker'
+  const variableTimeout = 12000 + Math.floor(Math.random() * 10000)
+  setTimeout(() => {
+    globalLog.info('worker ' + process.pid + ' dismissed after ' + Math.floor(variableTimeout/1000) + 's')
+    process.exit()
+  }, variableTimeout)
 
-    globalLog.info('worker ' + process.pid + ' ready')
-    const variableTimeout = 120000 + Math.floor(Math.random() * 10000)
-    setTimeout(() => {
-      process.exit()
-    }, variableTimeout)
+  const main = () => {
 
     process.on('message', ({
       workId,
@@ -195,7 +201,7 @@ if (cluster.isMaster) {
       difficulty,
       difficultyData
     }) => {
-      globalLog.debug('thread pool <- ' + process.pid + ' ' + workId + '                 ')
+      globalLog.info('worker ' + process.pid + ' reporting in')
 
       ts.offsetOverride(offset)
       // Deserialize buffers from parent process, buffer will be serialized as object of this shape { <idx>: byte } - so use Object.values on it
@@ -244,7 +250,7 @@ if (cluster.isMaster) {
           workId: workId
         }, () => {
           globalLog.info(`purposed candidate found: ${JSON.stringify(solution, null, 0)}`)
-          fkill('bc-miner-worker', { force: true })
+          fkill('bcworker', { force: true })
             .then(() => {
               globalLog.info('global pool rebase success')
             })

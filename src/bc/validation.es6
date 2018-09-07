@@ -113,8 +113,8 @@ export function isValidChildAge (newBlock: BcBlock, type: number = 0): bool {
 
   // add the offset for dark fiber
   const bcBlockTimestamp = new BN(newBlock.getTimestamp()).mul(new BN(1000)).toNumber()
-  const highRangeLimit = 39 * 1000
-  const lowRangeLimit = 19 * 1000
+  const highRangeLimit = 59 * 1000
+  const lowRangeLimit = 29 * 1000
   const newestHeaderDFBound = DF_CONFIG[newestHeader.blockchain].dfBound * 1000
   const newestHeaderTimestamp = new BN(newestHeader.timestamp).add(new BN(newestHeaderDFBound)).toNumber()
   const upperTimestampLimit = new BN(newestHeaderTimestamp).add(new BN(highRangeLimit)).toNumber()
@@ -172,7 +172,6 @@ export function getNewestHeader (newBlock: BcBlock): bool {
   const newestHeader = Object.keys(headers).reduce((newest, key) => {
     const sorted = headers[key].sort((a, b) => {
       /* eslint-disable */
-      console.log('timestamp: ' + a.timestamp)
       if (new BN(a.timestamp).gt(new BN(b.timestamp)) === true) {
         return 1
       }

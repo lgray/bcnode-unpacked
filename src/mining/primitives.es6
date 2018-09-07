@@ -54,9 +54,9 @@ const { Block, BcBlock, BcTransaction, BlockchainHeader, BlockchainHeaders } = r
 const ts = require('../utils/time').default // ES6 default export
 const GENESIS_DATA = require('../bc/genesis.raw')
 
-const MINIMUM_DIFFICULTY = new BN(290112262029012)
 // testnet: 11801972029393
-const MAX_TIMEOUT_SECONDS = 300
+const MINIMUM_DIFFICULTY = new BN(290112262029012)
+const MAX_TIMEOUT_SECONDS = 45
 
 const logging = require('../logger')
 const logger: Logger = logging.getLogger(__filename)
@@ -126,7 +126,7 @@ export function getDiff (currentBlockTime: number, previousBlockTime: number, pr
   const bigMinus99 = new BN(-99)
   const big1 = new BN(1)
   const big0 = new BN(0)
-  const bigTargetTimeWindow = new BN(10)
+  const bigTargetTimeWindow = new BN(8)
   if(newestChildBlock.timestamp === undefined){
     newestChildBlock = newestChildHeader.toObject()
   }
@@ -146,7 +146,7 @@ export function getDiff (currentBlockTime: number, previousBlockTime: number, pr
   // console.log('(after) elapsedTime: ' + elapsedTime.toNumber())
 
   // elapsedTime + ((elapsedTime - 5) * newBlocks)
-  const elapsedTimeBonus = elapsedTime.add(elapsedTime.sub(new BN(7)).mul(new BN(newBlockCount)))
+  const elapsedTimeBonus = elapsedTime.add(elapsedTime.sub(new BN(6)).mul(new BN(newBlockCount)))
   // console.log('time bonus  ' + elapsedTimeBonus.toNumber())
 
   if (elapsedTimeBonus.gt(big0)) {
@@ -244,7 +244,7 @@ export function dist (x: number[], y: number[], clbk: ?Function): number {
 }
 
 /**
- * Returns summed distances between two strings broken into of 8 bits
+ * [DEPRICATED] Returns summed distances between two strings broken into of 8 bits
  *
  * @param {string} a
  * @param {string} b
@@ -269,6 +269,32 @@ export function distance (a: string, b: string): number {
 }
 
 /**
+ * Returns distances between string chunks and a string proposed by @lgray
+ * @returns {number} cosine distance between two strings
+ */
+export function distanceFromCache (aChunks: string[], b: string): number {
+  //const aChunks = reverse(splitEvery(32, split(a)))
+  const bChunks = split(b)
+
+  const bchunkslength = Math.ceil(bChunks.length/32)
+  let value = 0
+  const len = Math.min(aChunks.length,bchunkslength)
+  for(var i = 0; i < len;i++) {
+    const tail = Math.min(32*(i+1),bChunks.length)
+    value += dist(bChunks.slice(32*i, tail), aChunks[i])
+  }
+
+  // TODO this is the previous implementation - because of
+  // ac.pop() we need to reverse(aChunks) to produce same number
+  // is that correct or just side-effect?
+  // const value = bc.reduce(function (all, bd, i) {
+  //   return all + dist(bd, ac.pop())
+  // }, 0)
+  return Math.floor(value * 1000000000000000)
+}
+
+
+/**
  * Finds the mean of the distances from a provided set of hashed header proofs
  *
  * @param {number} currentTimestamp current time reference
@@ -282,44 +308,48 @@ export function distance (a: string, b: string): number {
 // $FlowFixMe will never return anything else then a mining result
 export function mine (currentTimestamp: number, work: string, miner: string, merkleRoot: string, threshold: number, difficultyCalculator: ?Function, reportType: ?number): { distance: string, nonce: string, timestamp: number, difficulty: string } {
   let difficulty = threshold
+  let difficultyBN = new BN(difficulty)
   let result
   const tsStart = ts.now()
   const maxCalculationEnd = tsStart + (MAX_TIMEOUT_SECONDS * 1000)
+  const workChunks = reverse(splitEvery(32, split(work)))
   let currentLoopTimestamp = currentTimestamp
-
   let iterations = 0
   let res = null
+  let nowms = 0
+  let now = 0
+  let nonce = String(Math.abs(Random.engines.nativeMath()))
   while (true) {
     iterations += 1
 
-    if (maxCalculationEnd < ts.now()) {
+		nowms = ts.now()
+		now = (nowms/1000)<<0
+
+    if (maxCalculationEnd < nowms) {
       break
     }
-    // TODO optimize not to count each single loop
-    let now = ts.nowSeconds()
-    // recalculate difficulty each second
-    if (difficultyCalculator && currentLoopTimestamp < now) {
-      currentLoopTimestamp = now
-      difficulty = difficultyCalculator(now)
-      logger.debug(`In timestamp: ${currentLoopTimestamp} recalculated difficulty is: ${difficulty}`)
-    }
 
-    let nonce = String(Math.abs(Random.engines.nativeMath())) // random string
-    let nonceHash = blake2bl(nonce)
-    result = distance(work, blake2bl(miner + merkleRoot + nonceHash + currentLoopTimestamp))
-
-    if (new BN(result).gt(new BN(difficulty)) === true) {
+    if (new BN(result).gt(difficultyBN) === true) {
       res = {
         distance: (result).toString(),
         nonce,
         timestamp: currentLoopTimestamp,
         difficulty,
-        // NOTE: Following fields are for debug purposes only
+        // NOTE: Following fields are for analyses only
         iterations,
-        timeDiff: ts.now() - tsStart
+        timeDiff: nowms - tsStart
       }
       break
     }
+    // recalculate difficulty each second
+    if (difficultyCalculator && currentLoopTimestamp < now) {
+      currentLoopTimestamp = now
+      difficulty = difficultyCalculator(now)
+      difficultyBN = new BN(difficulty)
+    }
+    nonce = String(Math.abs(Random.engines.nativeMath()))
+    const nonceHash = blake2bl(nonce)
+    result = distanceFromCache(workChunks, blake2bl(miner + merkleRoot + nonceHash + currentLoopTimestamp))
   }
 
   // const tsEnd = ts.now()
@@ -676,7 +706,7 @@ export function prepareNewBlock (currentTimestamp: number, lastPreviousBlock: Bc
   newBlock.setBlockchainHeaders(childBlockHeaders)
 
   /* eslint-disable */
-  console.log('difficulty here is ' + newBlock.getDifficulty())
+  logger.info('distance <- minimum difficulty threshold ' + newBlock.getDifficulty())
 
   return [newBlock, currentTimestamp]
 }

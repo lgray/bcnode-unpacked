@@ -277,11 +277,6 @@ export class WorkerPool {
 
   _handlePoolError (msg: Object) {
 		this._logger.error(msg)
-    const pool: ChildProcess = fork(MINER_WORKER_PATH)
-    pool.on('message', this._handlePoolMessage.bind(this))
-    pool.on('error', this._handlePoolError.bind(this))
-    pool.on('exit', this._handlePoolExit.bind(this))
-    this._pool = pool
     return true
   }
 

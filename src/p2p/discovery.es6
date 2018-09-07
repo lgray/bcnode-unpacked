@@ -58,7 +58,7 @@ function Discovery (nodeId) {
   }
 
   const hash = crypto.createHash('sha1').update('bcbt002' + config.blockchainFingerprintsHash).digest('hex') // 68cb1ee15af08755204674752ef9aee13db93bb7
-  const maxConnections = process.env.BC_MAX_CONNECTIONS || 80
+  const maxConnections = process.env.BC_MAX_CONNECTIONS || config.bc.maximumWaypoints
   const seederPort = process.env.BC_SEEDER_PORT || 16060
   const port = process.env.BC_DISCOVERY_PORT || 16061
   this.options = {
@@ -69,10 +69,9 @@ function Discovery (nodeId) {
     dns: process.env.BC_DISCOVERY_MDNS === 'true',
     dht: {
       bootstrap: dhtBootstrap,
-      interval: 80000 + random(1000),
+      interval: 180000 + random(1000),
       maxConnections: maxConnections,
-      concurrency: maxConnections,
-      host: 'tds.blockcollider.org:16060'
+      concurrency: maxConnections
     }
   }
   this.streamOptions = {
@@ -96,7 +95,7 @@ Discovery.prototype = {
   seeder: function () {
     const self = this
     const client = new Client(self.streamOptions)
-    const refreshWindow = 60000 + Math.floor(Math.random() * 50000)
+    const refreshWindow = 190000 + Math.floor(Math.random() * 50000)
 
     client.on('error', (err) => {
       self._logger.debug(err.message)

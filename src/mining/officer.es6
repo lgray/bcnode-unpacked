@@ -13,6 +13,7 @@ import type { RocksDb } from '../persistence'
 
 const { writeFileSync } = require('fs')
 const { inspect } = require('util')
+const fkill = require('fkill')
 
 const crypto = require('crypto')
 const BN = require('bn.js')
@@ -145,7 +146,7 @@ export class MiningOfficer {
         // return Promise.resolve(false)
         // }
         if (parent.getHeight() === '1') {
-          this._logger.warn('searching for additional blocks before initiating mining')
+          this._logger.warn('searching for additional blocks before initiating mining process')
           this._canMine = false
         }
       } catch (err) {
@@ -296,7 +297,7 @@ export class MiningOfficer {
         to = from + 1
       }
 
-      from = max(to - 30, from)
+      from = max(to - 15, from)
 
       this._logger.info('chain: ' + chain + 'from: ' + from + ' to: ' + to)
 
@@ -349,7 +350,7 @@ export class MiningOfficer {
         }
       })
 
-      if (this._unfinished.length > 50) {
+      if (this._unfinished.length > 30) {
         this._unfinished.shift()
       }
 
@@ -380,10 +381,15 @@ export class MiningOfficer {
       }
 
       // this._workerPool.emitter.once('mined', (data) => {
-      //  this._handleWorkerFinishedMessage(data)
+      // this._handleWorkerFinishedMessage(data)
       // })
 
       /* eslint-disable */
+      try {
+        await fkill('bcworker', { force: true })
+      } catch(err) {
+        this._logger.debug(err)
+      }
       this._workerPool.updateWorkers({ type: 'work', data: update, workId: workId, newestChildBlock: block })
       return Promise.resolve(true)
     } catch (err) {
@@ -412,7 +418,7 @@ export class MiningOfficer {
     return this._blockTemplates[0]
   }
 
-  stopMining (pool: ?Object): bool {
+  stopMining (pool: ?Object): Promise<boolean> {
     debug('stop mining')
 
     if(pool !== undefined) {
@@ -420,8 +426,13 @@ export class MiningOfficer {
     } else {
       this._workerPool.updateWorkers({ type: 'reset' })
     }
+    try {
+      return fkill('bcworker', { force: true })
+    } catch (err) {
+      this._logger.debug(err)
+    }
+    return Promise.resolve(true)
 
-    return true
   }
 
   /*

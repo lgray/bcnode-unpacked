@@ -383,7 +383,7 @@ export default class PersistenceRocksDb {
         }))
     ).then((c) => {
       if (c !== undefined) {
-        this._logger.info('synchronized child headers: ' + c.length)
+        this._logger.debug('synchronized child headers: ' + c.length)
       }
       return Promise.resolve(true)
     }).catch((err) => {

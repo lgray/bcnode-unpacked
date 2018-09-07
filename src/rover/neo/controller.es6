@@ -33,16 +33,34 @@ const localMesh = sites.reduce((all, site) => {
   if (site.type === 'RPC') {
     if (site.protocol === 'https' || site.protocol === 'http') {
       let port = 80
+      let address = false
       if (site.port !== undefined) {
         port = Number(site.port)
       } else if (site.protocol === 'https') {
         port = 443
+      } else if (site.url !== undefined && site.url.indexOf('https') > -1) {
+        port = 443
       }
-      const obj = {
-        domain: site.address,
-        port: port
+      // determine key availability. Accolade to @davidthamwf.
+      if (site.address !== undefined) {
+        address = site.address
+      } else if (site.url !== undefined) {
+        address = site.url
       }
-      all.push(obj)
+
+      if (address.indexOf('http') < 0 && port !== 443) {
+        address = 'http://' + address
+      } else if (address.indexOf('https') < 0 && port === 443) {
+        address = 'https://' + address
+      }
+
+      if (address !== false) {
+        const obj = {
+          domain: address,
+          port: port
+        }
+        all.push(obj)
+      }
     }
   }
   return all

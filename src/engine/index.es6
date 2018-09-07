@@ -7,101 +7,47 @@
  * @flow
  */
 
-import type {
-  Logger
-} from 'winston'
-import type {
-  BcBlock
-} from '../protos/core_pb'
+import type { Logger } from 'winston'
+import type { BcBlock } from '../protos/core_pb'
 
 /* eslint-disable */
-//console.warn = () => {}
+console.warn = () => {}
 /* eslint-enable */
 
 const debug = require('debug')('bcnode:engine')
 const crypto = require('crypto')
 
-const {
-  EventEmitter
-} = require('events')
-const {
-  join,
-  resolve
-} = require('path')
-const {
-  writeFileSync
-} = require('fs')
-const {
-  max
-} = require('ramda')
-const {
-  queue
-} = require('async')
+const { EventEmitter } = require('events')
+const { join, resolve } = require('path')
+const { writeFileSync } = require('fs')
+const { max } = require('ramda')
+const { queue } = require('async')
 const maxmind = require('maxmind')
 const LRUCache = require('lru-cache')
 const BN = require('bn.js')
 const semver = require('semver')
-const {
-  config
-} = require('../config')
-const {
-  ensureDebugPath
-} = require('../debug')
-const {
-  Multiverse
-} = require('../bc/multiverse')
-const {
-  getLogger
-} = require('../logger')
-const {
-  Monitor
-} = require('../monitor')
-const {
-  Node
-} = require('../p2p')
-// const { NodeP2P2 } = require('../p2p2')
-const {
-  RoverManager
-} = require('../rover/manager')
+const fkill = require('fkill')
+const { config } = require('../config')
+const { ensureDebugPath } = require('../debug')
+const { Multiverse } = require('../bc/multiverse')
+const { getLogger } = require('../logger')
+const { Monitor } = require('../monitor')
+const { Node } = require('../p2p')
+const { RoverManager } = require('../rover/manager')
 const rovers = require('../rover/manager').rovers
-const {
-  Server
-} = require('../server/index')
+const { Server } = require('../server/index')
 const PersistenceRocksDb = require('../persistence').RocksDb
-const {
-  PubSub
-} = require('./pubsub')
-const {
-  RpcServer
-} = require('../rpc/index')
-const {
-  getGenesisBlock
-} = require('../bc/genesis')
-const {
-  getBootBlock
-} = require('../bc/bootblock')
-const {
-  BlockPool
-} = require('../bc/blockpool')
-const {
-  isValidBlockCached,
-  validateSequenceDifficulty
-} = require('../bc/validation')
-const {
-  Block
-} = require('../protos/core_pb')
-const {
-  errToString
-} = require('../helper/error')
-const {
-  getVersion
-} = require('../helper/version')
-const {
-  MiningOfficer
-} = require('../mining/officer')
-const {
-  WorkerPool
-} = require('../mining/pool')
+const { PubSub } = require('./pubsub')
+const { RpcServer } = require('../rpc/index')
+const { getGenesisBlock } = require('../bc/genesis')
+const { getBootBlock } = require('../bc/bootblock')
+const { BlockPool } = require('../bc/blockpool')
+const { isValidBlockCached, validateSequenceDifficulty } = require('../bc/validation')
+const { Block } = require('../protos/core_pb')
+const { errToString } = require('../helper/error')
+const { getVersion } = require('../helper/version')
+const { MiningOfficer } = require('../mining/officer')
+const { WorkerPool } = require('../mining/pool')
 const ts = require('../utils/time').default // ES6 default export
 
 const GEO_DB_PATH = resolve(__dirname, '..', '..', 'data', 'GeoLite2-City.mmdb')
@@ -127,7 +73,6 @@ export class Engine {
     _knownEvaluationsCache: LRUCache < string, BcBlock >
     _rawBlocks: LRUCache < number, Block >
     _node: Node
-    // _nodep2p2: NodeP2P2
     _persistence: PersistenceRocksDb
     _pubsub: PubSub
     _rovers: RoverManager
@@ -503,8 +448,13 @@ export class Engine {
         })
 
         this._workerPool.emitter.on('mined', (data) => {
-            this._logger.info('workers dismissed')
             //this.miningOfficer.stopMining()
+            fkill('bcworker', { force: true }).then(() => {
+              this._logger.info('workers dismissed')
+            })
+            .catch((err) => {
+              this._logger.debug(err)
+            })
             this.miningOfficer._handleWorkerFinishedMessage(data)
         })
 
@@ -604,11 +554,15 @@ export class Engine {
         const block = msg.data
         let storeChildHeaders = {
           btc: false,
-          neo: true,
-          lsk: false,
-          eth: true,
-          wav: true
+          neo: false,
+          lsk: true,
+          eth: false,
+          wav: false
         }
+        if(msg.childHeaders !== undefined) {
+          storeChildHeaders = msg.childHeaders
+        }
+        // override all settings if validation mode is strict
         if(BC_BT_VALIDATION === true) {
           storeChildHeaders = {
             btc: false,
@@ -847,12 +801,7 @@ export class Engine {
                 this._server._wsBroadcastPeerDisonnected(peer)
             }
         })
-        return this.node.start(nodeId).then(() => {
-            this._logger.info(nodeId)
-        })
-            .catch((err) => {
-                this._logger.error(err)
-            })
+        return this.node.start(nodeId)
     }
 
     /**
@@ -880,10 +829,6 @@ export class Engine {
                     if (PERSIST_ROVER_DATA === true) {
                         this._writeRoverData(block)
                     }
-
-                    // FIXME: @schnorr, is this typo? Should not it be this._rawBlocks.push(block) ?
-                    // this._rawBlock.push(block)
-                    this._logger.info('rovered block in consideration of cache ' + this._blockCache.length)
 
                     process.nextTick(() => {
                         this.miningOfficer.newRoveredBlock(rovers, block, this._blockCache)
@@ -1251,15 +1196,28 @@ export class Engine {
                     return this.multiverse.addNextBlock(newBlock).then((isNextBlock) => {
                             if (isNextBlock === true) {
 
+                                let options = {
+                                    key: 'bc.block.latest',
+                                    data: newBlock,
+                                    childHeaders: {
+                                      btc: true,
+                                      eth: true,
+                                      lsk: true,
+                                      wav: true,
+                                      neo: true
+                                    }
+                                }
                                 if (this.multiverse._chain.length > 1) {
                                     this._logger.info('new block ' + newBlock.getHash() + ' references previous Block ' + newBlock.getPreviousHash() + ' for block ' + this.multiverse._chain[1].getHash())
                                 }
                                 this._logger.info('block ' + newBlock.getHeight() + ' considered next block in current multiverse ')
                                 // RESTART MINING USED newBlock.getHash()
-                                this.pubsub.publish('update.block.latest', {
-                                    key: 'bc.block.latest',
-                                    data: newBlock
-                                })
+                                if (BC_BT_VALIDATION === true) {
+                                  delete options.childHeaders
+                                  this.pubsub.publish('update.block.latest', options)
+                                } else {
+                                  this.pubsub.publish('update.block.latest', options)
+                                }
                                 // notify the miner
                                 this.node.broadcastNewBlock(newBlock, conn)
                             } else {
@@ -1407,7 +1365,14 @@ export class Engine {
                                                         key: 'bc.block.latest',
                                                         data: newBlock,
                                                         force: true,
-                                                        multiverse: this.multiverse._chain
+                                                        multiverse: this.multiverse._chain,
+                                                        childHeaders: {
+                                                          btc: true,
+                                                          eth: true,
+                                                          neo: true,
+                                                          lsk: true,
+                                                          wav: true
+                                                        }
                                                     })
                                                     this.node.broadcastNewBlock(newBlock, conn)
                                                     this._logger.debug('sync unlocked')

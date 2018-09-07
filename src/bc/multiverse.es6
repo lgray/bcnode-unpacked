@@ -185,7 +185,7 @@ export class Multiverse {
     // if there is no current parent, this block is the right lbock
     if (currentParentHighestBlock === false) {
       if (new BN(newBlock.getTotalDistance()).gt(new BN(currentHighestBlock.getTotalDistance()))) {
-        this._logger.info('bestBlock failed newBlock total distance < currentHighestBlock total distance')
+        this._logger.info('best block failed newBlock total distance < current block total distance')
         this._chain.length = 0
         this._chain.push(newBlock)
         return Promise.resolve(true)
@@ -194,7 +194,7 @@ export class Multiverse {
     }
     // FAIL if newBlock total difficulty <  currentHighestBlock
     if (new BN(newBlock.getTotalDistance()).lt(new BN(currentHighestBlock.getTotalDistance()))) {
-      this._logger.info('bestBlock failed newBlock total distance < currentHighestBlock total distance')
+      this._logger.info('best block failed newBlock total distance < current block total distance')
       return Promise.resolve(false)
     }
     // if the current block at the same height is better switch
@@ -270,11 +270,11 @@ export class Multiverse {
     this._logger.warn('child height previous block: ' + childrenHeightSum(currentHighestBlock))
     if (childrenHeightSum(newBlock) < childrenHeightSum(currentHighestBlock)) {
       this._logger.warn('connection child chain weight is below threshold')
-      // after block height 450000 resume traditional assertions even if BC_BT_VALIDATION is true
-      if (new BN(newBlock.getHeight()).gt(new BN(450000)) === true && BC_BT_VALIDATION === true) {
+      // after block height 500000 resume traditional assertions even if BC_BT_VALIDATION is true
+      if (new BN(newBlock.getHeight()).gt(new BN(500000)) === true && BC_BT_VALIDATION === true) {
         return Promise.resolve(false)
-      // if BC_BT_VALIDATION is not enabled and the block height is greater than 450000 throw this as an error
-      } else if (BC_BT_VALIDATION !== true && new BN(newBlock.getHeight()).gt(new BN(450000)) === true) {
+      // if BC_BT_VALIDATION is not enabled and the block height is greater than 500000 throw this as an error
+      } else if (BC_BT_VALIDATION !== true && new BN(newBlock.getHeight()).gt(new BN(500000)) === true) {
         return Promise.resolve(false)
       }
     }
@@ -535,15 +535,14 @@ export class Multiverse {
       // $FlowFixMe - Object.values is not generic
       .map(({ blockchain, height }) => `${blockchain}.block.${height}`)
 
-    const previousKeys = receivedBlocks
-      // $FlowFixMe - Object.values is not generic
-      .map((b) => `${b.blockchain}.block.${(b.height - 1)}`)
-
     const blocks = await this.persistence.getBulk(keys)
     let valid = keys.length === blocks.length
 
     if (!valid) {
       /* eslint-disable */
+      const previousKeys = receivedBlocks
+        // $FlowFixMe - Object.values is not generic
+        .map((b) => `${b.blockchain}.block.${(b.height - 1)}`)
       console.log('------- KEYS ---------')
       console.log(keys)
       console.log('------- PREV KEYS ---------')
@@ -554,6 +553,12 @@ export class Multiverse {
         return Promise.resolve(true)
       }
       const previousBlocks = await this.persistence.getBulk(previousKeys)
+
+      if(previousBlocks === undefined || previousBlocks === false || previousBlocks.length !== keys.length){
+        this._logger.warn('previous blocks not available for sequence confirmation')
+        return Promise.resolve(false)
+      }
+
       const latestBlockchainNames = blocks.map((b) => {
         return b.getBlockchain()
       })
@@ -561,7 +566,7 @@ export class Multiverse {
         return b.getBlockchain()
       })
 
-      const missingBlockchainNames = keys.reduce((missing, key) => {
+      const missingBlockchainNames = latestBlockchainNames.reduce((missing, key) => {
         if(keys.indexOf(key) < 0){
           missing.push(key)
         }
@@ -577,24 +582,25 @@ export class Multiverse {
         return missing
       }, [])
 
-      console.log('------- FOUND BLOCKS ---------')
+      console.log('------- BLOCKS ON DISK ---------')
       console.log(latestBlockchainNames)
-      console.log('------- PREVIOUS FOUND BLOCKS ---------')
+      console.log('------- PREVIOUS BLOCKS ON DISK ---------')
       console.log(previousBlockchainNames)
-      console.log('------- MISSING BLOCKS ---------')
+      console.log('------- UNROVERED BLOCKS ---------')
       console.log(missingBlockchainNames)
 
       const correctSequence = missingBlocks.reduce((valid, block) => {
         if(valid === true) {
-          previousBlocks.map((pb) => {
+          valid = previousBlocks.reduce((updateValid, pb) => {
             if(block.getBlockchain() === pb.getBlockchain()){
               console.log('eval blockchain ' + pb.getBlockchain() + ' previousHash: ' + pb.getPreviousHash() + ' hash: ' + block.getHash())
               if(!validateBlockSequence([pb, block])){
                 console.log('for blockchain ' + pb.getBlockchain() + ' sequence is INVALID previousHash: ' + pb.getPreviousHash() + ' hash: ' + block.getHash())
-                valid = false
+                updateValid = false
               }
             }
-          })
+            return updateValid
+          }, true)
         }
         return valid
       }, true)
