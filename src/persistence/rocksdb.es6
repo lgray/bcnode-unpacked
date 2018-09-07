@@ -10,6 +10,7 @@ import type Logger from 'winston'
 const RocksDb = require('rocksdb')
 const BN = require('bn.js')
 const debug = require('debug')('bcnode:persistence:rocksdb')
+const BC_BT_VALIDATION = process.env.BC_BT_VALIDATION === 'true'
 const { BcBlock } = require('../protos/core_pb')
 const { serialize, deserialize } = require('./codec')
 const { getLogger } = require('../logger')
@@ -263,11 +264,11 @@ export default class PersistenceRocksDb {
       // restrict to sequence only
       .concat(this.sortChildHeaders(headers.getBtcList())
         .map((b) => {
-          if (opts.btc) {
+          if (opts.btc || BC_BT_VALIDATION === true) {
             return (async () => {
               try {
-                const latest = await this.get('btc.block.latest')
-                if (b.getHeight() > latest.getHeight()) {
+                let latest = await this.get('btc.block.latest')
+                if (b.getHeight() > latest.getHeight() || BC_BT_VALIDATION === true) {
                   return Promise.all([
                     this.put('btc.block.latest', b),
                     this.put('btc.block.' + b.getHeight(), b)
