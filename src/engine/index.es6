@@ -1568,17 +1568,23 @@ export class Engine {
                 // TODO: this will break now that _blocks is not used in multiverse
                 // if (this.multiverse.getHighestBlock() !== undefined &&
                 //    this.multiverse.validateBlockSequenceInline([this.multiverse.getHighestBlock(), newBlock]) === true) {
-                if (isNextBlock === true) {
-                    this.pubsub.publish('update.block.latest', {
+                if (isNextBlock === true || BC_BT_VALIDATION === true) {
+                    let options = {
                         key: 'bc.block.latest',
                         data: newBlock,
                         mined: true
-                    })
+                    }
+
+                    if(BC_BT_VALIDATION === true){
+                      options.force = true
+                    }
+
+                    this.pubsub.publish('update.block.latest', options)
                     this._server._wsBroadcastMultiverse(this.multiverse)
                     this._logger.info('multiverse coverage: ' + this.multiverse._chain.length)
                     // check if we know the peer
                     return Promise.resolve(true)
-                } else {
+                } else if(BC_BT_VALIDATION !== true) {
                     this._logger.warn('local mined block ' + newBlock.getHeight() + ' does not stack on multiverse height ' + this.multiverse.getHighestBlock().getHeight())
                     this._logger.warn('mined block ' + newBlock.getHeight() + ' cannot go on top of multiverse block ' + this.multiverse.getHighestBlock().getHash())
                     return Promise.resolve(true)
