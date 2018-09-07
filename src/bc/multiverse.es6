@@ -223,7 +223,7 @@ export class Multiverse {
     }
 
     const newBlockHeaders = newBlock.getBlockchainHeaders().toObject()
-    if (newBlock.getHeight() !== '1' && BC_BT_VALIDATION === true && new BN(newBlockHeaders['btcList'][0].height).gt(new BN(541000)) === true) {
+    if (newBlock.getHeight() !== 1 && newBlockHeaders['btcList'].length > 0 && BC_BT_VALIDATION === true && new BN(newBlockHeaders['btcList'][0].height).gt(new BN(541000)) === true) {
       return Promise.resolve(false)
     }
     // if there are no blocks in the multiverse this block is the highest
