@@ -16,7 +16,7 @@ const BC_BT_VALIDATION = process.env.BC_BT_VALIDATION === 'true'
 const { flatten } = require('ramda')
 
 const { getGenesisBlock } = require('./genesis')
-const { validateSequenceTotalDistance, validateSequenceDifficulty, isValidBlockCached, validateRoveredSequences, validateBlockSequence, getNewestHeader, childrenHeightSum } = require('./validation')
+const { validateSequenceTotalDistance, validateSequenceDifficulty, isValidBlockCached, validateBlockSequence, getNewestHeader, childrenHeightSum } = require('./validation')
 const { standardId } = require('./helper')
 const { getLogger } = require('../logger')
 
@@ -280,12 +280,18 @@ export class Multiverse {
     if (childrenHeightSum(newBlock) < childrenHeightSum(currentHighestBlock)) {
       this._logger.warn('connection child chain weight is below threshold')
       // after block height 500000 resume traditional assertions even if BC_BT_VALIDATION is true
-      if (new BN(newBlock.getHeight()).gt(new BN(500000)) === true && BC_BT_VALIDATION === true) {
-        return Promise.resolve(false)
-      // if BC_BT_VALIDATION is not enabled and the block height is greater than 500000 throw this as an error
-      } else if (BC_BT_VALIDATION !== true && new BN(newBlock.getHeight()).gt(new BN(500000)) === true) {
-        return Promise.resolve(false)
-      }
+      return Promise.resolve(false)
+    }
+
+    // if difficulty is invalid and we have not enabled BC_BT_VALIDATION on this node reject as next block
+    if (!validateSequenceDifficulty(currentHighestBlock, newBlock)) {
+      this._logger.info('invalid difficulties')
+      return Promise.resolve(false)
+    }
+    // if it has an invalid total distance and we have not enabled BC_BT_VALIDATION fail the block
+    if (!validateSequenceTotalDistance(currentHighestBlock, newBlock)) {
+      this._logger.info('invalid total distance')
+      return Promise.resolve(false)
     }
 
     if (childrenHeightSum(newBlock) === childrenHeightSum(currentHighestBlock)) {
@@ -300,17 +306,6 @@ export class Multiverse {
       }
     }
 
-    // if it has an invalid total distance and we have not enabled BC_BT_VALIDATION fail the block
-    if (!validateSequenceTotalDistance(currentHighestBlock, newBlock) && BC_BT_VALIDATION !== true) {
-      this._logger.info('invalid total distance')
-      return Promise.resolve(false)
-    }
-
-    // if difficulty is invalid and we have not enabled BC_BT_VALIDATION on this node reject as next block
-    if (!validateSequenceDifficulty(currentHighestBlock, newBlock) && BC_BT_VALIDATION !== true) {
-      this._logger.info('invalid difficulties')
-      return Promise.resolve(false)
-    }
     // FAIL
     // case fails over into the resync
     if (newBlock.getHeight() - 7 > currentHighestBlock.getHeight()) {
@@ -371,7 +366,6 @@ export class Multiverse {
     // FAIL
     // if newBlock does not reference the current highest block as it's previous hash
     // note this ignores the first block immediately following the genesis block due to lack of rovered blocks in the genesis block
-    // ////////////// ALWAYS FAILS HERE /////////////////
     if (newBlock.getHeight() > 2 && validateBlockSequence([newBlock, currentHighestBlock]) !== true) {
       this._logger.info('addition of block ' + newBlock.getHash() + ' creates malformed child blockchain sequence')
       return this.addBestBlock(newBlock)
@@ -380,13 +374,12 @@ export class Multiverse {
     // add the new block to the parent position
     this._chain.unshift(newBlock)
 
-    const validRovers = validateRoveredSequences([newBlock, currentHighestBlock])
-
-    if (validRovers === false) {
-      this._logger.info('multiverse contains wayward rovers')
-      // disabled until AT
-      // return this.addBestBlock(newBlock)
-    }
+    // const validRovers = validateRoveredSequences([newBlock, currentHighestBlock])
+    // if (validRovers === false) {
+    //  this._logger.info('multiverse contains wayward rovers')
+    //  // disabled until AT
+    //  // return this.addBestBlock(newBlock)
+    // }
 
     if (this._chain.length > 7) {
       this._chain.pop()
@@ -499,7 +492,7 @@ export class Multiverse {
       return Promise.resolve(false)
     }
 
-    if (this._chain.length < 2 && BC_BT_VALIDATION !== true) {
+    if (this._chain.length < 2) {
       this._logger.info('determining if chain current total distance is less than new block')
       if (new BN(currentHighestBlock.getTotalDistance()).lt(new BN(newBlock.getTotalDistance())) === true &&
          new BN(childrenHeightSum(currentHighestBlock)).lt(new BN(childrenHeightSum(newBlock))) === true) {
@@ -527,7 +520,7 @@ export class Multiverse {
     }
 
     // pick the chain we have rovered blocks for
-    if (childrenHeightSum(newBlock) <= childrenHeightSum(currentHighestBlock) && BC_BT_VALIDATION === true) {
+    if (childrenHeightSum(newBlock) <= childrenHeightSum(currentHighestBlock)) {
       this._logger.warn('child height new block: ' + childrenHeightSum(newBlock))
       this._logger.warn('child height previous block: ' + childrenHeightSum(currentHighestBlock))
 
