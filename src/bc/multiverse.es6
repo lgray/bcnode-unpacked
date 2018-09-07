@@ -479,7 +479,7 @@ export class Multiverse {
 
     // PASS if current highest block is older than 58 seconds from local time
     if (new BN(new BN(currentHighestBlock.getTimestamp()).add(new BN(58))).lt(new BN(Math.floor(Date.now() * 0.001))) === true &&
-       new BN(currentHighestBlock.getTotalDistance()).lt(new BN(newBlock.getTotalDistance())) === true &&
+       // new BN(currentHighestBlock.getTotalDistance()).lt(new BN(newBlock.getTotalDistance())) === true &&
        new BN(getNewestHeader(newBlock).timestamp).gt(new BN(getNewestHeader(currentHighestBlock).timestamp)) === true) {
       this._logger.info('current chain is stale chain new child time: ' + getNewestHeader(newBlock).timestamp + ' current child time: ' + getNewestHeader(currentHighestBlock).timestamp)
       return Promise.resolve(true)
@@ -519,7 +519,7 @@ export class Multiverse {
     }
 
     // FAIL if newBlock total difficulty <  currentHighestBlock
-    if (new BN(newBlock.getTotalDistance(), 16).lt(new BN(currentHighestBlock.getTotalDistance(), 16)) === true) {
+    if (new BN(newBlock.getTotalDistance()).lt(new BN(currentHighestBlock.getTotalDistance())) === true) {
       this._logger.info('cancel resync req <- new block distance ' + newBlock.getTotalDistance() + ' is lower than highest block ' + currentHighestBlock.getTotalDistance())
       return Promise.resolve(false)
     }

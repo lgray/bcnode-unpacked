@@ -99,6 +99,11 @@ if (cluster.isMaster) {
           workId: data.workId
         }, () => {
           (async () => {
+            try {
+              await fkill('bcworker', { force: true })
+            } catch (err) {
+              globalLog.debug(err)
+            }
             active.length = 0
             if (cluster.workers !== undefined && Object.keys(cluster.workers).length > 0) {
               Object.keys(cluster.workers).map((id) => {
