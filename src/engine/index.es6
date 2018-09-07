@@ -246,7 +246,11 @@ export class Engine {
             }
 
             if(BC_REMOVE_BTC === true){
+               this._logger.warn('REMOVE BTC BLOCK LATEST FLAG TRIGGERED')
                await this.persistence.del('btc.block.latest')
+               await this.persistence.del('btc.block.546785')
+               await this.persistence.del('btc.block.546784')
+               await this.persistence.del('btc.block.546783')
             }
             /* eslint-disable */
             try {
