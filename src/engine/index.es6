@@ -1289,7 +1289,8 @@ export class Engine {
                                             }
                                             this._emitter.emit('sendblock', {
                                                 data: newBlock,
-                                                connection: conn
+                                                connection: conn,
+                                                type: '0012W01'
                                             })
                                         }
                                     })

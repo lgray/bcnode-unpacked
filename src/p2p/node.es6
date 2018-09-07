@@ -198,7 +198,10 @@ export class PeerNode {
       })
 
       this._engine._emitter.on('sendblock', (msg) => {
-        const type = '0008W01'
+        let type = '0008W01'
+        if (msg.type !== undefined) {
+          type = msg.type
+        }
         const serial = msg.data.serializeBinary()
         this._p2p.qsend(msg.connection, type + protocolBits[type] + serial)
           .then(() => {
