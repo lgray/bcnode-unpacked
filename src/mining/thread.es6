@@ -125,8 +125,8 @@ if (cluster.isMaster) {
       (async () => {
         const workerA = applyEvents(createThread())
         await sendWorker(workerA, data.data)
-        const workerB = applyEvents(createThread())
-        await sendWorker(workerB, data.data)
+        // const workerB = applyEvents(createThread())
+        // await sendWorker(workerB, data.data)
         // if (Object.keys(cluster.workers).length < settings.maxWorkers) {
         // const deploy = settings.maxWorkers - Object.keys(cluster.workers).length
         // const worker = applyEvents(createThread())
