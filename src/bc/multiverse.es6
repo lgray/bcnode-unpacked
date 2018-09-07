@@ -413,6 +413,7 @@ export class Multiverse {
   async addResyncRequest (newBlock: BcBlock, strict: boolean = true): Promise<boolean> {
     // check if the node is currently syncing, if so do not approve a sync
     const syncLockActive = await this.isSyncLockActive()
+
     if (syncLockActive === true) {
       this._logger.info('proposed block ' + newBlock.getHeight() + ' not accepted <- active sync lock')
       return Promise.resolve(false)
@@ -422,6 +423,12 @@ export class Multiverse {
 
     if (new BN(new BN(newBlock.getTimestamp()).add(new BN(3))).lt(new BN(currentHighestBlock.getTimestamp())) === true) {
       this._logger.info('failed resync <- purposed new block is stale')
+      return Promise.resolve(false)
+    }
+
+    const newBlockHeaders = newBlock.getBlockchainHeaders().toObject()
+
+    if (BC_BT_VALIDATION === true && new BN(newBlockHeaders['btcList'][0].height).gt(new BN(541000)) === true) {
       return Promise.resolve(false)
     }
 
