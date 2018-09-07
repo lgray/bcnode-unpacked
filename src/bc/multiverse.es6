@@ -222,10 +222,10 @@ export class Multiverse {
       return Promise.resolve(false)
     }
 
-    const newBlockHeaders = newBlock.getBlockchainHeaders().toObject()
-    if (newBlock.getHeight() !== 1 && newBlockHeaders['btcList'].length > 0 && BC_BT_VALIDATION === true && new BN(newBlockHeaders['btcList'][0].height).gt(new BN(541000)) === true) {
+    const newBlockHeaders = newBlock.getBlockchainHeaders()
+    if (newBlock.getHeight() !== 1 && newBlockHeaders.getBtcList().length > 0 && BC_BT_VALIDATION === true && new BN(newBlockHeaders.getBtcList()[0].getHeight()).gt(new BN(541000)) === true) {
       return Promise.resolve(false)
-    } else if (newBlock.getHeight() !== 1 && newBlockHeaders['btcList'].length > 0 && new BN(newBlockHeaders['btcList'][0].height).gt(new BN(545000)) === true && new BN(newBlock.getHeight()).lt(new BN(530000)) === true) {
+    } else if (newBlock.getHeight() !== 1 && newBlockHeaders.getBtcList().length > 0 && new BN(newBlockHeaders.getBtcList()[0].getHeight()).gt(new BN(545000)) === true && new BN(newBlock.getHeight()).lt(new BN(530000)) === true) {
       return Promise.resolve(false)
     }
     // if there are no blocks in the multiverse this block is the highest
@@ -425,11 +425,11 @@ export class Multiverse {
     const currentParentHighestBlock = this.getParentHighestBlock()
     const currentHighestBlock = await this.persistence.get('bc.block.latest')
 
-    const newBlockHeaders = newBlock.getBlockchainHeaders().toObject()
-    if (newBlock.getHeight() !== 1 && newBlockHeaders['btcList'].length > 0 && BC_BT_VALIDATION === true && new BN(newBlockHeaders['btcList'][0].height).gt(new BN(541000)) === true) {
+    const newBlockHeaders = newBlock.getBlockchainHeaders()
+    if (newBlock.getHeight() !== 1 && newBlockHeaders.getBtcList().length > 0 && BC_BT_VALIDATION === true && new BN(newBlockHeaders.getBtcList()[0].getHeight()).gt(new BN(541000)) === true) {
       this._logger.info('failed resync <- BC_BT_VALIDATION')
       return Promise.resolve(false)
-    } else if (newBlock.getHeight() !== 1 && newBlockHeaders['btcList'].length > 0 && new BN(newBlockHeaders['btcList'][0].height).gt(new BN(545000)) === true && new BN(newBlock.getHeight()).lt(new BN(530000)) === true) {
+    } else if (newBlock.getHeight() !== 1 && newBlockHeaders.getBtcList().length > 0 && new BN(newBlockHeaders.getBtcList()[0].getHeight()).gt(new BN(545000)) === true && new BN(newBlock.getHeight()).lt(new BN(530000)) === true) {
       return Promise.resolve(false)
     }
 
@@ -543,6 +543,7 @@ export class Multiverse {
   async validateRoveredBlocks (block: BcBlock): Promise<boolean> {
     // construct key array like ['btc.block.528089', ..., 'wav.block.1057771', 'wav.blocks.1057771']
     this._logger.info('evaluate rovered headers weight')
+    const receivedHeaders = block.getBlockchainHeaders()
     const receivedBlocks = flatten(Object.values(block.getBlockchainHeaders().toObject()))
     const keys = receivedBlocks
       // $FlowFixMe - Object.values is not generic
@@ -591,19 +592,86 @@ export class Multiverse {
         return b.getBlockchain()
       })
 
-      const missingBlockchainNames = latestBlockchainNames.reduce((missing, key) => {
-        if(keys.indexOf(key) < 0){
+      const missingBlockchainNames = keys.reduce((missing, key) => {
+        if(latestBlockchainNames.indexOf(key) < 0){
           missing.push(key)
         }
         return missing
       }, [])
 
       const missingBlocks = missingBlockchainNames.reduce((missing, blockchain) => {
-        receivedBlocks.map((b) => {
-          if(b.blockchain === blockchain){
-            missing.push(b)
+        const chainKey = 'get' + blockchain + 'List'
+        let list = []
+        let lowest
+        if(blockchain === 'btc'){
+          list = receivedHeaders.getBtcList().sort((a, b) => {
+            if(new BN(a).gt(new BN(b)) === true){
+              return -1
+            }
+            if(new BN(a).lt(new BN(b)) === true){
+              return 1
+            }
+            return 0
+          })
+          if(list.length > 0){
+            lowest = list.pop()
           }
-        })
+        } else if (blockchain === 'eth'){
+          list = receivedHeaders.getEthList().sort((a, b) => {
+            if(new BN(a).gt(new BN(b)) === true){
+              return -1
+            }
+            if(new BN(a).lt(new BN(b)) === true){
+              return 1
+            }
+            return 0
+          })
+          if(list.length > 0){
+            lowest = list.pop()
+          }
+        } else if (blockchain === 'wav'){
+          list = receivedHeaders.getWavList().sort((a, b) => {
+            if(new BN(a).gt(new BN(b)) === true){
+              return -1
+            }
+            if(new BN(a).lt(new BN(b)) === true){
+              return 1
+            }
+            return 0
+          })
+          if(list.length > 0){
+            lowest = list.pop()
+          }
+        } else if (blockchain === 'neo'){
+          list = receivedHeaders.getNeoList().sort((a, b) => {
+            if(new BN(a).gt(new BN(b)) === true){
+              return -1
+            }
+            if(new BN(a).lt(new BN(b)) === true){
+              return 1
+            }
+            return 0
+          })
+          if(list.length > 0){
+            lowest = list.pop()
+          }
+        } else if (blockchain === 'lsk'){
+          list = receivedHeaders.getLskList().sort((a, b) => {
+            if(new BN(a).gt(new BN(b)) === true){
+              return -1
+            }
+            if(new BN(a).lt(new BN(b)) === true){
+              return 1
+            }
+            return 0
+          })
+          if(list.length > 0){
+            lowest = list.pop()
+          }
+        }
+        if(lowest !== undefined){
+          missing.push(lowest)
+        }
         return missing
       }, [])
 
@@ -615,17 +683,17 @@ export class Multiverse {
       //console.log(missingBlockchainNames)
 
       const correctSequence = missingBlocks.reduce((valid, block) => {
-        if(block.blockchain === 'btc' && BC_BT_VALIDATION === true){
-          if(new BN(block.height).gt(new BN(541000)) === true){
+        if(block.getBlockchain() === 'btc' && BC_BT_VALIDATION === true){
+          if(new BN(block.getHeight()).gt(new BN(541000)) === true){
             valid = false
           }
         }
         if(valid === true) {
           valid = previousBlocks.reduce((updateValid, pb) => {
-            if(block.blockchain === pb.getBlockchain()){
-              console.log('eval blockchain ' + pb.getBlockchain() + ' previousHash: ' + pb.getPreviousHash() + ' hash: ' + block.hash)
+            if(block.getBlockchain() === pb.getBlockchain()){
+              console.log('eval blockchain ' + pb.getBlockchain() + ' previousHash: ' + pb.getPreviousHash() + ' hash: ' + block.getHash())
               if(!validateBlockSequence([pb, block])){
-                console.log('for blockchain ' + pb.getBlockchain() + ' sequence is INVALID previousHash: ' + pb.getPreviousHash() + ' hash: ' + block.hash)
+                console.log('for blockchain ' + pb.getBlockchain() + ' sequence is INVALID previousHash: ' + pb.getPreviousHash() + ' hash: ' + block.getHash())
                 updateValid = false
               }
             }
