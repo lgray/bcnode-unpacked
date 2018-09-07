@@ -52,7 +52,7 @@ export const DF_CONFIG: DfConfig = fromPairs(FINGERPRINTS_TEMPLATE.blockchainHea
 const logger = getLogger(__filename)
 
 export function isValidBlock (newBlock: BcBlock, type: number = 0): bool {
-  if (newBlock === undefined) {
+  if (newBlock === undefined || newBlock.getBlockchainHeaders) {
     return false
   }
   if (new BN(newBlock.getHeight()).lt(new BN(151500)) === true) {
