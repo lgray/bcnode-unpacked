@@ -221,6 +221,11 @@ export class Multiverse {
       this._logger.warn('no block was given to evaluate')
       return Promise.resolve(false)
     }
+
+    const newBlockHeaders = newBlock.getBlockchainHeaders().toObject()
+    if (BC_BT_VALIDATION === true && new BN(newBlockHeaders['btcList'][0].height).gt(new BN(541000)) === true) {
+      return Promise.resolve(false)
+    }
     // if there are no blocks in the multiverse this block is the highest
     // in default setup the contructor loads the genesis block into the multiverse
     if (this._chain.length === 0) {
