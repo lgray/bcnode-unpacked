@@ -1170,8 +1170,12 @@ export class Engine {
      * @param conn Connection the block was received from
      * @param newBlock Block itself
      */
-    blockFromPeer(conn: Object, newBlock: BcBlock): void {
+    blockFromPeer(conn: Object, newBlock: BcBlock, options: ?Object): void {
         // Test if new block has been seen before
+        let opts = {}
+        if(options !== undefined){
+          opts = options
+        }
         if (newBlock && !this._knownBlocksCache.get(newBlock.getHash())) {
             // Add block to LRU cache to avoid processing the same block twice
             debug(`Adding received block into cache of known blocks - ${newBlock.getHash()}`)
@@ -1255,7 +1259,7 @@ export class Engine {
                                             let storeChildHeaders = {
                                               btc: false,
                                               neo: true,
-                                              lsk: false,
+                                              lsk: true,
                                               eth: true,
                                               wav: true
                                             }
@@ -1280,6 +1284,9 @@ export class Engine {
                                         } else {
                                             // this means the local peer has a better version of the chain and
                                             // therefore pushing it to the outside peer
+                                            if(opts.sendOnFail !== undefined && opts.sendOnFail === false){
+                                               return
+                                            }
                                             this._emitter.emit('sendblock', {
                                                 data: newBlock,
                                                 connection: conn

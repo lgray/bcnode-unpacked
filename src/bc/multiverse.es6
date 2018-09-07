@@ -283,8 +283,8 @@ export class Multiverse {
       return Promise.resolve(false)
     }
 
-    this._logger.warn('child height new block: ' + childrenHeightSum(newBlock))
-    this._logger.warn('child height previous block: ' + childrenHeightSum(currentHighestBlock))
+    this._logger.warn('child height new block #' + newBlock.getHeight() + ': ' + childrenHeightSum(newBlock))
+    this._logger.warn('child height previous block #' + currentHighestBlock.getHeight() + ': ' + childrenHeightSum(currentHighestBlock))
     if (childrenHeightSum(newBlock) < childrenHeightSum(currentHighestBlock)) {
       this._logger.warn('connection child chain weight is below threshold')
       // after block height 500000 resume traditional assertions even if BC_BT_VALIDATION is true
@@ -400,7 +400,7 @@ export class Multiverse {
     try {
       const synclock = await this.persistence.get('synclock')
 
-      if (synclock.getHeight() !== 1 && (synclock.getTimestamp() + 22) < Math.floor(Date.now() * 0.001)) {
+      if (synclock.getHeight() !== 1 && (synclock.getTimestamp() + 8) < Math.floor(Date.now() * 0.001)) {
         await this.persistence.put('synclock', getGenesisBlock())
         this._logger.warn('sync lock is stale resetting')
         return Promise.resolve(false)
@@ -445,10 +445,14 @@ export class Multiverse {
       return Promise.resolve(false)
     }
 
+    try {
     const roveredBlockHeaders = await this.validateRoveredBlocks(newBlock)
     if (roveredBlockHeaders === false) {
-      this._logger.info('child header weight <- below threshold')
+      this._logger.warn('rover coverage of child headers is low')
       // return Promise.resolve(false)
+    }
+    } catch (err) {
+      this._logger.error(err)
     }
     // current chain is malformed and new block is not
     const validNewBlock = await isValidBlockCached(this.persistence, newBlock)
@@ -556,11 +560,12 @@ export class Multiverse {
   async validateRoveredBlocks (block: BcBlock): Promise<boolean> {
     // construct key array like ['btc.block.528089', ..., 'wav.block.1057771', 'wav.blocks.1057771']
     this._logger.info('evaluate rovered headers weight')
-    const receivedHeaders = block.getBlockchainHeaders()
-    const receivedBlocks = flatten(Object.values(block.getBlockchainHeaders().toObject()))
-    const keys = receivedBlocks
-      // $FlowFixMe - Object.values is not generic
-      .map(({ blockchain, height }) => `${blockchain}.block.${height}`)
+    try {
+      const receivedHeaders = block.getBlockchainHeaders()
+      const receivedBlocks = flatten(Object.values(block.getBlockchainHeaders().toObject()))
+      const keys = receivedBlocks
+        // $FlowFixMe - Object.values is not generic
+        .map(({ blockchain, height }) => `${blockchain}.block.${height}`)
 
     const blocks = await this.persistence.getBulk(keys)
 

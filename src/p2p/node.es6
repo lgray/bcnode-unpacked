@@ -184,6 +184,19 @@ export class PeerNode {
         return this._p2p.qsend(msg.connection, type + '[*]' + msg.data.serializeBinary())
       })
 
+      this._engine._emitter.on('sendhandshakeblock', (msg) => {
+        const type = '0012W01'
+        const serial = msg.data.serializeBinary()
+        this._p2p.qsend(msg.connection, type + protocolBits[type] + serial)
+          .then(() => {
+            this._logger.info('block sent!')
+          })
+          .catch((err) => {
+            this._logger.warn('critical block rewards feature is failing with this error')
+            this._logger.error(err)
+          })
+      })
+
       this._engine._emitter.on('sendblock', (msg) => {
         const type = '0008W01'
         const serial = msg.data.serializeBinary()
@@ -360,7 +373,9 @@ export class PeerNode {
 
       this._engine._emitter.on('putblock', (msg) => {
         this._logger.debug('candidate block ' + msg.data.getHeight() + ' recieved')
-        this._engine.blockFromPeer(msg, msg.data)
+        let options = {}
+        if (msg.optoins) { options = msg.options }
+        this._engine.blockFromPeer(msg, msg.data, options)
       })
 
       /*
@@ -529,6 +544,21 @@ export class PeerNode {
 
         this._engine._emitter.emit('putblock', {
           data: block,
+          connection: conn
+        })
+
+      } else if (type === '0012W01') {
+
+        const parts = str.split(protocolBits[type])
+        const rawUint = parts[1]
+        const raw = new Uint8Array(rawUint.split(','))
+        const block = BcBlock.deserializeBinary(raw)
+
+        this._engine._emitter.emit('putblock', {
+          data: block,
+          options: {
+            sendOnFail: false
+          },
           connection: conn
         })
       // Peer Sends New Block
