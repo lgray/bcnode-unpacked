@@ -424,7 +424,7 @@ export class Multiverse {
     const currentHighestBlock = await this.persistence.get('bc.block.latest')
 
     const newBlockHeaders = newBlock.getBlockchainHeaders().toObject()
-    if (newBlock.getHeight() !== '1' && BC_BT_VALIDATION === true && new BN(newBlockHeaders['btcList'][0].height).gt(new BN(541000)) === true) {
+    if (newBlock.getHeight() !== 1 && newBlockHeaders['btcList'].length > 0 && BC_BT_VALIDATION === true && new BN(newBlockHeaders['btcList'][0].height).gt(new BN(541000)) === true) {
       this._logger.info('failed resync <- BC_BT_VALIDATION')
       return Promise.resolve(false)
     }
