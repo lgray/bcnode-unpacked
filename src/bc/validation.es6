@@ -163,7 +163,7 @@ export async function isValidBlockCached (persistence: Object, newBlock: BcBlock
 
 export function getNewestHeader (newBlock: BcBlock): bool {
   logger.info('getting block height ' + newBlock.getHeight())
-  if (newBlock === undefined) {
+  if (newBlock === undefined || newBlock.getBlockchainHeaders === undefined) {
     logger.warn('failed: isValidChildAge new block could not be found')
     return false
   }

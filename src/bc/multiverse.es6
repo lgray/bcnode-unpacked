@@ -222,6 +222,11 @@ export class Multiverse {
       return Promise.resolve(false)
     }
 
+    if (newBlock.getHeight() === '1' || newBlock.getHeight() === 1) {
+      this._logger.warn('cant recieve genesis block from peer')
+      return Promise.resolve(false)
+    }
+
     const newBlockHeaders = newBlock.getBlockchainHeaders()
     if (newBlock.getHeight() !== 1 && newBlockHeaders.getBtcList().length > 0 && BC_BT_VALIDATION === true && new BN(newBlockHeaders.getBtcList()[0].getHeight()).gt(new BN(541000)) === true) {
       return Promise.resolve(false)
@@ -354,8 +359,8 @@ export class Multiverse {
       this._logger.info('purposed block ' + newBlock.getHash() + ' has invalid timestamp ' + newBlock.getTimestamp() + ' from current height timestamp ' + currentHighestBlock.getTimestamp())
       return Promise.resolve(false)
     }
-    // FAIL if timestamp of block is greater than 27 seconds from system time
-    if (newBlock.getTimestamp() + 27 < Math.floor(Date.now() * 0.001)) {
+    // FAIL if timestamp of block is greater than 47 seconds from system time
+    if (newBlock.getTimestamp() + 47 < Math.floor(Date.now() * 0.001)) {
       this._logger.info('purposed block ' + newBlock.getHash() + ' has invalid timestamp ' + newBlock.getTimestamp() + ' from current height timestamp ' + currentHighestBlock.getTimestamp())
       return Promise.resolve(false)
     }
@@ -419,10 +424,16 @@ export class Multiverse {
     // check if the node is currently syncing, if so do not approve a sync
     const syncLockActive = await this.isSyncLockActive()
 
+    if (newBlock.getHeight() === '1' || newBlock.getHeight() === 1) {
+      this._logger.warn('cant recieve genesis block from peer')
+      return Promise.resolve(false)
+    }
+
     if (syncLockActive === true) {
       this._logger.info('proposed block ' + newBlock.getHeight() + ' not accepted <- active sync lock')
       return Promise.resolve(false)
     }
+
     const currentParentHighestBlock = this.getParentHighestBlock()
     const currentHighestBlock = await this.persistence.get('bc.block.latest')
 
@@ -479,20 +490,21 @@ export class Multiverse {
 
     // PASS if current highest block is older than 58 seconds from local time
     if (new BN(new BN(currentHighestBlock.getTimestamp()).add(new BN(58))).lt(new BN(Math.floor(Date.now() * 0.001))) === true &&
-       // new BN(currentHighestBlock.getTotalDistance()).lt(new BN(newBlock.getTotalDistance())) === true &&
+       new BN(currentHighestBlock.getTotalDistance()).lt(new BN(newBlock.getTotalDistance())) === true &&
+       new BN(currentHighestBlock.getHeight()).lt(new BN(newBlock.getHeight())) === true &&
        new BN(getNewestHeader(newBlock).timestamp).gt(new BN(getNewestHeader(currentHighestBlock).timestamp)) === true) {
       this._logger.info('current chain is stale chain new child time: ' + getNewestHeader(newBlock).timestamp + ' current child time: ' + getNewestHeader(currentHighestBlock).timestamp)
       return Promise.resolve(true)
     }
 
     // FAIL if new block not within 31 seconds of local time
-    if (new BN(newBlock.getHeight()).gt(100000) === true && newBlock.getTimestamp() + 31 < Math.floor(Date.now() * 0.001)) {
+    if (new BN(newBlock.getHeight()).gt(100000) === true && newBlock.getTimestamp() + 61 < Math.floor(Date.now() * 0.001)) {
       this._logger.warn('failed resync req: purposed block time has expired')
       return Promise.resolve(false)
     }
 
     // FAIL if new block not within 31 seconds of local time
-    if (new BN(newBlock.getHeight()).gt(100000) === true && newBlock.getTimestamp() - 31 > Math.floor(Date.now() * 0.001)) {
+    if (new BN(newBlock.getHeight()).gt(100000) === true && newBlock.getTimestamp() - 61 > Math.floor(Date.now() * 0.001)) {
       this._logger.warn('failed resync req: purposed block beyond temporal limit')
       return Promise.resolve(false)
     }
@@ -519,7 +531,7 @@ export class Multiverse {
     }
 
     // FAIL if newBlock total difficulty <  currentHighestBlock
-    if (new BN(newBlock.getTotalDistance()).lt(new BN(currentHighestBlock.getTotalDistance())) === true) {
+    if (new BN(currentHighestBlock.getTotalDistance()).lt(new BN(newBlock.getTotalDistance())) === true)
       this._logger.info('cancel resync req <- new block distance ' + newBlock.getTotalDistance() + ' is lower than highest block ' + currentHighestBlock.getTotalDistance())
       return Promise.resolve(false)
     }

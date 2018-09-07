@@ -593,7 +593,7 @@ export class MiningOfficer {
     this._cleanUnfinishedBlock()
     this.pubsub.publish('miner.block.new', { unfinishedBlock, solution })
 
-    //return this.stopMining()
+    return this.stopMining()
   }
 
   _handleWorkerError (error: Error): Promise<boolean> {

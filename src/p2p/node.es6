@@ -35,7 +35,6 @@ const { BlockPool } = require('../bc/blockpool')
 
 const MIN_HEALTH_NET = process.env.MIN_HEALTH_NET === 'true'
 const USER_QUORUM = process.env.USER_QUORUM || config.bc.quorum
-const BC_BT_VALIDATION = process.env.BC_BT_VALIDATION === 'true'
 const BC_MAX_CONNECTIONS = process.env.BC_MAX_CONNECTIONS || config.bc.maximumWaypoints
 
 const { range, max } = require('ramda')
@@ -236,8 +235,7 @@ export class PeerNode {
           // https://github.com/webtorrent/bittorrent-dht/blob/master/client.js#L579r
           // const msg = '0000R01' + info.host + '*' + info.port + '*' + info.id.toString('hex')
           const type = '0008W01'
-          const list = await this.getLiteMultiverse(latestBlock)
-          const serial = list.map((l) => { return l.serializeBinary() }).join(protocolBits[type])
+          const serial = latestBlock.serializeBinary()
           const msg = type + protocolBits[type] + serial
           try {
             await this._p2p.qsend(conn, msg)
@@ -448,9 +446,9 @@ export class PeerNode {
         return
       }
 
-      if (type !== '0008W01' && BC_BT_VALIDATION !== true) {
-        return
-      }
+      // if (type !== '0008W01' && BC_BT_VALIDATION !== true) {
+      //  return
+      // }
 
       this._logger.debug('peerDataHandler <- ' + type)
       // Peer Sent Highest Block
@@ -525,38 +523,19 @@ export class PeerNode {
       } else if (type === '0011W01') {
 
         const parts = str.split(protocolBits[type])
+        const rawUint = parts[1]
+        const raw = new Uint8Array(rawUint.split(','))
+        const block = BcBlock.deserializeBinary(raw)
 
-        if(parts[1].indexOf(',') > -1) {
-          const rawUint = parts[1]
-          const raw = new Uint8Array(rawUint.split(','))
-          const block = BcBlock.deserializeBinary(raw)
-
-          this._engine._emitter.emit('putblock', {
-            data: block,
-            connection: conn
-          })
-        } else {
-          const raw = new Uint8Array(parts[1])
-          const block = BcBlock.deserializeBinary(raw)
-
-          this._engine._emitter.emit('putblock', {
-            data: block,
-            connection: conn
-          })
-        }
+        this._engine._emitter.emit('putblock', {
+          data: block,
+          connection: conn
+        })
       // Peer Sends New Block
       } else if (type === '0008W01') {
         //this._logger.info("::::::::::::::::::::::::" + type)
         const parts = str.split(protocolBits[type])
-
-        let raw
-
-        if(parts[1].indexOf(',') > -1) {
-          const rawUint = parts[1]
-          raw = new Uint8Array(rawUint.split(','))
-        } else {
-          raw = new Uint8Array(parts[1])
-        }
+        const raw = new Uint8Array(parts[1].split(','))
         const block = BcBlock.deserializeBinary(raw)
         this._engine._emitter.emit('putblock', {
           data: block,

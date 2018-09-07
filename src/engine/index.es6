@@ -1221,12 +1221,7 @@ export class Engine {
                                 }
                                 this._logger.info('block ' + newBlock.getHeight() + ' considered next block in current multiverse ')
                                 // RESTART MINING USED newBlock.getHash()
-                                if (BC_BT_VALIDATION === true) {
-                                  delete options.childHeaders
-                                  this.pubsub.publish('update.block.latest', options)
-                                } else {
-                                  this.pubsub.publish('update.block.latest', options)
-                                }
+                                this.pubsub.publish('update.block.latest', options)
                                 // notify the miner
                                 this.node.broadcastNewBlock(newBlock, conn)
                             } else {
@@ -1285,10 +1280,10 @@ export class Engine {
                                         } else {
                                             // this means the local peer has a better version of the chain and
                                             // therefore pushing it to the outside peer
-                                            //this._emitter.emit('sendblock', {
-                                            //    data: newBlock,
-                                            //    connection: conn
-                                            //})
+                                            this._emitter.emit('sendblock', {
+                                                data: newBlock,
+                                                connection: conn
+                                            })
                                         }
                                     })
                             }
