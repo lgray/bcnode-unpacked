@@ -179,19 +179,6 @@ export class PeerNode {
     const discovery = new Discovery(nodeId)
     this._p2p = discovery.start()
     this._p2p.join(this._p2p.hash, this._p2p.port, (data) => {
-      const waypointDiscoveryInterval = 300000 + Math.floor(Math.random() * 50000)
-
-      // TODO cleanup on close
-      setInterval(() => {
-        if (this._p2p !== undefined && this._p2p._discovery !== undefined) {
-          // this._p2p.join(this._p2p.hash, this._p2p.port, (data) => {
-          // this._p2p._discovery.update()
-          // })
-          this._logger.info('emitting DHT echo')
-          this._p2p._discovery.update()
-        }
-      }, waypointDiscoveryInterval)
-
       this._engine._emitter.on('sendblockcontext', (msg) => {
         if (msg.data.constructor === Array.constructor) return
         const type = '0008W01'
@@ -434,6 +421,17 @@ export class PeerNode {
             })
         }
       }, 30900)
+      const waypointDiscoveryInterval = 300000 + Math.floor(Math.random() * 50000)
+      // TODO cleanup on close
+      setInterval(() => {
+        if (this._p2p !== undefined && this._p2p._discovery !== undefined) {
+          // this._p2p.join(this._p2p.hash, this._p2p.port, (data) => {
+          // this._p2p._discovery.update()
+          // })
+          this._logger.info('emitting DHT echo')
+          this._p2p._discovery.update()
+        }
+      }, waypointDiscoveryInterval)
     })
     return Promise.resolve(true)
   }
