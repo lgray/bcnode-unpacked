@@ -531,7 +531,7 @@ export class Multiverse {
     }
 
     // FAIL if newBlock total difficulty <  currentHighestBlock
-    if (new BN(currentHighestBlock.getTotalDistance()).lt(new BN(newBlock.getTotalDistance())) === true)
+    if (new BN(currentHighestBlock.getTotalDistance()).lt(new BN(newBlock.getTotalDistance())) === true) {
       this._logger.info('cancel resync req <- new block distance ' + newBlock.getTotalDistance() + ' is lower than highest block ' + currentHighestBlock.getTotalDistance())
       return Promise.resolve(false)
     }
@@ -562,12 +562,7 @@ export class Multiverse {
       // $FlowFixMe - Object.values is not generic
       .map(({ blockchain, height }) => `${blockchain}.block.${height}`)
 
-    const blocksData = await this.persistence.getBulk(keys)
-    const blocks = blocksData.filter((b) => {
-      if (b !== undefined && b.constructor !== true.constructor && b.getBlockchain !== undefined) {
-        return b
-      }
-    })
+    const blocks = await this.persistence.getBulk(keys)
 
     let valid = keys.length === blocks.length
 
@@ -576,15 +571,16 @@ export class Multiverse {
       const previousKeys = receivedBlocks
         // $FlowFixMe - Object.values is not generic
         .map((b) => `${b.blockchain}.block.${(b.height - 1)}`)
-      //console.log('------- KEYS ---------')
-      //console.log(keys)
-      //console.log('------- PREV KEYS ---------')
-      //console.log(previousKeys)
+      console.log('------- KEYS ---------')
+      console.log(keys)
+      console.log('------- PREV KEYS ---------')
+      console.log(previousKeys)
       const parentBlock = await this.persistence.get('bc.block.parent')
       // if the parent block is one accept the given child headers
-      if(parentBlock.getHeight() === '1'){
+      if(parentBlock.getHeight() === '1' || parentBlock.getHeight() === 1){
         return Promise.resolve(true)
       }
+
       const previousBlocks = await this.persistence.getBulk(previousKeys)
 
       //if(previousBlocks === undefined || previousBlocks === false || previousBlocks.length !== keys.length){
@@ -683,12 +679,12 @@ export class Multiverse {
         return missing
       }, [])
 
-      //console.log('------- BLOCKS ON DISK ---------')
-      //console.log(latestBlockchainNames)
-      //console.log('------- PREVIOUS BLOCKS ON DISK ---------')
-      //console.log(previousBlockchainNames)
-      //console.log('------- UNROVERED BLOCKS ---------')
-      //console.log(missingBlockchainNames)
+      console.log('------- BLOCKS ON DISK ---------')
+      console.log(latestBlockchainNames)
+      console.log('------- PREVIOUS BLOCKS ON DISK ---------')
+      console.log(previousBlockchainNames)
+      console.log('------- UNROVERED BLOCKS ---------')
+      console.log(missingBlockchainNames)
 
       const correctSequence = missingBlocks.reduce((valid, block) => {
         if(block.getBlockchain() === 'btc' && BC_BT_VALIDATION === true){
