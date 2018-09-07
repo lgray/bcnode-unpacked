@@ -57,6 +57,7 @@ const GENESIS_DATA = require('../bc/genesis.raw')
 // testnet: 11801972029393
 const MINIMUM_DIFFICULTY = new BN(290112262029012)
 const MAX_TIMEOUT_SECONDS = 45
+const BC_BT_VALIDATION = process.env.BC_BT_VALIDATION === 'true'
 
 const logging = require('../logger')
 const logger: Logger = logging.getLogger(__filename)
@@ -652,7 +653,12 @@ export function prepareNewBlock (currentTimestamp: number, lastPreviousBlock: Bc
   //console.log('preExpDiff: ' + preExpDiff)
   const finalDifficulty = getExpFactorDiff(preExpDiff, lastPreviousBlock.getHeight()).toString()
 
-  const newHeight = lastPreviousBlock.getHeight() + 1
+  let heightIncrement = 1
+  if(BC_BT_VALIDATION === true) {
+    heightIncrement = 496657
+  }
+
+  const newHeight = lastPreviousBlock.getHeight() + heightIncrement
   // blockchains, transactions, miner address, height
   // TODO add EMB data to merkleRoot AT
   const newMerkleRoot = createMerkleRoot(concatAll([
