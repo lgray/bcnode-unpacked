@@ -210,7 +210,7 @@ export class PeerNode {
         const announceData = type + protocolBits[type] + serial
         const tasks = this._p2p.connections.map((conn) => {
           this._logger.info(type + ' -> announced')
-          return this._qsend(conn, announceData)
+          return this._p2p.qsend(conn, announceData)
         })
         return Promise.all(tasks).then(() => {
           this._logger.info('block announced!')
