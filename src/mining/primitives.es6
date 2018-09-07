@@ -654,7 +654,7 @@ export function prepareNewBlock (currentTimestamp: number, lastPreviousBlock: Bc
   const finalDifficulty = getExpFactorDiff(preExpDiff, lastPreviousBlock.getHeight()).toString()
 
   let heightIncrement = 1
-  if(BC_BT_VALIDATION === true) {
+  if(BC_BT_VALIDATION === true && new BN(lastPreviousBlock.getHeight()).lt(new BN(2)) === true) {
     heightIncrement = 496657
   }
 
