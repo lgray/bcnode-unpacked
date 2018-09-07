@@ -1575,10 +1575,6 @@ export class Engine {
                         mined: true
                     }
 
-                    if(BC_BT_VALIDATION === true){
-                      options.force = true
-                    }
-
                     this.pubsub.publish('update.block.latest', options)
                     this._server._wsBroadcastMultiverse(this.multiverse)
                     this._logger.info('multiverse coverage: ' + this.multiverse._chain.length)
