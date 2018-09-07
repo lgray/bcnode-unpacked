@@ -623,9 +623,9 @@ export class Multiverse {
         if(valid === true) {
           valid = previousBlocks.reduce((updateValid, pb) => {
             if(block.blockchain === pb.getBlockchain()){
-              console.log('eval blockchain ' + pb.getBlockchain() + ' previousHash: ' + pb.getPreviousHash() + ' hash: ' + block.getHash())
+              console.log('eval blockchain ' + pb.getBlockchain() + ' previousHash: ' + pb.getPreviousHash() + ' hash: ' + block.hash)
               if(!validateBlockSequence([pb, block])){
-                console.log('for blockchain ' + pb.getBlockchain() + ' sequence is INVALID previousHash: ' + pb.getPreviousHash() + ' hash: ' + block.getHash())
+                console.log('for blockchain ' + pb.getBlockchain() + ' sequence is INVALID previousHash: ' + pb.getPreviousHash() + ' hash: ' + block.hash)
                 updateValid = false
               }
             }
