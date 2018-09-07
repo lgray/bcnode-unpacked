@@ -334,10 +334,10 @@ export class Multiverse {
       return Promise.resolve(false)
     }
 
-    if (new BN(newBlock.getTotalDistance()).lt(new BN(currentHighestBlock.getTotalDistance()))) {
-      this._logger.warn('new Block totalDistance ' + newBlock.getTotalDistance() + 'less than currentHighestBlock' + currentHighestBlock.getTotalDistance())
-      return Promise.resolve(false)
-    }
+    // if (new BN(newBlock.getTotalDistance()).lt(new BN(currentHighestBlock.getTotalDistance()))) {
+    //  this._logger.warn('new Block totalDistance ' + newBlock.getTotalDistance() + 'less than currentHighestBlock' + currentHighestBlock.getTotalDistance())
+    //  return Promise.resolve(false)
+    // }
 
     // FAIL
     // if newBlock does not include additional rover blocks
@@ -395,7 +395,7 @@ export class Multiverse {
     try {
       const synclock = await this.persistence.get('synclock')
 
-      if (synclock.getHeight() !== 1 && (synclock.getTimestamp() + 111) < Math.floor(Date.now() * 0.001)) {
+      if (synclock.getHeight() !== 1 && (synclock.getTimestamp() + 22) < Math.floor(Date.now() * 0.001)) {
         await this.persistence.put('synclock', getGenesisBlock())
         this._logger.warn('sync lock is stale resetting')
         return Promise.resolve(false)
@@ -519,8 +519,8 @@ export class Multiverse {
     }
 
     // FAIL if newBlock total difficulty <  currentHighestBlock
-    if (new BN(newBlock.getTotalDistance()).lt(new BN(currentHighestBlock.getTotalDistance())) === true) {
-      this._logger.info('failed resync req: new block distance is lower than highest block')
+    if (new BN(newBlock.getTotalDistance(), 16).lt(new BN(currentHighestBlock.getTotalDistance(), 16)) === true) {
+      this._logger.info('cancel resync req <- new block distance ' + newBlock.getTotalDistance() + ' is lower than highest block ' + currentHighestBlock.getTotalDistance())
       return Promise.resolve(false)
     }
 
