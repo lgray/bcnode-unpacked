@@ -498,15 +498,15 @@ export class PeerNode {
 
         //this._logger.info("::::::::::::::::::::::::" + type)
         const parts = str.split(protocolBits[type])
-        const low = parts[1]
-        const high = parts[2]
+        const low = parseInt(parts[1])
+        const high = parseInt(parts[2])
 
         let outboundType = '0007W01'
         if (type === '0009R01') {
           outboundType = '0010W01'
         }
 
-        this._logger.info(outboundType)
+        this._logger.info(`getblocklist handler: ${outboundType}, ${max(2, low)}, ${(high + 1)}`)
 
         try {
           const query = range(max(2, low), (high + 1)).map((n) => {
@@ -591,7 +591,7 @@ export class PeerNode {
       // Peer Sends Block List 0007 // Peer Sends Multiverse 001
       } else if (type === '0007W01' || type === '0010W01') {
         const parts = str.split(protocolBits[type])
-        //this._logger.info("::::::::::::::::::::::::" + type)
+        // this._logger.info(`:::::::::::::::::::::::: ${type}`)
 
         try {
 
