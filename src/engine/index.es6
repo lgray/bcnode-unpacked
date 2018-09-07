@@ -227,7 +227,7 @@ export class Engine {
             await this._persistence.open()
             try {
                 let version = await this.persistence.get('appversion')
-                if (semver.lt(version.version, '0.7.7')) { // GENESIS BLOCK 0.9
+                if (semver.lt(version.version, '0.8.2')) { // GENESIS BLOCK 0.9
                     this._logger.warn(DELETE_MESSAGE)
                     process.exit(8)
                 }
