@@ -64,7 +64,7 @@ export class Multiverse {
    */
   async getParentHighestBlock () {
     try {
-      const par = await this._persistence.get('bc.block.parent')
+      const par = await this.persistence.get('bc.block.parent', { asBuffer: true, softFail: true })
       return Promise.resolve(par)
     } catch (err) {
       this._logger.debug(err)
@@ -261,17 +261,12 @@ export class Multiverse {
       return Promise.resolve(true)
     }
 
-    const roveredBlockHeaders = await this.validateRoveredBlocks(newBlock)
-    if (roveredBlockHeaders === false) {
-      this._logger.info('assert rover block sequence <- invalid')
-      return Promise.resolve(false)
-    }
     // HOTSWAP - NO SYNC
     // this is a hotswap in at the current block height for a new block
     // TODO: Consider moving this to resync (except we dont want sync triggered)
     const currentHighestParent = await this.persistence.get('bc.block.parent', { asBuffer: true, softFail: true })
     if (currentHighestParent !== false &&
-       currentHighestBlock.getHeight() === newBlock.getHeight() &&
+       new BN(currentHighestBlock.getTotalDistance()).lt(new BN(newBlock.getTotalDistance())) === true &&
        newBlock.getPreviousHash() === currentHighestParent.getHash() &&
        validateSequenceDifficulty(currentHighestParent, newBlock) === true) {
       if (new BN(newBlock.getTotalDistance()).gt(new BN(currentHighestBlock.getTotalDistance())) === true) {
@@ -280,6 +275,12 @@ export class Multiverse {
         this._logger.warn('hs occured ' + newBlock.getHeight() + ' <-> ' + newBlock.getHeight() + ' all clear <- ref hash' + newBlock.getHash().slice(0, 12))
         return Promise.resolve(true)
       }
+    }
+
+    const roveredBlockHeaders = await this.validateRoveredBlocks(newBlock)
+    if (roveredBlockHeaders === false) {
+      this._logger.info('assert rover block sequence <- invalid')
+      return Promise.resolve(false)
     }
 
     if (newBlock.getHeight() === 1 || newBlock.getHeight() === '1') {
@@ -589,10 +590,10 @@ export class Multiverse {
       const previousKeys = receivedBlocks
         // $FlowFixMe - Object.values is not generic
         .map((b) => `${b.blockchain}.block.${(b.height - 1)}`)
-      console.log('------- KEYS ---------')
-      console.log(keys)
-      console.log('------- PREV KEYS ---------')
-      console.log(previousKeys)
+      //console.log('------- KEYS ---------')
+      //console.log(keys)
+      //console.log('------- PREV KEYS ---------')
+      //console.log(previousKeys)
       const parentBlock = await this.persistence.get('bc.block.parent')
       // if the parent block is one accept the given child headers
       if(parentBlock.getHeight() === '1' || parentBlock.getHeight() === 1){
@@ -696,12 +697,12 @@ export class Multiverse {
         return missing
       }, [])
 
-      console.log('------- BLOCKS ON DISK ---------')
-      console.log(latestBlockchainNames)
-      console.log('------- PREVIOUS BLOCKS ON DISK ---------')
-      console.log(previousBlockchainNames)
-      console.log('------- UNROVERED BLOCKS ---------')
-      console.log(missingBlockchainNames)
+      //console.log('------- BLOCKS ON DISK ---------')
+      //console.log(latestBlockchainNames)
+      //console.log('------- PREVIOUS BLOCKS ON DISK ---------')
+      //console.log(previousBlockchainNames)
+      //console.log('------- UNROVERED BLOCKS ---------')
+      //console.log(missingBlockchainNames)
 
       let falseBlock = false
       const correctSequence = missingBlocks.reduce((valid, block) => {
@@ -712,16 +713,23 @@ export class Multiverse {
           }
         }
         if(valid === false) {
-          valid = previousBlocks.reduce((updateValid, pb) => {
+          const count = previousBlocks.reduce((updateValid, pb) => {
             if(block.getBlockchain() === pb.getBlockchain()){
-              console.log('eval blockchain ' + pb.getBlockchain() + ' previousHash: ' + pb.getPreviousHash() + ' hash: ' + block.getHash())
+              //console.log('eval blockchain ' + pb.getBlockchain() + ' previousHash: ' + pb.getPreviousHash() + ' hash: ' + block.getHash())
               if(validateBlockSequence([pb, block])){
-                console.log('for blockchain ' + pb.getBlockchain() + ' sequence is INVALID previousHash: ' + pb.getPreviousHash() + ' hash: ' + block.getHash())
-                updateValid = true
+                //console.log('for blockchain ' + pb.getBlockchain() + ' sequence is INVALID previousHash: ' + pb.getPreviousHash() + ' hash: ' + block.getHash())
+                updateValid++
+              } else if (pb.getHeight() + 1 === block.getHeight()) { // permitted only in BT
+                updateValid++
+              } else {
+                updateValid--
               }
             }
             return updateValid
-          }, false)
+          }, 0)
+          if(count >= 0){
+            valid = true
+          }
         }
         return valid
       }, false)
