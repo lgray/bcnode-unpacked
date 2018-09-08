@@ -535,10 +535,10 @@ export function childrenHighestBlock (block: BcBlock): number {
   const highest = Object.values(block.getBlockchainHeaders().toObject()).reduce((all, headers) => {
 		const top = headers.sort((a, b) => {
 			if(a.height > b.height) {
-				return 1
+				return -1
 			}
 			if(a.height < b.height) {
-				return -1
+				return 1
 			}
 			return 0
 	  }).pop()
