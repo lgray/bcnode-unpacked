@@ -132,10 +132,10 @@ export function getDiff (currentBlockTime: number, previousBlockTime: number, pr
     newestChildBlock = newestChildHeader.toObject()
   }
   const bigChildHeaderTime = new BN(newestChildBlock.timestamp).div(new BN(1000))
-  console.log('----------------------------- currentBlockTime: ' + currentBlockTime)
-  console.log('----------------------------- previousBlockTime: ' + previousBlockTime)
-  console.log('----------------------------- newBlockCount: ' + newBlockCount)
-  console.log('----------------------------- bigChildHeaderTime: ' + bigChildHeaderTime)
+  //console.log('----------------------------- currentBlockTime: ' + currentBlockTime)
+  //console.log('----------------------------- previousBlockTime: ' + previousBlockTime)
+  //console.log('----------------------------- newBlockCount: ' + newBlockCount)
+  //console.log('----------------------------- bigChildHeaderTime: ' + bigChildHeaderTime)
 
   const bigChildHeaderTimeBound = new BN(bigChildHeaderTime).add(new BN(bigTargetTimeWindow).mul(new BN(2)))
   let elapsedTime = bigCurrentBlockTime.sub(bigPreviousBlockTime)
@@ -143,8 +143,8 @@ export function getDiff (currentBlockTime: number, previousBlockTime: number, pr
   let staleCost = new BN(new BN(bigCurrentBlockTime.sub(bigChildHeaderTimeBound)).div(new BN(bigTargetTimeWindow)))
   elapsedTime = elapsedTime.sub(staleCost)
 
-  console.log('staleCost: ' + staleCost.toNumber())
-  console.log('(after) elapsedTime: ' + elapsedTime.toNumber())
+  //console.log('staleCost: ' + staleCost.toNumber())
+  //console.log('(after) elapsedTime: ' + elapsedTime.toNumber())
 
   // elapsedTime + ((elapsedTime - 5) * newBlocks)
   const elapsedTimeBonus = elapsedTime.add(elapsedTime.sub(new BN(6)).mul(new BN(newBlockCount)))
