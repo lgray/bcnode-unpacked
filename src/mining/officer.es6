@@ -581,6 +581,7 @@ export class MiningOfficer {
       unfinishedBlockData.timeDiff = timeDiff
     }
 
+    this._logger.info('about to test if block is valid')
     if (!isValidBlock(unfinishedBlock, 1)) {
       this._logger.info(`candidate block is stale`)
       this._cleanUnfinishedBlock()
