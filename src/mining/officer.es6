@@ -550,7 +550,7 @@ export class MiningOfficer {
           this._unfinished = remainingUnfinished
 
         } else {
-          this._logger.warn('There is not an unfinished block to use solution for')
+          // this._logger.warn('There is not an unfinished block to use solution for')
           return
         }
       }
