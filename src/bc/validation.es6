@@ -57,14 +57,14 @@ export function isValidBlock (newBlock: BcBlock, type: number = 0): bool {
     return false
   }
   if (newBlock.getBlockchainHeaders === undefined){
-    this._logger.warn('candidate block has no child headers')
+    logger.warn('candidate block has incomplete child headers references')
     //return false
   }
   // blocks may pass before the soft opening limit of 151500 blocks
   if (new BN(newBlock.getHeight()).lt(new BN(151500)) === true) {
     return true
   }
-  this._logger.info('determining if block is valid')
+  logger.info('determining block validity')
   // if (!theBlockChainFingerPrintMatchGenesisBlock(newBlock)) {
   //  logger.warn('failed: theBlockChainFingerPrintMatchGenesisBlock')
   //  return false
