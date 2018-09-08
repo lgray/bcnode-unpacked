@@ -549,7 +549,7 @@ export class Multiverse {
     }
 
     // FAIL if newBlock total difficulty <  currentHighestBlock
-    if (new BN(currentHighestBlock.getTotalDistance()).lt(new BN(newBlock.getTotalDistance())) === true) {
+    if (new BN(currentHighestBlock.getTotalDistance()).gt(new BN(newBlock.getTotalDistance())) === true) {
       this._logger.info('cancel resync req <- new block distance ' + newBlock.getTotalDistance() + ' is lower than highest block ' + currentHighestBlock.getTotalDistance())
       return Promise.resolve(false)
     }
