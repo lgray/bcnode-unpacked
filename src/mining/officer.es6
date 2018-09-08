@@ -574,6 +574,8 @@ export class MiningOfficer {
     unfinishedBlock.setTotalDistance(new BN(unfinishedBlock.getTotalDistance()).add(new BN(chainWeight)).add(new BN(unfinishedBlock.getDifficulty())).toString())
     unfinishedBlock.setTimestamp(timestamp)
 
+    this._logger.info('total distance with unfinished block <- ' + unfinishedBlock.getTotalDistance())
+
     if (unfinishedBlockData) {
       unfinishedBlockData.iterations = iterations
       unfinishedBlockData.timeDiff = timeDiff
@@ -593,7 +595,7 @@ export class MiningOfficer {
     this._cleanUnfinishedBlock()
     this.pubsub.publish('miner.block.new', { unfinishedBlock, solution })
 
-    return this.stopMining()
+    //return this.stopMining()
   }
 
   _handleWorkerError (error: Error): Promise<boolean> {
