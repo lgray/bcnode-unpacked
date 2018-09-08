@@ -62,11 +62,14 @@ export class Multiverse {
   /**
    * Get second to highest block in Multiverse
    */
-  getParentHighestBlock (): BcBlock|null {
-    if (this._chain.length > 1) {
-      return null
+  async getParentHighestBlock () {
+    try {
+      const par = await this._persistence.get('bc.block.parent')
+      return Promise.resolve(par)
+    } catch (err) {
+      this._logger.debug(err)
+      return Promise.resolve(false)
     }
-    return this._chain[1]
   }
 
   /**
@@ -167,9 +170,9 @@ export class Multiverse {
    * @param newBlock
    * @returns {boolean}
    */
-  addBestBlock (newBlock: BcBlock): Promise<?boolean> {
+  async addBestBlock (newBlock: BcBlock): Promise<?boolean> {
     const currentHighestBlock = this.getHighestBlock()
-    const currentParentHighestBlock = this.getParentHighestBlock()
+    const currentParentHighestBlock = await this.getParentHighestBlock()
     if (currentHighestBlock === null || currentHighestBlock === undefined) {
       // assume we always have current highest block
       this._logger.error('Cannot get currentHighestBlock')
@@ -444,7 +447,7 @@ export class Multiverse {
     }
 
     const currentHighestBlock = await this.persistence.get('bc.block.latest')
-    const currentParentHighestBlock = this.getParentHighestBlock()
+    const currentParentHighestBlock = await this.getParentHighestBlock()
     const newBlockHeaders = newBlock.getBlockchainHeaders()
 
     if (newBlock.getHeight() !== 1 && newBlockHeaders.getBtcList().length > 0 && BC_BT_VALIDATION === true && new BN(newBlockHeaders.getBtcList()[0].getHeight()).gt(new BN(541000)) === true) {
