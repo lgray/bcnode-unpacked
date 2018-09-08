@@ -58,7 +58,7 @@ export function isValidBlock (newBlock: BcBlock, type: number = 0): bool {
   }
   if (newBlock.getBlockchainHeaders === undefined){
     this._logger.warn('candidate block has no child headers')
-    return false
+    //return false
   }
   // blocks may pass before the soft opening limit of 151500 blocks
   if (new BN(newBlock.getHeight()).lt(new BN(151500)) === true) {
