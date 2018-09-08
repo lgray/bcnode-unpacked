@@ -7,8 +7,8 @@
     }
   },
   "bc": {
-    "quorum": 5,
-    "maximumWaypoints": 48,
+    "quorum": 8,
+    "maximumWaypoints": 31,
     "council": {
       "enabled": false,
       "url": "http://council.blockcollider.org"
