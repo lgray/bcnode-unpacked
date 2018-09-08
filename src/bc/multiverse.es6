@@ -183,6 +183,15 @@ export class Multiverse {
     //  return false
     // }
     // if there is no current parent, this block is the right lbock
+    if (currentParentHighestBlock !== false && newBlock.getPreviousHash() === currentParentHighestBlock.getHash()) {
+      if (new BN(newBlock.getTotalDistance()).gt(new BN(currentHighestBlock.getTotalDistance()))) {
+        this._logger.info('best block failed newBlock total distance < current block total distance')
+        this._chain.length = 0
+        this._chain.push(newBlock)
+        return Promise.resolve(true)
+      }
+    }
+
     if (currentParentHighestBlock === false) {
       if (new BN(newBlock.getTotalDistance()).gt(new BN(currentHighestBlock.getTotalDistance()))) {
         this._logger.info('best block failed newBlock total distance < current block total distance')
@@ -192,6 +201,7 @@ export class Multiverse {
       }
       return Promise.resolve(false)
     }
+
     // FAIL if newBlock total difficulty <  currentHighestBlock
     if (new BN(newBlock.getTotalDistance()).lt(new BN(currentHighestBlock.getTotalDistance()))) {
       this._logger.info('best block failed newBlock total distance < current block total distance')
@@ -250,19 +260,18 @@ export class Multiverse {
 
     const roveredBlockHeaders = await this.validateRoveredBlocks(newBlock)
     if (roveredBlockHeaders === false) {
-      this._logger.info('sequence failed')
-    //  return Promise.resolve(false)
+      this._logger.info('assert rover block sequence <- invalid')
+      return Promise.resolve(false)
     }
     // HOTSWAP - NO SYNC
     // this is a hotswap in at the current block height for a new block
     // TODO: Consider moving this to resync (except we dont want sync triggered)
     const currentHighestParent = await this.persistence.get('bc.block.parent', { asBuffer: true, softFail: true })
-    if (currentHighestParent !== false && currentHighestParent.getHash() !== currentHighestBlock.getPreviousHash() &&
+    if (currentHighestParent !== false &&
        currentHighestBlock.getHeight() === newBlock.getHeight() &&
-       new BN(currentHighestBlock.getHeight()) === new BN(newBlock.getDistance()) &&
+       newBlock.getPreviousHash() === currentHighestParent.getHash() &&
        validateSequenceDifficulty(currentHighestParent, newBlock) === true) {
-      if (new BN(newBlock.getTotalDistance()).gt(new BN(currentHighestBlock.getTotalDistance())) === true &&
-          new BN(newBlock.getTimBlockestamp()).gte(new BN(currentHighestBlock.getTimestamp())) === true) {
+      if (new BN(newBlock.getTotalDistance()).gt(new BN(currentHighestBlock.getTotalDistance())) === true) {
         this._chain.shift()
         this._chain.unshift(newBlock)
         this._logger.warn('hs occured ' + newBlock.getHeight() + ' <-> ' + newBlock.getHeight() + ' all clear <- ref hash' + newBlock.getHash().slice(0, 12))
@@ -280,12 +289,12 @@ export class Multiverse {
     if (newBlock.getHeight() - 1 !== currentHighestBlock.getHeight()) {
       // block being sent is genesis block
       this._logger.warn('block does not increment the multichain sequence')
-      return Promise.resolve(false)
+      return this.addBestBlock(newBlock)
     }
 
     this._logger.warn('child height new block #' + newBlock.getHeight() + ': ' + childrenHeightSum(newBlock))
     this._logger.warn('child height previous block #' + currentHighestBlock.getHeight() + ': ' + childrenHeightSum(currentHighestBlock))
-    if (childrenHeightSum(newBlock) < childrenHeightSum(currentHighestBlock)) {
+    if (childrenHeightSum(newBlock) + 3 < childrenHeightSum(currentHighestBlock)) {
       this._logger.warn('connection child chain weight is below threshold')
       // after block height 500000 resume traditional assertions even if BC_BT_VALIDATION is true
       return Promise.resolve(false)
@@ -298,12 +307,12 @@ export class Multiverse {
     }
     // if it has an invalid total distance and we have not enabled BC_BT_VALIDATION fail the block
     if (!validateSequenceTotalDistance(currentHighestBlock, newBlock)) {
-      this._logger.info('invalid total distance')
+      this._logger.info('invalid total distance calculation')
       return Promise.resolve(false)
     }
 
     if (childrenHeightSum(newBlock) === childrenHeightSum(currentHighestBlock)) {
-      this._logger.warn('evaluating child chain weight on equality conditional')
+      this._logger.warn('evaluating child chain weight of equality conditional')
       const newBlockNewestChildHeader = getNewestHeader(newBlock)
       const currentBlockNewestChildHeader = getNewestHeader(currentHighestBlock)
 
@@ -434,10 +443,10 @@ export class Multiverse {
       return Promise.resolve(false)
     }
 
-    const currentParentHighestBlock = this.getParentHighestBlock()
     const currentHighestBlock = await this.persistence.get('bc.block.latest')
-
+    const currentParentHighestBlock = this.getParentHighestBlock()
     const newBlockHeaders = newBlock.getBlockchainHeaders()
+
     if (newBlock.getHeight() !== 1 && newBlockHeaders.getBtcList().length > 0 && BC_BT_VALIDATION === true && new BN(newBlockHeaders.getBtcList()[0].getHeight()).gt(new BN(541000)) === true) {
       this._logger.info('failed resync <- BC_BT_VALIDATION')
       return Promise.resolve(false)
@@ -449,17 +458,10 @@ export class Multiverse {
       const roveredBlockHeaders = await this.validateRoveredBlocks(newBlock)
       if (roveredBlockHeaders === false) {
         this._logger.warn('rover coverage of child headers is low')
-      // return Promise.resolve(false)
+        return Promise.resolve(false)
       }
     } catch (err) {
       this._logger.error(err)
-    }
-    // current chain is malformed and new block is not
-    const validNewBlock = await isValidBlockCached(this.persistence, newBlock)
-    const validCurrentBlock = await isValidBlockCached(this.persistence, currentHighestBlock)
-    if (validNewBlock === true && validCurrentBlock === false) {
-      this._logger.info('passed sync req <- currentHighestBlock malformed')
-      return Promise.resolve(true)
     }
 
     if (this._chain.length === 0) {
@@ -485,9 +487,17 @@ export class Multiverse {
       return Promise.resolve(false)
     }
 
+    // current chain is malformed and new block is not
+    const validNewBlock = await isValidBlockCached(this.persistence, newBlock)
+    const validCurrentBlock = await isValidBlockCached(this.persistence, currentHighestBlock)
+    if (validNewBlock === true && validCurrentBlock === false) {
+      this._logger.info('passed sync req <- currentHighestBlock malformed')
+      return Promise.resolve(true)
+    }
+
     this._logger.warn('child height new block: ' + childrenHeightSum(newBlock))
     this._logger.warn('child height previous block: ' + childrenHeightSum(currentHighestBlock))
-    if (childrenHeightSum(newBlock) < childrenHeightSum(currentHighestBlock)) {
+    if (childrenHeightSum(newBlock) + 3 < childrenHeightSum(currentHighestBlock)) {
       this._logger.warn('connection chain weight is below threshold')
       return Promise.resolve(false)
     }
@@ -495,7 +505,7 @@ export class Multiverse {
     // PASS if current highest block is older than 58 seconds from local time
     if (new BN(new BN(currentHighestBlock.getTimestamp()).add(new BN(58))).lt(new BN(Math.floor(Date.now() * 0.001))) === true &&
        new BN(currentHighestBlock.getTotalDistance()).lt(new BN(newBlock.getTotalDistance())) === true &&
-       new BN(currentHighestBlock.getHeight()).lt(new BN(newBlock.getHeight())) === true &&
+       new BN(currentHighestBlock.getHeight()).lte(new BN(newBlock.getHeight())) === true &&
        new BN(getNewestHeader(newBlock).timestamp).gt(new BN(getNewestHeader(currentHighestBlock).timestamp)) === true) {
       this._logger.info('current chain is stale chain new child time: ' + getNewestHeader(newBlock).timestamp + ' current child time: ' + getNewestHeader(currentHighestBlock).timestamp)
       return Promise.resolve(true)
