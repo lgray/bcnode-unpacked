@@ -582,7 +582,7 @@ export class MiningOfficer {
     }
 
     if (!isValidBlock(unfinishedBlock, 1)) {
-      this._logger.debug(`mined block is invalid`)
+      this._logger.debug(`candidate block is stale`)
       this._cleanUnfinishedBlock()
       //this._workerPool.emitter.emit('blockCacheRebase')
       return

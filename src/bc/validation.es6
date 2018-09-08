@@ -58,6 +58,8 @@ export function isValidBlock (newBlock: BcBlock, type: number = 0): bool {
   if (new BN(newBlock.getHeight()).lt(new BN(151500)) === true) {
     return true
   }
+
+  this._logger.info('determining if block is valid')
   // if (!theBlockChainFingerPrintMatchGenesisBlock(newBlock)) {
   //  logger.warn('failed: theBlockChainFingerPrintMatchGenesisBlock')
   //  return false
