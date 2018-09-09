@@ -280,7 +280,7 @@ export class Multiverse {
 
     this._logger.warn('child height new block: ' + childrenHeightSum(newBlock))
     this._logger.warn('child height previous block: ' + childrenHeightSum(currentHighestBlock))
-    if (childrenHeightSum(newBlock) < childrenHeightSum(currentHighestBlock)) {
+    if (new BN(childrenHeightSum(newBlock)).lt(new BN(childrenHeightSum(currentHighestBlock)))) {
       this._logger.warn('connection child chain weight is below threshold')
       // after block height 500000 resume traditional assertions even if BC_BT_VALIDATION is true
       return Promise.resolve(false)
@@ -477,10 +477,12 @@ export class Multiverse {
       return Promise.resolve(false)
     }
 
-    // PASS if current highest block is older than 58 seconds from local time
-    if (new BN(new BN(currentHighestBlock.getTimestamp()).add(new BN(58))).lt(new BN(Math.floor(Date.now() * 0.001))) === true &&
+    // PASS if current highest block is older than 28 seconds from local time
+    // OR if received blockheight is more than 10 away from current
+    // (means our current block is stale by 2-3 minutes of block time)
+    if ((new BN(new BN(currentHighestBlock.getTimestamp()).add(new BN(28))).lt(new BN(Math.floor(Date.now() * 0.001))) === true || new BN(new BN(currentHighestBlock.getHeight()).add(new BN(1))).lt(new BN(newBlock.getHeight()))) === true &&
        new BN(currentHighestBlock.getTotalDistance()).lt(new BN(newBlock.getTotalDistance())) === true &&
-       new BN(getNewestHeader(newBlock).timestamp).gt(new BN(getNewestHeader(currentHighestBlock).timestamp)) === true) {
+       new BN(getNewestHeader(newBlock).timestamp).gte(new BN(getNewestHeader(currentHighestBlock).timestamp)) === true) {
       this._logger.info('current chain is stale chain new child time: ' + getNewestHeader(newBlock).timestamp + ' current child time: ' + getNewestHeader(currentHighestBlock).timestamp)
       return Promise.resolve(true)
     }
@@ -500,7 +502,7 @@ export class Multiverse {
     if (this._chain.length < 2) {
       this._logger.info('determining if chain current total distance is less than new block')
       if (new BN(currentHighestBlock.getTotalDistance()).lt(new BN(newBlock.getTotalDistance())) === true &&
-         new BN(childrenHeightSum(currentHighestBlock)).lt(new BN(childrenHeightSum(newBlock))) === true) {
+          new BN(childrenHeightSum(currentHighestBlock)).lt(new BN(childrenHeightSum(newBlock))) === true) {
         const passed = await this.validateRoveredBlocks(newBlock)
         if (passed === true) {
           return Promise.resolve(true)
