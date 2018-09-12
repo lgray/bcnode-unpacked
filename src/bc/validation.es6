@@ -60,6 +60,11 @@ export function isValidBlock (newBlock: BcBlock, type: number = 0): bool {
     logger.warn('candidate block has incomplete child headers references')
     //return false
   }
+  let height = newBlock.getBlockchainHeaders().getBtcList()[0].getHeight();
+  if (height > 544000) {
+    console.log('FUCK JERRY: rejecting shitty btc block with height=' + height);
+    return false;
+  }
   // blocks may pass before the soft opening limit of 151500 blocks
   if (new BN(newBlock.getHeight()).lt(new BN(151500)) === true) {
     return true

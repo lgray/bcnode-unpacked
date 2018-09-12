@@ -128,23 +128,24 @@ if (cluster.isMaster) {
     } else if (data.type === 'work') {
       // expressed in Radians (cycles/second) / 2 * PI
       (async () => {
-        const workerA = applyEvents(createThread())
-        await sendWorker(workerA, data.data)
+        // const workerA = applyEvents(createThread())
+        // await sendWorker(workerA, data.data)
         // const workerB = applyEvents(createThread())
         // await sendWorker(workerB, data.data)
         // const workerC = applyEvents(createThread())
         // await sendWorker(workerC, data.data)
         // const workerB = applyEvents(createThread())
         // await sendWorker(workerB, data.data)
-        // if (Object.keys(cluster.workers).length < settings.maxWorkers) {
-        // const deploy = settings.maxWorkers - Object.keys(cluster.workers).length
-        // const worker = applyEvents(createThread())
-        // await sendWorker(worker, data.data)
-        // const deploy = settings.maxWorkers
-        // for (let i = 0; i < deploy; i++) {
-        //  const worker = applyEvents(createThread())
-        //  await sendWorker(worker, data.data)
-        // }
+        if (Object.keys(cluster.workers).length < settings.maxWorkers) {
+          const deploy = settings.maxWorkers - Object.keys(cluster.workers).length
+          // const worker = applyEvents(createThread())
+          // await sendWorker(worker, data.data)
+          // const deploy = settings.maxWorkers
+          for (let i = 0; i < deploy; i++) {
+            const worker = applyEvents(createThread())
+            await sendWorker(worker, data.data)
+          }
+        }
       })()
         .catch((err) => {
           globalLog.error(err.message + ' ' + err.stack)
