@@ -1,6 +1,5 @@
 #include "blake2.h"
-#include "blake2b.cu"
-#include "cos_dist.cu"
+#include "bc_miner.cu"
 
 #include <string>
 
@@ -90,8 +89,10 @@ int main(int argc, char **argv) {
     	 std::cout << std::hex << (unsigned)(hash_gpu[i]>>4) << (unsigned)(hash_gpu[i]&0xf);
     }
     std::cout << std::dec << std::endl;
-    double dist_gpu = cosine_distance_cu(work_char,hash_gpu);
-    std::cout << "gpu distance is: " << (unsigned long long)(dist_gpu) << std::endl;
+    unsigned long long dist_gpu = one_unit_work(work_char,empty_gpu,the_thing.size());
+    std::cout << "gpu distance is: " << (dist_gpu) << std::endl;
+
+    
     
     return 0;
 }
