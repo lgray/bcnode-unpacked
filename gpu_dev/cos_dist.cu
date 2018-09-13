@@ -17,17 +17,13 @@ __host__ double cosine_distance_cu(uint8_t work[BLAKE2B_OUTBYTES],
     uint64_t num(0),norm_work(0),norm_comp(0);
     for( unsigned i = 0; i < 16; ++i ) {      
       unsigned offset_fwd = 16*j + i;      
-      unsigned offset_bkw = (16*(j)) + i;
-      std::cout << offset_bkw << std::endl;
+      unsigned offset_bkw = (16*(4-j-1)) + i;
       unsigned work_lcl = work[offset_bkw];
       unsigned comp_lcl = comp[offset_fwd];
-      std::cout << std::hex << work_lcl << std::dec << std::endl;
-      jwork1 = num_to_code[work_lcl&0xf];
-      jcomp1 = num_to_code[comp_lcl&0xf];
-      jwork2 = num_to_code[(work_lcl>>4)&0xf];
-      jcomp2 = num_to_code[(comp_lcl>>4)&0xf];
-      std::cout << jwork1 << ' ' << jwork2 << std::endl;
-      std::cout << jcomp1 << ' ' << jcomp2 << std::endl;
+      jwork2 = num_to_code[work_lcl&0xf];
+      jcomp2 = num_to_code[comp_lcl&0xf];
+      jwork1 = num_to_code[(work_lcl>>4)&0xf];
+      jcomp1 = num_to_code[(comp_lcl>>4)&0xf];
       num += (jwork1*jcomp1 + jwork2*jcomp2);
       norm_work += (jwork1*jwork1 + jwork2*jwork2);
       norm_comp += (jcomp1*jcomp1 + jcomp2*jcomp2);
@@ -35,5 +31,5 @@ __host__ double cosine_distance_cu(uint8_t work[BLAKE2B_OUTBYTES],
     den = std::sqrt(double(norm_work))*std::sqrt(double(norm_comp));
     acc += (1.0-num/den);
   }  
-  return acc;
+  return acc*1e15;
 }

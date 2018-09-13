@@ -53,7 +53,10 @@ int main(int argc, char **argv) {
     memcpy(empty_cpu,the_thing.c_str(),the_thing.size()*sizeof(uint8_t));
     memcpy(empty_gpu,the_thing.c_str(),the_thing.size()*sizeof(uint8_t));
     for(unsigned i = 0; i < work.size(); ++i ) {
-      work_char[i/2] += atoi(&work[i])<<(4*(i%2));
+      char temp[2];
+      temp[0] = work[i];
+      temp[1] = '\0';
+      work_char[i/2] += strtol(temp,NULL,16)<<(4*((i+1)%2));
     }
     //memcpy(work_char,work.c_str(),work.size()*sizeof(uint8_t)/2);
     
@@ -76,7 +79,7 @@ int main(int argc, char **argv) {
     }   
     std::cout << std::dec << std::endl;
     double dist_cpu = cosine_distance_cu(work_char,hash_cpu);
-    std::cout << "cpu distance is: " << dist_cpu << std::endl;
+    std::cout << "cpu distance is: " << (unsigned long long)(dist_cpu) << std::endl;
 
     blake2b_init_cu(&gpu.state,BLAKE2B_OUTBYTES);
     blake2b_update_cu(&gpu.state,empty_gpu,the_thing.size());
@@ -88,7 +91,7 @@ int main(int argc, char **argv) {
     }
     std::cout << std::dec << std::endl;
     double dist_gpu = cosine_distance_cu(work_char,hash_gpu);
-    std::cout << "gpu distance is: " << dist_gpu << std::endl;
+    std::cout << "gpu distance is: " << (unsigned long long)(dist_gpu) << std::endl;
     
     return 0;
 }
