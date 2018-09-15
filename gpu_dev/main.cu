@@ -33,10 +33,12 @@ int mypow(int base, int exp) {
   return result;
 }
 
-bool sort_by_distance(const bc_mining_data& i1, 
-		      const bc_mining_data& i2) { 
-  return i1.distance > i2.distance; 
-} 
+struct sort_by_distance {
+  const bc_mining_data* data_;
+  bool operator()(size_t i1,size_t i2) const {
+    return data_[i1].distance > data_[i2].distance; 
+  }
+};
 
 int main(int argc, char **argv) {
     BCHash cpu = BCHash();
@@ -169,21 +171,26 @@ int main(int argc, char **argv) {
 
     //unsigned long long dist_gpu = cosine_distance_cu(work_char,hash_gpu);//one_unit_work(work_char,empty_gpu,the_thing.size());
     
-    std::sort(  testhost, 
-                testhost + hash_tries,
-                sort_by_distance );
+    std::vector<size_t> indices(hash_tries);
+    for(size_t i=0; i < indices.size(); ++i) { indices[i] = i; }
+    sort_by_distance comp;
+    comp.data_ = testhost;
+
+    std::sort(  indices.begin(),
+		indices.end(),
+                comp );
     
     for( unsigned i = 32; i < BLAKE2B_OUTBYTES; ++i ) {
-    	 std::cout << std::hex << (unsigned)(testhost[0].result[i]>>4) << (unsigned)(testhost[0].result[i]&0xf);
+    	 std::cout << std::hex << (unsigned)(testhost[indices[0]].result[i]>>4) << (unsigned)(testhost[indices[0]].result[i]&0xf);
     }
     std::cout << std::dec << std::endl;
-    std::cout << "gpu distance is: " << testhost[0].distance << std::endl;
+    std::cout << "gpu distance is: " << testhost[indices[0]].distance << std::endl;
 
     for( unsigned i = 32; i < BLAKE2B_OUTBYTES; ++i ) {
-      std::cout << std::hex << (unsigned)(testhost[hash_tries-1].result[i]>>4) << (unsigned)(testhost[hash_tries-1].result[i]&0xf);
+      std::cout << std::hex << (unsigned)(testhost[indices[hash_tries-1]].result[i]>>4) << (unsigned)(testhost[indices[hash_tries-1]].result[i]&0xf);
     }
     std::cout << std::dec << std::endl;
-    std::cout << "gpu distance is: " << testhost[hash_tries-1].distance << std::endl;
+    std::cout << "gpu distance is: " << testhost[indices[hash_tries-1]].distance << std::endl;
     
 
     cudaFree(testdev);
@@ -191,6 +198,3 @@ int main(int argc, char **argv) {
     
     return 0;
 }
-
-//301973303693442
-//277301613100604
