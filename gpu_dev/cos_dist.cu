@@ -11,10 +11,12 @@ __host__ __device__ double cosine_distance_cu(uint8_t work[BLAKE2B_OUTBYTES],
   static uint16_t num_to_code[16] = {48,49,50,51,52,53,54,55,56,57,97,98,99,100,101,102};
   
   double acc = 0;  
+  #pragma unroll
   for(unsigned j = 2; j < BLAKE2B_OUTBYTES/16; ++j) {
     double den = 0; 
     uint32_t jwork1(0), jwork2(0), jcomp1(0), jcomp2(0);
     uint64_t num(0),norm_work(0),norm_comp(0);
+    #pragma unroll
     for( unsigned i = 0; i < 16; ++i ) {      
       unsigned offset_fwd = 16*j + i;      
       unsigned offset_bkw = (16*(4-j-1)) + i;

@@ -34,9 +34,10 @@ int mypow(int base, int exp) {
 }
 
 struct sort_by_distance {
-  const bc_mining_data* data_;
+  const size_t* distances;
   bool operator()(size_t i1,size_t i2) const {
-    return data_[i1].distance > data_[i2].distance; 
+    //std::cout << i1 << ' ' << distances[i1] << " >?= " << i2 << ' ' << distances[i2] << std::endl;
+    return distances[i1] >= distances[i2]; 
   }
 };
 
@@ -47,7 +48,7 @@ int main(int argc, char **argv) {
     std::string work("0edd781347cfc9c3ff49fdc423c7f1a3deae6501e5cef6b99c45c8901f763320");
     std::string mhash("0xf34fa87db39d15471bebe997860dcd49fc259318");
     std::string merkl("7aff5341ec1a1caa51c74c162c7f2a3946fe28f23b6e630de995f74d5767f865");
-    unsigned int thenonce = 2060688607;
+    uint32_t thenonce = 2060688607;
     uint8_t nonce_string[12]; // ten bytes and a null character max;
     memset(nonce_string,0,12);
     // convert nonce
@@ -87,26 +88,23 @@ int main(int argc, char **argv) {
       work_char[i/2] += strtol(temp,NULL,16)<<(4*((i+1)%2));
     }
     //memcpy(work_char,work.c_str(),work.size()*sizeof(uint8_t)/2);
-
-    const unsigned long long hash_tries = 1 << 18;
-
-    clock_t begin = clock();
+    
+    std::time_t begin = time(0);
 
     bc_mining_data* testhost = NULL;
-    testhost = (bc_mining_data*)malloc(hash_tries*sizeof(bc_mining_data));
-    memset(testhost,0,hash_tries*sizeof(bc_mining_data));
+    testhost = (bc_mining_data*)malloc(sizeof(bc_mining_data));
+    memset(testhost,0,sizeof(bc_mining_data));
 
-    for(unsigned long long i = 0; i < hash_tries; ++i ) {    
+    for(unsigned long long i = 0; i < 1; ++i ) {    
       blake2b_init(&cpu.state,BLAKE2B_OUTBYTES);
       blake2b_update(&cpu.state,empty_cpu,the_thing.size());
       blake2b_final(&cpu.state,hash_cpu,BLAKE2B_OUTBYTES);
-
     }
 
-    clock_t end = clock();
+    std::time_t end = time(0);
     double elapsed_secs = double(end - begin);
     
-    std::cout<< "cpu took clocks: " << elapsed_secs << std::endl;
+    std::cout<< "cpu took clocks: " << elapsed_secs*1000 << std::endl;
 
     std::cout << BLAKE2B_OUTBYTES << ' ' << work_char << std::endl;
 
@@ -128,71 +126,102 @@ int main(int argc, char **argv) {
     // now let's do it on the GPU for real
     size_t stash_size = mhash.length();
     size_t tstamp_size = times.length();
+    /*
     cudaMemcpyToSymbol(time_stamp_size_, &tstamp_size, sizeof(size_t));
     cudaMemcpyToSymbol(time_stamp_, times.c_str(), times.length());
     cudaMemcpyToSymbol(miner_key_size_, &stash_size, sizeof(size_t));
     cudaMemcpyToSymbol(miner_key_, mhash.c_str(), mhash.length());
     cudaMemcpyToSymbol(received_work_, work_char, BLAKE2B_OUTBYTES);
     cudaMemcpyToSymbol(merkle_root_,merkl.c_str(), BLAKE2B_OUTBYTES);
-    bc_mining_data* testdev = NULL;
-    cudaMalloc(&testdev,hash_tries*sizeof(bc_mining_data));     
-    cudaMemset(testdev,0,hash_tries*sizeof(bc_mining_data));
-        
+    */
+
     //random numbers
     curandState *devStates;
-    cudaMalloc((void **)&devStates, hash_tries * 1 * sizeof(curandState));
+    cudaMalloc((void **)&devStates, HASH_TRIES * 1 * sizeof(curandState));
+
+    bc_mining_data* testdev = NULL;
+    uint16_t work_size = mhash.length() + 2*BLAKE2B_OUTBYTES + times.size();
+    uint16_t nonce_hash_offset = mhash.length() + BLAKE2B_OUTBYTES;
+    cudaMalloc(&testdev,sizeof(bc_mining_data));     
+    cudaMemset(testdev,0,sizeof(bc_mining_data));
+    // set common thread data (mostly in case we need it later now...    
+    cudaMemcpy(&testdev->time_stamp_size_, &tstamp_size, sizeof(size_t), cudaMemcpyHostToDevice);
+    cudaMemcpy(testdev->time_stamp_, times.c_str(), times.length(), cudaMemcpyHostToDevice);
+    cudaMemcpy(&testdev->miner_key_size_, &stash_size, sizeof(size_t), cudaMemcpyHostToDevice);
+    cudaMemcpy(testdev->miner_key_, mhash.c_str(), mhash.length(), cudaMemcpyHostToDevice);
+    cudaMemcpy(testdev->received_work_, work_char, BLAKE2B_OUTBYTES, cudaMemcpyHostToDevice);
+    cudaMemcpy(testdev->merkle_root_,merkl.c_str(), BLAKE2B_OUTBYTES, cudaMemcpyHostToDevice);
+        
+    //setup the work template
+    cudaMemset(testdev->work_template_,0,bc_mining_data::INLENGTH);
+    cudaMemcpy(&testdev->nonce_hash_offset_,&nonce_hash_offset,sizeof(uint16_t),cudaMemcpyHostToDevice);
+    cudaMemcpy(&testdev->work_size_,&work_size,sizeof(uint16_t),cudaMemcpyHostToDevice);
+    unsigned index = 0;
+    cudaMemcpy(testdev->work_template_,testdev->miner_key_,mhash.length(),cudaMemcpyDeviceToDevice);
+    index += mhash.length();
+    cudaMemcpy(testdev->work_template_+index,testdev->merkle_root_,BLAKE2B_OUTBYTES,cudaMemcpyDeviceToDevice);
+    index += 2*BLAKE2B_OUTBYTES; //advance past nonce hash area
+    cudaMemcpy(testdev->work_template_+index,testdev->time_stamp_,times.length(),cudaMemcpyDeviceToDevice);
+    index += times.length();
 
     //setup test information
-    for(unsigned long long i = 0; i < hash_tries; ++i ) {
-      cudaMemcpy(&testdev[i].nonce,&thenonce,sizeof(uint32_t),cudaMemcpyHostToDevice);
+    /*
+ m,/
+    cudaMemcpy(&testdev->nonce[0],&thenonce,sizeof(uint32_t),cudaMemcpyHostToDevice);
+    for(unsigned long long i = 1; i < HASH_TRIES; ++i ) {
+      cudaMemcpy(&testdev->nonce[i],&testdev->nonce[0],sizeof(uint32_t),cudaMemcpyDeviceToDevice);
     }
+    */
     
-    clock_t begin_gpu = clock();
+    
+    std::time_t begin_gpu = time(0);
 
-    setup_rand<<<hash_tries/N_MINER_THREADS_PER_BLOCK,N_MINER_THREADS_PER_BLOCK>>>(devStates);
-    prepare_work<<<hash_tries/N_MINER_THREADS_PER_BLOCK,N_MINER_THREADS_PER_BLOCK>>>(devStates,testdev);
-    one_unit_work<<<hash_tries/N_MINER_THREADS_PER_BLOCK,N_MINER_THREADS_PER_BLOCK>>>(testdev);
-    cudaDeviceSynchronize();
+    dim3 threads(N_MINER_THREADS_PER_BLOCK,1,1), blocks(HASH_TRIES/N_MINER_THREADS_PER_BLOCK,1,1);
 
-    clock_t end_gpu = clock();
+    
+    setup_rand<<<blocks,threads>>>(devStates);
+    //cudaDeviceSynchronize();
+    prepare_work_nonces<<<blocks,threads>>>(devStates,testdev);
+    //cudaDeviceSynchronize();
+    one_unit_work<<<blocks,threads>>>(testdev);
+    //cudaDeviceSynchronize();
+    
+
+    std::time_t end_gpu = time(0);
     double elapsed_secs_gpu = double(end_gpu - begin_gpu);
     
-    std::cout<< "gpu took clocks: " << elapsed_secs_gpu << std::endl;
+    std::cout<< "gpu took clocks: " << elapsed_secs_gpu*1000 << std::endl;
 
-    cudaMemcpy(testhost,testdev,hash_tries*sizeof(bc_mining_data),cudaMemcpyDeviceToHost);
+    cudaMemcpy(testhost,testdev,sizeof(bc_mining_data),cudaMemcpyDeviceToHost);
     
-    std::cout << "gpu: " << testhost[0].data_size << " trial = 0x" << std::hex;
+    std::cout << "gpu: " << "blep" << " trial = 0x" << std::hex;
     // output "blake2bl"
     for( unsigned i = 32; i < BLAKE2B_OUTBYTES; ++i ) {
-    	 std::cout << std::hex << (unsigned)(testhost[0].result[i]>>4) << (unsigned)(testhost[0].result[i]&0xf);
+    	 std::cout << std::hex << (unsigned)(testhost->result[i]>>4) << (unsigned)(testhost->result[i]&0xf);
     }
     std::cout << std::dec << std::endl;
-    std::cout << "gpu distance is: " << testhost[1].distance << std::endl;
+    std::cout << "gpu distance is: " << testhost->distance[0] << std::endl;
 
     //unsigned long long dist_gpu = cosine_distance_cu(work_char,hash_gpu);//one_unit_work(work_char,empty_gpu,the_thing.size());
-    
-    std::vector<size_t> indices(hash_tries);
-    for(size_t i=0; i < indices.size(); ++i) { indices[i] = i; }
-    sort_by_distance comp;
-    comp.data_ = testhost;
-
-    std::sort(  indices.begin(),
-		indices.end(),
-                comp );
-    
+        
+    size_t max = 0;
+    unsigned long long distance = testhost->distance[0];
+    for(unsigned i = 0; i < HASH_TRIES; ++i) {
+      if( testhost->distance[i] > distance ) {
+	max = i;
+	distance = testhost->distance[i];
+      }
+    }
+        
+    unsigned offset_first = BLAKE2B_OUTBYTES*max;
     for( unsigned i = 32; i < BLAKE2B_OUTBYTES; ++i ) {
-    	 std::cout << std::hex << (unsigned)(testhost[indices[0]].result[i]>>4) << (unsigned)(testhost[indices[0]].result[i]&0xf);
+      std::cout << std::hex 
+		<< (unsigned)(testhost->result[i+offset_first]>>4)
+		<< (unsigned)(testhost->result[i+offset_first]&0xf);
     }
     std::cout << std::dec << std::endl;
-    std::cout << "gpu distance is: " << testhost[indices[0]].distance << std::endl;
-
-    for( unsigned i = 32; i < BLAKE2B_OUTBYTES; ++i ) {
-      std::cout << std::hex << (unsigned)(testhost[indices[hash_tries-1]].result[i]>>4) << (unsigned)(testhost[indices[hash_tries-1]].result[i]&0xf);
-    }
-    std::cout << std::dec << std::endl;
-    std::cout << "gpu distance is: " << testhost[indices[hash_tries-1]].distance << std::endl;
+    std::cout << "gpu distance is: " << testhost->distance[max] << std::endl;
     
-
     cudaFree(testdev);
     free(testhost);
     
