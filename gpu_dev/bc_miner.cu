@@ -1,7 +1,7 @@
-// Blake2-B Faithful CUDA Implementation
+// The basic components of a GPU-based block collider miner
 // lgray@github September 2018
 // permission granted to use under MIT license
-// this is a GPU miner for block collider that does ~ 23M hashes + distances per second
+// this is a GPU miner for block collider that does ~ 20M hashes + distances per second
 
 #include "blake2.h"
 #include "blake2b.cu"
@@ -9,7 +9,7 @@
 #include <curand_kernel.h>
 #include "stdio.h"
 
-static const unsigned HASH_TRIES = 1 << 23;
+static const unsigned HASH_TRIES = 1 << 24;
 static const unsigned N_MINER_THREADS_PER_BLOCK = 32;
 
 /*
@@ -57,17 +57,19 @@ void one_unit_work(bc_mining_data* mining_info) {
   unsigned id = threadIdx.x + blockIdx.x *blockDim.x;
   
   uint8_t data_in[bc_mining_data::INLENGTH];
-  memset(data_in,0,bc_mining_data::INLENGTH);
+  //memset(data_in,0,bc_mining_data::INLENGTH); // this memset is unecessary 
   
   const size_t idoffset = id*BLAKE2B_OUTBYTES;
   memcpy(data_in,mining_info->work_template_,mining_info->work_size_);
   memcpy(data_in+mining_info->nonce_hash_offset_,mining_info->nonce_hashes+idoffset,BLAKE2B_OUTBYTES);
+
   
   blake2b_state s;
   blake2b_init_cu(&s,BLAKE2B_OUTBYTES);  
   blake2b_update_cu(&s,data_in,mining_info->work_size_);
   blake2b_final_cu(&s,mining_info->result+idoffset,BLAKE2B_OUTBYTES);
   
+
   mining_info->distance[id] = cosine_distance_cu(mining_info->received_work_,
 						 mining_info->result+id*BLAKE2B_OUTBYTES);
 }
@@ -136,10 +138,56 @@ void prepare_work_nonces(curandState *state, bc_mining_data* mining_info) {
   state[id] = localState;
 }
 
-__host__ void do_mining(uint8_t work[BLAKE2B_OUTBYTES]) {
+__global__ void prepare_max_distance(uint64_t *max, uint64_t *maxidx, const uint64_t *a) {
+  __shared__ uint64_t maxtile[N_MINER_THREADS_PER_BLOCK];
+  __shared__ uint64_t maxidxtile[N_MINER_THREADS_PER_BLOCK];
   
+  unsigned int tid = threadIdx.x;
+  uint64_t i = blockIdx.x * blockDim.x + threadIdx.x;
+  maxtile[tid] = a[i];
+  maxidxtile[tid] = i;
+  __syncthreads();
+  
+  //sequential addressing by reverse loop and thread-id based indexing
+  for (unsigned int s = blockDim.x / 2; s > 0; s >>= 1) {
+    if (tid < s) {
+      if (maxtile[tid + s] > maxtile[tid]) {
+	maxtile[tid] = maxtile[tid + s];
+	maxidxtile[tid] = maxidxtile[tid + s];
+      }
+    }
+    __syncthreads();
+  }
+  
+  if (tid == 0) {
+    max[blockIdx.x] = maxtile[0];
+    maxidx[blockIdx.x] = maxidxtile[0];
+  }
 }
 
-__device__ __host__ void launch_mining(uint8_t work[BLAKE2B_OUTBYTES]) {
+__global__ void finalize_max_distance(uint64_t *max, uint64_t *maxidx) {
+  __shared__ uint64_t maxtile[N_MINER_THREADS_PER_BLOCK];
+  __shared__ uint64_t maxidxtile[N_MINER_THREADS_PER_BLOCK];
+
+  unsigned int tid = threadIdx.x;
+  uint64_t i = blockIdx.x * blockDim.x + threadIdx.x;
+  maxtile[tid] = max[i];
+  maxidxtile[tid] = maxidx[i];
+  __syncthreads();
   
+  //sequential addressing by reverse loop and thread-id based indexing
+  for (unsigned int s = blockDim.x / 2; s > 0; s >>= 1) {
+    if (tid < s) {
+      if (maxtile[tid + s] > maxtile[tid]) {
+	maxtile[tid] = maxtile[tid + s];
+	maxidxtile[tid] = maxidxtile[tid + s];
+      }
+    }
+    __syncthreads();
+  }
+  
+  if (tid == 0) {    
+    max[blockIdx.x] = maxtile[0];
+    maxidx[blockIdx.x] = maxidxtile[0];
+  }
 }

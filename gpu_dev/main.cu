@@ -6,43 +6,11 @@
 #include <algorithm>
 #include <ctime>
 
+struct BCHash {
+   blake2b_state state;
+};
+
 #include <iostream>
-
-#define CUDA_ERROR_CHECK
-
-inline void cudacheckerror( const char *file, const int line )
-{
-#ifdef CUDA_ERROR_CHECK
-    cudaError err = cudaGetLastError();
-    if ( cudaSuccess != err )
-    {
-        fprintf( stderr, "cudacheckerror() failed at %s:%i : %s\n",
-                 file, line, cudaGetErrorString( err ) );
-        exit( -1 );
-    }
-
-    // More careful checking. However, this will affect performance.
-    // Comment away if needed.
-    err = cudaDeviceSynchronize();
-    if( cudaSuccess != err )
-    {
-        fprintf( stderr, "cudacheckerror() with sync failed at %s:%i : %s\n",
-                 file, line, cudaGetErrorString( err ) );
-        exit( -1 );
-    }
-#endif
-
-    return;
-}
-
-void cudasafe(int error, char* message, char* file, int line) {
-  #ifdef CUDA_CHECK_ERROR
-  if (error != cudaSuccess) {
-    fprintf(stderr, "CUDA Error: %s : %i. In %s line %d\n", message, error, file, line); 
-    exit(-1);
-  }
-  #endif
-}
 
 /*
 INFO	 mining.thread worker 4517 reporting in 
@@ -74,7 +42,9 @@ struct sort_by_distance {
 };
 
 int main(int argc, char **argv) {
-  
+    BCHash cpu = BCHash();
+    BCHash gpu = BCHash();
+
     std::string work("0edd781347cfc9c3ff49fdc423c7f1a3deae6501e5cef6b99c45c8901f763320");
     std::string mhash("0xf34fa87db39d15471bebe997860dcd49fc259318");
     std::string merkl("7aff5341ec1a1caa51c74c162c7f2a3946fe28f23b6e630de995f74d5767f865");
@@ -119,12 +89,12 @@ int main(int argc, char **argv) {
     }
     //memcpy(work_char,work.c_str(),work.size()*sizeof(uint8_t)/2);
     
+    std::time_t begin = time(0);
 
     bc_mining_data* testhost = NULL;
     testhost = (bc_mining_data*)malloc(sizeof(bc_mining_data));
     memset(testhost,0,sizeof(bc_mining_data));
 
-    /*
     for(unsigned long long i = 0; i < 1; ++i ) {    
       blake2b_init(&cpu.state,BLAKE2B_OUTBYTES);
       blake2b_update(&cpu.state,empty_cpu,the_thing.size());
@@ -137,8 +107,7 @@ int main(int argc, char **argv) {
     std::cout<< "cpu took clocks: " << elapsed_secs*1000 << std::endl;
 
     std::cout << BLAKE2B_OUTBYTES << ' ' << work_char << std::endl;
-    
-    
+
     std::cout << "input work: 0x";
     for( unsigned i = 0; i < BLAKE2B_OUTBYTES ; ++i ) {
       std::cout << std::hex << (unsigned)(work_char[i]>>4) << (unsigned)(work_char[i]&0xf);
@@ -153,8 +122,6 @@ int main(int argc, char **argv) {
     std::cout << std::dec << std::endl;
     double dist_cpu = cosine_distance_cu(work_char,hash_cpu);
     std::cout << "cpu distance is: " << (unsigned long long)(dist_cpu) << std::endl;
-
-    */
 
     // now let's do it on the GPU for real
     size_t stash_size = mhash.length();
@@ -197,6 +164,15 @@ int main(int argc, char **argv) {
     cudaMemcpy(testdev->work_template_+index,testdev->time_stamp_,times.length(),cudaMemcpyDeviceToDevice);
     index += times.length();
 
+    // work areas for finding max
+    uint64_t *scratch_dists;
+    uint64_t *scratch_indices;
+    uint64_t max_value, max_idx;
+    cudaMalloc(&scratch_dists,HASH_TRIES*sizeof(uint64_t));
+    cudaMalloc(&scratch_indices,HASH_TRIES*sizeof(uint64_t));
+    cudaMemset(scratch_dists,0,HASH_TRIES*sizeof(uint64_t));
+    cudaMemset(scratch_indices,0,HASH_TRIES*sizeof(uint64_t));
+    
     //setup test information
     /*
  m,/
@@ -213,18 +189,31 @@ int main(int argc, char **argv) {
 
     
     setup_rand<<<blocks,threads>>>(devStates);
-    cudacheckerror( __FILE__, __LINE__ );
+    //cudaDeviceSynchronize();
     prepare_work_nonces<<<blocks,threads>>>(devStates,testdev);
-    cudacheckerror( __FILE__, __LINE__ );
+    //cudaDeviceSynchronize();
     one_unit_work<<<blocks,threads>>>(testdev);
-    cudacheckerror( __FILE__, __LINE__ );
+    //cudaDeviceSynchronize();
+    prepare_max_distance<<<blocks,threads>>>(scratch_dists,scratch_indices,testdev->distance);
+    unsigned temp = blocks.x;
+    while( temp > threads.x ) {
+      temp /= threads.x;
+      finalize_max_distance<<<temp,threads>>>(scratch_dists,scratch_indices);
+    }
+    finalize_max_distance<<<1,temp>>>(scratch_dists,scratch_indices);
     
-
     std::time_t end_gpu = time(0);
     double elapsed_secs_gpu = double(end_gpu - begin_gpu);
     
     std::cout<< "gpu took clocks: " << elapsed_secs_gpu*1000 << std::endl;
 
+    cudaMemcpy(&max_value,scratch_dists,sizeof(uint64_t),cudaMemcpyDeviceToHost);
+    cudaMemcpy(&max_idx,scratch_indices,sizeof(uint64_t),cudaMemcpyDeviceToHost);
+
+    uint8_t host_result[BLAKE2B_OUTBYTES];
+    uint64_t host_distance;
+    cudaMemcpy(host_result,testdev->result + max_idx*BLAKE2B_OUTBYTES,BLAKE2B_OUTBYTES,cudaMemcpyDeviceToHost);
+    cudaMemcpy(&host_distance,testdev->distance + max_idx, sizeof(uint64_t),cudaMemcpyDeviceToHost);
     cudaMemcpy(testhost,testdev,sizeof(bc_mining_data),cudaMemcpyDeviceToHost);
     
     std::cout << "gpu: " << "blep" << " trial = 0x" << std::hex;
@@ -253,8 +242,17 @@ int main(int argc, char **argv) {
 		<< (unsigned)(testhost->result[i+offset_first]&0xf);
     }
     std::cout << std::dec << std::endl;
-    std::cout << "gpu distance is: " << testhost->distance[max] << std::endl;
+    std::cout << "gpu distance is: " << max << ' ' << testhost->distance[max] << std::endl;
     
+    std::cout << "gpu-hax hash  :  ";
+    for( unsigned i = 32; i < BLAKE2B_OUTBYTES; ++i ) {
+      std::cout << std::hex
+                << (unsigned)(host_result[i]>>4)
+                << (unsigned)(host_result[i]&0xf);
+    }
+    std::cout << std::dec << std::endl;
+    std::cout << "gpu-max result:  " << max_idx << ' ' << host_distance << ' ' << testhost->distance[max_idx] << std::endl;
+
     cudaFree(testdev);
     free(testhost);
     
