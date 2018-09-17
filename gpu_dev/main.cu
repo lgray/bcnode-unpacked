@@ -12,6 +12,42 @@ struct BCHash {
 
 #include <iostream>
 
+#define CUDA_ERROR_CHECK
+
+inline void cudacheckerror( const char *file, const int line )
+{
+#ifdef CUDA_ERROR_CHECK
+    cudaError err = cudaGetLastError();
+    if ( cudaSuccess != err )
+    {
+        fprintf( stderr, "cudacheckerror() failed at %s:%i : %s\n",
+                 file, line, cudaGetErrorString( err ) );
+        exit( -1 );
+    }
+
+    // More careful checking. However, this will affect performance.
+    // Comment away if needed.
+    err = cudaDeviceSynchronize();
+    if( cudaSuccess != err )
+    {
+        fprintf( stderr, "cudacheckerror() with sync failed at %s:%i : %s\n",
+                 file, line, cudaGetErrorString( err ) );
+        exit( -1 );
+    }
+#endif
+
+    return;
+}
+
+void cudasafe(int error, char* message, char* file, int line) {
+  #ifdef CUDA_CHECK_ERROR
+  if (error != cudaSuccess) {
+    fprintf(stderr, "CUDA Error: %s : %i. In %s line %d\n", message, error, file, line); 
+    exit(-1);
+  }
+  #endif
+}
+
 /*
 INFO	 mining.thread worker 4517 reporting in 
 INFO	 mining.primitives twork: 7296c034e95304ee2a69c2a61e6287a0 58448d08d723222d19658c0364dd247c 64
@@ -180,11 +216,11 @@ int main(int argc, char **argv) {
 
     
     setup_rand<<<blocks,threads>>>(devStates);
-    //cudaDeviceSynchronize();
+    cudacheckerror( __FILE__, __LINE__ );
     prepare_work_nonces<<<blocks,threads>>>(devStates,testdev);
-    //cudaDeviceSynchronize();
+    cudacheckerror( __FILE__, __LINE__ );
     one_unit_work<<<blocks,threads>>>(testdev);
-    //cudaDeviceSynchronize();
+    cudacheckerror( __FILE__, __LINE__ );
     
 
     std::time_t end_gpu = time(0);
