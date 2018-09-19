@@ -95,11 +95,14 @@ int main(int argc, char **argv) {
     testhost = (bc_mining_data*)malloc(sizeof(bc_mining_data));
     memset(testhost,0,sizeof(bc_mining_data));
 
+
+    /*
     for(unsigned long long i = 0; i < 1; ++i ) {    
       blake2b_init(&cpu.state,BLAKE2B_OUTBYTES);
       blake2b_update(&cpu.state,empty_cpu,the_thing.size());
       blake2b_final(&cpu.state,hash_cpu,BLAKE2B_OUTBYTES);
     }
+    */
 
     std::time_t end = time(0);
     double elapsed_secs = double(end - begin);
