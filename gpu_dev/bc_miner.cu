@@ -9,7 +9,7 @@
 #include <curand_kernel.h>
 #include "stdio.h"
 
-static const unsigned HASH_TRIES = 1 << 24;
+static const unsigned HASH_TRIES = 1 << 23;
 static const unsigned N_MINER_THREADS_PER_BLOCK = 32;
 
 /*
