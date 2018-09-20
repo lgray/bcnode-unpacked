@@ -350,6 +350,22 @@ function isDistanceCorrectlyCalculated (newBlock: BcBlock): bool {
       newBlock.getTimestamp()
     )
   ).toString()
+
+  const b2b = blake2bl(
+      newBlock.getMiner() +
+      newBlock.getMerkleRoot() +
+      blake2bl(newBlock.getNonce()) +
+      newBlock.getTimestamp()
+    )
+
+  logger.info('exp. work:   ' + expectedWork)
+  logger.info('getMiner():  ' + newBlock.getMiner())
+  logger.info('getNonce():  ' + newBlock.getNonce())
+  logger.info('getMerkle(): ' + newBlock.getMerkleRoot())
+  logger.info('getTime():   ' + newBlock.getTimestamp())
+  logger.info('outhash:     ' + b2b.toString())
+  logger.info(expectedDistance + ' ?==? ' + receivedDistance)
+
   return receivedDistance === expectedDistance
 }
 

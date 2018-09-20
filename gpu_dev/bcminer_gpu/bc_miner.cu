@@ -244,7 +244,7 @@ void run_miner(const bc_mining_inputs& in, bc_mining_mempools& pool,bc_mining_ou
 
   const uint64_t offsetb2b = max_idx*BLAKE2B_OUTBYTES;
   cudaMemcpy(out.result_blake2b_,pool.dev_cache->result+offsetb2b, BLAKE2B_OUTBYTES,cudaMemcpyDeviceToHost);
-  cudaMemcpy(&out.nonce_, &pool.dev_cache[max_idx], sizeof(uint32_t), cudaMemcpyDeviceToHost);
+  cudaMemcpy(&out.nonce_, &pool.dev_cache->nonce[max_idx], sizeof(uint32_t), cudaMemcpyDeviceToHost);
   out.difficulty_ = in.the_difficulty_;
   out.distance_ = max_value;
   out.iterations_ = iterations*HASH_TRIES; 

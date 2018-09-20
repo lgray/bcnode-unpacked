@@ -33,6 +33,36 @@ const ps = require('ps-node')
 const fkill = require('fkill')
 const minerRecycleInterval = 660000 + Math.floor(Math.random() * 10) * 10000
 const globalLog: Logger = logging.getLogger(__filename)
+
+var gpumining = require('../../gpu_dev/build/Release/bcminer_gpu.node')
+
+function mine_gpu (currentTimestamp: number, work: string, miner: string, merkleRoot: string, threshold: number, difficultyCalculator: ?Function, reportType: ?number): { distance: string, nonce: string, timestamp: number, difficulty: string } {
+    const tsStart = ts.now()
+    var thegpuminer = gpumining.BCGPUStream()
+    var now = (tsStart/1000)<<0
+    var difficulty = difficultyCalculator(now)
+    const solution = thegpuminer.RunMiner(Buffer.from(miner),
+					  Buffer.from(merkleRoot),
+					  Buffer.from(work),
+					  Buffer.from(now.toString()),
+					  Buffer.from(difficulty.toString()))
+    const nowms = ts.now()
+    now = (nowms/1000)<<0
+    var res = {
+        distance: solution.distance,
+        nonce: solution.nonce.toString(),
+        timestamp: now,
+        difficulty: solution.difficulty,
+        // NOTE: Following fields are for analyses only
+        iterations: solution.iterations,
+        timeDiff: nowms - tsStart,
+	outhash: solution.result_blake2bl
+    }
+    globalLog.info('gpu result: ' + res.distance + ' ' + res.timestamp)
+    
+    return res
+}
+
 // setup logging of unhandled rejections
 //
 //
@@ -128,24 +158,23 @@ if (cluster.isMaster) {
     } else if (data.type === 'work') {
       // expressed in Radians (cycles/second) / 2 * PI
       (async () => {
-        // const workerA = applyEvents(createThread())
-        // await sendWorker(workerA, data.data)
+        const workerA = applyEvents(createThread())
+        await sendWorker(workerA, data.data)
         // const workerB = applyEvents(createThread())
         // await sendWorker(workerB, data.data)
         // const workerC = applyEvents(createThread())
         // await sendWorker(workerC, data.data)
         // const workerB = applyEvents(createThread())
         // await sendWorker(workerB, data.data)
-        if (Object.keys(cluster.workers).length < settings.maxWorkers) {
-          const deploy = settings.maxWorkers - Object.keys(cluster.workers).length
-          // const worker = applyEvents(createThread())
-          // await sendWorker(worker, data.data)
-          // const deploy = settings.maxWorkers
-          for (let i = 0; i < deploy; i++) {
-            const worker = applyEvents(createThread())
-            await sendWorker(worker, data.data)
-          }
-        }
+        // if (Object.keys(cluster.workers).length < settings.maxWorkers) {
+        //  const deploy = settings.maxWorkers - Object.keys(cluster.workers).length
+        // const worker = applyEvents(createThread())
+        // await sendWorker(worker, data.data)
+        // const deploy = settings.maxWorkers
+        //  for (let i = 0; i < deploy; i++) {
+        //    const worker = applyEvents(createThread())
+        //    await sendWorker(worker, data.data)
+        //  }
       })()
         .catch((err) => {
           globalLog.error(err.message + ' ' + err.stack)
@@ -192,12 +221,12 @@ if (cluster.isMaster) {
      * Miner woker entrypoin
      */
   process.title = 'bcworker'
-  const variableTimeout = 12000 + Math.floor(Math.random() * 10000)
+  const variableTimeout = 60000 + Math.floor(Math.random() * 10000)
   setTimeout(() => {
     globalLog.info('worker ' + process.pid + ' dismissed after ' + Math.floor(variableTimeout/1000) + 's')
     process.exit()
   }, variableTimeout)
-
+    
   const main = () => {
 
     process.on('message', ({
@@ -246,7 +275,7 @@ if (cluster.isMaster) {
       }
 
       try {
-        const solution = mine(
+          const solution = mine_gpu(
           currentTimestamp,
           work,
           minerKey,
@@ -254,7 +283,7 @@ if (cluster.isMaster) {
           difficulty,
           difficultyCalculator()
         )
-
+	  
         process.send({
           data: solution,
           workId: workId

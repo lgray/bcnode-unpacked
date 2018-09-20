@@ -70,12 +70,24 @@ NAN_METHOD(BCGPUStream::RunMiner) {
   Local<Object> workbuffer = info[2].As<Object>();
   size_t worklength = node::Buffer::Length(workbuffer);
   char* workdata = node::Buffer::Data(workbuffer);
-  memcpy(in.received_work_,workdata,worklength);
+  //memcpy(in.received_work_,workdata,worklength);
+  memset(in.received_work_,0,BLAKE2B_OUTBYTES);
   in.work_size_ = worklength;
   assert(worklength == BLAKE2B_OUTBYTES);
 
-  std::cout << "received work: " << workdata << std::endl;
-  
+  for(unsigned i = 0; i < in.work_size_; ++i ) {
+      char temp[2];
+      temp[0] = workdata[i];
+      temp[1] = '\0';
+      in.received_work_[i/2] += strtol(temp,NULL,16)<<(4*((i+1)%2));
+    }
+
+  std::cout << "received work: ";
+  for( unsigned i = 0; i < BLAKE2B_OUTBYTES ; ++i ) {
+    std::cout << std::hex << (unsigned)(in.received_work_[i]>>4) << (unsigned)(in.received_work_[i]&0xf);
+  }
+  std::cout << std::dec << std::endl;
+    
   // the timestamp from BC
   Local<Object> tsbuffer = info[3].As<Object>();
   size_t tslength = node::Buffer::Length(tsbuffer);
@@ -83,7 +95,7 @@ NAN_METHOD(BCGPUStream::RunMiner) {
   memcpy(in.time_stamp_,tsdata,tslength);
   in.time_stamp_size_ = tslength;
 
-  std::cout << "timestamp: " << tsdata << std::endl;
+  std::cout << "timestamp: " << tsdata << ' ' << tslength << std::endl;
   
   // the difficulty
   Local<Object> diffbuffer = info[4].As<Object>();
@@ -94,10 +106,41 @@ NAN_METHOD(BCGPUStream::RunMiner) {
 
   std::cout << "difficulty: " << in.the_difficulty_ << std::endl;
   
-  //obj->mMiner.do_mining(in,out);
+  obj->mMiner.do_mining(in,out);
+
+  v8::Isolate* isolate = info.GetIsolate();
+  
+  Local<Object> jsout = Object::New(isolate);
+
+  std::stringstream ssdist, ssiters, ssdiff, result;
+  ssdist << out.distance_;
+  ssiters << out.iterations_;
+  ssdiff << out.difficulty_;
+
+  //convert to blake2bl stringified form
+  for( unsigned i = 32; i < BLAKE2B_OUTBYTES; ++i ) {
+    result << std::hex 
+	   << (unsigned)(out.result_blake2b_[i]>>4)
+	   << (unsigned)(out.result_blake2b_[i]&0xf);
+  }
+  
+  jsout->Set( v8::String::NewFromUtf8(isolate,"nonce"),
+	      v8::Uint32::NewFromUnsigned(isolate,out.nonce_) );
+  jsout->Set( v8::String::NewFromUtf8(isolate,"result_blake2bl"),
+	      v8::String::NewFromUtf8(isolate,result.str().c_str()) );
+  jsout->Set( v8::String::NewFromUtf8(isolate,"distance"),
+	      v8::String::NewFromUtf8(isolate,ssdist.str().c_str()) );
+  jsout->Set( v8::String::NewFromUtf8(isolate,"iterations"),
+              v8::String::NewFromUtf8(isolate,ssiters.str().c_str()) );
+  jsout->Set( v8::String::NewFromUtf8(isolate,"difficulty"),
+              v8::String::NewFromUtf8(isolate,ssdiff.str().c_str()) );
+    
+  std::cout << "distance: " << out.distance_ << std::endl;
+  std::cout << "nonce: " << out.nonce_ << std::endl;
+  std::cout << "iterations: " << out.iterations_ << std::endl;
   
   // set the return value
-  //info.GetReturnValue().Set(result);
+  info.GetReturnValue().Set(jsout);
 }
 
 // --- v8 module ceremony

@@ -1,6 +1,6 @@
 const
 	bindings = require('bindings'),
-	blake2_gpu   = bindings('blake2_gpu'),
+	bcminer_gpu   = bindings('bcminer_gpu'),
 	P        = require('p-promise')
 	;
 
