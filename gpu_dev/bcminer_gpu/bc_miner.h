@@ -62,11 +62,11 @@ struct bc_mining_mempools{
 };
 
 // do this once
-//void init_mining_memory(bc_mining_mempools& pool);
+void init_mining_memory(bc_mining_mempools& pool);
 // do this a bunch
-//void run_miner(const bc_mining_inputs& in, bc_mining_mempools& pool,bc_mining_outputs& out);
+void run_miner(const bc_mining_inputs& in, bc_mining_mempools& pool,bc_mining_outputs& out);
 // do this once
-//void destroy_mining_memory(bc_mining_mempools& pool);
+void destroy_mining_memory(bc_mining_mempools& pool);
  
 
 #endif

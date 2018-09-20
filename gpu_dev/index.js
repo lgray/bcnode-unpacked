@@ -4,14 +4,15 @@ const
 	P        = require('p-promise')
 	;
 
-function doWork(miner_key, merkle_root, timestamp)
+function doWork(miner_key, merkle_root, timestamp, difficulty)
 {
-	if (!Buffer.isBuffer(miner_key) || !Buffer.isBuffer(merkle_root) || !Buffer.isBuffer(timestamp) )
+    if ( !Buffer.isBuffer(miner_key) || !Buffer.isBuffer(merkle_root) ||
+	 !Buffer.isBuffer(timestamp) || !Buffer.isBuffer(difficulty) )
 	{
 		throw new TypeError('One of the things you passed as input is not a buffer');
 	}
 
-	return blake2_gpu.do_bc_work(miner_key,merkle_root,timestamp);
+    return blake2_gpu.do_bc_work(miner_key,merkle_root,timestamp,difficulty);
 }
 
 
