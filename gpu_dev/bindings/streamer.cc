@@ -17,6 +17,8 @@
 using namespace v8;
 using namespace node;
 
+std::mutex BCGPUStream::miner_lock;
+
 NAN_METHOD(BCGPUStream::New) {
   if (info.IsConstructCall())
     {
@@ -43,10 +45,15 @@ BCGPUStream::~BCGPUStream() {
 }
 
 NAN_METHOD(BCGPUStream::RunMiner) {
+
+  std::lock_guard<std::mutex> lock(miner_lock);
+
   bc_mining_inputs in;
   bc_mining_outputs out;
   BCGPUStream* obj = ObjectWrap::Unwrap<BCGPUStream>(info.Holder());
 
+  obj->mMiner.init_memory();
+  
   // first arg is the miner key
   Local<Object> minerkeybuffer = info[0].As<Object>();
   size_t minerkeylength = node::Buffer::Length(minerkeybuffer);
@@ -105,9 +112,12 @@ NAN_METHOD(BCGPUStream::RunMiner) {
   in.the_difficulty_ = thediff;
 
   std::cout << "difficulty: " << in.the_difficulty_ << std::endl;
-  
+
+  //std::lock_guard<std::mutex> lock(miner_lock);
   obj->mMiner.do_mining(in,out);
 
+  obj->mMiner.destroy_memory();
+  
   v8::Isolate* isolate = info.GetIsolate();
   
   Local<Object> jsout = Object::New(isolate);

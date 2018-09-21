@@ -24,6 +24,7 @@ const {
     BlockchainHeader,
     BcBlock
 } = require('../protos/core_pb')
+
 const ts = require('../utils/time').default // ES6 default export
 const cluster = require('cluster')
 const logging = require('../logger')
@@ -34,18 +35,18 @@ const fkill = require('fkill')
 const minerRecycleInterval = 660000 + Math.floor(Math.random() * 10) * 10000
 const globalLog: Logger = logging.getLogger(__filename)
 
-var gpumining = require('../../gpu_dev/build/Release/bcminer_gpu.node')
+const { bcminer_gpu } = require('../../gpu_dev')
 
 function mine_gpu (currentTimestamp: number, work: string, miner: string, merkleRoot: string, threshold: number, difficultyCalculator: ?Function, reportType: ?number): { distance: string, nonce: string, timestamp: number, difficulty: string } {
-    const tsStart = ts.now()
-    var thegpuminer = gpumining.BCGPUStream()
+    const tsStart = ts.now()    
     var now = (tsStart/1000)<<0
     var difficulty = difficultyCalculator(now)
-    const solution = thegpuminer.RunMiner(Buffer.from(miner),
-					  Buffer.from(merkleRoot),
-					  Buffer.from(work),
-					  Buffer.from(now.toString()),
-					  Buffer.from(difficulty.toString()))
+    const gpu = bcminer_gpu.BCGPUStream()
+    const solution = gpu.RunMiner(Buffer.from(miner),
+				  Buffer.from(merkleRoot),
+				  Buffer.from(work),
+				  Buffer.from(now.toString()),
+				  Buffer.from(difficulty.toString()))
     const nowms = ts.now()
     now = (nowms/1000)<<0
     var res = {

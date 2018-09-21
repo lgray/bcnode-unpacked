@@ -171,10 +171,12 @@ void init_mining_memory(bc_mining_mempools& pool) {
   if( pool.scratch_indices != NULL ) return;
 
   // allocate device memory for random states and hashing work
+  cudaDeviceSynchronize();
   cudaMalloc((void **)&pool.dev_states, HASH_TRIES * 1 * sizeof(curandState));
   cudaMalloc(&pool.dev_cache,sizeof(bc_mining_data));
   cudaMalloc(&pool.scratch_dists,HASH_TRIES*sizeof(uint64_t));
   cudaMalloc(&pool.scratch_indices,HASH_TRIES*sizeof(uint64_t));
+  cudaDeviceSynchronize();
 }
 
 void run_miner(const bc_mining_inputs& in, bc_mining_mempools& pool,bc_mining_outputs& out) {
@@ -182,6 +184,9 @@ void run_miner(const bc_mining_inputs& in, bc_mining_mempools& pool,bc_mining_ou
   if( pool.dev_states == NULL ) return;
   if( pool.scratch_dists == NULL ) return;
   if( pool.scratch_indices == NULL ) return;
+
+  cudaStream_t stream;
+  cudaStreamCreate( &stream );
 
   const unsigned max_iterations = 100;
   
@@ -216,38 +221,47 @@ void run_miner(const bc_mining_inputs& in, bc_mining_mempools& pool,bc_mining_ou
   uint64_t max_value(0), max_idx(0);
   cudaMemset(pool.scratch_dists,0,HASH_TRIES*sizeof(uint64_t));
   cudaMemset(pool.scratch_indices,0,HASH_TRIES*sizeof(uint64_t));
-
   
   uint64_t iterations = 0;
   // the following kernel launches are the primary work
   // only set the random seeds once
-  setup_rand<<<blocks,threads>>>(pool.dev_states,((const uint32_t*)in.received_work_)[0]);
-  //cudaDeviceSynchronize();
+  cudaStreamSynchronize(stream);
+  setup_rand<<<blocks,threads,0,stream>>>(pool.dev_states,((const uint32_t*)in.received_work_)[0]);
+  cudaStreamSynchronize(stream);
   do {
-    prepare_work_nonces<<<blocks,threads>>>(pool.dev_states,pool.dev_cache);
-    //cudaDeviceSynchronize();
-    one_unit_work<<<blocks,threads>>>(pool.dev_cache);
-    //cudaDeviceSynchronize();
-    prepare_max_distance<<<blocks,threads>>>(pool.scratch_dists,pool.scratch_indices,pool.dev_cache->distance);
+    cudaMemset(pool.dev_cache->result,0,HASH_TRIES*BLAKE2B_OUTBYTES);
+    cudaMemset(pool.dev_cache->nonce,0,HASH_TRIES*sizeof(uint32_t));
+    cudaMemset(pool.dev_cache->nonce_hashes,0,HASH_TRIES*BLAKE2B_OUTBYTES);
+    prepare_work_nonces<<<blocks,threads,0,stream>>>(pool.dev_states,pool.dev_cache);
+    cudaStreamSynchronize(stream);
+    one_unit_work<<<blocks,threads,0,stream>>>(pool.dev_cache);
+    cudaStreamSynchronize(stream);
+    cudaMemset(pool.scratch_dists,0,HASH_TRIES*sizeof(uint64_t));
+    cudaMemset(pool.scratch_indices,0,HASH_TRIES*sizeof(uint64_t));
+    prepare_max_distance<<<blocks,threads,0,stream>>>(pool.scratch_dists,pool.scratch_indices,pool.dev_cache->distance);
+    cudaStreamSynchronize(stream);
     unsigned temp = blocks.x;
     while( temp > threads.x ) {
       temp /= threads.x;
-      finalize_max_distance<<<temp,threads>>>(pool.scratch_dists,pool.scratch_indices);
+      finalize_max_distance<<<temp,threads,0,stream>>>(pool.scratch_dists,pool.scratch_indices);
+      cudaStreamSynchronize(stream);
     }
-    finalize_max_distance<<<1,temp>>>(pool.scratch_dists,pool.scratch_indices);
-    
+    finalize_max_distance<<<1,temp,0,stream>>>(pool.scratch_dists,pool.scratch_indices);
+    cudaStreamSynchronize(stream);
     // get the max value and index, which are at index zero in the scratch arrays
     cudaMemcpy(&max_value,pool.scratch_dists,sizeof(uint64_t),cudaMemcpyDeviceToHost);
     cudaMemcpy(&max_idx,pool.scratch_indices,sizeof(uint64_t),cudaMemcpyDeviceToHost);
+    const uint64_t offsetb2b = max_idx*BLAKE2B_OUTBYTES;
+    cudaMemcpy(out.result_blake2b_,pool.dev_cache->result+offsetb2b, BLAKE2B_OUTBYTES,cudaMemcpyDeviceToHost);
+    cudaMemcpy(&out.nonce_, &pool.dev_cache->nonce[max_idx], sizeof(uint32_t), cudaMemcpyDeviceToHost);
     ++iterations;
+    cudaStreamSynchronize(stream);
   } while( max_value <= in.the_difficulty_ && iterations <= max_iterations );
 
-  const uint64_t offsetb2b = max_idx*BLAKE2B_OUTBYTES;
-  cudaMemcpy(out.result_blake2b_,pool.dev_cache->result+offsetb2b, BLAKE2B_OUTBYTES,cudaMemcpyDeviceToHost);
-  cudaMemcpy(&out.nonce_, &pool.dev_cache->nonce[max_idx], sizeof(uint32_t), cudaMemcpyDeviceToHost);
   out.difficulty_ = in.the_difficulty_;
   out.distance_ = max_value;
-  out.iterations_ = iterations*HASH_TRIES; 
+  out.iterations_ = iterations*HASH_TRIES;
+  cudaStreamDestroy( stream );
 }
 
 void destroy_mining_memory(bc_mining_mempools& pool) {
@@ -257,10 +271,12 @@ void destroy_mining_memory(bc_mining_mempools& pool) {
   if( pool.scratch_indices == NULL ) return;
 
   // free device memory
+  cudaDeviceSynchronize();
   cudaFree(pool.dev_states);
   cudaFree(pool.dev_cache);
   cudaFree(pool.scratch_dists);
   cudaFree(pool.scratch_indices);
+  cudaDeviceSynchronize();
 
   // set it to null
   pool.dev_states = NULL;

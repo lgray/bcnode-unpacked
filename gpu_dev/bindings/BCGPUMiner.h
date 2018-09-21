@@ -7,6 +7,9 @@ class BCGPUMiner {
  public:
   BCGPUMiner();
   ~BCGPUMiner();
+
+  void init_memory();
+  void destroy_memory();
   
   void do_mining(const bc_mining_inputs&, bc_mining_outputs&);
   

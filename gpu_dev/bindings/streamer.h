@@ -3,6 +3,8 @@
 #ifndef STREAMER_H
 #define STREAMER_H
 
+#include <mutex>
+#include <memory>
 #include <node.h>
 #include "BCGPUMiner.h"
 
@@ -17,7 +19,8 @@ class BCGPUStream : public node::ObjectWrap {
   static NAN_METHOD(RunMiner);		
   
  private:
- 
+
+  static std::mutex miner_lock;
   BCGPUMiner mMiner;
   
   static inline Nan::Persistent<v8::Function> & constructor() {

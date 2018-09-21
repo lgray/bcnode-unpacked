@@ -1,27 +1,28 @@
 const
-	bindings = require('bindings'),
-	bcminer_gpu   = bindings('bcminer_gpu'),
+	bcminer_gpu   = require('./build/Release/bcminer_gpu.node'),
 	P        = require('p-promise')
 	;
 
-function doWork(miner_key, merkle_root, timestamp, difficulty)
-{
-    if ( !Buffer.isBuffer(miner_key) || !Buffer.isBuffer(merkle_root) ||
-	 !Buffer.isBuffer(timestamp) || !Buffer.isBuffer(difficulty) )
-	{
-		throw new TypeError('One of the things you passed as input is not a buffer');
-	}
+// var thegpuminer = bcminer_gpu.BCGPUStream()
 
-    return blake2_gpu.do_bc_work(miner_key,merkle_root,timestamp,difficulty);
+function runMiner(miner,
+		  merkleRoot,
+		  work,
+		  timestamp,
+		  difficulty) {
+
+    var thegpuminer = bcminer_gpu.BCGPUStream()
+    const result = thegpuminer.RunMiner(Buffer.from(miner),
+					Buffer.from(merkleRoot),
+					Buffer.from(work),
+					Buffer.from(timestamp.toString()),
+					Buffer.from(difficulty.toString()))
+    return result
 }
-
 
 
 module.exports =
 {
-	// convenience wrappers
-	doWork,
-	
-	// exposing the implementations
-	blake2_gpu:       function(miner_key,merkle_root,timestamp) { return doWork(miner_key,merkle_root,timestamp); }
+    bcminer_gpu,
+    runMiner
 };

@@ -33,5 +33,5 @@ __host__ __device__ double cosine_distance_cu(uint8_t work[BLAKE2B_OUTBYTES],
     den = std::sqrt(double(norm_work))*std::sqrt(double(norm_comp));
     acc += (1.0-num/den);
   }  
-  return acc*1e15;
+  return acc*1000000000000000ULL;
 }
