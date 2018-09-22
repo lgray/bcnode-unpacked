@@ -47,8 +47,9 @@ function mine_gpu (currentTimestamp: number, work: string, miner: string, merkle
 				  Buffer.from(work),
 				  Buffer.from(now.toString()),
 				  Buffer.from(difficulty.toString()))
-    const nowms = ts.now()
-    now = (nowms/1000)<<0
+    var tsStop = ts.now()
+    //const nowms = ts.now()
+    //now = (nowms/1000)<<0
     var res = {
         distance: solution.distance,
         nonce: solution.nonce.toString(),
@@ -56,7 +57,7 @@ function mine_gpu (currentTimestamp: number, work: string, miner: string, merkle
         difficulty: solution.difficulty,
         // NOTE: Following fields are for analyses only
         iterations: solution.iterations,
-        timeDiff: nowms - tsStart,
+        timeDiff: tsStop - tsStart,
 	outhash: solution.result_blake2bl
     }
     globalLog.info('gpu result: ' + res.distance + ' ' + res.timestamp)
@@ -218,92 +219,82 @@ if (cluster.isMaster) {
   globalLog.info('pool controller ready ' + process.pid)
 
 } else {
-  /**
+    /**
      * Miner woker entrypoin
      */
-  process.title = 'bcworker'
-  const variableTimeout = 60000 + Math.floor(Math.random() * 10000)
-  setTimeout(() => {
-    globalLog.info('worker ' + process.pid + ' dismissed after ' + Math.floor(variableTimeout/1000) + 's')
-    process.exit()
-  }, variableTimeout)
+    process.title = 'bcworker'
     
-  const main = () => {
-
     process.on('message', ({
-      workId,
-      currentTimestamp,
-      offset,
-      work,
-      minerKey,
-      merkleRoot,
-      newestChildBlock,
-      difficulty,
-      difficultyData
+	workId,
+	currentTimestamp,
+	offset,
+	work,
+	minerKey,
+	merkleRoot,
+	newestChildBlock,
+	difficulty,
+	difficultyData
     }) => {
-      globalLog.info('worker ' + process.pid + ' reporting in')
-
-      ts.offsetOverride(offset)
-      // Deserialize buffers from parent process, buffer will be serialized as object of this shape { <idx>: byte } - so use Object.values on it
-      const deserialize = (buffer: {
-                [string]: number
-            }, clazz: BcBlock | BlockchainHeader | BlockchainHeaders) => clazz.deserializeBinary(new Uint8Array(Object.values(buffer).map(n => parseInt(n, 10))))
-
-      // function with all difficultyData closed in scope and
-      // send it to mine with all arguments except of timestamp and use it
-      // each 1s tick with new timestamp
-      const difficultyCalculator = function () {
-        // Proto buffers are serialized - let's deserialize them
-        const {
-          lastPreviousBlock,
-          newBlockHeaders
-        } = difficultyData
-        const lastPreviousBlockProto = deserialize(lastPreviousBlock, BcBlock)
-        const newBlockHeadersProto = deserialize(newBlockHeaders, BlockchainHeaders)
-
-        // return function with scope closing all deserialized difficulty data
-        return function (timestamp: number) {
-          const newBlockCount = getNewBlockCount(lastPreviousBlockProto.getBlockchainHeaders(), newBlockHeadersProto)
-
-          const preExpDiff = getNewPreExpDifficulty(
-            timestamp,
-            lastPreviousBlockProto,
-            newestChildBlock,
-            newBlockCount
-          )
-          return getExpFactorDiff(preExpDiff, lastPreviousBlockProto.getHeight()).toString()
-        }
-      }
-
-      try {
-          const solution = mine_gpu(
-          currentTimestamp,
-          work,
-          minerKey,
-          merkleRoot,
-          difficulty,
-          difficultyCalculator()
-        )
-	  
-        process.send({
-          data: solution,
-          workId: workId
-        }, () => {
-          globalLog.info(`purposed candidate found: ${JSON.stringify(solution, null, 0)}`)
-          fkill('bcworker', { force: true })
-            .then(() => {
-              globalLog.info('global pool rebase success')
+	globalLog.info('worker ' + process.pid + ' reporting in')
+	
+	ts.offsetOverride(offset)
+	// Deserialize buffers from parent process, buffer will be serialized as object of this shape { <idx>: byte } - so use Object.values on it
+	const deserialize = (buffer: {
+            [string]: number
+        }, clazz: BcBlock | BlockchainHeader | BlockchainHeaders) => clazz.deserializeBinary(new Uint8Array(Object.values(buffer).map(n => parseInt(n, 10))))
+	
+	// function with all difficultyData closed in scope and
+	// send it to mine with all arguments except of timestamp and use it
+	// each 1s tick with new timestamp
+	const difficultyCalculator = function () {
+            // Proto buffers are serialized - let's deserialize them
+            const {
+		lastPreviousBlock,
+		newBlockHeaders
+            } = difficultyData
+            const lastPreviousBlockProto = deserialize(lastPreviousBlock, BcBlock)
+            const newBlockHeadersProto = deserialize(newBlockHeaders, BlockchainHeaders)
+	    
+            // return function with scope closing all deserialized difficulty data
+            return function (timestamp: number) {
+		const newBlockCount = getNewBlockCount(lastPreviousBlockProto.getBlockchainHeaders(), newBlockHeadersProto)
+		
+		const preExpDiff = getNewPreExpDifficulty(
+		    timestamp,
+		    lastPreviousBlockProto,
+		    newestChildBlock,
+		    newBlockCount
+		)
+		return getExpFactorDiff(preExpDiff, lastPreviousBlockProto.getHeight()).toString()
+            }
+	}
+	
+	try {
+            const solution = mine_gpu(
+		currentTimestamp,
+		work,
+		minerKey,
+		merkleRoot,
+		difficulty,
+		difficultyCalculator()
+            )
+	    
+            process.send({
+		data: solution,
+		workId: workId
+            }, () => {
+		globalLog.info(`purposed candidate found: ${JSON.stringify(solution, null, 0)}`)
+		fkill('bcworker', { force: true })
+		    .then(() => {
+			globalLog.info('global pool rebase success')
+		    })
+		    .catch((err) => {
+			globalLog.debug(err.message)
+		    })
             })
-            .catch((err) => {
-              globalLog.debug(err.message)
-            })
-        })
-      } catch (e) {
-        globalLog.warn(`mining failed with reason: ${e.message}, stack ${e.stack}`)
-        process.exit(3)
-      }
+	} catch (e) {
+            globalLog.warn(`mining failed with reason: ${e.message}, stack ${e.stack}`)
+            process.exit(3)
+	}
     })
-  }
-
-  main()
 }
