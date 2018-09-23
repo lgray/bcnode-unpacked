@@ -36,11 +36,12 @@ const {
   blockchainMapToList,
   createMerkleRoot,
   prepareWork,
-  distance
+  distance,
+  MINIMUM_DIFFICULTY
 } = require('../mining/primitives')
 const GENESIS_DATA = require('./genesis.raw')
 const FINGERPRINTS_TEMPLATE = require('../utils/templates/blockchain_fingerprints.json')
-const MINIMAL_DIFFICULTY = new BN(290112262029012)
+const MINIMAL_DIFFICULTY = MINIMUM_DIFFICULTY// new BN(290112262029012)
 
 export type DfConfig = {
   [chain: string]: {dfNumerator: number, dfDenominator: number, dfVoid: number, dfBound: number}

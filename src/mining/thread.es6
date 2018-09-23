@@ -24,7 +24,6 @@ const {
     BlockchainHeader,
     BcBlock
 } = require('../protos/core_pb')
-
 const ts = require('../utils/time').default // ES6 default export
 const cluster = require('cluster')
 const logging = require('../logger')
@@ -35,21 +34,14 @@ const fkill = require('fkill')
 const minerRecycleInterval = 660000 + Math.floor(Math.random() * 10) * 10000
 const globalLog: Logger = logging.getLogger(__filename)
 
-const { bcminer_gpu } = require('../../gpu_dev')
+const { createMinerMemory, destroyMinerMemory, runMiner, gpu_mutex } = require('../../gpu_dev')
 
 function mine_gpu (currentTimestamp: number, work: string, miner: string, merkleRoot: string, threshold: number, difficultyCalculator: ?Function, reportType: ?number): { distance: string, nonce: string, timestamp: number, difficulty: string } {
-    const tsStart = ts.now()    
+    const tsStart = ts.now()
     var now = (tsStart/1000)<<0
     var difficulty = difficultyCalculator(now)
-    const gpu = bcminer_gpu.BCGPUStream()
-    const solution = gpu.RunMiner(Buffer.from(miner),
-				  Buffer.from(merkleRoot),
-				  Buffer.from(work),
-				  Buffer.from(now.toString()),
-				  Buffer.from(difficulty.toString()))
-    var tsStop = ts.now()
-    //const nowms = ts.now()
-    //now = (nowms/1000)<<0
+    const solution = runMiner(miner,merkleRoot,work,now,difficulty)
+    const tsStop = ts.now()
     var res = {
         distance: solution.distance,
         nonce: solution.nonce.toString(),
@@ -82,7 +74,7 @@ process.on('unhandledRejection', (err) => {
 })
 
 const settings = {
-    maxWorkers: 2
+    maxWorkers: 1
 }
 
 const sendWorker = (worker, msg) => {
@@ -219,82 +211,108 @@ if (cluster.isMaster) {
   globalLog.info('pool controller ready ' + process.pid)
 
 } else {
-    /**
+  /**
      * Miner woker entrypoin
      */
-    process.title = 'bcworker'
+  process.title = 'bcworker'
+  const variableTimeout = 60000 + Math.floor(Math.random() * 10000)
+  setTimeout(() => {
+    globalLog.info('worker ' + process.pid + ' dismissed after ' + Math.floor(variableTimeout/1000) + 's')
+    process.exit()
+  }, variableTimeout)
+
+  gpu_mutex.runExclusive(async () => { createMinerMemory() })
+
+  process.once("SIGTERM", () => {
+      process.exit(0)
+  })
+  process.once("SIGINT", () => {
+      process.exit(0)
+  })
+  process.once("exit", () => {
+      gpu_mutex.runExclusive( async() => { destroyMinerMemory() })
+      globalLog.info('worker exited')
+  })
     
-    process.on('message', ({
-	workId,
-	currentTimestamp,
-	offset,
-	work,
-	minerKey,
-	merkleRoot,
-	newestChildBlock,
-	difficulty,
-	difficultyData
+  const main = () => {
+
+    process.on('message', async ({
+      workId,
+      currentTimestamp,
+      offset,
+      work,
+      minerKey,
+      merkleRoot,
+      newestChildBlock,
+      difficulty,
+      difficultyData
     }) => {
-	globalLog.info('worker ' + process.pid + ' reporting in')
-	
-	ts.offsetOverride(offset)
-	// Deserialize buffers from parent process, buffer will be serialized as object of this shape { <idx>: byte } - so use Object.values on it
-	const deserialize = (buffer: {
-            [string]: number
-        }, clazz: BcBlock | BlockchainHeader | BlockchainHeaders) => clazz.deserializeBinary(new Uint8Array(Object.values(buffer).map(n => parseInt(n, 10))))
-	
-	// function with all difficultyData closed in scope and
-	// send it to mine with all arguments except of timestamp and use it
-	// each 1s tick with new timestamp
-	const difficultyCalculator = function () {
-            // Proto buffers are serialized - let's deserialize them
-            const {
-		lastPreviousBlock,
-		newBlockHeaders
-            } = difficultyData
-            const lastPreviousBlockProto = deserialize(lastPreviousBlock, BcBlock)
-            const newBlockHeadersProto = deserialize(newBlockHeaders, BlockchainHeaders)
-	    
-            // return function with scope closing all deserialized difficulty data
-            return function (timestamp: number) {
-		const newBlockCount = getNewBlockCount(lastPreviousBlockProto.getBlockchainHeaders(), newBlockHeadersProto)
-		
-		const preExpDiff = getNewPreExpDifficulty(
-		    timestamp,
-		    lastPreviousBlockProto,
-		    newestChildBlock,
-		    newBlockCount
-		)
-		return getExpFactorDiff(preExpDiff, lastPreviousBlockProto.getHeight()).toString()
-            }
-	}
-	
-	try {
-            const solution = mine_gpu(
-		currentTimestamp,
-		work,
-		minerKey,
-		merkleRoot,
-		difficulty,
-		difficultyCalculator()
-            )
-	    
-            process.send({
-		data: solution,
-		workId: workId
-            }, () => {
-		globalLog.info(`purposed candidate found: ${JSON.stringify(solution, null, 0)}`)
-		fkill('bcworker', { force: true })
-		    .then(() => {
-			globalLog.info('global pool rebase success')
-		    })
-		    .catch((err) => {
-			globalLog.debug(err.message)
-		    })
+      const release = await gpu_mutex.acquire();
+      globalLog.info('worker ' + process.pid + ' reporting in')
+
+      ts.offsetOverride(offset)
+      // Deserialize buffers from parent process, buffer will be serialized as object of this shape { <idx>: byte } - so use Object.values on it
+      const deserialize = (buffer: {
+                [string]: number
+            }, clazz: BcBlock | BlockchainHeader | BlockchainHeaders) => clazz.deserializeBinary(new Uint8Array(Object.values(buffer).map(n => parseInt(n, 10))))
+
+      // function with all difficultyData closed in scope and
+      // send it to mine with all arguments except of timestamp and use it
+      // each 1s tick with new timestamp
+      const difficultyCalculator = function () {
+        // Proto buffers are serialized - let's deserialize them
+        const {
+          lastPreviousBlock,
+          newBlockHeaders
+        } = difficultyData
+        const lastPreviousBlockProto = deserialize(lastPreviousBlock, BcBlock)
+        const newBlockHeadersProto = deserialize(newBlockHeaders, BlockchainHeaders)
+
+        // return function with scope closing all deserialized difficulty data
+        return function (timestamp: number) {
+          const newBlockCount = getNewBlockCount(lastPreviousBlockProto.getBlockchainHeaders(), newBlockHeadersProto)
+
+          const preExpDiff = getNewPreExpDifficulty(
+            timestamp,
+            lastPreviousBlockProto,
+            newestChildBlock,
+            newBlockCount
+          )
+          return getExpFactorDiff(preExpDiff, lastPreviousBlockProto.getHeight()).toString()
+        }
+      }
+
+      try {
+          const solution = mine_gpu(
+          currentTimestamp,
+          work,
+          minerKey,
+          merkleRoot,
+          difficulty,
+          difficultyCalculator()
+        )
+	  
+        process.send({
+          data: solution,
+          workId: workId
+        }, () => {
+          globalLog.info(`purposed candidate found: ${JSON.stringify(solution, null, 0)}`)
+          fkill('bcworker', { force: true })
+            .then(() => {
+              globalLog.info('global pool rebase success')
             })
-	} catch (e) {
-            globalLog.warn(`mining failed with reason: ${e.message}, stack ${e.stack}`)
-            process.exit(3)
-	}
+            .catch((err) => {
+              globalLog.debug(err.message)
+            })
+        })
+      } catch (e) {
+        globalLog.warn(`mining failed with reason: ${e.message}, stack ${e.stack}`)
+	release()  
+        process.exit(3)  
+      }
     })
+    release()
+  }
+
+  main()
 }

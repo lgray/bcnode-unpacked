@@ -15,7 +15,9 @@ class BCGPUStream : public node::ObjectWrap {
   
   BCGPUStream();
   ~BCGPUStream();
-  
+
+  static NAN_METHOD(CreateMemory);
+  static NAN_METHOD(DestroyMemory);
   static NAN_METHOD(RunMiner);		
   
  private:

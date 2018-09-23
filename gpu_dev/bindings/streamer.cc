@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <cstdlib>
 #include <sstream>
+#include <random>
 
 #include <node.h>
 #include "nan.h"
@@ -21,8 +22,7 @@ std::mutex BCGPUStream::miner_lock;
 
 NAN_METHOD(BCGPUStream::New) {
   if (info.IsConstructCall())
-    {
-      
+    {      
       BCGPUStream* obj = new BCGPUStream();
       obj->Wrap(info.This());
       info.GetReturnValue().Set(info.This());
@@ -44,6 +44,18 @@ BCGPUStream::~BCGPUStream() {
   std::cout << "destructing BCGPUStream" << std::endl;
 }
 
+NAN_METHOD(BCGPUStream::CreateMemory) {
+  std::lock_guard<std::mutex> lock(miner_lock);
+  BCGPUStream* obj = ObjectWrap::Unwrap<BCGPUStream>(info.Holder());
+  obj->mMiner.init_memory();
+}
+
+NAN_METHOD(BCGPUStream::DestroyMemory) {
+  std::lock_guard<std::mutex> lock(miner_lock);
+  BCGPUStream* obj = ObjectWrap::Unwrap<BCGPUStream>(info.Holder());
+  obj->mMiner.destroy_memory();
+}
+
 NAN_METHOD(BCGPUStream::RunMiner) {
 
   std::lock_guard<std::mutex> lock(miner_lock);
@@ -52,7 +64,7 @@ NAN_METHOD(BCGPUStream::RunMiner) {
   bc_mining_outputs out;
   BCGPUStream* obj = ObjectWrap::Unwrap<BCGPUStream>(info.Holder());
 
-  obj->mMiner.init_memory();
+  std::random_device rd;
   
   // first arg is the miner key
   Local<Object> minerkeybuffer = info[0].As<Object>();
@@ -62,8 +74,7 @@ NAN_METHOD(BCGPUStream::RunMiner) {
   in.miner_key_size_ = minerkeylength;
 
   std::cout << "miner key: " << in.miner_key_ << ' ' << minerkeylength << std::endl;
-
-
+  
   // merkel root from BC
   Local<Object> merkelbuffer = info[1].As<Object>();
   size_t merkellength = node::Buffer::Length(merkelbuffer);
@@ -115,8 +126,6 @@ NAN_METHOD(BCGPUStream::RunMiner) {
 
   //std::lock_guard<std::mutex> lock(miner_lock);
   obj->mMiner.do_mining(in,out);
-
-  obj->mMiner.destroy_memory();
   
   v8::Isolate* isolate = info.GetIsolate();
   
@@ -159,9 +168,11 @@ NAN_MODULE_INIT(BCGPUStream::Initialize) {
   v8::Local<v8::FunctionTemplate> t = Nan::New<v8::FunctionTemplate>(New);
   
   t->SetClassName(Nan::New<String>("BCGPUStream").ToLocalChecked());
-  t->InstanceTemplate()->SetInternalFieldCount(1);
+  t->InstanceTemplate()->SetInternalFieldCount(3);
   
   Nan::SetPrototypeMethod(t, "RunMiner", BCGPUStream::RunMiner);
+  Nan::SetPrototypeMethod(t, "CreateMemory", BCGPUStream::CreateMemory);
+  Nan::SetPrototypeMethod(t, "DestroyMemory", BCGPUStream::DestroyMemory);
   
   constructor().Reset(Nan::GetFunction(t).ToLocalChecked());
   Nan::Set(target, Nan::New("BCGPUStream").ToLocalChecked(), Nan::GetFunction(t).ToLocalChecked());
@@ -169,7 +180,7 @@ NAN_MODULE_INIT(BCGPUStream::Initialize) {
 
 NAN_MODULE_INIT(InitAll)
 {
-	BCGPUStream::Initialize(target);
+  BCGPUStream::Initialize(target);
 }
 
 NODE_MODULE(bcminer_gpu, InitAll)

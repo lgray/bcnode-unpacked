@@ -55,7 +55,7 @@ const ts = require('../utils/time').default // ES6 default export
 const GENESIS_DATA = require('../bc/genesis.raw')
 
 // testnet: 11801972029393
-const MINIMUM_DIFFICULTY = new BN(291112262029012)
+const MINIMUM_DIFFICULTY = new BN(290112262029012) // BN(291112262029012)
 const MAX_TIMEOUT_SECONDS = 45
 const BC_BT_VALIDATION = process.env.BC_BT_VALIDATION === 'true'
 

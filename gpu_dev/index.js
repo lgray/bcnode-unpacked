@@ -1,17 +1,26 @@
 const
 	bcminer_gpu   = require('./build/Release/bcminer_gpu.node'),
-	P        = require('p-promise')
+        P        = require('p-promise'),
+        { Mutex } = require('async-mutex')
 	;
 
-// var thegpuminer = bcminer_gpu.BCGPUStream()
+const thegpuminer = bcminer_gpu.BCGPUStream()
+
+gpu_mutex = new Mutex()
+
+function createMinerMemory() {
+    thegpuminer.CreateMemory()
+}
+
+function destroyMinerMemory() {
+    thegpuminer.DestroyMemory()
+}
 
 function runMiner(miner,
 		  merkleRoot,
 		  work,
 		  timestamp,
 		  difficulty) {
-
-    var thegpuminer = bcminer_gpu.BCGPUStream()
     const result = thegpuminer.RunMiner(Buffer.from(miner),
 					Buffer.from(merkleRoot),
 					Buffer.from(work),
@@ -23,6 +32,8 @@ function runMiner(miner,
 
 module.exports =
 {
-    bcminer_gpu,
-    runMiner
+    gpu_mutex,
+    runMiner,
+    createMinerMemory,
+    destroyMinerMemory
 };
