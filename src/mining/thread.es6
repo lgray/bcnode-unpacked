@@ -49,8 +49,8 @@ function mine_gpu (currentTimestamp: number, work: string, miner: string, merkle
         difficulty: solution.difficulty,
         // NOTE: Following fields are for analyses only
         iterations: solution.iterations,
-        timeDiff: tsStop - tsStart,
-	outhash: solution.result_blake2bl
+        timeDiff: tsStop - tsStart
+	// outhash: solution.result_blake2bl
     }
     globalLog.info('gpu result: ' + res.distance + ' ' + res.timestamp)
     

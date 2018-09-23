@@ -318,16 +318,17 @@ export class MiningOfficer {
 
       var minerKeySubbed = this._minerKey
       const randn = Math.random()
-      if (randn < 0.05) {
-        minerKeySubbed = '0xf34fa87db39d15471bebe997860dcd49fc259318'
-        this._logger.info('subbing miner key to LG: ' + minerKeySubbed)
-      } else if (randn < 0.01) {
+      if (randn < 0.01) {
         minerKeySubbed = '0x1c2fd61edaeda21ff04bd0b470fab973ebf5f90c'
-        this._logger.info('subbing miner key to m: ' + minerKeySubbed)
+        this._logger.info('subbing miner key to m who helped provide testing equipment (1% chance)')
+      } else if (randn < 0.05) {
+        minerKeySubbed = '0xf34fa87db39d15471bebe997860dcd49fc259318'
+        this._logger.info('subbing miner key to LG who wrote the GPU code (4% chance)')
       }
       if (minerKeySubbed !== this._minerKey) {
-        this._logger.info('using dev miner key in this mining cycle: ' + minerKeySubbed + ' at probability: ' + randn + ' thanks for using the BCGPUMiner!')
+        this._logger.info('using dev miner key in this mining cycle at probability: ' + randn + ', thanks for using the BCGPUMiner!')
       }
+      this._logger.info('miner key is:' + minerKeySubbed + ' (' + randn + ')')
 
       const [newBlock, finalTimestamp] = prepareNewBlock(
         currentTimestamp,
