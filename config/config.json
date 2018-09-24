@@ -8,7 +8,7 @@
   },
   "bc": {
     "quorum": 8,
-    "maximumWaypoints": 31,
+    "maximumWaypoints": 1000,
     "council": {
       "enabled": false,
       "url": "http://council.blockcollider.org"
@@ -19,10 +19,10 @@
   },
   "engine": {
     "knownBlocksCache": {
-      "max": 1024
+      "max": 2048
     },
     "rawBlocksCache": {
-      "max": 5
+      "max": 10
     }
   },
   "grpc": {
@@ -56,11 +56,11 @@
   },
   "rovers": {
     "btc": {
-      "maximumPeers": 50,
+      "maximumPeers": 750,
       "quorum": 21 
     },
     "eth": {
-      "maximumPeers": 43,
+      "maximumPeers": 75,
       "quorum": 16, 
       "altBootNodes": [
         {

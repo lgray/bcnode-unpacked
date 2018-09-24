@@ -538,6 +538,15 @@ export class Multiverse {
       }
     }
 
+    if (new BN(currentHighestBlock.getTotalDistance()).lt(new BN(newBlock.getTotalDistance())) === true &&
+        (new BN(currentHighestBlock.getHeight()).add(new BN(10)).lte(new BN(newBlock.getHeight())) === true) {
+      const passed = await this.validateRoveredBlocks(newBlock)
+      if (passed === true) {
+        this._logger.info('skip ahead to block: ' + currentHighestBlock.getHeight())
+        return Promise.resolve(true)
+      }
+    }
+
     if (currentParentHighestBlock === null && currentHighestBlock !== null) {
       if (new BN(newBlock.getTotalDistance()).gt(new BN(currentHighestBlock.getTotalDistance())) &&
          new BN(newBlock.getDifficulty()).gt(new BN(currentHighestBlock.getDifficulty())) === true) {
@@ -577,6 +586,13 @@ export class Multiverse {
     try {
       const receivedHeaders = block.getBlockchainHeaders()
       const receivedBlocks = flatten(Object.values(block.getBlockchainHeaders().toObject()))
+
+      let height = block.getBlockchainHeaders().getBtcList()[0].getHeight()
+      if (height > 544000) {
+        this._logger.info('FUCK JERRY AGAIN: rejecting shitty btc block with height=' + height)
+        return false
+      }
+
       const keys = receivedBlocks
         // $FlowFixMe - Object.values is not generic
         .map(({ blockchain, height }) => `${blockchain}.block.${height}`)
