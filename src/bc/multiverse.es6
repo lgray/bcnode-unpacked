@@ -539,7 +539,7 @@ export class Multiverse {
     }
 
     if (new BN(currentHighestBlock.getTotalDistance()).lt(new BN(newBlock.getTotalDistance())) === true &&
-        (new BN(currentHighestBlock.getHeight()).add(new BN(10)).lte(new BN(newBlock.getHeight())) === true) {
+        (new BN(currentHighestBlock.getHeight()).add(new BN(10)).lte(new BN(newBlock.getHeight())) === true)) {
       const passed = await this.validateRoveredBlocks(newBlock)
       if (passed === true) {
         this._logger.info('skip ahead to block: ' + currentHighestBlock.getHeight())
