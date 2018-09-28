@@ -9,6 +9,7 @@
 #include "cos_dist.cu"
 #include <curand_kernel.h>
 #include "stdio.h"
+#include <pthread.h>
 
 __global__ void setup_rand(curandState* state, uint32_t random)
 {
@@ -161,33 +162,49 @@ __global__ void finalize_max_distance(uint64_t *max, uint64_t *maxidx) {
   }
 }
 
+void init_gpus(std::vector<bc_mining_stream>& streams) {
+  streams.clear();
+  int nGPUs = 0;
+  cudaGetDeviceCount(&nGPUs);
+  std::cout << "Found " << nGPUs << " GPUs to use for mining!" << std::endl;
+
+  streams.resize(nGPUs);
+  for( unsigned iGPU = 0; iGPU < nGPUs; ++iGPU ) {
+    streams[iGPU].device = iGPU;
+    cudaSetDevice(iGPU);
+    cudaStreamCreate(&streams[iGPU].stream);
+    init_mining_memory(streams[iGPU].pool,streams[iGPU].stream);
+  }
+}
+
 // create the primary mining work areas
 // run this once to create the memory pools necessary for mining
 // large cudaMallocs take a long time, cudaMemset is fast
-void init_mining_memory(bc_mining_mempools& pool) {
+void init_mining_memory(bc_mining_mempools& pool, cudaStream_t stream) {
   if( pool.dev_cache != NULL ) return;
   if( pool.dev_states != NULL ) return;
   if( pool.scratch_dists != NULL ) return;
   if( pool.scratch_indices != NULL ) return;
 
   // allocate device memory for random states and hashing work
-  cudaDeviceSynchronize();
+  cudaStreamSynchronize(stream);
   cudaMalloc((void **)&pool.dev_states, HASH_TRIES * 1 * sizeof(curandState));
   cudaMalloc(&pool.dev_cache,sizeof(bc_mining_data));
   cudaMalloc(&pool.scratch_dists,HASH_TRIES*sizeof(uint64_t));
   cudaMalloc(&pool.scratch_indices,HASH_TRIES*sizeof(uint64_t));
-  cudaDeviceSynchronize();
+  cudaStreamSynchronize(stream);
 }
 
-void run_miner(const bc_mining_inputs& in, bc_mining_mempools& pool,bc_mining_outputs& out) {
+void run_miner(const bc_mining_inputs& in, bc_mining_stream& bcstream, bc_mining_outputs& out) {
+  cudaSetDevice(bcstream.device);
+  cudaStream_t stream = bcstream.stream;
+  bc_mining_mempools& pool = bcstream.pool;
+
   if( pool.dev_cache == NULL ) return;
   if( pool.dev_states == NULL ) return;
   if( pool.scratch_dists == NULL ) return;
   if( pool.scratch_indices == NULL ) return;
-
-  cudaStream_t stream;
-  cudaStreamCreate( &stream );
-
+  
   const unsigned max_iterations = 100;
   
   dim3 threads(N_MINER_THREADS_PER_BLOCK,1,1), blocks(HASH_TRIES/N_MINER_THREADS_PER_BLOCK,1,1);
@@ -197,90 +214,97 @@ void run_miner(const bc_mining_inputs& in, bc_mining_mempools& pool,bc_mining_ou
   uint16_t nonce_hash_offset = in.miner_key_size_ + BLAKE2B_OUTBYTES;
     
   // prepare the mining work
-  cudaMemset(pool.dev_cache,0,sizeof(bc_mining_data));
-  cudaMemcpy(&pool.dev_cache->time_stamp_size_, &in.time_stamp_size_, sizeof(size_t), cudaMemcpyHostToDevice);
-  cudaMemcpy(pool.dev_cache->time_stamp_, in.time_stamp_, in.time_stamp_size_, cudaMemcpyHostToDevice);
-  cudaMemcpy(&pool.dev_cache->miner_key_size_, &in.miner_key_size_, sizeof(size_t), cudaMemcpyHostToDevice);
-  cudaMemcpy(pool.dev_cache->miner_key_, in.miner_key_, in.miner_key_size_, cudaMemcpyHostToDevice);
-  cudaMemcpy(pool.dev_cache->received_work_, in.received_work_, BLAKE2B_OUTBYTES, cudaMemcpyHostToDevice);
-  cudaMemcpy(pool.dev_cache->merkel_root_,in.merkel_root_, BLAKE2B_OUTBYTES, cudaMemcpyHostToDevice);
+  cudaMemsetAsync(pool.dev_cache,0,sizeof(bc_mining_data),stream);
+  cudaMemcpyAsync(&pool.dev_cache->time_stamp_size_, &in.time_stamp_size_, sizeof(size_t), cudaMemcpyHostToDevice,stream);
+  cudaMemcpyAsync(pool.dev_cache->time_stamp_, in.time_stamp_, in.time_stamp_size_, cudaMemcpyHostToDevice,stream);
+  cudaMemcpyAsync(&pool.dev_cache->miner_key_size_, &in.miner_key_size_, sizeof(size_t), cudaMemcpyHostToDevice,stream);
+  cudaMemcpyAsync(pool.dev_cache->miner_key_, in.miner_key_, in.miner_key_size_, cudaMemcpyHostToDevice,stream);
+  cudaMemcpyAsync(pool.dev_cache->received_work_, in.received_work_, BLAKE2B_OUTBYTES, cudaMemcpyHostToDevice,stream);
+  cudaMemcpyAsync(pool.dev_cache->merkel_root_,in.merkel_root_, BLAKE2B_OUTBYTES, cudaMemcpyHostToDevice,stream);
 
   //setup the work template
-  cudaMemset(pool.dev_cache->work_template_,0,bc_mining_data::INLENGTH);
-  cudaMemcpy(&pool.dev_cache->nonce_hash_offset_,&nonce_hash_offset,sizeof(uint16_t),cudaMemcpyHostToDevice);
-  cudaMemcpy(&pool.dev_cache->work_size_,&work_size,sizeof(uint16_t),cudaMemcpyHostToDevice);
+  cudaMemsetAsync(pool.dev_cache->work_template_,0,bc_mining_data::INLENGTH,stream);
+  cudaMemcpyAsync(&pool.dev_cache->nonce_hash_offset_,&nonce_hash_offset,sizeof(uint16_t),cudaMemcpyHostToDevice,stream);
+  cudaMemcpyAsync(&pool.dev_cache->work_size_,&work_size,sizeof(uint16_t),cudaMemcpyHostToDevice,stream);
   unsigned index = 0;
-  cudaMemcpy(pool.dev_cache->work_template_,pool.dev_cache->miner_key_,in.miner_key_size_,cudaMemcpyDeviceToDevice);
+  cudaMemcpyAsync(pool.dev_cache->work_template_,pool.dev_cache->miner_key_,in.miner_key_size_,cudaMemcpyDeviceToDevice,stream);
   index += in.miner_key_size_;
-  cudaMemcpy(pool.dev_cache->work_template_+index,pool.dev_cache->merkel_root_,BLAKE2B_OUTBYTES,cudaMemcpyDeviceToDevice);
+  cudaMemcpyAsync(pool.dev_cache->work_template_+index,pool.dev_cache->merkel_root_,BLAKE2B_OUTBYTES,cudaMemcpyDeviceToDevice,stream);
   index += 2*BLAKE2B_OUTBYTES; //advance past nonce hash area
-  cudaMemcpy(pool.dev_cache->work_template_+index,pool.dev_cache->time_stamp_,in.time_stamp_size_,cudaMemcpyDeviceToDevice);
+  cudaMemcpyAsync(pool.dev_cache->work_template_+index,pool.dev_cache->time_stamp_,in.time_stamp_size_,cudaMemcpyDeviceToDevice,stream);
   index += in.time_stamp_size_;
   
   // work areas for finding max
   uint64_t max_value(0), max_idx(0);
-  cudaMemset(pool.scratch_dists,0,HASH_TRIES*sizeof(uint64_t));
-  cudaMemset(pool.scratch_indices,0,HASH_TRIES*sizeof(uint64_t));
+  cudaMemsetAsync(pool.scratch_dists,0,HASH_TRIES*sizeof(uint64_t),stream);
+  cudaMemsetAsync(pool.scratch_indices,0,HASH_TRIES*sizeof(uint64_t),stream);
   
   uint64_t iterations = 0;
   // the following kernel launches are the primary work
   // only set the random seeds once
-  cudaStreamSynchronize(stream);
   setup_rand<<<blocks,threads,0,stream>>>(pool.dev_states,((const uint32_t*)in.received_work_)[0]);
-  cudaStreamSynchronize(stream);
   do {
-    cudaMemset(pool.dev_cache->result,0,HASH_TRIES*BLAKE2B_OUTBYTES);
-    cudaMemset(pool.dev_cache->nonce,0,HASH_TRIES*sizeof(uint32_t));
-    cudaMemset(pool.dev_cache->nonce_hashes,0,HASH_TRIES*BLAKE2B_OUTBYTES);
+    cudaMemsetAsync(pool.dev_cache->result,0,HASH_TRIES*BLAKE2B_OUTBYTES,stream);
+    cudaMemsetAsync(pool.dev_cache->nonce,0,HASH_TRIES*sizeof(uint32_t),stream);
+    cudaMemsetAsync(pool.dev_cache->nonce_hashes,0,HASH_TRIES*BLAKE2B_OUTBYTES,stream);
     prepare_work_nonces<<<blocks,threads,0,stream>>>(pool.dev_states,pool.dev_cache);
-    cudaStreamSynchronize(stream);
     one_unit_work<<<blocks,threads,0,stream>>>(pool.dev_cache);
-    cudaStreamSynchronize(stream);
-    cudaMemset(pool.scratch_dists,0,HASH_TRIES*sizeof(uint64_t));
-    cudaMemset(pool.scratch_indices,0,HASH_TRIES*sizeof(uint64_t));
+    cudaMemsetAsync(pool.scratch_dists,0,HASH_TRIES*sizeof(uint64_t),stream);
+    cudaMemsetAsync(pool.scratch_indices,0,HASH_TRIES*sizeof(uint64_t),stream);
     prepare_max_distance<<<blocks,threads,0,stream>>>(pool.scratch_dists,pool.scratch_indices,pool.dev_cache->distance);
-    cudaStreamSynchronize(stream);
     unsigned temp = blocks.x;
     while( temp > threads.x ) {
       temp /= threads.x;
       finalize_max_distance<<<temp,threads,0,stream>>>(pool.scratch_dists,pool.scratch_indices);
-      cudaStreamSynchronize(stream);
     }
     finalize_max_distance<<<1,temp,0,stream>>>(pool.scratch_dists,pool.scratch_indices);
-    cudaStreamSynchronize(stream);
     // get the max value and index, which are at index zero in the scratch arrays
-    cudaMemcpy(&max_value,pool.scratch_dists,sizeof(uint64_t),cudaMemcpyDeviceToHost);
-    cudaMemcpy(&max_idx,pool.scratch_indices,sizeof(uint64_t),cudaMemcpyDeviceToHost);
+    cudaMemcpyAsync(&max_value,pool.scratch_dists,sizeof(uint64_t),cudaMemcpyDeviceToHost,stream);
+    cudaMemcpyAsync(&max_idx,pool.scratch_indices,sizeof(uint64_t),cudaMemcpyDeviceToHost,stream);
     const uint64_t offsetb2b = max_idx*BLAKE2B_OUTBYTES;
-    cudaMemcpy(out.result_blake2b_,pool.dev_cache->result+offsetb2b, BLAKE2B_OUTBYTES,cudaMemcpyDeviceToHost);
-    cudaMemcpy(&out.nonce_, &pool.dev_cache->nonce[max_idx], sizeof(uint32_t), cudaMemcpyDeviceToHost);
-    ++iterations;
+    cudaMemcpyAsync(out.result_blake2b_,pool.dev_cache->result+offsetb2b, BLAKE2B_OUTBYTES,cudaMemcpyDeviceToHost,stream);
+    cudaMemcpyAsync(&out.nonce_, &pool.dev_cache->nonce[max_idx], sizeof(uint32_t), cudaMemcpyDeviceToHost,stream);
     cudaStreamSynchronize(stream);
+    ++iterations;
   } while( max_value <= in.the_difficulty_ && iterations <= max_iterations );
 
   out.difficulty_ = in.the_difficulty_;
   out.distance_ = max_value;
   out.iterations_ = iterations*HASH_TRIES;
-  cudaStreamDestroy( stream );
 }
 
-void destroy_mining_memory(bc_mining_mempools& pool) {
+void* run_miner_thread(void * input) {
+  bc_thread_data& inputs = *((bc_thread_data*)input);
+  run_miner(*inputs.in,*inputs.stream,*inputs.out);
+  return NULL;
+}
+
+void destroy_mining_memory(bc_mining_mempools& pool, cudaStream_t stream) {
   if( pool.dev_cache == NULL ) return;
   if( pool.dev_states == NULL ) return;
   if( pool.scratch_dists == NULL ) return;
   if( pool.scratch_indices == NULL ) return;
 
   // free device memory
-  cudaDeviceSynchronize();
+  cudaStreamSynchronize(stream);
   cudaFree(pool.dev_states);
   cudaFree(pool.dev_cache);
   cudaFree(pool.scratch_dists);
   cudaFree(pool.scratch_indices);
-  cudaDeviceSynchronize();
+  cudaStreamSynchronize(stream);
 
   // set it to null
   pool.dev_states = NULL;
   pool.dev_cache = NULL;
   pool.scratch_dists = NULL;
   pool.scratch_indices = NULL;
+}
+
+void destroy_gpus(std::vector<bc_mining_stream>& streams) {
+  for(unsigned i = 0; i < streams.size(); ++i ) {
+    cudaSetDevice(streams[i].device);
+    destroy_mining_memory(streams[i].pool,streams[i].stream);
+    cudaStreamDestroy(streams[i].stream);
+  }
+  streams.resize(0);
 }

@@ -6,6 +6,7 @@
 #ifndef __BC_GPU_MINER_H__
 #define __BC_GPU_MINER_H__
 
+#include <vector>
 #include "blake2.h"
 
 static const unsigned HASH_TRIES = 1 << 23;
@@ -14,6 +15,7 @@ static const unsigned N_MINER_THREADS_PER_BLOCK = 32;
 // forward decl of curandState
 // include curand_kernel.h in your .cu file!!
 typedef struct curandStateXORWOW curandState; 
+typedef CUstream_st * cudaStream_t;
 
 struct bc_mining_data {
   static const size_t INLENGTH = 2048;
@@ -51,7 +53,7 @@ struct bc_mining_outputs {
   uint32_t nonce_;  
 };
 
-struct bc_mining_mempools{
+struct bc_mining_mempools {
 
   bc_mining_mempools() : dev_states(NULL), dev_cache(NULL), scratch_dists(NULL), scratch_indices(NULL) {}
   
@@ -61,12 +63,30 @@ struct bc_mining_mempools{
   uint64_t*       scratch_indices;
 };
 
+struct bc_mining_stream {
+  bc_mining_mempools pool;
+  cudaStream_t stream;
+  int device;
+};
+
+struct bc_thread_data {
+  const bc_mining_inputs* in;
+  bc_mining_outputs *out;
+  bc_mining_stream* stream;
+};
+
 // do this once
-void init_mining_memory(bc_mining_mempools& pool);
+void init_gpus(std::vector<bc_mining_stream>& streams);
+// do this once for each GPU you would like to use
+void init_mining_memory(bc_mining_mempools& pool, cudaStream_t stream);
 // do this a bunch
-void run_miner(const bc_mining_inputs& in, bc_mining_mempools& pool,bc_mining_outputs& out);
+void run_miner(const bc_mining_inputs& in, bc_mining_stream& pool,bc_mining_outputs& out);
+// for threading
+void* run_miner_thread(void *);
+// do this once for each GPU
+void destroy_mining_memory(bc_mining_mempools& pool, cudaStream_t stream);
 // do this once
-void destroy_mining_memory(bc_mining_mempools& pool);
+void destroy_gpus(std::vector<bc_mining_stream>& streams);
  
 
 #endif

@@ -5,6 +5,8 @@
 #include <vector>
 #include <algorithm>
 #include <ctime>
+#include <pthread.h>
+#include <assert.h>
 
 #include <iostream>
 
@@ -65,42 +67,69 @@ int main(int argc, char **argv) {
     // now let's do it on the GPU for real
     size_t stash_size = mhash.length();
     size_t tstamp_size = times.length();
+        
+    std::vector<bc_mining_stream> streams;    
     
+    init_gpus(streams);
 
-    bc_mining_inputs in;
-    bc_mining_outputs out;
-    bc_mining_mempools mempool;
+    std::vector<pthread_t> threads(streams.size());
+    std::vector<bc_thread_data> thread_data(streams.size());
 
-    in.miner_key_size_ = mhash.length();
-    in.time_stamp_size_ = times.length();
-    in.work_size_ = work.length();    
-    in.the_difficulty_ = 303810187437540ULL;
+    bc_mining_inputs* in; 
+    cudaMallocHost(&in,streams.size()*sizeof(bc_mining_inputs));
+    bc_mining_outputs* out;
+    cudaMallocHost(&out,streams.size()*sizeof(bc_mining_outputs));
+    
+    for(unsigned iGPU = 0; iGPU < streams.size(); ++iGPU ) {
+      in[iGPU].miner_key_size_ = mhash.length();
+      in[iGPU].time_stamp_size_ = times.length();
+      in[iGPU].work_size_ = work.length();    
+      in[iGPU].the_difficulty_ = 303810187437540ULL;
+      
+      memcpy(in[iGPU].miner_key_,mhash.c_str(),in[iGPU].miner_key_size_);
+      memcpy(in[iGPU].merkel_root_,merkl.c_str(),BLAKE2B_OUTBYTES);
+      memcpy(in[iGPU].time_stamp_,times.c_str(),in[iGPU].time_stamp_size_);
+      //set the work
+      for(unsigned i = 0; i < in[iGPU].work_size_; ++i ) {
+	char temp[2];
+	temp[0] = work[i];
+	temp[1] = '\0';
+	in[iGPU].received_work_[i/2] += strtol(temp,NULL,16)<<(4*((i+1)%2));
+      }
 
-    memcpy(in.miner_key_,mhash.c_str(),in.miner_key_size_);
-    memcpy(in.merkel_root_,merkl.c_str(),BLAKE2B_OUTBYTES);
-    memcpy(in.time_stamp_,times.c_str(),in.time_stamp_size_);
-    //set the work
-    for(unsigned i = 0; i < in.work_size_; ++i ) {
-      char temp[2];
-      temp[0] = work[i];
-      temp[1] = '\0';
-      in.received_work_[i/2] += strtol(temp,NULL,16)<<(4*((i+1)%2));
+      thread_data[iGPU].in = in + iGPU;
+      thread_data[iGPU].out = out + iGPU;
+      thread_data[iGPU].stream = &streams[iGPU];
     }
 
-
-    init_mining_memory(mempool);
-
-    run_miner(in,mempool,out);
-    
-    std::cout << "gpu: " << "blep" << " trial = 0x" << std::hex;
-    // output "blake2bl"
-    for( unsigned i = 32; i < BLAKE2B_OUTBYTES; ++i ) {
-    	 std::cout << std::hex << (unsigned)(out.result_blake2b_[i]>>4) << (unsigned)(out.result_blake2b_[i]&0xf);
+    int result_code;
+    for( unsigned iGPU = 0; iGPU < streams.size(); ++iGPU ) {      
+      result_code = pthread_create(&threads[iGPU], NULL, run_miner_thread, &thread_data[iGPU]);
+      assert(!result_code);
     }
-    std::cout << std::dec << std::endl;
-    std::cout << "gpu distance is: " << out.distance_ << std::endl;
     
-    destroy_mining_memory(mempool);
+    
+    for ( unsigned iGPU = 0; iGPU < streams.size(); ++iGPU) {
+      // block until thread 'index' completes
+      result_code = pthread_join(threads[iGPU], NULL);
+      assert(!result_code);
+      std::cout << "In main: thread " << iGPU <<" has completed" << std::endl;
+    }
+
+    for( unsigned iGPU = 0; iGPU < streams.size(); ++iGPU ) {
+      std::cout << "gpu: " << streams[iGPU].device << " trial = 0x" << std::hex;
+      // output "blake2bl"
+      for( unsigned i = 32; i < BLAKE2B_OUTBYTES; ++i ) {
+	std::cout << std::hex << (unsigned)(out[iGPU].result_blake2b_[i]>>4) << (unsigned)(out[iGPU].result_blake2b_[i]&0xf);
+      }
+      std::cout << std::dec << std::endl;
+      std::cout << "gpu distance is: " << out[iGPU].distance_ << std::endl;
+    }
+
+    destroy_gpus(streams);
+    
+    cudaFreeHost(in);
+    cudaFreeHost(out);
     
     return 0;
 }
