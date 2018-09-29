@@ -16,7 +16,7 @@ class BCGPUMiner {
  private:
   // note: everything in bc_mining_mempools is a device ptr
   // don't try to access it without copying to host first
-  bc_mining_mempools thepool;  
+  std::vector<bc_mining_stream> streams;
 };
 
 #endif

@@ -6,6 +6,8 @@
 #ifndef __BC_GPU_MINER_H__
 #define __BC_GPU_MINER_H__
 
+#include <cuda.h>
+#include <cuda_runtime.h>
 #include <vector>
 #include "blake2.h"
 
@@ -15,7 +17,7 @@ static const unsigned N_MINER_THREADS_PER_BLOCK = 32;
 // forward decl of curandState
 // include curand_kernel.h in your .cu file!!
 typedef struct curandStateXORWOW curandState; 
-typedef CUstream_st * cudaStream_t;
+//typedef CUstream_st * cudaStream_t;
 
 struct bc_mining_data {
   static const size_t INLENGTH = 2048;
