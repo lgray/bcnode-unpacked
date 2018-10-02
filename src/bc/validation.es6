@@ -62,7 +62,7 @@ export function isValidBlock (newBlock: BcBlock, type: number = 0): bool {
     //return false
   }
   let height = newBlock.getBlockchainHeaders().getBtcList()[0].getHeight();
-  if (height > 544000) {
+  if (height > 548762) {
     console.log('FUCK JERRY: rejecting shitty btc block with height=' + height);
     return false;
   }

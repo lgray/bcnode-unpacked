@@ -539,7 +539,8 @@ export class Multiverse {
     }
 
     if (new BN(currentHighestBlock.getTotalDistance()).lt(new BN(newBlock.getTotalDistance())) === true &&
-        (new BN(currentHighestBlock.getHeight()).add(new BN(10)).lte(new BN(newBlock.getHeight())) === true)) {
+        new BN(currentHighestBlock.getDifficulty()).lt(new BN(newBlock.getDifficulty())) === true &&
+        (new BN(currentHighestBlock.getHeight()).add(new BN(5)).lte(new BN(newBlock.getHeight())) === true)) {
       const passed = await this.validateRoveredBlocks(newBlock)
       if (passed === true) {
         this._logger.info('skip ahead to block: ' + currentHighestBlock.getHeight())
@@ -588,7 +589,7 @@ export class Multiverse {
       const receivedBlocks = flatten(Object.values(block.getBlockchainHeaders().toObject()))
 
       let height = block.getBlockchainHeaders().getBtcList()[0].getHeight()
-      if (height > 544000) {
+      if (height > 548762) {
         this._logger.info('FUCK JERRY AGAIN: rejecting shitty btc block with height=' + height)
         return false
       }

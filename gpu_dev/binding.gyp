@@ -42,7 +42,7 @@
     [ 'OS=="linux"', {
       'libraries': ['-lcuda', '-lcudart', '-lpthread'],
       'include_dirs': ['/usr/local/include'],
-      'library_dirs': ['/usr/local/lib', '/usr/local/cuda/lib64', '/usr/lib64/stubs'],
+      'library_dirs': ['/usr/local/lib', '/usr/local/cuda/lib64', '/usr/local/cuda/lib64/stubs/','/usr/lib64/stubs'],
     }],
     [ 'OS=="win"', {
       'conditions': [

@@ -42,7 +42,7 @@ void BCGPUMiner::do_mining(const bc_mining_inputs& in,
     // block until thread 'index' completes
     result_code = pthread_join(threads[iGPU], NULL);
     assert(!result_code);
-    std::cout << "In do_mining: thread " << iGPU <<" has completed" << std::endl;
+    //std::cout << "In do_mining: thread " << iGPU <<" has completed" << std::endl;
   }
 
   unsigned best_result = 0;
